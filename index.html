@@ -814,17 +814,27 @@ function clearFilter(k, v){
   if(k === 'year'){ state.yMin = allYears[0]; state.yMax = allYears[allYears.length - 1]; syncYears(); }
   else if(k === 'q'){ state.q = ''; $('#q').value = ''; }
   else state.include[k].delete(v);
-  syncChips(); render();
+  applyFilters();
 }
 function clearAll(){
   FILTER_KEYS.forEach(k => state.include[k].clear());
   state.q = ''; $('#q').value = '';
   if(allYears.length){ state.yMin = allYears[0]; state.yMax = allYears[allYears.length - 1]; syncYears(); }
-  syncChips(); render();
+  applyFilters();
 }
 function toggleInclude(k, v){
   const s = state.include[k]; s.has(v) ? s.delete(v) : s.add(v);
+  applyFilters();
+}
+/* Après un changement de filtre : si un groupe ou un contact est sélectionné, sa fiche est mise à jour et le zoom
+   se recentre sur lui ; s’il a disparu avec le filtre, la fiche se ferme et tout le graphe est recadré */
+function applyFilters(){
+  const had = state.selected;
   syncChips(); render();
+  if(state.view !== 'graph' || !had) return;
+  const n = nodes.find(x => x.id === had);
+  if(!n){ closeDrawer(); fit(); return; }
+  if(n.type === 'hub') showHub(n); else if(n.type === 'me') showMe(); else showContact(n.c);
 }
 
 /* ---------- Classification par Claude (capacité sample) ----------
@@ -2151,9 +2161,9 @@ $('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition(
 $('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
 $('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
 $('#topN').addEventListener('input', e => { state.topN = +e.target.value; select(null); closeDrawer(); render(); });
-$('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } render(); });
-$('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } render(); });
-let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); render(); }, 180); });
+$('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } applyFilters(); });
+$('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
+let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
 $('#targetBtn').addEventListener('click', findEntry);
 $('#target').addEventListener('keydown', e => { if(e.key === 'Enter') findEntry(); });
 $('#fab').addEventListener('click', openPanel);
@@ -2198,7 +2208,7 @@ document.addEventListener('click', e => {
   if(tl){
     const y = +tl.dataset.year;
     if(state.yMin === y && state.yMax === y){ state.yMin = allYears[0]; state.yMax = allYears[allYears.length - 1]; } else { state.yMin = state.yMax = y; }
-    syncYears(); render(); return;
+    syncYears(); applyFilters(); return;
   }
   const only = e.target.closest('[data-only]');
   if(only){ const k = only.dataset.only; state.include[k].clear(); state.include[k].add(only.dataset.v); syncChips(); select(null); closeDrawer(); needFit = true; render(); return; }
