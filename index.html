@@ -5,9 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Synapses, ton réseau LinkedIn en graphe</title>
 <meta name="description" content="Visualise ton réseau LinkedIn sous forme de graphe neuronal à partir de ton export LinkedIn. Gratuit, sans inscription : ton fichier reste dans ton navigateur.">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#2F5BEA">
+<!-- Aperçu du lien partagé (LinkedIn, WhatsApp, Slack…) : l’image doit avoir une adresse absolue -->
+<link rel="canonical" href="https://vincentnguyenpro.github.io/synapses/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Synapses">
+<meta property="og:url" content="https://vincentnguyenpro.github.io/synapses/">
+<meta property="og:title" content="Synapses, ton réseau LinkedIn en graphe">
+<meta property="og:description" content="Importe ton export LinkedIn et vois ton réseau comme un réseau de neurones. Gratuit, sans inscription : ton fichier reste dans ton navigateur.">
+<meta property="og:image" content="https://vincentnguyenpro.github.io/synapses/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Graphe en étoile d’un réseau de contacts regroupés par secteur, avec le titre Synapses">
+<meta name="twitter:card" content="summary_large_image">
+<!-- Empreintes SRI : le navigateur refuse une bibliothèque modifiée sur le CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 :root{
   --bg:#EDF1F5; --surface:#FFFFFF; --surface-2:#F4F7FA; --ink:#17212E; --muted:#5B6B7C; --line:#D5DDE5; --link:#C3CEDA;
@@ -1074,6 +1091,10 @@ const svg = d3.select('#graph');
 const root = svg.append('g');
 const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append('g'), gGauge = root.append('g'), gNodes = root.append('g'), gCounts = root.append('g'), gBadges = root.append('g'), gLabels = root.append('g');
 let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
+/* Noms des groupes : taille fixe à l’écran (13 px) tant que le zoom reste au-dessus de LK, puis ils rétrécissent avec le graphe.
+   lblScale(k) donne ce facteur de taille pour un zoom k : le cadrage s’en sert pour ne jamais couper un nom. */
+const LK = 0.2, lblScale = k => Math.min(1, k / LK);
+const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
 function syncTopN(total){
   const f = document.getElementById('fld-topn'), r = document.getElementById('topN');
   if(!f || !r) return;
@@ -1139,7 +1160,7 @@ const drag = d3.drag()
   .on('end', (e, d) => { if(!e.active) sim.alphaTarget(0); d.fx = d.type === 'hub' ? d.ax : null; d.fy = d.type === 'hub' ? d.ay : null; });
 
 function positionLabels(){
-  const k = Math.max(zk, 0.35);
+  const k = Math.max(zk, LK);
   /* Noms horizontaux tant qu’ils ne se touchent pas ; sinon, noms dans l’axe de leur branche (mode radial) */
   if(labelSel) labelSel.each(function(d){
     const a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0) + 8 / k;
@@ -1150,23 +1171,24 @@ function positionLabels(){
   if(countSel) countSel.attr('x', d => d.x).attr('y', d => d.y).selectAll('tspan').attr('x', function(){ return this.parentNode.__data__.x; });
   if(badgeSel) badgeSel.attr('transform', d => `translate(${d.x},${d.y})`);
 }
-/* Géométrie d’un nom : point d’ancrage dans le graphe et largeur réelle à l’écran */
+/* Géométrie d’un nom : point d’ancrage dans le graphe et largeur à l’écran en taille pleine (13 px) */
 function lblGeo(el){
   const d = el.__data__, a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0);
-  let w = 0; try { w = el.getComputedTextLength() * zk; } catch(e) { w = 0; }
+  let w = 0; try { w = el.getComputedTextLength() * Math.max(zk, LK); } catch(e) { w = 0; }
   if(!w || !isFinite(w)) w = (el.textContent || '').length * 7.4;
   return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w};
 }
-/* Boîte d’un nom en pixels d’écran, relative à son ancrage, en mode horizontal ou radial */
-function lblOffsets(g, radial){
-  const ox = g.c * 8, oy = g.s * 8;
-  if(radial){ const ex = ox + g.c * g.w, ey = oy + g.s * g.w; return {l:Math.min(ox, ex) - 7, r:Math.max(ox, ex) + 7, t:Math.min(oy, ey) - 7, b:Math.max(oy, ey) + 7}; }
-  const hh = 17, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -g.w : -g.w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
-  return {l:ox + l, r:ox + l + g.w, t:oy + t, b:oy + t + hh};
+/* Boîte d’un nom en pixels d’écran, relative à son ancrage, en mode horizontal ou radial ; f : facteur de taille du nom (lblScale) */
+function lblOffsets(g, radial, f = 1){
+  const ox = g.c * 8 * f, oy = g.s * 8 * f, w = g.w * f;
+  if(radial){ const ex = ox + g.c * w, ey = oy + g.s * w; return {l:Math.min(ox, ex) - 7 * f, r:Math.max(ox, ex) + 7 * f, t:Math.min(oy, ey) - 7 * f, b:Math.max(oy, ey) + 7 * f}; }
+  const hh = 17 * f, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -w : -w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
+  return {l:ox + l, r:ox + l + w, t:oy + t, b:oy + t + hh};
 }
 /* Vrai si deux noms horizontaux se chevaucheraient avec ce zoom */
 function hClash(geos, tr){
-  const bx = geos.map(g => { const o = lblOffsets(g, false), sx = tr.x + tr.k * g.bx, sy = tr.y + tr.k * g.by; return {L:sx + o.l, R:sx + o.r, T:sy + o.t, B:sy + o.b}; });
+  const f = lblScale(tr.k);
+  const bx = geos.map(g => { const o = lblOffsets(g, false, f), sx = tr.x + tr.k * g.bx, sy = tr.y + tr.k * g.by; return {L:sx + o.l, R:sx + o.r, T:sy + o.t, B:sy + o.b}; });
   for(let i = 0; i < bx.length; i++) for(let j = i + 1; j < bx.length; j++){ const a = bx[i], b = bx[j]; if(a.L < b.R + 3 && b.L < a.R + 3 && a.T < b.B + 2 && b.T < a.B + 2) return true; }
   return false;
 }
@@ -1179,16 +1201,16 @@ function layoutLabels(){
   labelRadial = hClash(geos, tr);
   if(!labelRadial) return;
   /* Garde-fou en cas de très fort dézoom : si deux noms radiaux partent trop près, on masque celui du plus petit groupe */
-  const anchor = g => [tr.x + tr.k * g.bx + g.c * 8, tr.y + tr.k * g.by + g.s * 8];
+  const f = lblScale(tr.k), anchor = g => [tr.x + tr.k * g.bx + g.c * 8 * f, tr.y + tr.k * g.by + g.s * 8 * f];
   const order = geos.map((g, i) => i).sort((i, j) => (geos[j].d.id === state.selected) - (geos[i].d.id === state.selected) || geos[j].d.count - geos[i].d.count);
   const kept = [];
   order.forEach(i => { const p = anchor(geos[i]); if(kept.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < 16)) els[i].style.display = 'none'; else kept.push(p); });
 }
 function styleLabels(){
   if(!labelSel) return;
-  const k = Math.max(zk, 0.35);
+  const k = Math.max(zk, LK);
   labelSel.style('font-size', `${13 / k}px`).style('stroke-width', `${4 / k}px`);
-  gColl.selectAll('text.colllbl').style('font-size', `${12 / k}px`).style('stroke-width', `${4 / k}px`);
+  gColl.selectAll('text.colllbl').style('font-size', `${12 / Math.max(zk, 0.35)}px`).style('stroke-width', `${4 / k}px`);
   /* Chiffres des groupes : taille compensée au dézoom, sans déborder du cercle */
   if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => `${Math.min(d.r * 1.15, Math.max(Math.min(13, Math.max(9.5, d.r * 0.8)), 11 / k))}px`);
   layoutLabels();
@@ -1378,7 +1400,8 @@ function renderGraph(vis){
   syncTopN(eligible.length);
   const cr = coarse ? 7 : 5.5;
   const cNodes = vis.map(c => keep({id:'c:' + c.id, type:'c', c, hub:'h:' + hubOf(c), r:cr}));
-  const me = {id:'me', type:'me', r:meProfile.name ? 38 : 26, x:w / 2, y:h / 2, fx:w / 2, fy:h / 2};
+  const mp = myProfile();
+  const me = {id:'me', type:'me', r:mp.name ? 38 : 26, x:w / 2, y:h / 2, fx:w / 2, fy:h / 2};
   nodes = [me, ...hubNodes, ...cNodes];
   applyLayout();
   drawRings();
@@ -1405,12 +1428,12 @@ function renderGraph(vis){
   countSel = gCounts.selectAll('text').data([me, ...(logoMode ? [] : hubNodes)], d => d.id).join('text')
     .attr('class', d => d.type === 'me' ? 'hubCount meText' : 'hubCount')
     .style('fill', null)
-    .style('font-size', d => d.type === 'me' ? (meProfile.name ? '11.5px' : '14px') : `${Math.min(13, Math.max(9.5, d.r * 0.8))}px`)
+    .style('font-size', d => d.type === 'me' ? (mp.name ? '11.5px' : '14px') : `${Math.min(13, Math.max(9.5, d.r * 0.8))}px`)
     .each(function(d){
       const t = d3.select(this);
       t.selectAll('tspan').remove();
       if(d.type !== 'me'){ t.text(d.count); return; }
-      const nm = (meProfile.name || '').trim();
+      const nm = (mp.name || '').trim();
       if(!nm){ t.text('Moi'); return; }
       t.text(null);
       const parts = nm.split(/\s+/), cut = s => s.length > 12 ? s.slice(0, 11) + '…' : s;
@@ -1422,8 +1445,9 @@ function renderGraph(vis){
   labelSel = gLabels.selectAll('text').data(labelled, d => d.id).join('text').attr('class', 'hubLabel')
     .each(function(d){
       const t = d3.select(this); t.text(null);
-      const nm = d.others ? `${d.key} (${d.others.length})` : d.key;
-      t.append('tspan').text(nm.length > 30 ? nm.slice(0, 29) + '…' : nm);
+      /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
+      const nm = d.others ? `${d.key} (${d.others.length})` : d.key, max = narrowScreen() ? 15 : 30;
+      t.append('tspan').text(nm.length > max ? nm.slice(0, max - 1).trimEnd() + '…' : nm);
       t.append('tspan').attr('class', 'lblPct').text(' ' + pct(d.count, vis.length));
     });
   styleLabels();
@@ -1484,7 +1508,8 @@ function fit(){
     const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b})));
     const ext = k => {
       let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
-      for(const it of items){ L = Math.min(L, k * it.x0 + it.l); R = Math.max(R, k * it.x1 + it.r); T = Math.min(T, k * it.y0 + it.t); B = Math.max(B, k * it.y1 + it.b); }
+      const f = lblScale(k); /* les noms rétrécissent sous le zoom LK : leur boîte aussi */
+      for(const it of items){ L = Math.min(L, k * it.x0 + it.l * f); R = Math.max(R, k * it.x1 + it.r * f); T = Math.min(T, k * it.y0 + it.t * f); B = Math.max(B, k * it.y1 + it.b * f); }
       return {L, R, T, B};
     };
     const ok = k => { const e = ext(k); return e.R - e.L <= vb.w - 2 * M && e.B - e.T <= vb.h - 2 * M; };
@@ -1593,7 +1618,8 @@ const tip = $('#tip');
 function showTip(e, d){
   if(e.pointerType && e.pointerType !== 'mouse') return;
   const [x, y] = d3.pointer(e, canvas);
-  tip.innerHTML = d.type === 'me' ? `<strong>${esc(meProfile.name || 'Toi')}</strong><span>${meProfile.position ? esc(meProfile.position) + '. ' : ''}Clique pour voir ta fiche.</span>` : d.type === 'hub'
+  const mp = myProfile();
+  tip.innerHTML = d.type === 'me' ? `<strong>${esc(mp.name || 'Toi')}</strong><span>${mp.position ? esc(mp.position) + '. ' : ''}Clique pour voir ta fiche.</span>` : d.type === 'hub'
     ? `<strong>${esc(d.key)}</strong><span>${d.count} contact${d.count > 1 ? 's' : ''}. Clique pour explorer ce groupe.</span>`
     : `<strong>${esc(d.c.name)}</strong><span>${esc(d.c.position || 'Poste non renseigné')}${d.c.company ? ' chez ' + esc(d.c.company) : ''}</span>`;
   const w = canvas.clientWidth;
@@ -1761,10 +1787,21 @@ function showHub(h){
 const ME_KEY = 'synapses-me-v1';
 let meProfile = {};
 try { meProfile = JSON.parse(localStorage.getItem(ME_KEY) || '{}') || {}; } catch(e) { meProfile = {}; }
+/* Profil affiché : jamais pendant la démo, pour qu’un visiteur ne voie pas le nom de la personne précédente sur un ordinateur partagé */
+const myProfile = () => isDemo ? {} : meProfile;
+/* Efface tout ce que Synapses garde dans ce navigateur (profil, tags, corrections), puis repart de la démo */
+function wipeData(){
+  if(!confirm('Effacer ton profil, tes tags et tes corrections enregistrés dans ce navigateur ? Le réseau affiché sera aussi retiré.')) return;
+  try { Object.keys(localStorage).filter(k => k.startsWith('synapses-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
+  location.reload();
+}
+const WIPE_BLOCK = `<h3>Tes données</h3>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Ton profil, tes tags et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite.</p>
+    <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
 
 function showMe(){
   select('me'); clearFocus();
-  const p = meProfile, total = contacts.length;
+  const p = myProfile(), total = contacts.length;
   const url = /^https:\/\//.test(p.url || '') ? p.url : '';
   const top = k => {
     const r = d3.greatest(d3.rollup(contacts.filter(c => !TAIL.includes(DIMS[k].get(c))), v => v.length, DIMS[k].get), d => d[1]);
@@ -1794,7 +1831,9 @@ function showMe(){
     <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${cc.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
     <div class="legendlist">${rows.slice(0, 8).map(v => `<div><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(v)}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>
-    <h3>Mon profil</h3>
+    ${isDemo ? `<h3>Mon profil</h3>
+    <p class="pos">Ceci est un réseau de démonstration. Importe ton export LinkedIn pour voir ton nom et ton poste au centre.</p>
+    <button class="btn primary block" type="button" data-act="import" style="margin-top:10px">Importer mon export LinkedIn</button>` : `<h3>Mon profil</h3>
     <div class="meform">
       <label for="me-name">Nom</label><input id="me-name" type="text" autocomplete="name" value="${esc(p.name || '')}">
       <label for="me-pos">Poste</label><input id="me-pos" type="text" autocomplete="organization-title" value="${esc(p.position || '')}">
@@ -1802,7 +1841,8 @@ function showMe(){
       <label for="me-url">Lien de ton profil LinkedIn</label><input id="me-url" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/…" value="${esc(p.url || '')}">
       <button class="btn primary block" type="button" data-act="saveme">Enregistrer mon profil</button>
       <p class="hint" style="margin-top:10px">Ces informations restent sur cet appareil.</p>
-    </div>`);
+    </div>`}
+    ${WIPE_BLOCK}`);
   dbody.querySelectorAll('.meform input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') saveMe(); }));
   zoomToNode(nodes.find(n => n.type === 'me'));
 }
@@ -1832,7 +1872,8 @@ function showHelp(msg){
     <p class="pos">Nom, entreprise actuelle, poste, date de connexion et lien du profil. Secteur, fonction et séniorité sont estimés à partir de ces champs.</p>
     <h3>Aller plus loin</h3>
     <p class="pos">Pour filtrer par pays, ville, formation ou expérience, ajoute dans le CSV des colonnes « Localisation » (par exemple « Paris, France »), « Pays », « Formation », « Expérience » (en années) ou « Secteur » avant l’import. Le pays est déduit automatiquement de la localisation.</p>
-    <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>`);
+    <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>
+    ${WIPE_BLOCK}`);
 }
 
 function findEntry(){
@@ -1958,6 +1999,7 @@ document.addEventListener('click', e => {
     else if(a === 'dismiss'){ demoHidden = true; render(); }
     else if(a === 'clearall') clearAll();
     else if(a === 'saveme') saveMe();
+    else if(a === 'wipe') wipeData();
     else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'legendall'){ legendAll = !legendAll; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'showall'){ state.topN = 999; select(null); closeDrawer(); render(); }
