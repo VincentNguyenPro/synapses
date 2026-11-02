@@ -24,7 +24,7 @@ Pour mettre à jour le site, remplace `index.html` dans le dépôt : GitHub Page
 
 - Un seul fichier HTML, sans étape de compilation.
 - Bibliothèques chargées depuis cdnjs : D3 (graphe), PapaParse (CSV), JSZip (archive).
-- Secteur, fonction et séniorité sont estimés dans le navigateur à partir d’un dictionnaire intégré d’entreprises et de mots-clés. Chaque estimation peut être corrigée depuis la fiche d’un contact.
+- Secteur, fonction et séniorité sont estimés dans le navigateur à partir des dictionnaires du dossier `data/` : `entreprises.json` (entreprises et mots-clés par secteur) et `postes.json` (mots-clés de fonction et règles de séniorité). Chaque estimation peut être corrigée depuis la fiche d’un contact.
 - Les tags et corrections sont enregistrés dans le stockage local du navigateur.
 
 ## Droits

@@ -1,0 +1,83 @@
+{
+ "version": 1,
+ "description": "Dictionnaire Synapses : intitulé de poste → fonction et séniorité. Motifs = expressions régulières appliquées au poste en minuscules sans accents ; la première règle qui correspond l’emporte.",
+ "fonctions": [
+  {
+   "fonction": "Direction générale",
+   "motif": "\\b(ceo|founder|co-?founder|fondat\\w*|co-?fondat\\w*|president\\w*|directeur general|directrice generale|managing director|general manager|associe\\w*|owner)\\b"
+  },
+  {
+   "fonction": "Produit",
+   "motif": "\\b(product|produit|po|ux|ui|design\\w*)\\b"
+  },
+  {
+   "fonction": "Data",
+   "motif": "\\b(data|analyst|analytics|bi|machine learning|ml|ia|ai|scientist)\\b"
+  },
+  {
+   "fonction": "Tech",
+   "motif": "\\b(developer|developpeu\\w*|engineer\\w*|ingenieu\\w*|dev|devops|software|cto|architect\\w*|tech|technique\\w*|technical|it|informatique|cloud|security|securite|qa|full-stack|fullstack|r&d|ingenierie|bureau d['’]?etudes)\\b"
+  },
+  {
+   "fonction": "Sales",
+   "motif": "\\b(sales|commercial\\w*|business developer|business development|developpement commercial|account|vente\\w*|bizdev|key account|customer success|affaires|partnerships?|partenariats?)\\b"
+  },
+  {
+   "fonction": "Marketing",
+   "motif": "\\b(marketing|growth|brand|communication|content|seo|cmo)\\b"
+  },
+  {
+   "fonction": "Finance",
+   "motif": "\\b(finance\\w*|financ\\w*|cfo|controller|controleu\\w*|controle de gestion|comptab\\w*|audit\\w*|treasury|tresor\\w*|investment|investissement|analyste financier|cost\\w*|credit|tax|fiscal\\w*|fp&a|patrimoin\\w*|patrimonial|wealth|risk|risques?|actuar\\w*|banquier|m&a)\\b"
+  },
+  {
+   "fonction": "RH",
+   "motif": "\\b(rh|hr|human|ressources humaines|recruit\\w*|recrut\\w*|talent|people)\\b"
+  },
+  {
+   "fonction": "Juridique",
+   "motif": "\\b(avocat\\w*|juriste\\w*|juridique|legal|counsel|compliance|conformite|notaire|lawyer)\\b"
+  },
+  {
+   "fonction": "Enseignement & recherche",
+   "motif": "\\b(professeur\\w*|professor|enseignant\\w*|teacher|chercheu\\w*|researcher|doctorant\\w*|phd|lecturer|maitre de conferences)\\b"
+  },
+  {
+   "fonction": "Conseil",
+   "motif": "\\b(consultant\\w*|conseil|conseiller\\w*|advisor|consulting|strateg\\w*|transformation)\\b"
+  },
+  {
+   "fonction": "Opérations",
+   "motif": "\\b(operations?|ops|supply|logisti\\w*|achats?|procurement|projets?|project|pmo|programmes?|program|delivery|pilot\\w*|methodes?|production|qualite|quality|maintenance|industri\\w*|usine|plant|lean|performance|exploitation)\\b"
+  }
+ ],
+ "fonction_par_defaut": "Autre",
+ "seniorite": [
+  {
+   "niveau": "Dirigeant",
+   "motif": "\\b(ceo|cto|coo|cfo|cmo|cpo|cio|chief|founder|co-?founder|fondat\\w*|co-?fondat\\w*|president\\w*|directeur general|directrice generale|managing director|general manager|partner|associe\\w*|owner|gerant\\w*)\\b"
+  },
+  {
+   "niveau": "Direction",
+   "motif": "\\b(director|directeur|directrice|head of|vp|vice[- ]president)\\b"
+  },
+  {
+   "niveau": "Junior",
+   "motif": "\\b(intern|internship|stagiaire|alternant\\w*|alternance|apprenti\\w*|junior|jr|trainee|graduate|etudiant\\w*|student)\\b"
+  },
+  {
+   "niveau": "Senior",
+   "motif": "\\b(senior|sr|principal|staff|expert\\w*|lead)\\b"
+  },
+  {
+   "niveau": "Confirmé",
+   "motif": "(product|project|program|account|projet|produit|success|community|office|marketing) manager|chef de projet|growth manager",
+   "commentaire": "Exception : ces « managers » ne gèrent pas d’équipe"
+  },
+  {
+   "niveau": "Manager",
+   "motif": "\\b(manager|responsable|chef|team leader|supervisor|encadrant\\w*)\\b"
+  }
+ ],
+ "seniorite_par_defaut": "Confirmé"
+}

@@ -15,7 +15,10 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - Un seul fichier `index.html` (HTML, CSS et JS inline), sans étape de compilation.
 - Import : `handleFiles` lit le .zip (JSZip) et y cherche `Connections.csv`, `Profile.csv`, `Positions.csv`.
   Format réel de Connections.csv : 3 lignes de notes, puis `First Name,Last Name,URL,Email Address,Company,Position,Connected On`, dates du type `17 Jan 2026`.
-- Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > dictionnaire intégré `BUILTIN_SECTORS` > mots-clés `SECTORS` / `FUNCTIONS` / `seniorityOf`.
+- Dictionnaires de classification dans `data/` (fichiers statiques chargés au démarrage par `loadDictionary`) :
+  `data/entreprises.json` (entreprise → secteur, mots-clés de secteur) et `data/postes.json` (mots-clés de fonction, règles de séniorité).
+  Pour enrichir la classification, modifier ces fichiers, pas `index.html`. Ne jamais y ajouter un nom de personne.
+- Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > dictionnaire `data/entreprises.json` (variantes « Groupe X », « x.fr », « A - B » comprises) > mots-clés.
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
 - Le code lié à claude.ai (`window.claude`, capacités `sample` et `db`) est inactif ici : l’app fonctionne sans lui.
 
