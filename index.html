@@ -201,7 +201,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .hub{fill:var(--hub);stroke:var(--ink);stroke-width:1.5px;cursor:pointer}
 .hub:hover{stroke-width:3px}
 circle.sel{stroke:var(--ink) !important;stroke-width:3.5px !important}
-.hubLabel{font-weight:700;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;pointer-events:none}
+.hubLabel{font-weight:700;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;cursor:pointer}
+.hubLabel:hover{text-decoration:underline}
 .hubCount{font-weight:800;fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
 .link.me{stroke:var(--accent);stroke-opacity:.55;stroke-width:1.8px}
 .me{fill:var(--accent);stroke:var(--surface);stroke-width:4px;cursor:pointer}
@@ -1559,7 +1560,8 @@ function renderGraph(vis){
       if(l2) t.append('tspan').attr('x', d.x).attr('dy', '1.2em').text(cut(l2));
     });
   const labelled = hubNodes;
-  labelSel = gLabels.selectAll('text').data(labelled, d => d.id).join('text').attr('class', 'hubLabel')
+  /* Le nom d’un groupe se clique comme son nœud : plus facile à viser quand le nœud est petit */
+  labelSel = gLabels.selectAll('text').data(labelled, d => d.id).join(enter => enter.append('text').on('click', onNodeClick)).attr('class', 'hubLabel')
     .each(function(d){
       const t = d3.select(this); t.text(null);
       /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
