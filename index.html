@@ -184,21 +184,22 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .gauge{fill:none;stroke:var(--accent);stroke-width:3px;stroke-linecap:round;pointer-events:none}
 .lblPct{fill:var(--accent);font-weight:800}
 .badge{pointer-events:none;transition:opacity .2s}
-.badge rect{stroke:var(--surface);stroke-width:2px}
+.badge .bdisc{stroke:none}
 .badge .mono{fill:#fff;font-weight:800;text-anchor:middle;dominant-baseline:central;letter-spacing:.02em}
 .badge .cnt{fill:var(--ink);stroke:var(--surface);stroke-width:2px}
 .badge .cntText{fill:var(--surface);font-size:9px;font-weight:800;text-anchor:middle;dominant-baseline:central}
 .badge text{stroke:none !important}
-.badge.sel rect{stroke:var(--ink);stroke-width:3px}
 .badge.dim{opacity:.08}
-.logo-badge{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:13px;color:#fff;font-weight:800;font-size:16px;margin:0 0 10px}
+.logo-badge{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;color:#fff;font-weight:800;font-size:16px;margin:0 0 10px}
 .logo-badge.has-img{background:#fff !important;border:1px solid var(--line)}
 .logo-badge.has-img .mtext{display:none}
 .logo-badge{overflow:hidden}
 .logo-badge .logo-img{width:100%;height:100%;object-fit:contain}
 .badge .lbg{fill:#fff;stroke:none}
-.badge .lring{fill:none;stroke:var(--surface);stroke-width:2px}
-.badge.sel .lring{stroke:var(--ink);stroke-width:3px}
+/* Groupe sélectionné en mode entreprise : badge inchangé, anneau bleu autour du nœud (des traits foncés rempliraient l’espace autour du badge) */
+/* Nœud d’entreprise : fin liseré blanc autour du logo (le trait noir des autres groupes l’alourdirait) */
+circle.logohub{stroke:var(--surface);stroke-width:2px}
+circle.logohub.sel{stroke:var(--accent) !important;stroke-width:3px !important}
 .contact{stroke:var(--surface);stroke-width:1.2px;cursor:pointer}
 .contact:hover{stroke:var(--ink);stroke-width:2px}
 .hub{fill:var(--hub);stroke:var(--ink);stroke-width:1.5px;cursor:pointer}
@@ -1226,8 +1227,8 @@ function renderBar(vis){
 /* ---------- Graph ---------- */
 const canvas = $('#canvas');
 const svg = d3.select('#graph');
-/* Découpe arrondie des logos d’entreprise, aux mêmes coins que les badges */
-svg.append('defs').html('<clipPath id="logoClip" clipPathUnits="objectBoundingBox"><rect width="1" height="1" rx=".3" ry=".3"/></clipPath>');
+/* Découpe ronde des logos d’entreprise : ils remplissent le cercle du nœud */
+svg.append('defs').html('<clipPath id="logoClip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath>');
 const root = svg.append('g');
 const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append('g'), gGauge = root.append('g'), gNodes = root.append('g'), gCounts = root.append('g'), gBadges = root.append('g'), gLabels = root.append('g');
 let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
@@ -1599,7 +1600,7 @@ function renderGraph(vis){
       .on('pointerenter pointermove', showTip)
       .on('pointerleave', hideTip))
     .attr('r', d => d.r)
-    .attr('class', d => (d.type === 'hub' ? 'hub' : d.type === 'me' ? 'me' : 'contact') + (d.id === state.selected ? ' sel' : ''))
+    .attr('class', d => (d.type === 'hub' ? 'hub' + (logoMode ? ' logohub' : '') : d.type === 'me' ? 'me' : 'contact') + (d.id === state.selected ? ' sel' : ''))
     .attr('fill', d => d.type === 'c' ? colorOf(d.c) : null)
     .style('stroke', d => d.type === 'hub' && sameDim ? colorFn(d.key) : null)
     .style('fill', d => d.type !== 'hub' ? null : logoMode ? 'var(--surface)' : CM_OK ? `color-mix(in srgb, var(--accent) ${Math.round(6 + (d.weight || 0) * 32)}%, var(--hub))` : null)
@@ -1636,21 +1637,23 @@ function renderGraph(vis){
   styleLabels();
 
   /* Mode entreprise : un badge monogramme coloré par entreprise, avec le nombre de contacts en pastille */
+  /* Mode entreprise : le logo (ou, à défaut, le monogramme sur fond coloré) remplit le cercle du nœud.
+     Le disque s’arrête juste à l’intérieur du contour du nœud, qui reste visible (et bleu quand le groupe est sélectionné). */
+  const fillR = d => Math.max(2, d.r - 0.75);
   badgeSel = gBadges.selectAll('g.badge').data(logoMode ? hubNodes : [], d => d.id)
-    .join(enter => { const g = enter.append('g').attr('class', 'badge'); g.append('rect'); g.append('text').attr('class', 'mono'); g.append('rect').attr('class', 'lbg').style('display', 'none'); g.append('image').attr('class', 'blogo').attr('clip-path', 'url(#logoClip)').style('display', 'none'); g.append('rect').attr('class', 'lring').style('display', 'none'); g.append('circle').attr('class', 'cnt'); g.append('text').attr('class', 'cntText'); return g; });
-  badgeSel.select('rect').attr('x', d => -d.r * 0.82).attr('y', d => -d.r * 0.82).attr('width', d => d.r * 1.64).attr('height', d => d.r * 1.64).attr('rx', d => d.r * 0.49)
-    .style('fill', d => d.key === otherKey ? 'var(--muted)' : brandColor(d.key));
+    .join(enter => { const g = enter.append('g').attr('class', 'badge'); g.append('circle').attr('class', 'bdisc'); g.append('text').attr('class', 'mono'); g.append('circle').attr('class', 'lbg').style('display', 'none'); g.append('image').attr('class', 'blogo').attr('clip-path', 'url(#logoClip)').style('display', 'none'); g.append('circle').attr('class', 'cnt'); g.append('text').attr('class', 'cntText'); return g; });
+  badgeSel.select('circle.bdisc').attr('r', fillR).style('fill', d => d.key === otherKey ? 'var(--muted)' : brandColor(d.key));
   badgeSel.select('text.mono').text(d => d.key === otherKey ? '…' : mono(d.key)).attr('y', 0)
-    .style('font-size', d => `${Math.max(7, d.r * (mono(d.key).length > 2 ? 0.5 : 0.66))}px`);
-  /* Nombre de contacts en pastille, dans le coin inférieur droit : il ne cache ni le logo ni le monogramme */
-  badgeSel.select('circle.cnt').attr('cx', d => d.r * 0.74).attr('cy', d => d.r * 0.74).attr('r', 7);
-  badgeSel.select('text.cntText').attr('x', d => d.r * 0.74).attr('y', d => d.r * 0.74).text(d => d.count);
-  /* Vrai logo par-dessus le badge si le service est configuré ; en cas d’échec, le monogramme reste visible */
+    .style('font-size', d => `${Math.max(7, d.r * (mono(d.key).length > 2 ? 0.58 : 0.76))}px`);
+  /* Nombre de contacts en pastille, sur le bord du cercle en bas à droite : il ne cache ni le logo ni le monogramme */
+  badgeSel.select('circle.cnt').attr('cx', d => d.r * 0.71).attr('cy', d => d.r * 0.71).attr('r', 7);
+  badgeSel.select('text.cntText').attr('x', d => d.r * 0.71).attr('y', d => d.r * 0.71).text(d => d.count);
+  /* Vrai logo par-dessus le monogramme si le service est configuré ; en cas d’échec, le monogramme reste visible */
   badgeSel.each(function(d){
-    const g = d3.select(this), url = d.key === otherKey ? '' : logoUrl(d.key);
-    const img = g.select('image.blogo'), bg = g.select('rect.lbg'), ring = g.select('rect.lring'), parts = [img, bg, ring];
-    const box = sel => sel.attr('x', -d.r * 0.82).attr('y', -d.r * 0.82).attr('width', d.r * 1.64).attr('height', d.r * 1.64);
-    box(bg).attr('rx', d.r * 0.49); box(ring).attr('rx', d.r * 0.49); box(img).attr('preserveAspectRatio', 'xMidYMid meet');
+    const g = d3.select(this), url = d.key === otherKey ? '' : logoUrl(d.key), rr = fillR(d);
+    const img = g.select('image.blogo'), bg = g.select('circle.lbg'), parts = [img, bg];
+    bg.attr('r', rr);
+    img.attr('x', -rr).attr('y', -rr).attr('width', rr * 2).attr('height', rr * 2).attr('preserveAspectRatio', 'xMidYMid meet');
     const show = on => parts.forEach(x => x.style('display', on ? null : 'none'));
     if(!url){ img.attr('href', null); show(false); return; }
     if(img.attr('href') === url) return;
