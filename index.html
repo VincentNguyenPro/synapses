@@ -149,6 +149,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .demo strong{display:block;font-size:14px}
 .demo span{color:var(--muted)}
 .demo-actions{display:flex;gap:8px;align-items:center}
+.sharebox{display:flex;gap:10px;font-weight:400;align-items:flex-start;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:13px;color:var(--muted);line-height:1.45;cursor:pointer}
+.sharebox input{margin-top:2px;width:16px;height:16px;flex:none;accent-color:var(--accent)}
 .aiprog{display:block;height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}
 .aiprog span{display:block;height:100%;background:var(--accent);transition:width .3s ease}
 .canvas{position:relative;flex:1;min-height:0;overflow:hidden}
@@ -839,70 +841,91 @@ const FIX_KEY = 'synapses-fix-v1';
 let userFix = {co:{}, pos:{}};
 try { const s = JSON.parse(localStorage.getItem(FIX_KEY) || 'null'); if(s && s.co && s.pos) userFix = s; } catch(e) {}
 const saveFix = () => { try { localStorage.setItem(FIX_KEY, JSON.stringify(userFix)); } catch(e) {} };
+/* ---------- Dictionnaire partagé (Supabase) ----------
+   Lecture : les ajouts validés au dictionnaire, téléchargés en entier (rien de l’utilisateur n’est envoyé pour les lire).
+   Écriture : seulement si l’utilisateur l’accepte (case « Partager mes corrections »). Seuls partent un nom d’entreprise
+   ou un intitulé de poste et la catégorie choisie, jamais le nom, le profil ou l’email d’un contact.
+   Les propositions restent en attente jusqu’à leur validation par l’administrateur (voir supabase/schema.sql). */
+const SB_URL = 'https://afvmshbacxaznhmlgkzc.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_U9XvfQWQ3gqA1u0wRq5JCA_YgdWdVe2'; /* clé publique par conception, protégée par les règles d’accès de la base */
+const SHARE_KEY = 'synapses-share-v1', SENT_KEY = 'synapses-sent-v1';
+let shareOn = false; try { shareOn = localStorage.getItem(SHARE_KEY) === '1'; } catch(e) {}
+let sentStore = {}; try { sentStore = JSON.parse(localStorage.getItem(SENT_KEY) || '{}') || {}; } catch(e) {}
 const sharedCo = {}, sharedPos = {};
-let dbRef = null, sharedLoaded = false;
-(async () => {
-  try { if(window.claude && typeof window.claude.use === 'function') dbRef = await window.claude.use('db'); } catch(e) { dbRef = null; }
-  if(dbRef && !isDemo && contacts.length) refreshShared();
-})();
-const bucketOf = k => { let h = 0; for(const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % 64; };
-/* Clé de champ sûre pour la base (un nom comme « F.initiatives » contient un point) : empreinte du libellé, libellé gardé dans la valeur */
-const safeKey = k => { let h = 2166136261; for(let i = 0; i < k.length; i++){ h ^= k.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return 'k' + h.toString(36) + '_' + k.length; };
-/* Les écritures partagées passent par une file unique : une correction faite pendant un envoi IA arrive toujours après lui */
+let sharedLoaded = false;
+const sbFetch = (path, opt = {}) => {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+  return fetch(SB_URL + path, {...opt, signal:ctl.signal, headers:{apikey:SB_KEY, 'Content-Type':'application/json', ...(opt.headers || {})}}).finally(() => clearTimeout(t));
+};
+async function sbAll(table, cols){
+  const rows = [];
+  for(let from = 0; from < 50000; from += 1000){
+    const r = await sbFetch(`/${table}?select=${cols}&order=cle`, {headers:{Range:`${from}-${from + 999}`}});
+    if(!r.ok) throw new Error(table + ' ' + r.status);
+    const page = await r.json(); rows.push(...page);
+    if(page.length < 1000) break;
+  }
+  return rows;
+}
+function setShare(on){
+  shareOn = !!on;
+  try { localStorage.setItem(SHARE_KEY, shareOn ? '1' : '0'); } catch(e) {}
+  document.querySelectorAll('input[data-share]').forEach(i => { i.checked = shareOn; });
+  if(shareOn && !isDemo) refreshShared();
+  toast(shareOn ? 'Tes corrections seront proposées au dictionnaire partagé' : 'Tes corrections restent sur cet appareil');
+}
+const shareBox = () => `<label class="sharebox"><input type="checkbox" data-share${shareOn ? ' checked' : ''}> <span>Partager mes corrections pour améliorer le dictionnaire de tous. Seuls le nom de l’entreprise ou l’intitulé du poste et la catégorie choisie sont envoyés, jamais le nom d’un contact.</span></label>`;
+/* Les envois passent par une file unique, dans l’ordre des corrections */
 let pushChain = Promise.resolve();
 function pushShared(kind, entries){ pushChain = pushChain.then(() => pushNow(kind, entries)).catch(() => {}); return pushChain; }
+const labelOf = (kind, k) => { const c = contacts.find(o => nkey(kind === 'co' ? o.company : o.position) === k); return c ? (kind === 'co' ? c.company : c.position) : k; };
 async function pushNow(kind, entries){
-  if(!dbRef) return;
-  const groups = {};
-  for(const [k, v] of Object.entries(entries)){ if(!k) continue; (groups[bucketOf(k)] = groups[bucketOf(k)] || {})[safeKey(k)] = {...v, k}; }
-  for(const [b, m] of Object.entries(groups)){
-    const ref = dbRef.doc(`dict/${kind}_${b}`);
-    /* Un classement IA n’écrase jamais une correction humaine déjà enregistrée (par toi ou un autre utilisateur) */
-    if(Object.values(m).some(v => v.src !== 'user')){
-      const cur = await ref.get().catch(() => null);
-      const stored = cur && cur.exists ? ((cur.data() || {}).m || {}) : {};
-      for(const k of Object.keys(m)) if(m[k].src !== 'user' && stored[k] && stored[k].src === 'user') delete m[k];
-      if(!Object.keys(m).length) continue;
-    }
-    try { await ref.update({m}); }
-    catch(e){
-      if(e && e.code === 'invalid_argument'){ try { await ref.set({m}); } catch(e2) { continue; } }
-      else if(e && (e.code === 'not_granted' || e.code === 'revoked' || e.code === 'capability_disabled')) return;
-      else continue; /* lecture seule ou souci ponctuel : on garde tout en local */
-    }
+  if(!shareOn || isDemo) return;
+  const rows = [], marks = [];
+  for(const [k, v] of Object.entries(entries)){
+    if(!k || k.length > 120) continue;
+    const val = kind === 'co' ? v.s : v.f + '|' + v.n, mark = `${kind}|${k}|${val}`;
+    if(sentStore[mark]) continue;
+    const libelle = labelOf(kind, k).slice(0, 150);
+    const base = {cle:k, libelle, origine:v.src === 'user' ? 'correction' : 'llm', modele:v.src === 'user' ? null : (v.model || null)};
+    rows.push(kind === 'co' ? {...base, type:'entreprise', secteur:v.s} : {...base, type:'poste', fonction:v.f, seniorite:v.n});
+    marks.push(mark);
+  }
+  for(let i = 0; i < rows.length; i += 200){
+    try {
+      const r = await sbFetch('/contributions', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(rows.slice(i, i + 200))});
+      if(!r.ok) continue;
+      marks.slice(i, i + 200).forEach(m => { sentStore[m] = 1; });
+      try { localStorage.setItem(SENT_KEY, JSON.stringify(sentStore)); } catch(e) {}
+    } catch(e) { return; } /* hors ligne : on réessaiera au prochain import */
   }
 }
 async function loadShared(){
-  if(!dbRef) return false;
   try {
-    const snap = await dbRef.collection('dict').get();
-    snap.docs.forEach(d => {
-      const m = ((d.data() || {}).m) || {}, isCo = d.id.startsWith('co_');
-      for(const [sk, v] of Object.entries(m)){
-        if(!v) continue;
-        const k = v.k || sk;
-        if(isCo){ if(SECTOR_LABELS.includes(v.s)) sharedCo[k] = v; }
-        else if(FN_LABELS.includes(v.f) && SEN_LABELS.includes(v.n)) sharedPos[k] = v;
-      }
-    });
+    const [cos, poss] = await Promise.all([sbAll('dict_entreprises', 'cle,secteur'), sbAll('dict_postes', 'cle,fonction,seniorite')]);
+    /* Ajouts validés par l’administrateur : traités comme des corrections humaines */
+    cos.forEach(r => { if(SECTOR_LABELS.includes(r.secteur)) sharedCo[r.cle] = {s:r.secteur, src:'user'}; });
+    poss.forEach(r => { if(FN_LABELS.includes(r.fonction) && SEN_LABELS.includes(r.seniorite)) sharedPos[r.cle] = {f:r.fonction, n:r.seniorite, src:'user'}; });
     sharedLoaded = true;
     return true;
   } catch(e){ return false; }
 }
 async function refreshShared(){
-  const ok = await loadShared();
-  if(!ok || isDemo) return;
-  /* Rattrapage : on partage les classements et corrections déjà faits sur cet appareil mais absents du dictionnaire */
-  const upCo = {}, upPos = {};
-  for(const [k, s] of Object.entries(userFix.co)) if(!(sharedCo[k] && sharedCo[k].src === 'user' && sharedCo[k].s === s)){ upCo[k] = {s, src:'user'}; sharedCo[k] = upCo[k]; }
-  for(const [k, s] of Object.entries(aiStore.co)) if(!sharedCo[k]){ upCo[k] = {s, src:'ai'}; sharedCo[k] = upCo[k]; }
-  for(const [k, p] of Object.entries(userFix.pos)) if(!(sharedPos[k] && sharedPos[k].src === 'user' && sharedPos[k].f === p[0] && sharedPos[k].n === p[1])){ upPos[k] = {f:p[0], n:p[1], src:'user'}; sharedPos[k] = upPos[k]; }
-  for(const [k, p] of Object.entries(aiStore.pos)) if(!sharedPos[k]){ upPos[k] = {f:p[0], n:p[1], src:'ai', v:2}; sharedPos[k] = upPos[k]; }
-  if(Object.keys(upCo).length) pushShared('co', upCo);
-  if(Object.keys(upPos).length) pushShared('pos', upPos);
+  const ok = sharedLoaded || await loadShared();
+  if(isDemo) return;
+  /* Rattrapage : propose les corrections et classements faits sur cet appareil (une seule fois chacun) */
+  if(shareOn){
+    const upCo = {}, upPos = {};
+    for(const [k, s] of Object.entries(userFix.co)) upCo[k] = {s, src:'user'};
+    for(const [k, s] of Object.entries(aiStore.co)) if(!userFix.co[k] && !sharedCo[k]) upCo[k] = {s, src:'ai'};
+    for(const [k, p] of Object.entries(userFix.pos)) upPos[k] = {f:p[0], n:p[1], src:'user'};
+    for(const [k, p] of Object.entries(aiStore.pos)) if(!userFix.pos[k] && !sharedPos[k]) upPos[k] = {f:p[0], n:p[1], src:'ai'};
+    pushShared('co', upCo); pushShared('pos', upPos);
+  }
+  if(!ok) return;
   applyAI(contacts); setupColor(); syncChips(); render();
   const known = new Set(contacts.filter(c => c.company && sharedCo[nkey(c.company)]).map(c => nkey(c.company))).size;
-  if(known) toast(`Dictionnaire partagé : ${known} de tes entreprises étaient déjà classées`);
+  if(known) toast(`Dictionnaire partagé : ${known} de tes entreprises y étaient déjà classées`);
 }
 /* Priorité : ta correction > correction partagée > dictionnaire intégré > mot-clé d’un secteur ajouté récemment > classement IA (local puis partagé) > mots-clés */
 const NEW_SECTORS = new Set(['Juridique','Finance & investissement','Immobilier & construction','Agroalimentaire','Tourisme, hôtellerie & restauration']);
@@ -1720,7 +1743,8 @@ function showContact(c){
     </dl>
     ${peopleList(sameCo, `Aussi chez ${esc(c.company)} (${sameCo.length})`, 8)}
     ${peopleList(sameSchool, `Même formation (${sameSchool.length})`, 6)}
-    <p class="note">Secteur, fonction et séniorité sont estimés. Une estimation te semble fausse ? Corrige-la ci-dessus : la correction s’applique à tous les contacts de la même entreprise ou du même intitulé de poste,. L’icône est déduite du prénom et reste neutre quand il est mixte ou inconnu.</p>`);
+    <p class="note">Secteur, fonction et séniorité sont estimés. Une estimation te semble fausse ? Corrige-la ci-dessus : la correction s’applique à tous les contacts de la même entreprise ou du même intitulé de poste. L’icône est déduite du prénom et reste neutre quand il est mixte ou inconnu.</p>
+    ${shareBox()}`);
   zoomToNode(node);
 }
 
@@ -1767,8 +1791,9 @@ function wipeData(){
   try { Object.keys(localStorage).filter(k => k.startsWith('synapses-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
   location.reload();
 }
-const WIPE_BLOCK = `<h3>Tes données</h3>
+const WIPE_BLOCK = () => `<h3>Tes données</h3>
     <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Ton profil, tes tags et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite.</p>
+    ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
 
 function showMe(){
@@ -1814,7 +1839,7 @@ function showMe(){
       <button class="btn primary block" type="button" data-act="saveme">Enregistrer mon profil</button>
       <p class="hint" style="margin-top:10px">Ces informations restent sur cet appareil.</p>
     </div>`}
-    ${WIPE_BLOCK}`);
+    ${WIPE_BLOCK()}`);
   dbody.querySelectorAll('.meform input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') saveMe(); }));
   zoomToNode(nodes.find(n => n.type === 'me'));
 }
@@ -1845,7 +1870,7 @@ function showHelp(msg){
     <h3>Aller plus loin</h3>
     <p class="pos">Pour filtrer par pays, ville, formation ou expérience, ajoute dans le CSV des colonnes « Localisation » (par exemple « Paris, France »), « Pays », « Formation », « Expérience » (en années) ou « Secteur » avant l’import. Le pays est déduit automatiquement de la localisation.</p>
     <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>
-    ${WIPE_BLOCK}`);
+    ${WIPE_BLOCK()}`);
 }
 
 function findEntry(){
@@ -1874,7 +1899,7 @@ function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add
 /* ---------- Load ---------- */
 function load(list, demo){
   contacts = list; isDemo = demo;
-  if(!demo){ applyAI(list); if(dbRef) refreshShared(); }
+  if(!demo){ applyAI(list); refreshShared(); }
   nodes = []; pos.clear(); needFit = true; state.selected = null;
   gLinks.selectAll('*').remove(); gNodes.selectAll('*').remove(); gLabels.selectAll('*').remove(); gCounts.selectAll('*').remove();
   setupControls(); closeDrawer(); render();
@@ -2011,6 +2036,7 @@ document.addEventListener('keydown', e => {
 });
 /* Correction manuelle d’un secteur, d’une fonction ou d’une séniorité depuis la fiche */
 document.addEventListener('change', e => {
+  if(e.target.matches && e.target.matches('input[data-share]')){ setShare(e.target.checked); return; }
   const s = e.target.closest && e.target.closest('select[data-fix]');
   if(!s) return;
   const kind = s.dataset.fix, raw = s.dataset.raw, k = nkey(raw), v = s.value;
@@ -2033,7 +2059,7 @@ document.addEventListener('change', e => {
   applyAI(contacts); setupColor(); syncChips(); render();
   const c = contacts.find(o => o.id === cid);
   if(c) showContact(c);
-  toast(`Correction appliquée à ${n} contact${n > 1 ? 's' : ''}${dbRef ? ' et partagée' : ''}`);
+  toast(`Correction appliquée à ${n} contact${n > 1 ? 's' : ''}${shareOn ? ' et proposée au dictionnaire partagé' : ''}`);
 });
 
 /* Drag and drop */

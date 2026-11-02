@@ -3,7 +3,8 @@
 Visualise ton réseau LinkedIn sous forme de graphe neuronal, à partir de ton export LinkedIn.
 
 - Gratuit, sans inscription.
-- Ton fichier est lu dans ton navigateur : aucun serveur, aucune donnée stockée en ligne.
+- Ton fichier est lu dans ton navigateur : il n’est envoyé nulle part, et les noms de tes contacts ne quittent jamais ton appareil.
+- Option « Partager mes corrections » (désactivée par défaut) : quand tu corriges un secteur, une fonction ou une séniorité, seuls le nom de l’entreprise ou l’intitulé du poste et la catégorie choisie sont proposés au dictionnaire partagé.
 - Outil indépendant, non affilié à LinkedIn.
 
 ## Utilisation
@@ -26,6 +27,11 @@ Pour mettre à jour le site, remplace `index.html` dans le dépôt : GitHub Page
 - Bibliothèques chargées depuis cdnjs : D3 (graphe), PapaParse (CSV), JSZip (archive).
 - Secteur, fonction et séniorité sont estimés dans le navigateur à partir des dictionnaires du dossier `data/` : `entreprises.json` (entreprises et mots-clés par secteur) et `postes.json` (mots-clés de fonction et règles de séniorité). Chaque estimation peut être corrigée depuis la fiche d’un contact.
 - Les tags et corrections sont enregistrés dans le stockage local du navigateur.
+- Dictionnaire partagé : base Supabase hébergée dans l’Union européenne (schéma et droits d’accès dans `supabase/schema.sql`). Le public peut lire les ajouts validés et proposer des corrections ; une proposition n’entre dans le dictionnaire qu’après validation.
+
+## Modérer les propositions
+
+Dans Supabase › Table Editor › `contributions`, passe le statut d’une ligne à `validee` (ou `refusee`) : une ligne validée entre aussitôt dans le dictionnaire partagé. Dans SQL Editor, `select * from a_valider;` regroupe les propositions identiques, et `select valider_consensus(3);` valide d’un coup celles proposées au moins 3 fois.
 
 ## Droits
 

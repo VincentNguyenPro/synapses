@@ -6,10 +6,14 @@ Site public gratuit : https://vincentnguyenpro.github.io/synapses/ (GitHub Pages
 Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des échanges : français.
 
 ## Principes non négociables
-- **Aucune donnée de contact ne quitte le navigateur.** Pas de serveur, pas d’analytics, pas d’appel réseau avec des données utilisateur.
-- **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs, versions figées.
+- **Le fichier importé et les données de contact ne quittent pas le navigateur.** Jamais de nom, d’URL de profil ni d’email d’un contact envoyé où que ce soit. Pas d’analytics.
+- **Seule exception, le dictionnaire partagé (Supabase, projet `afvmshbacxaznhmlgkzc`, région UE)** — choix de Vincent du 2 novembre 2026 :
+  - lecture : la page télécharge les ajouts validés (`dict_entreprises`, `dict_postes`) sans rien envoyer de l’utilisateur ;
+  - écriture : uniquement si l’utilisateur coche « Partager mes corrections » (désactivé par défaut) ; seuls partent un nom d’entreprise ou un intitulé de poste et la catégorie choisie, dans `contributions` ;
+  - une contribution n’entre dans le dictionnaire qu’après validation par Vincent (`statut = 'validee'`). Schéma et droits : `supabase/schema.sql`.
+- **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), et l’API Supabase ci-dessus.
 - **Outil indépendant, non affilié à LinkedIn** : pas de logo LinkedIn, pas de formulation laissant croire à un partenariat.
-- Tout le code est public : ne jamais y mettre de clé d’API, de jeton ou de donnée personnelle.
+- Tout le code est public : ne jamais y mettre de clé d’API, de jeton ou de donnée personnelle. Seule exception : la clé **publishable** Supabase (`sb_publishable_…`), publique par conception. Jamais la clé secrète (`sb_secret_…`).
 
 ## Architecture
 - Un seul fichier `index.html` (HTML, CSS et JS inline), sans étape de compilation.
@@ -18,9 +22,9 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - Dictionnaires de classification dans `data/` (fichiers statiques chargés au démarrage par `loadDictionary`) :
   `data/entreprises.json` (entreprise → secteur, mots-clés de secteur) et `data/postes.json` (mots-clés de fonction, règles de séniorité).
   Pour enrichir la classification, modifier ces fichiers, pas `index.html`. Ne jamais y ajouter un nom de personne.
-- Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > dictionnaire `data/entreprises.json` (variantes « Groupe X », « x.fr », « A - B » comprises) > mots-clés.
+- Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > ajout validé du dictionnaire partagé (Supabase) > dictionnaire `data/entreprises.json` (variantes « Groupe X », « x.fr », « A - B » comprises) > mots-clés.
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
-- Le code lié à claude.ai (`window.claude`, capacités `sample` et `db`) est inactif ici : l’app fonctionne sans lui.
+- Le code lié à claude.ai (`window.claude`, capacité `sample`) est inactif ici : l’app fonctionne sans lui.
 
 ## Règles de design acquises (validées avec Vincent)
 - Aucun chevauchement entre nœuds, grappes, jauges et noms de groupes (vérifier après chaque changement de disposition).
