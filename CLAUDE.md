@@ -1,0 +1,33 @@
+# Synapses — consignes pour Claude Code
+
+## Le produit
+Synapses visualise un réseau LinkedIn en graphe neuronal à partir de l’export LinkedIn de l’utilisateur (archive .zip ou Connections.csv).
+Site public gratuit : https://vincentnguyenpro.github.io/synapses/ (GitHub Pages, branche `main`, dossier racine).
+Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des échanges : français.
+
+## Principes non négociables
+- **Aucune donnée de contact ne quitte le navigateur.** Pas de serveur, pas d’analytics, pas d’appel réseau avec des données utilisateur.
+- **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs, versions figées.
+- **Outil indépendant, non affilié à LinkedIn** : pas de logo LinkedIn, pas de formulation laissant croire à un partenariat.
+- Tout le code est public : ne jamais y mettre de clé d’API, de jeton ou de donnée personnelle.
+
+## Architecture
+- Un seul fichier `index.html` (HTML, CSS et JS inline), sans étape de compilation.
+- Import : `handleFiles` lit le .zip (JSZip) et y cherche `Connections.csv`, `Profile.csv`, `Positions.csv`.
+  Format réel de Connections.csv : 3 lignes de notes, puis `First Name,Last Name,URL,Email Address,Company,Position,Connected On`, dates du type `17 Jan 2026`.
+- Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > dictionnaire intégré `BUILTIN_SECTORS` > mots-clés `SECTORS` / `FUNCTIONS` / `seniorityOf`.
+- Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
+- Le code lié à claude.ai (`window.claude`, capacités `sample` et `db`) est inactif ici : l’app fonctionne sans lui.
+
+## Règles de design acquises (validées avec Vincent)
+- Aucun chevauchement entre nœuds, grappes, jauges et noms de groupes (vérifier après chaque changement de disposition).
+- Branches de même longueur autour de « Moi » ; le poids d’un groupe se lit par la teinte, la jauge, l’épaisseur de branche et le pourcentage.
+- Sélection d’un contact : il va au centre de sa grappe, ses collègues de la même entreprise forment un cercle autour de lui, ordonnés par séniorité (Junior → Dirigeant) depuis midi.
+- Filtres et légende en lignes avec un fin trait de poids ; sélection = case cochée + fond bleuté + bordure.
+- Typographie française : apostrophe ’, guillemets « », espace insécable avant « : » et « % ».
+
+## Méthode de travail
+1. Expliquer en une phrase ce qui va changer avant de modifier.
+2. Après modification, tester dans un navigateur (démo + import d’un export réel si disponible) et vérifier la console.
+3. Montrer le résultat à Vincent, puis seulement après son accord : commit avec un message clair en français, puis push sur `main`.
+4. Ne jamais pousser un fichier contenant une erreur de syntaxe JavaScript.
