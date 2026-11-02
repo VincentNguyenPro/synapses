@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Synapses, ton réseau LinkedIn en graphe</title>
+<meta name="description" content="Visualise ton réseau LinkedIn sous forme de graphe neuronal à partir de ton export LinkedIn. Gratuit, sans inscription : ton fichier reste dans ton navigateur.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#EDF1F5; --surface:#FFFFFF; --surface-2:#F4F7FA; --ink:#17212E; --muted:#5B6B7C; --line:#D5DDE5; --link:#C3CEDA;
+  --accent:#2F5BEA; --accent-soft:#E4EAFD; --on-accent:#FFFFFF; --hub:#FFFFFF;
+  --shadow:0 8px 28px rgba(23,33,46,.14);
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F151C; --surface:#18212B; --surface-2:#1E2935; --ink:#E6EDF3; --muted:#93A3B5; --line:#2A3644; --link:#3A4958;
+    --accent:#7D95FF; --accent-soft:#25304F; --on-accent:#0F151C; --hub:#22303D; --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#18212B; --surface-2:#1E2935; --ink:#E6EDF3; --muted:#93A3B5; --line:#2A3644; --link:#3A4958;
+  --accent:#7D95FF; --accent-soft:#25304F; --on-accent:#0F151C; --hub:#22303D; --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg.i{width:18px;height:18px;flex:none}
+
+/* Layout */
+.app{display:grid;grid-template-columns:300px 1fr;grid-template-rows:auto 1fr;height:100%}
+header{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+.brand h1{font-size:19px;font-weight:800;margin:0;letter-spacing:-.02em;line-height:1.1}
+.brand p{margin:0;font-size:12px;color:var(--muted)}
+.search{flex:1;max-width:480px;margin:0 auto;position:relative}
+.search input[type=search]{width:100%;padding:10px 14px 10px 40px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);font-size:14px}
+.search input[type=search]:focus{background:var(--surface);border-color:var(--accent)}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.hdr-actions{display:flex;gap:8px;flex:none}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 15px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;min-height:40px;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{min-height:34px;padding:5px 12px;font-size:13px}
+.btn.block{width:100%}
+.icon-btn{width:40px;height:40px;padding:0;border-radius:50%;min-height:0}
+.icon-btn.sm{width:32px;height:32px}
+.linkbtn{all:unset;color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;border-radius:4px}
+.linkbtn:focus-visible{outline:2px solid var(--accent)}
+
+/* Sidebar */
+aside{grid-row:2;grid-column:1;overflow-y:auto;background:var(--surface);border-right:1px solid var(--line)}
+.sheethead{display:none}
+.section{padding:18px 18px 6px;border-bottom:1px solid var(--line)}
+.section h2{font-size:15px;font-weight:800;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:-.01em}
+.field{margin-bottom:16px}
+.lbl,label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}
+.lbl small{font-weight:400;color:var(--muted);margin-left:4px}
+.hint{font-size:12.5px;color:var(--muted);margin:-4px 0 12px;line-height:1.45}
+select,input[type=search]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:14px}
+.row{display:flex;gap:8px;align-items:center}
+.row input,.row select{flex:1;min-width:0}
+.to{color:var(--muted);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer;min-height:32px}
+.chip:hover{border-color:var(--muted)}
+.chip .n{color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:700}
+.chip::before{content:"";width:15px;height:15px;border:1.5px solid var(--muted);border-radius:4px;box-sizing:border-box;flex:none;display:grid;place-items:center;font-size:11px;line-height:1}
+.chip[aria-pressed="true"]::before{content:"✓";background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:800}
+.chipfoot{flex-basis:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:4px}
+/* Filtres en barres : la longueur de chaque barre montre le poids de la valeur (relatif à la plus grande) */
+.chip.frow{position:relative;width:100%;border-radius:9px;padding:6px 10px 12px;gap:8px;overflow:hidden;isolation:isolate;min-height:38px}
+/* Barre de poids : fin trait sous le libellé, pour ne jamais être confondue avec une sélection (fond bleuté + bordure) */
+.chip.frow .fbar{position:absolute;left:10px;bottom:5px;height:4px;background:var(--accent);opacity:.55;border-radius:2px;transition:width .3s ease}
+.chip.frow .flbl{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.frow .n{font-weight:700;color:var(--ink)}
+.chip.frow .pct{background:none;padding:0;min-width:36px;text-align:right}
+.chip.frow[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.chip.frow[aria-pressed="true"] .fbar{opacity:1}
+.hlnote{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:8px 10px;margin:0 0 14px !important}
+.hldot{width:10px;height:10px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--surface);flex:none;margin-top:4px}
+.hlkey{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
+.hlkt{flex-basis:100%;font-weight:700;color:var(--ink)}
+.hlki{display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
+.cval{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap}
+.colllbl{font-weight:700;fill:var(--ink);text-anchor:middle;dominant-baseline:hanging;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.chip.frow .fbar{transition:none}}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.privacy{font-size:12.5px;color:var(--muted);padding:16px 18px 24px;margin:0}
+.stats{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;margin:0}
+.stats dt{color:var(--muted)}
+.stats dd{margin:0;min-width:0}
+.timeline{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:12px}
+.tl{all:unset;flex:1;background:var(--accent);border-radius:3px 3px 0 0;cursor:pointer;min-height:3px}
+.tl.off{opacity:.25}
+.tl:hover{filter:brightness(1.15)}
+.tl:focus-visible{outline:2px solid var(--ink)}
+.tlAxis{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:4px}
+
+/* Stage */
+.stage{grid-row:2;grid-column:2;display:flex;flex-direction:column;min-height:0;min-width:0}
+.bar{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
+.toprow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.count{font-size:14px;color:var(--muted);margin-right:4px}
+.count strong{color:var(--ink);font-size:16px}
+.afchip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);border:1px solid transparent;border-radius:999px;padding:4px 6px 4px 11px;font-size:13px;font-weight:600;cursor:pointer}
+.afchip .x{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--surface);font-size:10px}
+.afchip:hover{border-color:var(--accent)}
+.viewtoggle{margin-left:auto;display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.viewtoggle button{border:0;background:transparent;color:var(--muted);padding:6px 14px;border-radius:999px;font-weight:700;font-size:13px;cursor:pointer}
+.viewtoggle button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.demo{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:12px 14px}
+.demo div:first-child{flex:1;min-width:220px;font-size:13.5px}
+.demo strong{display:block;font-size:14px}
+.demo span{color:var(--muted)}
+.demo-actions{display:flex;gap:8px;align-items:center}
+.aiprog{display:block;height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}
+.aiprog span{display:block;height:100%;background:var(--accent);transition:width .3s ease}
+.canvas{position:relative;flex:1;min-height:0;overflow:hidden}
+#graph{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#graph:active{cursor:grabbing}
+.canvas[data-mode="list"] #graph,.canvas[data-mode="list"] .legendbox,.canvas[data-mode="list"] .zoombar{display:none}
+.canvas[data-mode="graph"] .list{display:none}
+.list{position:absolute;inset:0;overflow-y:auto;padding:8px 16px 96px}
+.lgroup{max-width:760px;margin:0 auto 18px}
+.lgroup h3{font-size:15px;margin:14px 0 6px;display:flex;gap:8px;align-items:baseline}
+.lgroup h3 .n{color:var(--muted);font-weight:600;font-size:13px}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:4px}
+.empty p{margin:0}
+.empty .btn{margin-top:12px}
+
+/* Graph */
+.link{stroke:var(--link);stroke-width:1px}
+.coll{stroke:var(--ink);stroke-width:1.2px;stroke-dasharray:3 3;opacity:.55;pointer-events:none}
+.tipline{stroke:var(--accent);stroke-width:2.5px;opacity:.85;pointer-events:none}
+.ring{fill:none;stroke:var(--link);stroke-width:1px;stroke-dasharray:2 4;pointer-events:none}
+.blob{fill-opacity:.13;stroke-opacity:.5;stroke-width:1.2px;pointer-events:none}
+.spoke{stroke:var(--link);stroke-width:1.4px;pointer-events:none}
+.link.sub{display:none}
+.track{fill:none;stroke:var(--line);stroke-width:3px;pointer-events:none}
+.gauge{fill:none;stroke:var(--accent);stroke-width:3px;stroke-linecap:round;pointer-events:none}
+.lblPct{fill:var(--accent);font-weight:800}
+.badge{pointer-events:none;transition:opacity .2s}
+.badge rect{stroke:var(--surface);stroke-width:2px}
+.badge .mono{fill:#fff;font-weight:800;text-anchor:middle;dominant-baseline:central;letter-spacing:.02em}
+.badge .cnt{fill:var(--ink);stroke:var(--surface);stroke-width:2px}
+.badge .cntText{fill:var(--surface);font-size:9px;font-weight:800;text-anchor:middle;dominant-baseline:central}
+.badge text{stroke:none !important}
+.badge.sel rect{stroke:var(--ink);stroke-width:3px}
+.badge.dim{opacity:.08}
+.logo-badge{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:13px;color:#fff;font-weight:800;font-size:16px;margin:0 0 10px}
+.logo-badge.has-img{background:#fff !important;border:1px solid var(--line)}
+.logo-badge.has-img .mtext{display:none}
+.logo-badge .logo-img{width:72%;height:72%;object-fit:contain}
+.badge .lbg{fill:#fff;stroke:var(--line);stroke-width:1.5px}
+.contact{stroke:var(--surface);stroke-width:1.2px;cursor:pointer}
+.contact:hover{stroke:var(--ink);stroke-width:2px}
+.hub{fill:var(--hub);stroke:var(--ink);stroke-width:1.5px;cursor:pointer}
+.hub:hover{stroke-width:3px}
+circle.sel{stroke:var(--ink) !important;stroke-width:3.5px !important}
+.hubLabel{font-weight:700;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;pointer-events:none}
+.hubCount{font-weight:800;fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.link.me{stroke:var(--accent);stroke-opacity:.55;stroke-width:1.8px}
+.me{fill:var(--accent);stroke:var(--surface);stroke-width:4px;cursor:pointer}
+.meText{fill:var(--on-accent)}
+.contact,.hub,.link,.hubLabel,.hubCount{transition:opacity .2s}
+.dim{opacity:.08}
+.ghost{opacity:0 !important;pointer-events:none}
+.blob,.spoke{transition:opacity .2s}
+
+/* Overlays on canvas */
+.legendbox{position:absolute;right:16px;bottom:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px 8px;max-width:250px;box-shadow:var(--shadow);z-index:2}
+.legendbox .lt{font-size:12.5px;font-weight:700;margin:0 6px 4px}
+.lgtoggle{all:unset;display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:2px 6px 4px;font-size:12.5px;font-weight:700;cursor:pointer;border-radius:6px}
+.lgtoggle span{flex:1}
+.lgbody{max-height:52vh;overflow-y:auto}
+.lgtoggle:hover{background:var(--surface-2)}
+.lgtoggle:focus-visible{outline:2px solid var(--accent)}
+.lgtoggle svg{transition:transform .2s}
+.lgtoggle[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.legendbox ul{list-style:none;margin:0;padding:0}
+.lg{all:unset;display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:4px 6px;border-radius:6px;font-size:13px;cursor:pointer}
+span.lg{cursor:default}
+button.lg:hover{background:var(--surface-2)}
+.lg[aria-pressed="true"]{background:var(--accent-soft);font-weight:700}
+.lg.off{opacity:.45}
+/* Légende en barres, comme les filtres : longueur = poids relatif, couleur = celle du graphe */
+.lg{position:relative;isolation:isolate;overflow:hidden;margin-bottom:2px;padding-bottom:9px !important}
+.lg .fbar{position:absolute;left:6px;bottom:3px;height:3px;opacity:.7;border-radius:2px;transition:width .3s ease}
+.lg[aria-pressed="true"] .fbar{opacity:1}
+.lg .n{font-weight:700;color:var(--ink)}
+.lg .pct{background:none;padding:0;min-width:34px;text-align:right}
+@media (min-width:761px){.legendbox{min-width:240px}}
+/* Fiche ouverte : la légende se décale à gauche de la fiche pour rester visible */
+.legendbox{transition:right .22s ease}
+.canvas.has-drawer .legendbox{right:min(406px, calc(100% - 260px))}
+@media (prefers-reduced-motion: reduce){.lg .fbar{transition:none}.legendbox{transition:none}}
+.lg.off:hover{opacity:.8}
+.lg:focus-visible{outline:2px solid var(--accent)}
+.lgl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg .n{color:var(--muted)}
+.legendbox .more{font-size:12px;color:var(--muted);margin:2px 6px 0}
+.zoombar{position:absolute;right:16px;top:16px;display:flex;flex-direction:column;gap:6px;z-index:2}
+.zoombar .btn{box-shadow:var(--shadow);font-size:18px}
+.overview{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:3;box-shadow:var(--shadow);background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.overview:hover{border-color:var(--ink);filter:brightness(1.2)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);padding:8px 11px;border-radius:9px;font-size:13px;max-width:250px;z-index:3;opacity:0;transition:opacity .12s}
+.tip.on{opacity:1}
+.tip strong{display:block}
+.tip span{opacity:.8}
+
+/* Drawer */
+.drawer{position:absolute;top:0;right:0;bottom:0;width:390px;max-width:100%;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(100%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;z-index:5;overflow-y:auto;padding:22px 20px 28px}
+.drawer.open{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s}
+.close{position:absolute;right:12px;top:12px}
+.dhead{display:flex;gap:14px;align-items:flex-start;margin:0 40px 16px 0}
+.drawer h2{font-size:20px;margin:0 0 2px;letter-spacing:-.015em;line-height:1.2}
+.drawer h2:focus{outline:none}
+.drawer h3{font-size:14px;margin:20px 0 8px}
+.drawer p{margin:0 0 6px}
+.drawer .pos{color:var(--muted);font-size:14px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px;margin:16px 0 0}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0}
+.note{font-size:12.5px;color:var(--muted);margin-top:16px !important}
+.drawer ol{padding-left:20px;margin:8px 0}
+.drawer ol li{margin-bottom:8px}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12.5px;flex:none;text-shadow:0 0 3px rgba(0,0,0,.35)}
+.av.lg2{width:52px;height:52px;font-size:17px}
+.av svg{width:64%;height:64%}
+.pct{font-size:11.5px;font-weight:700;color:var(--muted);background:var(--surface-2);border-radius:999px;padding:1px 7px;white-space:nowrap}
+.chip[aria-pressed="true"] .pct{background:var(--surface)}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;min-height:32px}
+.tag:hover{border-color:var(--muted)}
+.meform label{margin:14px 0 6px}
+.fixsel{width:100%;padding:5px 8px;border-radius:8px;font-size:14px;border:1px solid var(--line);background:var(--surface-2)}
+.fixsel:hover{border-color:var(--muted)}
+.meform input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:14px}
+.meform input:focus{background:var(--surface);border-color:var(--accent)}
+.meform .btn{margin-top:18px}
+.tag[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
+.tagpill{font-size:11.5px;font-weight:700;background:var(--accent-soft);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.stack{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 10px;gap:2px}
+.drawer .legendlist{display:grid;gap:4px;font-size:13.5px}
+.drawer .legendlist div{display:flex;align-items:center;gap:8px}
+.drawer .legendlist .n{margin-left:auto;color:var(--muted)}
+.people{list-style:none;padding:0;margin:0}
+.people li{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line)}
+.lrow{all:unset;flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 4px;cursor:pointer;border-radius:8px}
+.lrow:hover{background:var(--surface-2)}
+.lrow:focus-visible{outline:2px solid var(--accent)}
+.who{flex:1;min-width:0;font-size:14px}
+.who strong{display:block}
+.who span{display:block;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;padding:8px;border-radius:8px;white-space:nowrap}
+.lk:hover{background:var(--accent-soft)}
+.more{font-size:12.5px;color:var(--muted);margin-top:8px}
+
+/* Misc */
+.fab{display:none}
+.backdrop{position:fixed;inset:0;background:rgba(15,21,28,.42);z-index:19}
+.dropzone{position:fixed;inset:0;z-index:40;background:rgba(47,91,234,.14);display:grid;place-items:center;padding:24px}
+.dropzone div{background:var(--surface);border:2px dashed var(--accent);border-radius:16px;padding:32px 40px;font-size:17px;font-weight:700;box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){
+  .contact,.hub,.link,.hubLabel,.hubCount,.drawer,.toast,aside,.tip{transition:none !important}
+}
+
+/* Mobile */
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  header{flex-wrap:wrap;gap:10px;padding:10px 12px}
+  .brand p,.lbl-long{display:none}
+  .search{order:3;flex-basis:100%;max-width:none}
+  .hdr-actions{margin-left:auto}
+  .stage{grid-column:1}
+  aside{position:fixed;left:0;right:0;bottom:0;max-height:82vh;border-right:0;border-radius:18px 18px 0 0;z-index:20;box-shadow:var(--shadow);transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s;padding-bottom:env(safe-area-inset-bottom,0px)}
+  aside.open{transform:none;visibility:visible;transition:transform .25s ease,visibility 0s}
+  .sheethead{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--surface);padding:18px 18px 12px;border-bottom:1px solid var(--line);z-index:1}
+  .grab{position:absolute;left:50%;top:7px;width:40px;height:4px;border-radius:2px;background:var(--line);transform:translateX(-50%)}
+  .bar{padding:10px 12px 0}
+  .fab{display:inline-flex;position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;box-shadow:var(--shadow);min-height:48px;padding:10px 18px}
+  .badge{background:var(--on-accent);color:var(--accent);border-radius:999px;min-width:20px;height:20px;display:inline-grid;place-items:center;font-size:12px;padding:0 6px}
+  .zoombar{top:12px;bottom:auto;right:12px}
+  .zoombar .zin,.zoombar .zout{display:none}
+  .legendbox{right:12px;left:auto;bottom:16px;max-width:calc(100% - 160px)}
+  .legendbox li:nth-child(n+5){display:none}
+  .canvas.has-drawer .legendbox{right:12px;bottom:auto;top:12px}
+  .drawer{top:auto;left:0;width:auto;max-height:78%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
+  .list{padding:8px 12px 96px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><g stroke="var(--on-accent)" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="var(--on-accent)"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg>
+      </span>
+      <div><h1>Synapses</h1><p>Ton réseau LinkedIn, vu comme un réseau de neurones</p></div>
+    </div>
+    <div class="search">
+      <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="q" placeholder="Rechercher un nom, une entreprise, un poste…" aria-label="Rechercher dans tes contacts">
+    </div>
+    <div class="hdr-actions">
+      <button class="btn ghost" id="helpBtn" type="button" data-act="help">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></svg>
+        <span>Aide</span>
+      </button>
+      <button class="btn primary" type="button" data-act="import">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+        <span>Importer<span class="lbl-long"> mon export LinkedIn</span></span>
+      </button>
+      <input type="file" id="file" accept=".csv,.zip,text/csv,application/zip" multiple hidden>
+    </div>
+  </header>
+
+  <div class="backdrop" id="backdrop" hidden></div>
+  <aside id="panel" aria-label="Affichage et filtres">
+    <div class="sheethead">
+      <span class="grab" aria-hidden="true"></span>
+      <strong>Affichage et filtres</strong>
+      <button class="btn sm primary" id="closePanel" type="button">Voir les résultats</button>
+    </div>
+    <section class="section">
+      <h2>Affichage</h2>
+      <div class="field"><label for="groupBy">Regrouper par</label><select id="groupBy"></select></div>
+      <div class="field"><label for="colorBy">Colorer par</label><select id="colorBy"></select></div>
+      <div class="field" id="fld-topn" hidden>
+        <label for="topN">Branches affichées : <strong id="topNVal">12</strong></label>
+        <input type="range" id="topN" min="3" max="40" step="1" value="12">
+        <p class="hint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Filtres <button class="linkbtn" id="clearAllSide" type="button" data-act="clearall" hidden>Tout effacer</button></h2>
+      <p class="hint">Sélectionne une ou plusieurs valeurs. Sans sélection, tous les contacts sont affichés.</p>
+      <div class="field"><span class="lbl">Secteur<small>estimé</small></span><div class="chips" id="f-sector"></div></div>
+      <div class="field"><span class="lbl">Fonction<small>estimée</small></span><div class="chips" id="f-fn"></div></div>
+      <div class="field"><span class="lbl">Séniorité<small>estimée</small></span><div class="chips" id="f-seniority"></div></div>
+      <div class="field" id="fld-school"><span class="lbl">Formation</span><div class="chips" id="f-school"></div></div>
+      <div class="field" id="fld-country"><span class="lbl">Pays</span><div class="chips" id="f-country"></div></div>
+      <div class="field" id="fld-location"><span class="lbl">Ville</span><div class="chips" id="f-location"></div></div>
+      <div class="field" id="fld-exp"><span class="lbl">Expérience</span><div class="chips" id="f-exp"></div></div>
+      <div class="field"><span class="lbl">Tag</span><div class="chips" id="f-tag"></div></div>
+      <div class="field" id="yearField">
+        <span class="lbl">Année de connexion</span>
+        <div class="row">
+          <select id="yMin" aria-label="Depuis l’année"></select><span class="to">à</span><select id="yMax" aria-label="Jusqu’à l’année"></select>
+        </div>
+        <div id="timeline"></div>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Exploration</h2>
+      <div class="field">
+        <label for="target">Trouver une porte d’entrée</label>
+        <p class="hint">Qui, dans ton réseau, peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
+        <div class="row"><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC"><button class="btn" id="targetBtn" type="button">Chercher</button></div>
+      </div>
+      <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
+    </section>
+    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part&nbsp;: aucun serveur, aucun compte, aucune donnée stockée en ligne. Tes tags et tes corrections restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.</p>
+  </aside>
+
+  <main class="stage">
+    <div class="bar" id="bar"></div>
+    <div class="canvas" id="canvas" data-mode="graph">
+      <svg id="graph" role="img" aria-label="Graphe de tes contacts LinkedIn. Le mode Liste en donne une version textuelle."></svg>
+      <div class="list" id="list"></div>
+      <div class="empty" id="empty" hidden>
+        <p><strong>Aucun contact ne correspond à ces filtres.</strong></p>
+        <p class="pos">Retire un filtre ou élargis ta recherche.</p>
+        <button class="btn" type="button" data-act="clearall">Tout effacer</button>
+      </div>
+      <div class="legendbox" id="legend"></div>
+      <div class="zoombar">
+        <button class="btn icon-btn zin" id="zin" type="button" aria-label="Zoomer">+</button>
+        <button class="btn icon-btn zout" id="zout" type="button" aria-label="Dézoomer">−</button>
+        <button class="btn icon-btn" id="recenter" type="button" aria-label="Recentrer le graphe" title="Recentrer">
+          <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+      </div>
+      <button class="btn overview" id="overview" type="button" hidden>
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6"/></svg>
+        Vue d’ensemble
+      </button>
+      <div class="tip" id="tip" role="tooltip"></div>
+      <div class="drawer" id="drawer" role="dialog" aria-labelledby="dtitle" aria-hidden="true">
+        <button class="btn icon-btn sm close" id="closeDrawer" type="button" aria-label="Fermer">✕</button>
+        <div id="drawerBody"></div>
+      </div>
+    </div>
+  </main>
+
+  <button class="btn primary fab" id="fab" type="button" aria-controls="panel" aria-expanded="false">
+    <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+    Filtres <span class="badge" id="fabCount" hidden>0</span>
+  </button>
+  <div class="dropzone" id="dropzone" hidden><div>Dépose ton fichier Connections.csv</div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const norm = s => (s ?? '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+const esc = s => (s ?? '').toString().replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse = window.matchMedia('(pointer: coarse)').matches;
+/* Teinte des groupes : color-mix seulement si le navigateur le gère, sinon couleur de fond simple (jamais de noir par défaut) */
+const CM_OK = !!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red 50%, white)'));
+const ICON_EXT = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:15px;height:15px"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+
+/* ---------- Classification heuristics ---------- */
+const SECTORS = [
+  ['Juridique', /\b(avocat\w*|law|lawyers?|legal|juridique|notair\w*|huissier\w*|barreau|attorneys?|llp)\b/],
+  ['Finance & investissement', /\b(capital|ventures?|private equity|investissements?|investments?|investors?|asset management|gestion d['’]?actifs|family office|gestion de patrimoine|wealth management|funds?|fonds)\b/],
+  ['Immobilier & construction', /\b(immobili\w*|real estate|realty|propert(y|ies)|fonciere|promotion|btp|construction|batiment|travaux|habitat|logement|vinci|eiffage|nexity|icade|gecina|unibail|klepierre|covivio|altarea|cbre|jll|foncia|colas|fayat)\b/],
+  ['Agroalimentaire', /\b(agro\w*|alimentaire|food|foods|danone|lactalis|nestle|bonduelle|savencia|pernod|ricard|heineken|brasserie\w*|laiti\w*|fromag\w*|vins?|wines?|spirits|champagne|beverages?|boissons?)\b/],
+  ['Tourisme, hôtellerie & restauration', /\b(touris\w*|hotel\w*|hotellerie|hospitality|restaura\w*|resorts?|voyages?|travel|loisirs?|accor|club med|sodexo|elior|camping\w*)\b/],
+  ['Conseil', /\b(consult\w*|conseil|accenture|capgemini|deloitte|kpmg|pwc|ey|ernst|mckinsey|bcg|bain|sopra|wavestone|cgi|devoteam|onepoint|sia partners|alten|altran|akkodis|bartle|wefiit|aubay|advisory|partners|esn)\b/],
+  ['Banque & assurance', /\b(bank|banque|bnp\w*|societe generale|credit|axa|allianz|generali|natixis|lcl|caisse|assur\w*|insurance|boursorama|qonto|lydia|revolut|bpce|mutuel\w*|maif|macif|groupama|coface|bpi\w*|bred)\b/],
+  ['Énergie & industrie', /\b(engie|edf|total\w*|equans|schneider|airbus|safran|thales|renault|stellantis|michelin|alstom|veolia|saint-gobain|industr\w*|energ\w*|nuclear|ampere|alpine|horse|nexans|ariane\w*|aerospace|aeronauti\w*|automoti\w*|automobile|manufactur\w*|chimi\w*|chemicals?|defense)\b/],
+  ['Télécom & médias', /\b(orange|sfr|bouygues telecom|iliad|tf1|canal\+?|m6|radio france|deezer|ubisoft|vivendi|havas|publicis|jcdecaux|media\w*|telecom\w*|presse|press|edition\w*|publishing|studios?|advertising|publicite)\b/],
+  ['Transport & mobilité', /\b(sncf|ratp|blablacar|air france|transdev|keolis|getaround|uber|bolt|cma cgm|geodis|mobilit\w*|transport\w*|ceva|bollore|logistic\w*|logistique|airlines?|aeroports?|airports?|shipping|maritime|ferroviaire|rail)\b/],
+  ['Retail & conso', /\b(carrefour|auchan|leclerc|fnac|darty|decathlon|leroy merlin|l['’]?\s?oreal|lvmh|kering|hermes|chanel|sephora|cdiscount|veepee|retail|unilever|ikea|luxe|luxury|fashion|mode|cosmeti\w*|beauty|beaute|e-commerce|ecommerce|distribution)\b/],
+  ['Santé', /\b(sanofi|servier|pharma\w*|health\w*|sante|medical|biotech|clinique|ipsen|hopital|hospital|chu|chru|laboratoires?|therapeutics|medtech|biologie)\b/],
+  ['Secteur public & éducation', /\b(ministere|universite|university|ecole|school|mairie|region|departement|cnrs|inria|france travail|ap-hp|education|supmeca|esa|european space agency|institut\w*|iae|edhec|essec|hec|insead|polytechnique|centrale\w*|epita|epitech|ensam|arts et metiers|business school|prefecture|agence nationale|collectivite|commune|metropole|conseil (regional|departemental)|academie|lycee|college)\b/],
+  ['Tech & logiciel', /\b(google|microsoft|amazon|aws|meta|apple|salesforce|sap|oracle|ibm|datadog|doctolib|contentsquare|mirakl|alan|back market|dataiku|criteo|ovh\w*|dassault systemes|atlassian|station f|software|tech\w*|labs?|digital|data|cloud|saas|ai|pennylane|a2mac1|\.io|\.ai|app|apps|platform|logiciel\w*|numerique|cyber\w*|robotics?|robotique)\b/]
+];
+const FUNCTIONS = [
+  ['Direction générale', /\b(ceo|founder|co-?founder|fondat\w*|co-?fondat\w*|president\w*|directeur general|directrice generale|managing director|general manager|associe\w*|owner)\b/],
+  ['Produit', /\b(product|produit|po|ux|ui|design\w*)\b/],
+  ['Data', /\b(data|analyst|analytics|bi|machine learning|ml|ia|ai|scientist)\b/],
+  ['Tech', /\b(developer|developpeu\w*|engineer\w*|ingenieu\w*|dev|devops|software|cto|architect\w*|tech|technique\w*|technical|it|informatique|cloud|security|securite|qa|full-stack|fullstack|r&d|ingenierie|bureau d['’]?etudes)\b/],
+  ['Sales', /\b(sales|commercial\w*|business developer|business development|developpement commercial|account|vente\w*|bizdev|key account|customer success|affaires|partnerships?|partenariats?)\b/],
+  ['Marketing', /\b(marketing|growth|brand|communication|content|seo|cmo)\b/],
+  ['Finance', /\b(finance\w*|financ\w*|cfo|controller|controleu\w*|controle de gestion|comptab\w*|audit\w*|treasury|tresor\w*|investment|investissement|analyste financier|cost\w*|credit|tax|fiscal\w*|fp&a|patrimoin\w*|patrimonial|wealth|risk|risques?|actuar\w*|banquier|m&a)\b/],
+  ['RH', /\b(rh|hr|human|ressources humaines|recruit\w*|recrut\w*|talent|people)\b/],
+  ['Juridique', /\b(avocat\w*|juriste\w*|juridique|legal|counsel|compliance|conformite|notaire|lawyer)\b/],
+  ['Enseignement & recherche', /\b(professeur\w*|professor|enseignant\w*|teacher|chercheu\w*|researcher|doctorant\w*|phd|lecturer|maitre de conferences)\b/],
+  ['Conseil', /\b(consultant\w*|conseil|conseiller\w*|advisor|consulting|strateg\w*|transformation)\b/],
+  ['Opérations', /\b(operations?|ops|supply|logisti\w*|achats?|procurement|projets?|project|pmo|programmes?|program|delivery|pilot\w*|methodes?|production|qualite|quality|maintenance|industri\w*|usine|plant|lean|performance|exploitation)\b/]
+];
+function classify(list, s, def){ if(!s) return def; for(const [k, re] of list){ if(re.test(s)) return k; } return def; }
+
+const SEN_ORDER = ['Junior','Confirmé','Senior','Manager','Direction','Dirigeant','Non renseignée'];
+function seniorityOf(p){
+  if(!p) return 'Non renseignée';
+  if(/\b(ceo|cto|coo|cfo|cmo|cpo|cio|chief|founder|co-?founder|fondat\w*|co-?fondat\w*|president\w*|directeur general|directrice generale|managing director|general manager|partner|associe\w*|owner|gerant\w*)\b/.test(p)) return 'Dirigeant';
+  if(/\b(director|directeur|directrice|head of|vp|vice[- ]president)\b/.test(p)) return 'Direction';
+  if(/\b(intern|internship|stagiaire|alternant\w*|alternance|apprenti\w*|junior|jr|trainee|graduate|etudiant\w*|student)\b/.test(p)) return 'Junior';
+  if(/\b(senior|sr|principal|staff|expert\w*|lead)\b/.test(p)) return 'Senior';
+  if(/\b(manager|responsable|chef|team leader|supervisor|encadrant\w*)\b/.test(p)){
+    if(/(product|project|program|account|projet|produit|success|community|office|marketing) manager|chef de projet|growth manager/.test(p)) return 'Confirmé';
+    return 'Manager';
+  }
+  return 'Confirmé';
+}
+const EXP_ORDER = ['0 à 2 ans','3 à 5 ans','6 à 10 ans','11 à 15 ans','16 ans et plus'];
+function expBucket(n){ return n < 3 ? EXP_ORDER[0] : n < 6 ? EXP_ORDER[1] : n < 11 ? EXP_ORDER[2] : n < 16 ? EXP_ORDER[3] : EXP_ORDER[4]; }
+
+const MONTHS = {jan:0,janv:0,feb:1,fev:1,mar:2,mars:2,apr:3,avr:3,may:4,mai:4,jun:5,juin:5,jul:6,juil:6,aug:7,aou:7,sep:8,sept:8,oct:9,nov:10,dec:11};
+function parseDate(s){
+  if(!s) return null; s = s.toString().trim();
+  let m = s.match(/^(\d{1,2})\s+([^\s.]+)\.?\s+(\d{4})$/);
+  if(m){ const k = norm(m[2]); const mo = MONTHS[k.slice(0,4)] ?? MONTHS[k.slice(0,3)]; if(mo !== undefined) return new Date(+m[3], mo, +m[1]); }
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if(m) return new Date(+m[3], +m[2]-1, +m[1]);
+  const d = new Date(s); return isNaN(d) ? null : d;
+}
+
+/* Localisation → ville + pays. « Paris, Île-de-France, France » donne Paris et France ; une ville seule connue donne aussi son pays */
+const COUNTRY_ALIASES = {
+  'france':'France', 'belgique':'Belgique', 'belgium':'Belgique', 'suisse':'Suisse', 'switzerland':'Suisse', 'luxembourg':'Luxembourg',
+  'royaume-uni':'Royaume-Uni', 'united kingdom':'Royaume-Uni', 'uk':'Royaume-Uni', 'england':'Royaume-Uni', 'allemagne':'Allemagne', 'germany':'Allemagne',
+  'espagne':'Espagne', 'spain':'Espagne', 'italie':'Italie', 'italy':'Italie', 'portugal':'Portugal', 'pays-bas':'Pays-Bas', 'netherlands':'Pays-Bas',
+  'irlande':'Irlande', 'ireland':'Irlande', 'suede':'Suède', 'sweden':'Suède', 'danemark':'Danemark', 'denmark':'Danemark', 'pologne':'Pologne', 'poland':'Pologne',
+  'etats-unis':'États-Unis', 'united states':'États-Unis', 'usa':'États-Unis', 'canada':'Canada', 'maroc':'Maroc', 'morocco':'Maroc', 'tunisie':'Tunisie', 'tunisia':'Tunisie',
+  'algerie':'Algérie', 'algeria':'Algérie', 'senegal':'Sénégal', "cote d'ivoire":'Côte d’Ivoire', 'cote d’ivoire':'Côte d’Ivoire', 'ivory coast':'Côte d’Ivoire',
+  'emirats arabes unis':'Émirats arabes unis', 'united arab emirates':'Émirats arabes unis', 'singapour':'Singapour', 'singapore':'Singapour',
+  'inde':'Inde', 'india':'Inde', 'chine':'Chine', 'china':'Chine', 'japon':'Japon', 'japan':'Japon', 'bresil':'Brésil', 'brazil':'Brésil', 'australie':'Australie', 'australia':'Australie'
+};
+const CITY_COUNTRY = {
+  'paris':'France', 'lyon':'France', 'lille':'France', 'nantes':'France', 'bordeaux':'France', 'marseille':'France', 'toulouse':'France', 'nice':'France',
+  'rennes':'France', 'strasbourg':'France', 'montpellier':'France', 'grenoble':'France', 'la defense':'France', 'londres':'Royaume-Uni', 'london':'Royaume-Uni',
+  'bruxelles':'Belgique', 'brussels':'Belgique', 'geneve':'Suisse', 'geneva':'Suisse', 'zurich':'Suisse', 'lausanne':'Suisse', 'montreal':'Canada', 'toronto':'Canada',
+  'new york':'États-Unis', 'san francisco':'États-Unis', 'casablanca':'Maroc', 'tunis':'Tunisie', 'dakar':'Sénégal', 'abidjan':'Côte d’Ivoire', 'dubai':'Émirats arabes unis',
+  'berlin':'Allemagne', 'munich':'Allemagne', 'madrid':'Espagne', 'barcelone':'Espagne', 'barcelona':'Espagne', 'milan':'Italie', 'lisbonne':'Portugal', 'lisbon':'Portugal', 'amsterdam':'Pays-Bas'
+};
+function splitLoc(loc, country){
+  const parts = (loc || '').toString().split(',').map(s => s.trim()).filter(Boolean);
+  let city = (parts[0] || '').replace(/^greater\s+/i, '').replace(/\s+(metropolitan\s+)?area$/i, '').replace(/^r[ée]gion de\s+/i, '').replace(/\s+et p[ée]riph[ée]rie$/i, '').trim(), ctry = (country || '').toString().trim();
+  const asCountry = s => COUNTRY_ALIASES[norm(s).replace(/^greater\s+/, '').replace(/\s+area$/, '')] || null;
+  if(ctry) ctry = asCountry(ctry) || ctry;
+  else if(parts.length > 1) ctry = asCountry(parts[parts.length - 1]) || parts[parts.length - 1];
+  else if(city && asCountry(city)){ ctry = asCountry(city); city = ''; }
+  if(!ctry && city) ctry = CITY_COUNTRY[norm(city).replace(/^(greater|region de|région de)\s+/, '').replace(/\s+(area|metropolitan area|et peripherie)$/, '')] || '';
+  return {location: city, country: ctry};
+}
+function buildContact(r, i){
+  const company = (r.company || '').toString().trim();
+  const position = (r.position || '').toString().trim();
+  const d = parseDate(r.connected);
+  const expN = parseFloat((r.exp ?? '').toString().replace(',', '.'));
+  const givenSector = (r.sector || '').toString().trim();
+  return {
+    id: i,
+    first: (r.first || '').toString().trim(),
+    name: `${(r.first || '').toString().trim()} ${(r.last || '').toString().trim()}`.trim(),
+    url: (r.url || '').toString().trim(),
+    company, position, date: d, year: d ? d.getFullYear() : null,
+    ...splitLoc(r.location, r.country),
+    school: (r.school || '').toString().trim(),
+    sectorGiven: !!givenSector,
+    sector: givenSector || builtinSector(nkey(company)) || classify(SECTORS, norm(company), 'Non classé'),
+    fn: classify(FUNCTIONS, norm(position), 'Autre'),
+    seniority: seniorityOf(norm(position)),
+    exp: isNaN(expN) ? '' : expBucket(expN)
+  };
+}
+
+function parseLinkedIn(text){
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+  let start = lines.findIndex(l => /^\s*"?(first name|prenom|prénom)"?\s*[,;]/i.test(l));
+  if(start < 0) start = 0;
+  const res = Papa.parse(lines.slice(start).join('\n'), {header:true, skipEmptyLines:true});
+  const fields = res.meta.fields || [];
+  const find = (...alts) => fields.find(f => alts.includes(norm(f)));
+  const F = {
+    first: find('first name','prenom'), last: find('last name','nom','nom de famille'),
+    url: find('url','profil','profile url','lien'), company: find('company','entreprise','societe'),
+    position: find('position','poste','titre','title'), connected: find('connected on','date de connexion','connecte le'),
+    location: find('location','localisation','ville','lieu'), country: find('country','pays'), school: find('school','ecole','formation','education'),
+    sector: find('sector','secteur','industry','industrie'),
+    exp: find('experience','annees d\'experience','annees d’experience','years of experience','annees experience')
+  };
+  const out = [];
+  res.data.forEach((r, i) => {
+    const c = buildContact({first:r[F.first], last:r[F.last], url:r[F.url], company:r[F.company], position:r[F.position],
+      connected:r[F.connected], location:r[F.location], country:r[F.country], school:r[F.school], sector:r[F.sector], exp:r[F.exp]}, i);
+    if(c.name) out.push(c);
+  });
+  return out;
+}
+
+/* ---------- Demo data ---------- */
+function demoContacts(){
+  let seed = 11;
+  const rnd = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const first = ['Camille','Lucas','Léa','Hugo','Chloé','Nathan','Manon','Thomas','Inès','Julien','Sarah','Antoine','Emma','Maxime','Clara','Nicolas','Yasmine','Paul','Lina','Romain','Zoé','Karim','Alice','Mehdi','Juliette','Bastien','Sofia','Arthur','Margaux','Adrien'];
+  const last = ['Martin','Bernard','Dubois','Moreau','Laurent','Simon','Michel','Lefebvre','Leroy','Roux','Garnier','Faure','Rousseau','Blanc','Guerin','Muller','Henry','Perrin','Morel','Fournier','Benali','Nguyen','Lambert','Fontaine','Chevalier','Robin','Mercier','Boyer','Diallo','Lopez'];
+  const companies = ['Capgemini','Capgemini','Accenture','BNP Paribas','BNP Paribas','Société Générale','AXA','Engie','Equans','TotalEnergies','Doctolib','Doctolib','Dataiku','Back Market','Qonto','Alan','Mirakl','Contentsquare','JCDecaux','Orange','SNCF','BlaBlaCar','BlaBlaCar','L’Oréal','LVMH','Decathlon','Carrefour','Sanofi','Ubisoft','Publicis','Wavestone','Ministère de l’Économie','Station F','Atelier Kairn'];
+  const positions = ['Product Manager','Product Manager','Senior Product Manager','Product Owner','Product Owner','Head of Product','Data Analyst','Data Scientist','Développeur full-stack','Software Engineer','Engineering Manager','Tech Lead','CTO','CEO & co-fondateur','Account Executive','Business Developer','Directeur commercial','Responsable marketing','Growth Marketing Manager','Consultant senior','Manager conseil','Contrôleur de gestion','Directrice financière','Talent Acquisition Manager','Chargée de recrutement','Chef de projet digital','UX Designer','Stagiaire produit','Alternant data','Directeur des opérations','Customer Success Manager','Analyste financier'];
+  const cities = ['Paris','Paris','Paris','Lyon','Lille','Nantes','Bordeaux','Marseille','Toulouse','Londres'];
+  const schools = ['HEC Paris','ESSEC','ESCP','Sciences Po','École polytechnique','CentraleSupélec','Université Paris Dauphine','EM Lyon','Sorbonne Université','Epitech','IÉSEG','NEOMA'];
+  const expRange = {Junior:[0,2],Confirmé:[2,7],Senior:[6,12],Manager:[5,14],Direction:[10,20],Dirigeant:[8,25]};
+  const now = new Date();
+  const list = [];
+  for(let i = 0; i < 150; i++){
+    const position = pick(positions);
+    const [a, b] = expRange[seniorityOf(norm(position))] || [2, 8];
+    let d = new Date(2013 + Math.floor(rnd() * 14), Math.floor(rnd() * 12), 1 + Math.floor(rnd() * 28));
+    if(d > now) d = now;
+    list.push(buildContact({first:pick(first), last:pick(last), company:pick(companies), position,
+      connected:d.toISOString().slice(0,10), location:pick(cities), school:pick(schools),
+      exp:String(Math.round(a + rnd() * (b - a)))}, i));
+  }
+  return list;
+}
+
+/* ---------- Tags ---------- */
+const TAGS = ['Client','Prospect','Partenaire','Mentor','Recruteur','À recontacter'];
+const TAG_KEY = 'synapses-tags-v1';
+let tagStore = {};
+try { tagStore = JSON.parse(localStorage.getItem(TAG_KEY) || '{}') || {}; } catch(e) { tagStore = {}; }
+const tagKey = c => c.url || ('n:' + norm(c.name) + '|' + norm(c.company));
+const tagOf = c => tagStore[tagKey(c)] || '';
+function setTag(c, t){
+  const k = tagKey(c);
+  if(tagStore[k] === t) delete tagStore[k]; else tagStore[k] = t;
+  try { localStorage.setItem(TAG_KEY, JSON.stringify(tagStore)); } catch(e) {}
+  return tagStore[k] || '';
+}
+
+/* ---------- Dimensions ---------- */
+const DIMS = {
+  sector:   {label:'Secteur', get:c => c.sector},
+  company:  {label:'Entreprise', get:c => c.company || 'Sans entreprise', minHub:2, other:'Autres entreprises'},
+  fn:       {label:'Fonction', get:c => c.fn},
+  seniority:{label:'Séniorité', get:c => c.seniority, order:SEN_ORDER},
+  year:     {label:'Année de connexion', get:c => c.year ? String(c.year) : 'Inconnue'},
+  country:  {label:'Pays', get:c => c.country || 'Non renseigné', optional:'country'},
+  location: {label:'Ville', get:c => c.location || 'Non renseignée', optional:'location'},
+  school:   {label:'Formation', get:c => c.school || 'Non renseignée', optional:'school'},
+  exp:      {label:'Expérience', get:c => c.exp || 'Non renseignée', order:EXP_ORDER, optional:'exp'},
+  tag:      {label:'Tag', get:c => tagOf(c) || 'Sans tag', order:[...TAGS, 'Sans tag']}
+};
+const TAIL = ['Non classé','Autre','Non renseignée','Non renseigné','Inconnue','Sans entreprise','Sans tag'];
+const PALETTE = ['#2F5BEA','#12A39A','#D9A21B','#C2417A','#6C4FD8','#3E9B4F','#E2702F','#4A86B5','#A0703F','#8C5FA8','#7A8B1F','#B23A3A','#0E7490','#9D5C0D','#5B21B6'];
+const GREY = '#8A97A6';
+const FILTERS = [['sector','f-sector'],['fn','f-fn'],['seniority','f-seniority'],['school','f-school'],['country','f-country'],['location','f-location'],['exp','f-exp'],['tag','f-tag']];
+const FILTER_KEYS = ['sector','fn','seniority','school','country','location','exp','tag','company','year'];
+const isFilterDim = k => FILTER_KEYS.includes(k);
+
+function domainFor(key, list){
+  const dim = DIMS[key];
+  const counts = d3.rollup(list, v => v.length, dim.get);
+  const keys = [...counts.keys()];
+  if(key === 'year') return keys.sort();
+  if(dim.order){ const ix = v => { const i = dim.order.indexOf(v); return i < 0 ? 99 : i; }; return keys.sort((a, b) => ix(a) - ix(b)); }
+  return keys.sort((a, b) => (TAIL.includes(a) - TAIL.includes(b)) || counts.get(b) - counts.get(a));
+}
+
+/* ---------- State ---------- */
+let contacts = [], isDemo = true, demoHidden = false, colorDomain = [], colorFn = () => GREY, allYears = [];
+let legendCollapsed = window.matchMedia('(max-width:760px)').matches, legendAll = false;
+const state = {groupBy:'sector', colorBy:'seniority', q:'', yMin:0, yMax:9999,
+  include:Object.fromEntries(FILTER_KEYS.map(k => [k, new Set()])), view:'graph', selected:null, topN:12};
+
+function availableDims(){ return Object.keys(DIMS).filter(k => !DIMS[k].optional || contacts.some(c => c[DIMS[k].optional])); }
+const initials = n => n.split(/\s+/).filter(Boolean).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+/* Monogramme d’entreprise : sigle existant (BNP, SNCF…) ou initiales des mots significatifs */
+const MONO_STOP = new Set(['de','du','des','la','le','les','et','&','l','d','the','of','group','groupe','sa','sas','inc','ltd','gmbh']);
+function mono(name){
+  const words = (name || '').replace(/[’']/g, ' ').split(/[\s\-\/]+/).filter(w => w && !MONO_STOP.has(norm(w)));
+  if(!words.length) return '?';
+  const acr = words.find(w => /^[A-Z0-9]{2,4}$/.test(w));
+  if(acr) return acr;
+  if(words.length === 1){ const caps = words[0].match(/[A-ZÀ-Ý]/g) || []; return caps.length >= 2 ? caps.slice(0, 3).join('') : words[0].slice(0, 2).toUpperCase(); }
+  return words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+const brandColor = name => { let h = 0; for(const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360; return `hsl(${h} 48% 40%)`; };
+
+/* ---------- Logos d’entreprise (version déployée) ----------
+   Dans l’artefact claude.ai, laisser urlTemplate vide : les images externes y sont bloquées, les badges s’affichent.
+   Sur ton propre site : renseigner l’adresse du service de logos avec {domain} et {token}, puis ta clé.
+   Exemple de forme : 'https://service-de-logos.example/{domain}?token={token}&size=128' */
+const LOGO_CONFIG = { urlTemplate:'', token:'' };
+const nkey = s => norm(s).replace(/['’]/g, ' ').replace(/\s+/g, ' ').trim();
+
+/* ---------- Dictionnaire intégré entreprise → secteur ----------
+   Classe sans IA (donc sans consommer de tokens) les entreprises les plus courantes dans un réseau français :
+   CAC 40 et SBF 120, banques, assureurs, fonds, cabinets, ESN, start-up de la French Tech, écoles, organismes publics, grands groupes internationaux.
+   Correspondance exacte, puis par début de nom (« Capgemini Engineering » → Capgemini). */
+const BUILTIN_SECTORS = {
+  'Conseil': `accenture|capgemini|capgemini invent|capgemini engineering|deloitte|kpmg|pwc|pricewaterhousecoopers|ey|ernst & young|mazars|forvis mazars|grant thornton|bdo|rsm|mckinsey|mckinsey & company|boston consulting group|bcg|bain|bain & company|roland berger|oliver wyman|kearney|a.t. kearney|arthur d. little|simon-kucher|oc&c|eurogroup consulting|wavestone|sia partners|kea|kea & partners|onepoint|devoteam|sopra steria|cgi|atos|eviden|alten|altran|akkodis|expleo|assystem|segula|segula technologies|aubay|neurones|sii|inetum|gfi|business & decision|micropole|keyrus|umanis|talan|converteo|artefact|ekimetrics|octo technology|ippon technologies|xebia|publicis sapient|thoughtworks|zenika|theodo|bartle|wefiit|julhiet sterwen|square management|mews partners|alcimed|f.initiatives|ayming|leyton|beijaflore|magellan partners|hardis|infosys|tcs|tata consultancy services|wipro|hcl|hcltech|cognizant|ibm consulting|avanade|exton consulting|weave|vertone|bearingpoint|cylad consulting|eleven strategy|alvarez & marsal|fti consulting|ausy|astek|scalian|amaris|amaris consulting|abylsen|extia|alteca|apside|niji|smile|davidson|davidson consulting|ekino|valtech|razorfish|fabernovel|ey-parthenon|strategy&|accenture song|capgemini consulting|solucom|nexialog|kpmg advisory|deloitte france|pwc france|ey france|mazars france|onepoint france|ineo? |orange consulting|sopra banking software|sopra hr software|lincoln? |advention|insign|klee group|cooptalis|altima|aressy|cap hr|wemanity|positive thinking company|ntt data|accenture technology|kyndryl|dxc technology|unisys|capgemini technology services|tessi|sword group|proxiad|open|groupe open|aubay france|cyllene|stime|osaxis|vivadia|elca|adone conseil|lionpoint`,
+  'Banque & assurance': `bnp paribas|bnp paribas cib|bnp paribas corporate and institutional banking|bnp paribas personal finance|societe generale|societe generale cib|credit agricole|credit agricole cib|credit agricole sa|lcl|natixis|natixis cib|bpce|groupe bpce|banque populaire|caisse d epargne|credit mutuel|credit mutuel arkea|arkea|cic|la banque postale|banque de france|bpifrance|bred|bred banque populaire|hsbc|hsbc france|hsbc continental europe|barclays|jp morgan|jpmorgan|jpmorgan chase|j.p. morgan|goldman sachs|morgan stanley|citi|citigroup|deutsche bank|ubs|credit suisse|ing|santander|oddo bhf|rothschild & co|lazard|edmond de rothschild|banque transatlantique|neuflize obc|cmb monaco|axa|axa france|allianz|allianz france|generali|generali france|groupama|covea|maif|macif|matmut|maaf|mma|gmf|ag2r la mondiale|malakoff humanis|klesia|harmonie mutuelle|mgen|vyv|groupe vyv|swiss life|cnp assurances|scor|aviva|abeille assurances|euler hermes|allianz trade|coface|april|ageas|chubb|zurich|aig|qonto|shine|boursorama|boursobank|hello bank|fortuneo|n26|revolut|lydia|sumeria|nickel|ma french bank|younited|younited credit|oney|cofidis|sofinco|cetelem|franfinance|credit foncier|american express|amex|visa|mastercard|alan|luko|leocare|hiscox|axa xl|axa climate|bnp paribas cardif|cardif|predica|pacifica|sogecap|credit logement|my money bank|ca-cib|cacib|amundi bank? |banque palatine|banque delubac|banque hottinguer|societe generale private banking|bnp paribas wealth management|caisse centrale de reassurance|ccr|apicil|pro btp|ircem|uniprevoyance|mutuelle generale|la mutuelle generale|smabtp|sma|groupama gan|gan|thelem|sogessur|euronext|banque de luxembourg|bil|lombard odier|pictet|julius baer|nomura|mizuho|smbc|mufg|bank of america|bofa securities|wells fargo|standard chartered|nordea|bbva|unicredit|intesa sanpaolo|commerzbank|kbc|belfius|bnp paribas fortis|rabobank|abn amro`,
+  'Finance & investissement': `amundi|natixis investment managers|axa investment managers|axa im|bnp paribas asset management|bnp paribas am|blackrock|vanguard|pimco|carmignac|tikehau capital|ardian|eurazeo|wendel|apax|apax partners|pai partners|idinvest|partech|partech partners|isai|kima ventures|serena|alven|elaia|daphni|frst|xange|seventure|omnes capital|siparex|iris capital|cathay capital|keensight|keensight capital|astorg|cinven|kkr|blackstone|carlyle|tpg|apollo|bridgepoint|eqt|permira|hg|hg capital|cvc|cvc capital partners|meridiam|antin infrastructure partners|lbo france|qualium|andera partners|abenex|lincoln international|clearwater international|natixis partners|sofina|peugeot invest|bpifrance investissement|eurazeo growth|bridgepoint development capital|five arrows|naxicap|naxicap partners|unigrains|weinberg capital|activa capital|argos wityu|chequers capital|parquest|ciclad|edrip? |sparring capital|raise|raise ventures|ring capital|eurazeo brands|headline|accel|sequoia|sequoia capital|index ventures|balderton|atomico|general catalyst|a16z|andreessen horowitz|lightspeed|insight partners|tiger global|softbank|softbank vision fund|level20|135 ventures? |breega|asterion|white star capital|founders future|side capital|axeleo capital|newfund|bnp paribas developpement|ca indosuez|indosuez wealth management|lyxor|ofi invest|la francaise|la francaise am|ostrum|ostrum asset management|mirova|dnca|comgest|h2o am|edram|lazard freres gestion|oddo bhf asset management|ellipsis am|sycomore am|candriam|schroders|fidelity|fidelity international|jpmorgan asset management|goldman sachs asset management|morgan stanley investment management|state street|northern trust|allianz global investors|pictet asset management|m&g|aberdeen|abrdn|invesco|franklin templeton|nuveen|pgim|bnp paribas reim|primonial|primonial reim|corum|perial|sofidy|amundi immobilier|axa real estate|swiss life asset managers|tikehau|eiffel investment group|kartesia|muzinich|alcentra|ares|ares management|tikehau ace capital|mubadala|qia|adia|cdpq|caisse de depot et placement du quebec|temasek|gic|norges bank|nbim|family office|bpi france investissement`,
+  'Immobilier & construction': `vinci|vinci construction|vinci energies|vinci immobilier|bouygues construction|bouygues immobilier|bouygues batiment|bouygues batiment ile-de-france|eiffage|eiffage construction|eiffage genie civil|spie batignolles|fayat|nge|colas|razel-bec|demathieu bard|leon grosse|nexity|icade|gecina|unibail-rodamco-westfield|unibail|urw|klepierre|covivio|altarea|altarea cogedim|cogedim|kaufman & broad|bnp paribas real estate|cbre|jll|cushman & wakefield|savills|knight frank|foncia|century 21|orpi|laforet|seloger|meilleurs agents|pap|sergic|citya|apsys|emerige|ogic|linkcity|sogeprom|redman|groupe pichet|pichet|quartus|cdc habitat|action logement|icf habitat|paris habitat|3f|immobiliere 3f|in li|batigere|sefri-cime|bnp paribas immobilier|societe de la grande paris? |grand paris amenagement|epa paris-saclay|sodearif|lamotte|bpd marignan|marignan|vinci autoroutes? |saint-gobain distribution batiment|point p|cedeo|lapeyre|bricoman|tarkett|lafarge france|ciments calcia|xella|wienerberger|soletanche bachy|menard|keller|bessac|campenon bernard|dodin campenon bernard|botte fondations|sade|guintoli|ehtp|eurovia|vinci construction france|bouygues travaux publics|chantiers modernes|petit|cbc|sicra|gtm|dumez|setec|egis|artelia|ingerop|systra|arcadis|tractebel|wsp|jacobs|aecom|bureau veritas? |socotec|apave|qualiconsult|dekra? |wilmotte|valode & pistre|ateliers jean nouvel|jean nouvel|sogaris|atland|frey|mercialys|carmila|ceetrus|nhood|hammerson|westfield|stam europe|mata capital|thor equities? |kinston|habiteo|hosman|liberkeys|homeloop|effy|hellio|leroy merlin? `,
+  'Agroalimentaire': `danone|lactalis|nestle|nestle france|nestle waters|bonduelle|savencia|bel|groupe bel|sodiaal|terrena|agrial|avril|tereos|cristal union|sucden|lesieur|fleury michon|herta|lu|mondelez|mondelez international|ferrero|mars|mars wrigley|pernod ricard|remy cointreau|moet & chandon|moet hennessy|heineken|kronenbourg|carlsberg|ab inbev|coca-cola|coca-cola europacific partners|pepsico|ldc|vivescia|invivo|limagrain|vilmorin|roquette|panzani|barilla|andros|st michel|bridor|labeyrie|cooperl|bigard|charal|nutricia|yoplait|candia|eurial|mccain|materne|kraft heinz|kellogg|kelloggs|general mills|lindt|haribo|cemoi|cafe richard|lavazza|nespresso|jde|jacobs douwe egberts|unilever food solutions|bonne maman|st mamet|daunat|sodebo|marie|william saurin|cofigeo|d aucy|eureden|triskalia|maitre coq|ldc volaille|gastronome|lustucru|tipiak|brioche pasquier|pasquier|jacquet|harrys|barry callebaut|cargill|bunge|louis dreyfus|louis dreyfus company|ldc group|olam|ofi|thai union|thai union group|regal springs|ynsect|innovafeed|la belle vie|frichti|seazon|hari&co|michel et augustin|alpro|oatly|blue apron? |sicoly|agromousquetaires|lact? |agro paris? `,
+  'Tourisme, hôtellerie & restauration': `accor|club med|pierre & vacances|pierre et vacances|center parcs|belambra|b&b hotels|louvre hotels|marriott|hilton|hyatt|ihg|intercontinental hotels group|best western|barriere|groupe barriere|compagnie des alpes|disneyland paris|disney|parc asterix|sodexo|elior|compass group|mcdonald s|mcdonalds|burger king|quick|flunch|buffalo grill|courtepaille|big mamma|lagardere travel retail|voyageurs du monde|fram|thomas cook|tui|tui france|booking.com|expedia|evaneos|ucpa|groupe partouche|fdj|la francaise des jeux|pmu|ugc|pathe|cgr cinemas|le petit ballon? |kinepolis|aqualand|puy du fou|futuroscope|grevin|orpea? |les grands chais? |ducasse|alain ducasse|groupe bertrand|groupe flo|holder|paul|starbucks|kfc|subway|domino s|dominos|five guys|pret a manger|columbus cafe|del arte|la pataterie|hippopotamus|leon de bruxelles|novotel|ibis|sofitel|mercure|pullman|mgallery|ennismore|airbnb? |abritel|homeaway|gites de france|campings? |huttopia|yelloh village|sandaya|capfun|siblu|odalys|madame vacances|lagrange|sowell|mmv|travelski|go voyages|opodo|lastminute|ebookers|kayak|trivago|tripadvisor|lonely planet|visit paris region|office de tourisme|atout france`,
+  'Télécom & médias': `orange|orange business|orange business services|orange france|sfr|altice|altice france|bouygues telecom|free|free mobile|iliad|tf1|groupe tf1|m6|groupe m6|france televisions|radio france|arte|canal+|canal plus|groupe canal+|vivendi|havas|publicis|publicis groupe|publicis media|omnicom|wpp|dentsu|ipsos|kantar|jcdecaux|lagardere|hachette|hachette livre|editis|le monde|groupe le monde|le figaro|groupe figaro|les echos|les echos le parisien|bfm|bfmtv|nextradiotv|ouest-france|prisma media|reworld media|deezer|spotify|netflix|ubisoft|ankama|gameloft|asmodee|mediawan|banijay|webedia|konbini|brut|cellnex|tdf|eutelsat|ses|nokia|ericsson|huawei|alcatel-lucent|sony|warner bros|warner music|universal music|universal music group|sony music|believe|fremantle|gaumont|studiocanal|pathe films|mk2|france medias monde|rfi|france 24|lci|cnews|europe 1|rtl|nrj|nrj group|skyrock|marie claire|condé nast|conde nast|vogue|elle|hearst|mediapart|liberation|l express|le point|challenges|l equipe|20 minutes|huffpost|vice|buzzfeed|dailymotion|youtube|twitch|meta? |snap? |tiktok? |ogilvy|bbdo|tbwa|ddb|mccann|fred & farid|marcel|betc|leo burnett|saatchi & saatchi|young & rubicam|vml|wunderman thompson|publicis conseil|havas paris|dentsu creative|mediacom|mindshare|carat|zenith|starcom|ogilvy paris|hopscotch|ddb paris|jung von matt|serviceplan|wavemaker|groupm|vivendi? |editions gallimard|gallimard|flammarion|albin michel|grasset|actes sud|madrigall|bayard|milan presse|unify? `,
+  'Transport & mobilité': `sncf|sncf reseau|sncf voyageurs|sncf connect|ratp|ratp dev|transdev|keolis|blablacar|air france|air france-klm|klm|transavia|corsair|air caraibes|french bee|aeroports de paris|groupe adp|adp|vinci airports|cma cgm|ceva logistics|geodis|bollore logistics|bollore|dhl|fedex|ups|la poste|groupe la poste|colissimo|chronopost|dpd|gefco|xpo logistics|kuehne + nagel|kuehne nagel|stef|norbert dentressangle|getaround|uber|bolt|heetch|lime|dott|tier|free2move|ayvens|ald automotive|leaseplan|arval|hertz|europcar|sixt|vinci autoroutes|sanef|aprr|eurostar|thalys|flixbus|navya|africa global logistics|agl|louis dreyfus armateurs|brittany ferries|corsica linea|ponant|msc|maersk|cosco|hapag-lloyd|db schenker|schenker|dachser|bollore africa logistics|fm logistic|id logistics|stef|gxo|rhenus|heppner|transports mendy? |ziegler|easydis|faurecia? |zity|marcel|g7|taxi g7|cityscoot|cooltra|indigo|onepark|zenpark|qucit|padam mobility|vulog|kapten|mobilize|renault mobilize|ile-de-france mobilites|idfm|airbus helicopters? |easyjet|ryanair|lufthansa|british airways|emirates|qatar airways|delta|united airlines|swiss|tap|iberia|vueling|volotea|air austral|air tahiti nui|alstom transport? |siemens mobility|bombardier transportation`,
+  'Retail & conso': `carrefour|carrefour france|auchan|auchan retail|e.leclerc|leclerc|intermarche|les mousquetaires|systeme u|cooperative u|casino|groupe casino|monoprix|franprix|lidl|aldi|fnac|darty|fnac darty|boulanger|cdiscount|decathlon|leroy merlin|adeo|castorama|kingfisher|ikea|conforama|but|maisons du monde|kiabi|celio|jules|zara|inditex|h&m|uniqlo|galeries lafayette|printemps|bhv|la redoute|veepee|vente-privee|showroomprive|zalando|sephora|marionnaud|nocibe|yves rocher|groupe rocher|l oreal|loreal|l oreal paris|lvmh|kering|hermes|chanel|dior|christian dior|christian dior couture|louis vuitton|cartier|richemont|gucci|saint laurent|ysl|balenciaga|givenchy|celine|clarins|unilever|procter & gamble|p&g|henkel|reckitt|colgate|colgate-palmolive|beiersdorf|bic|seb|groupe seb|petit bateau|lacoste|longchamp|sezane|manomano|chullanka|picard|grand frais|biocoop|naturalia|nature & decouvertes|cultura|action|gifi|la grande recre|king jouet|smyths|optic 2000|afflelou|alain afflelou|krys|atol|ldlc|norauto|feu vert|speedy|midas|mobivia|darty? |etam|promod|camaieu|pimkie|jennyfer|bonobo|sandro|maje|smcp|the kooples|ba&sh|zadig & voltaire|ami paris|jacquemus|isabel marant|chloe|lancome|guerlain|givenchy beauty|parfums christian dior|shiseido|estee lauder|coty|puig|interparfums|nuxe|caudalie|la roche-posay|vichy|bioderma|naos|avene|pierre fabre dermo? |sisley|l occitane|l occitane en provence|rituals|kiko|mac cosmetics|nyx|maybelline|garnier|lush|body shop|the body shop|nike|adidas|puma|new balance|salomon|rossignol|lafuma|aigle|le coq sportif|asics|under armour|columbia|the north face|vf corporation|levi s|levis|ralph lauren|tommy hilfiger|calvin klein|pvh|tapestry|swarovski|pandora|swatch|rolex|tag heuer|bulgari|tiffany|tiffany & co|boucheron|van cleef & arpels|chaumet|fred|moncler|burberry|prada|armani|dolce & gabbana|versace|valentino|bottega veneta|loewe|fendi|kenzo|berluti|rimowa|sephora france|fnac darty? |electro depot|ubaldi|carglass? |vertbaudet|okaidi|orchestra|du pareil au meme|jacadi|cyrillus|tape a l oeil|bonpoint|la halle|gemo|chausea|eram|andre|minelli|jonak|cosmoparis|bocage|mephisto|the kase? |la poste? |relay|lagardere travel? |hema|flying tiger|leroy merlin france|bricodepot|brico depot|bricorama|mr bricolage|weldom|point p? |jardiland|truffaut|botanic|gamm vert|animalis|maxi zoo|zooplus|ikks|devred|brice|armand thiery|tati|vinted? |vestiaire collective? `,
+  'Santé': `sanofi|servier|ipsen|pierre fabre|boiron|guerbet|biomerieux|stallergenes|stallergenes greer|lfb|novartis|roche|pfizer|msd|merck|astrazeneca|gsk|glaxosmithkline|bayer|johnson & johnson|janssen|abbvie|bristol myers squibb|bms|lilly|eli lilly|novo nordisk|takeda|medtronic|abbott|siemens healthineers|ge healthcare|philips|philips healthcare|essilorluxottica|essilor|sartorius|eurofins|cerba|cerba healthcare|synlab|biogroup|ramsay sante|elsan|vivalto|vivalto sante|clinea|korian|clariane|orpea|emeis|ap-hp|aphp|assistance publique hopitaux de paris|institut pasteur|institut curie|gustave roussy|unicancer|ars|haute autorite de sante|has|vidal|withings|owkin|ipsen pharma|upsa|zentiva|teva|viatris|mylan|biogen|gilead|amgen|vertex|regeneron|moderna|biontech|valneva|transgene|innate pharma|dbv technologies|nanobiotix|cellectis|genfit|erytech|abivax|ose immuno|adocia|quantum surgical|implanet|carmat|ekinops? |stryker|zimmer biomet|smith & nephew|b. braun|fresenius|fresenius kabi|baxter|becton dickinson|bd|boston scientific|edwards lifesciences|olympus|dentsply sirona|straumann|thuasne|hartmann|urgo|laboratoires urgo|coloplast|convatec|air liquide sante|air liquide healthcare|lne? |doctolib? |qare|livi|medadom|kelindi|cegedim|cegedim sante|ugap? |mutualite francaise|croix-rouge|croix-rouge francaise|chu de|centre hospitalier|hopital foch|hopital americain|fondation rothschild|institut mutualiste montsouris|clinique|ehpad|domusvi|colisee|lna sante|maisons de famille`,
+  'Juridique': `gide|gide loyrette nouel|bredin prat|darrois villey|darrois villey maillot brochier|cleary gottlieb|clifford chance|linklaters|allen & overy|a&o shearman|allen & overy shearman sterling|shearman & sterling|freshfields|freshfields bruckhaus deringer|white & case|latham & watkins|skadden|baker mckenzie|dla piper|hogan lovells|norton rose fulbright|herbert smith freehills|jones day|mayer brown|august debouzy|cms francis lefebvre|cms|fidal|de pardieu brocas maffei|jeantet|racine|lamy lexel|taj|ey avocats|ey societe d avocats|pwc societe d avocats|pwc legal|deloitte legal|kpmg avocats|kpmg law|lefebvre dalloz|lefebvre sarrut|wolters kluwer|lexisnexis|dalloz|doctrine|legalstart|captain contrat|conseil national des barreaux|barreau de paris|ordre des avocats|chambre des notaires|conseil superieur du notariat|notaires de france|weil gotshal & manges|weil|sullivan & cromwell|davis polk|simpson thacher|kirkland & ellis|sidley austin|paul hastings|orrick|dechert|ashurst|bird & bird|fieldfisher|osborne clarke|pinsent masons|eversheds sutherland|simmons & simmons|stephenson harwood|reed smith|morgan lewis|goodwin|gibson dunn|willkie farr & gallagher|proskauer|winston & strawn|mcdermott will & emery|quinn emanuel|cooley|wilson sonsini|bignon lebray|lacourte raquin tatar|hoche avocats|veil jourde|bredin|flichy grange|chammas & marcheteau|villey girard grolleaud|delsol avocats|lexcase|altana|ayache|joffe & associes|vivien & associes|lerins|lerins & bci|capstan|capstan avocats|flichy grange avocats|fromont briens|actance|ydes|sekri valentin zerrouk|cabinet|avocats|scp|selarl`,
+  'Secteur public & éducation': `caisse des depots|caisse des depots et consignations|banque des territoires|france travail|pole emploi|urssaf|urssaf caisse nationale|cnaf|caf|cpam|assurance maladie|cnam assurance maladie|cnav|msa|insee|dgfip|direction generale des finances publiques|direction generale du tresor|education nationale|ministere de l education nationale|ministere des armees|armee de terre|marine nationale|armee de l air et de l espace|gendarmerie nationale|police nationale|ville de paris|mairie de paris|region ile-de-france|prefecture de police|senat|assemblee nationale|cour des comptes|conseil d etat|cnrs|inria|inserm|inrae|cea|cnes|onera|ifremer|ademe|irsn|brgm|ign|meteo-france|esa|european space agency|european commission|commission europeenne|parlement europeen|banque centrale europeenne|bce|ecb|banque europeenne d investissement|bei|eib|oecd|ocde|unesco|onu|united nations|undp|unicef|who|oms|world bank|banque mondiale|imf|fmi|business france|afd|agence francaise de developpement|campus france|la french tech|mission french tech|dinum|anssi|cnil|arcep|arcom|autorite des marches financiers|amf|acpr|autorite de la concurrence|bpi? |direction generale de l aviation civile|dgac|douane|douanes|dgddi|sgpi|france strategie|hec|hec paris|essec|essec business school|escp|escp business school|edhec|edhec business school|em lyon|emlyon|emlyon business school|skema|skema business school|kedge|kedge business school|neoma|neoma business school|audencia|grenoble ecole de management|gem|tbs|tbs education|toulouse business school|ieseg|ieseg school of management|icn business school|rennes school of business|montpellier business school|excelia|psb|paris school of business|inseec|iae paris|iae lyon|sciences po|sciences po paris|ena|insp|ecole polytechnique|polytechnique|l x|centralesupelec|centrale supelec|ecole centrale de lyon|centrale lyon|centrale nantes|centrale lille|centrale marseille|mines paris|mines paris - psl|mines paristech|mines saint-etienne|mines nancy|telecom paris|telecom sudparis|imt|imt atlantique|imt nord europe|ensae|ensae paris|ensta|ensta paris|ensam|arts et metiers|insa|insa lyon|insa toulouse|insa rennes|utc|universite de technologie de compiegne|utt|epita|epitech|42|ecole 42|ece|ece paris|esiee|esiee paris|isep|efrei|efrei paris|esilv|supinfo|supmeca|isae-supaero|isae supaero|enac|estaca|ipsa|esme|esme sudria|esiea|agroparistech|ensae paristech|ponts paristech|ecole des ponts|ecole des ponts paristech|chimie paristech|espci|espci paris|ens|ecole normale superieure|ens paris-saclay|ens lyon|sorbonne|sorbonne universite|universite paris 1 pantheon-sorbonne|pantheon-sorbonne|pantheon-assas|universite paris-pantheon-assas|universite paris dauphine|paris-dauphine|universite paris dauphine - psl|dauphine|universite paris-saclay|paris-saclay|universite paris cite|universite psl|psl|universite de lyon|aix-marseille universite|universite de bordeaux|universite de lille|universite de strasbourg|universite de montpellier|nantes universite|universite de nantes|universite grenoble alpes|universite de toulouse|universite toulouse capitole|cnam|le cnam|conservatoire national des arts et metiers|insead|harvard|harvard business school|stanford|stanford university|mit|massachusetts institute of technology|oxford|university of oxford|cambridge|university of cambridge|lse|london school of economics|london business school|columbia|columbia university|imperial college|imperial college london|epfl|eth zurich|hec montreal|mcgill|mcgill university|universite laval|bocconi|ie business school|esade|iese|iese business school|wharton|kellogg school of management|ucla|berkeley|yale|princeton|nyu|duke|cornell|universite de geneve|unige|kth|tu munich|tum|ucl|kings college london|universite libre de bruxelles|ulb|uclouvain|solvay brussels school|neoma bs|ipag|ism? |iscom|iscpa|efap|celsa|cfj|esj lille|ipj|ecole du louvre|beaux-arts de paris|gobelins|strate|ecole de design nantes|ensad|ensci|penninghen|ecole boulle|ferrandi|institut paul bocuse|vatel|ehl|glion|les roches|ecole hoteliere de lausanne|openclassrooms|le wagon|ironhack|wild code school|simplon|ecole o clock|o clock|studi|noe|formation noe|cned|afpa|cci|cci paris ile-de-france|chambre de commerce|cma|chambre de metiers|bpifrance? `,
+  'Tech & logiciel': `google|alphabet|microsoft|amazon|amazon web services|aws|meta|facebook|apple|salesforce|sap|oracle|ibm|adobe|nvidia|intel|amd|qualcomm|cisco|dell|dell technologies|hp|hp inc|hewlett packard enterprise|hpe|vmware|broadcom|servicenow|workday|atlassian|datadog|snowflake|databricks|mongodb|elastic|twilio|stripe|adyen|paypal|block|shopify|linkedin|twitter|x corp|tiktok|bytedance|snap|pinterest|zoom|slack|notion|figma|canva|miro|hubspot|zendesk|intercom|dassault systemes|criteo|ovhcloud|ovh|scaleway|doctolib|contentsquare|mirakl|dataiku|back market|backmarket|ledger|sorare|vinted|leboncoin|adevinta|algolia|mistral ai|mistral|hugging face|lighton|owkin|swile|payfit|spendesk|pennylane|agicap|libeo|lucca|malt|welcome to the jungle|indy|ivalua|sidetrade|esker|cegid|cegid for hr|sage|axway|talend|worldline|ingenico|believe? |ankorstore|vestiaire collective|devialet|aircall|front|livestorm|platform.sh|botify|ubble|shift technology|tinyclues|akeneo|sendinblue|brevo|yousign|docusign|trustpair|treezor|lemon way|360learning|side|meero|exotec|ecovadis|jellysmack|happn|meetic|tomorro|fabriq|stellia.ai|a2mac1|dassault systemes 3dexperience|capgemini? |sopra? |steam? |valeo? |thales digital identity & security|gemalto|idemia|wallix|stormshield|vade|sekoia|tehtris|harfanglab|yes we hack|yeswehack|ecovadis|qonto? |alan? |deezer? |spotify? |uber? |airbnb|booking? |trainline|hopper|getyourguide|blablacar? |dashlane|bitwarden|1password|proton|proton ag|qwant|ecosia|lydia? |spendesk|pigment|dust|photoroom|alma|upway|ornikar|luko? |hiflow|cooltra? |the fork|thefork|deliveroo|uber eats|just eat|frichti? |gorillas|getir|flink|cajoo|epicery|wizbii|jobteaser|indeed|glassdoor|monster|hellowork|cadremploi|apec|meteojob|staffme|studentpop|qapa|crème de la crème|cremedelacreme|comet|freelance.com|crowdfarming|ledger|kard|pixpay|vivid money|bunq|n26? |klarna|scalapay|alma|fintecture|bridge|budget insight|powens|linxo|yapily|tink|plaid|truelayer|checkout.com|lemonway|mangopay|hipay|payplug|stancer|sumup|zettle|lightspeed commerce|zelty|innovorder|sunday|obypay|tiller|leo&go|getaround? |blablacar? |lydia? |ornikar? |owkin? |veepee? |manomano? |cdiscount? |sorare? |voodoo|homa games|ubisoft? |gameloft? |ankama? |kinoba? |dontnod|quantic dream|amplitude studios|arkane|nacon|focus entertainment|asmodee? |withings? |netatmo|legrand? |sigfox|unabiz|actility|kerlink|teads|ogury|adikteev|tradelab|1000mercis|numberly|mediarithmics|commanders act|abtasty|ab tasty|kameleoon|contentsquare? |semji|sowink? |dailymotion? |brut? |konbini? |gojob|iziwork|side? |mobilic? `
+};
+const BUILTIN = new Map();
+for(const [s, list] of Object.entries(BUILTIN_SECTORS)) list.split('|').forEach(n => { if(n.includes('?')) return; const k = nkey(n); if(k && !BUILTIN.has(k)) BUILTIN.set(k, s); });
+const PREFIX_STOP = new Set(['groupe','group','the','la','le','les','societe','ste','banque','caisse','credit','universite','university','ecole','institut','ministere','agence','compagnie','cie','centre','conseil','direction','service','services','cabinet','fondation','association','mairie','ville','region','departement','hopital','clinique','laboratoire','laboratoires','air','new','first','global','international','france','paris','national','nationale','union','mutuelle','chambre','office','maison','home','smart','open','digital','data','tech','studio','agency','partners','capital','media','energy','energie','sante','health','food','travel','action','marcel','quick','raise','smile','comet','weave','bridge','sunday','tiller','front','block','petit','marie','orange','fred','side','free','paul','mars','dust','indy','kard','sma','gan','cms','vml','espace','atlas','alpha','delta','omega','nova','green','blue','red','black','white','grand','united','european','american','british']);
+/* Correspondance exacte, puis par début de nom, en ignorant les premiers mots trop génériques */
+function builtinSector(k){
+  if(!k) return null;
+  if(BUILTIN.has(k)) return BUILTIN.get(k);
+  const w = k.split(' ');
+  for(let n = w.length - 1; n >= 1; n--){
+    const p = w.slice(0, n).join(' ');
+    if(n === 1 && (PREFIX_STOP.has(p) || p.length < 5)) continue;
+    if(BUILTIN.has(p)) return BUILTIN.get(p);
+  }
+  return null;
+}
+const COMPANY_DOMAINS = {
+  'capgemini':'capgemini.com', 'accenture':'accenture.com', 'bnp paribas':'bnpparibas.com', 'societe generale':'societegenerale.com',
+  'axa':'axa.com', 'engie':'engie.com', 'equans':'equans.com', 'totalenergies':'totalenergies.com', 'doctolib':'doctolib.fr',
+  'dataiku':'dataiku.com', 'back market':'backmarket.com', 'qonto':'qonto.com', 'alan':'alan.com', 'mirakl':'mirakl.com',
+  'contentsquare':'contentsquare.com', 'jcdecaux':'jcdecaux.com', 'orange':'orange.com', 'sncf':'sncf.com', 'blablacar':'blablacar.com',
+  'l oreal':'loreal.com', 'lvmh':'lvmh.com', 'decathlon':'decathlon.com', 'carrefour':'carrefour.com', 'sanofi':'sanofi.com',
+  'ubisoft':'ubisoft.com', 'publicis':'publicisgroupe.com', 'publicis groupe':'publicisgroupe.com', 'wavestone':'wavestone.com',
+  'station f':'stationf.co', 'google':'google.com', 'microsoft':'microsoft.com', 'amazon':'amazon.com', 'aws':'aws.amazon.com',
+  'airbus':'airbus.com', 'thales':'thalesgroup.com', 'safran':'safran-group.com', 'renault':'renault.com', 'stellantis':'stellantis.com',
+  'michelin':'michelin.com', 'danone':'danone.com', 'deloitte':'deloitte.com', 'kpmg':'kpmg.com', 'pwc':'pwc.com', 'ey':'ey.com',
+  'mckinsey':'mckinsey.com', 'bcg':'bcg.com', 'sopra steria':'soprasteria.com', 'air france':'airfrance.com', 'bouygues':'bouygues.com',
+  'vinci':'vinci.com', 'schneider electric':'se.com', 'credit agricole':'credit-agricole.com', 'natixis':'natixis.com', 'allianz':'allianz.com',
+  'edf':'edf.fr', 'ratp':'ratp.fr', 'salesforce':'salesforce.com', 'criteo':'criteo.com', 'ovhcloud':'ovhcloud.com',
+  'dassault systemes':'3ds.com', 'veolia':'veolia.com', 'saint gobain':'saint-gobain.com', 'pernod ricard':'pernod-ricard.com',
+  'kering':'kering.com', 'hermes':'hermes.com', 'chanel':'chanel.com', 'sephora':'sephora.com', 'leroy merlin':'leroymerlin.fr',
+  'fnac':'fnac.com', 'darty':'darty.com', 'auchan':'auchan.fr', 'datadog':'datadoghq.com', 'atlassian':'atlassian.com', 'ibm':'ibm.com',
+  'oracle':'oracle.com', 'sap':'sap.com', 'meta':'meta.com', 'apple':'apple.com', 'alstom':'alstom.com', 'cgi':'cgi.com', 'devoteam':'devoteam.com'
+};
+const LEGAL = /\b(sa|sas|sasu|se|group|groupe|inc|ltd|llc|gmbh|france|international)\b/g;
+function domainOf(name){
+  const n = nkey(name); if(!n) return '';
+  if(COMPANY_DOMAINS[n]) return COMPANY_DOMAINS[n];
+  const first = n.split(' ')[0]; if(COMPANY_DOMAINS[first]) return COMPANY_DOMAINS[first];
+  const slug = n.replace(LEGAL, '').replace(/[^a-z0-9]/g, '');
+  return slug.length >= 2 ? slug + '.com' : '';
+}
+const logoFails = new Set();
+function logoUrl(name){
+  if(!LOGO_CONFIG.urlTemplate) return '';
+  const dom = domainOf(name);
+  if(!dom || logoFails.has(dom)) return '';
+  return LOGO_CONFIG.urlTemplate.replace('{domain}', encodeURIComponent(dom)).replace('{token}', encodeURIComponent(LOGO_CONFIG.token));
+}
+const pct = (n, t) => { if(!t) return ''; const p = n / t * 100; return (p > 0 && p < 1 ? '<1' : Math.round(p)) + '\u202f%'; };
+
+/* Icône de profil déduite du prénom (neutre si inconnu ou mixte) */
+const FEMALE = new Set('marie lea chloe manon ines sarah emma clara yasmine lina zoe alice juliette sofia sophia margaux julie laura sophie anne nathalie isabelle sandrine celine aurelie audrey elodie emilie caroline christine catherine valerie stephanie virginie pauline marion lucie charlotte mathilde louise jade eva ambre anna lisa oceane amandine melanie helene claire cecile agnes sylvie veronique patricia karine laetitia fatima amina nadia leila sonia alexandra elise morgane justine laure melissa jessica jennifer emily hannah olivia mia priya aisha maria ana elena lucia chiara giulia francesca beatrice florence delphine severine coralie estelle gaelle maeva lola noemie romane salome victoria apolline capucine clemence diane eloise heloise jeanne josephine lena marine maya nina rose myriam samira sabrina khadija meriem hanane'.split(' '));
+const MALE = new Set('lucas hugo nathan thomas julien antoine maxime nicolas paul romain karim mehdi bastien arthur adrien vincent pierre jean louis gabriel leo raphael jules adam mathis theo alexandre guillaume sebastien olivier christophe frederic laurent stephane david eric philippe francois michel patrick alain benoit damien florian kevin jeremy jonathan mathieu matthieu quentin clement victor simon yann yannick cedric fabien jerome ludovic mickael michael samuel benjamin axel enzo ethan noah tom mohamed mohammed ahmed youssef omar ali rayan sami john james robert william daniel mark peter andrew marco luca giovanni carlos juan jose rahul amit thibault thibaut aurelien remi gregory xavier bruno didier thierry pascal gilles herve joel marc franck emmanuel arnaud baptiste corentin valentin tristan hadrien gaspard augustin martin hamza bilal ilyes nabil rachid'.split(' '));
+function genderOf(c){ const f = norm((c.first || c.name || '').split(/[\s-]/)[0]); return FEMALE.has(f) ? 'f' : MALE.has(f) ? 'm' : ''; }
+const SIL = {
+  m:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4" fill="#fff"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z" fill="#fff"/></svg>',
+  f:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.4 0-5.6 2.7-5.6 6.2 0 2.6.7 4.6 1.8 5.6h7.6c1.1-1 1.8-3 1.8-5.6C17.6 5.7 15.4 3 12 3z" fill="#fff" fill-opacity=".55"/><circle cx="12" cy="9" r="3.6" fill="#fff"/><path d="M4.5 21c0-4 3.3-7 7.5-7s7.5 3 7.5 7z" fill="#fff"/></svg>',
+  n:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8.5" r="3.8"/><path d="M5 20.5c.6-3.8 3.4-6.3 7-6.3s6.4 2.5 7 6.3"/></svg>'
+};
+function avatar(c, big){ const g = genderOf(c); return `<span class="av${big ? ' lg2' : ''}" style="background:${colorOf(c)}" role="img" aria-label="${g === 'f' ? 'Femme' : g === 'm' ? 'Homme' : 'Contact'}">${SIL[g || 'n']}</span>`; }
+const colorOf = c => colorFn(DIMS[state.colorBy].get(c));
+
+function setupColor(){
+  const key = state.colorBy;
+  colorDomain = domainFor(key, contacts);
+  if(key === 'year'){
+    const ys = colorDomain.filter(y => y !== 'Inconnue').map(Number);
+    const [a, b] = d3.extent(ys);
+    const s = d3.scaleSequential(d3.interpolateViridis).domain([a ?? 0, (b ?? 1) === a ? a + 1 : b]);
+    colorFn = v => v === 'Inconnue' ? GREY : s(+v);
+  } else {
+    colorFn = v => { const i = colorDomain.indexOf(v); return (i < 0 || i >= PALETTE.length || TAIL.includes(v)) ? GREY : PALETTE[i]; };
+  }
+}
+
+function buildChips(k, id){
+  const fld = document.getElementById('fld-' + k);
+  if(fld){ fld.hidden = !!DIMS[k].optional && !contacts.some(c => c[DIMS[k].optional]); if(fld.hidden) return; }
+  const el = document.getElementById(id);
+  if(k === 'tag' && !contacts.some(c => tagOf(c))){
+    el.innerHTML = '<p class="hint" style="margin:0">Ouvre la fiche d’un contact pour lui attribuer un tag (client, mentor…). Tu pourras ensuite filtrer ici.</p>';
+    return;
+  }
+  const counts = d3.rollup(contacts, v => v.length, DIMS[k].get);
+  const sel = state.include[k].size;
+  const foot = sel ? `<div class="chipfoot"><span>${sel} sélectionné${sel > 1 ? 's' : ''}, touche une valeur pour l’ajouter ou la retirer</span><button class="linkbtn" type="button" data-cleark="${k}">Effacer</button></div>` : '';
+  const maxC = d3.max([...counts.values()]) || 1;
+  el.innerHTML = domainFor(k, contacts).map(v =>
+    `<button class="chip frow" type="button" aria-pressed="${state.include[k].has(v)}" data-k="${k}" data-v="${esc(v)}"><span class="fbar" style="width:calc((100% - 20px) * ${Math.max(0.02, counts.get(v) / maxC).toFixed(3)})${k === state.colorBy ? `;background:${colorFn(v)}` : ''}"></span>${k === state.colorBy ? `<span class="dot" style="background:${colorFn(v)}"></span>` : ''}<span class="flbl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), contacts.length)}</span></button>`).join('') + foot;
+}
+const syncChips = () => FILTERS.forEach(([k, id]) => buildChips(k, id));
+function syncYears(){ if(allYears.length){ $('#yMin').value = state.yMin; $('#yMax').value = state.yMax; } }
+
+function setupControls(){
+  const dims = availableDims();
+  if(!dims.includes(state.groupBy)) state.groupBy = 'sector';
+  if(!dims.includes(state.colorBy)) state.colorBy = 'seniority';
+  const opts = dims.map(k => `<option value="${k}">${DIMS[k].label}</option>`).join('');
+  $('#groupBy').innerHTML = opts; $('#colorBy').innerHTML = opts;
+  $('#groupBy').value = state.groupBy; $('#colorBy').value = state.colorBy;
+  allYears = [...new Set(contacts.map(c => c.year).filter(Boolean))].sort((a, b) => a - b);
+  $('#yearField').hidden = !allYears.length;
+  const yOpts = allYears.map(y => `<option>${y}</option>`).join('');
+  $('#yMin').innerHTML = yOpts; $('#yMax').innerHTML = yOpts;
+  state.yMin = allYears[0] || 0; state.yMax = allYears[allYears.length - 1] || 9999;
+  syncYears();
+  FILTER_KEYS.forEach(k => state.include[k].clear());
+  state.q = ''; $('#q').value = '';
+  setupColor(); syncChips();
+}
+
+function pass(c, skip){
+  for(const k of FILTER_KEYS){ if(k === skip) continue; const s = state.include[k]; if(s.size && !s.has(DIMS[k].get(c))) return false; }
+  if(c.year && (c.year < state.yMin || c.year > state.yMax)) return false;
+  if(state.q){
+    const hay = norm([c.name, c.company, c.position, c.location, c.country, c.school, c.sector, c.fn, tagOf(c)].join(' '));
+    if(!hay.includes(norm(state.q))) return false;
+  }
+  return true;
+}
+
+function activeFilters(){
+  const out = [];
+  FILTER_KEYS.forEach(k => state.include[k].forEach(v => out.push({k, v, label: k === 'year' ? 'Connectés en ' + v : v})));
+  if(allYears.length && (state.yMin > allYears[0] || state.yMax < allYears[allYears.length - 1]))
+    out.push({k:'year', v:'', label: state.yMin === state.yMax ? `Connectés en ${state.yMin}` : `Connectés de ${state.yMin} à ${state.yMax}`});
+  if(state.q) out.push({k:'q', v:'', label:`« ${state.q} »`});
+  return out;
+}
+function clearFilter(k, v){
+  if(k === 'year'){ state.yMin = allYears[0]; state.yMax = allYears[allYears.length - 1]; syncYears(); }
+  else if(k === 'q'){ state.q = ''; $('#q').value = ''; }
+  else state.include[k].delete(v);
+  syncChips(); render();
+}
+function clearAll(){
+  FILTER_KEYS.forEach(k => state.include[k].clear());
+  state.q = ''; $('#q').value = '';
+  if(allYears.length){ state.yMin = allYears[0]; state.yMax = allYears[allYears.length - 1]; syncYears(); }
+  syncChips(); render();
+}
+function toggleInclude(k, v){
+  const s = state.include[k]; s.has(v) ? s.delete(v) : s.add(v);
+  syncChips(); render();
+}
+
+/* ---------- Classification par Claude (capacité sample) ----------
+   Remplace les estimations par mots-clés : secteur à partir du nom d’entreprise, fonction et séniorité à partir de l’intitulé de poste.
+   Seuls ces libellés sont envoyés (jamais les noms des contacts). Résultats gardés sur l’appareil. */
+const AI_KEY = 'synapses-ai-v1';
+let aiStore = {co:{}, pos:{}};
+try { const s = JSON.parse(localStorage.getItem(AI_KEY) || 'null'); if(s && s.co && s.pos) aiStore = s; } catch(e) {}
+const saveAI = () => { try { localStorage.setItem(AI_KEY, JSON.stringify(aiStore)); } catch(e) {} };
+/* Nouvelles fonctions (Juridique, Enseignement & recherche…) : les postes classés « Autre » par l’ancienne version seront redemandés */
+if(!(aiStore.v >= 2)){ for(const k of Object.keys(aiStore.pos)) if(aiStore.pos[k][0] === 'Autre') delete aiStore.pos[k]; aiStore.v = 2; saveAI(); }
+const SECTOR_LABELS = [...SECTORS.map(s => s[0]), 'Non classé'];
+const FN_LABELS = [...FUNCTIONS.map(f => f[0]), 'Autre'];
+const SEN_LABELS = SEN_ORDER.filter(s => s !== 'Non renseignée');
+let sampleFn = null, aiRun = null, aiHidden = false;
+(async () => {
+  try { if(window.claude && typeof window.claude.use === 'function') sampleFn = await window.claude.use('sample'); } catch(e) { sampleFn = null; }
+  if(sampleFn && contacts.length) renderBar(contacts.filter(pass));
+})();
+/* Corrections manuelles (prioritaires) et dictionnaire partagé entre utilisateurs de l’artefact (capacité db) */
+const FIX_KEY = 'synapses-fix-v1';
+let userFix = {co:{}, pos:{}};
+try { const s = JSON.parse(localStorage.getItem(FIX_KEY) || 'null'); if(s && s.co && s.pos) userFix = s; } catch(e) {}
+const saveFix = () => { try { localStorage.setItem(FIX_KEY, JSON.stringify(userFix)); } catch(e) {} };
+const sharedCo = {}, sharedPos = {};
+let dbRef = null, sharedLoaded = false;
+(async () => {
+  try { if(window.claude && typeof window.claude.use === 'function') dbRef = await window.claude.use('db'); } catch(e) { dbRef = null; }
+  if(dbRef && !isDemo && contacts.length) refreshShared();
+})();
+const bucketOf = k => { let h = 0; for(const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % 64; };
+/* Clé de champ sûre pour la base (un nom comme « F.initiatives » contient un point) : empreinte du libellé, libellé gardé dans la valeur */
+const safeKey = k => { let h = 2166136261; for(let i = 0; i < k.length; i++){ h ^= k.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return 'k' + h.toString(36) + '_' + k.length; };
+/* Les écritures partagées passent par une file unique : une correction faite pendant un envoi IA arrive toujours après lui */
+let pushChain = Promise.resolve();
+function pushShared(kind, entries){ pushChain = pushChain.then(() => pushNow(kind, entries)).catch(() => {}); return pushChain; }
+async function pushNow(kind, entries){
+  if(!dbRef) return;
+  const groups = {};
+  for(const [k, v] of Object.entries(entries)){ if(!k) continue; (groups[bucketOf(k)] = groups[bucketOf(k)] || {})[safeKey(k)] = {...v, k}; }
+  for(const [b, m] of Object.entries(groups)){
+    const ref = dbRef.doc(`dict/${kind}_${b}`);
+    /* Un classement IA n’écrase jamais une correction humaine déjà enregistrée (par toi ou un autre utilisateur) */
+    if(Object.values(m).some(v => v.src !== 'user')){
+      const cur = await ref.get().catch(() => null);
+      const stored = cur && cur.exists ? ((cur.data() || {}).m || {}) : {};
+      for(const k of Object.keys(m)) if(m[k].src !== 'user' && stored[k] && stored[k].src === 'user') delete m[k];
+      if(!Object.keys(m).length) continue;
+    }
+    try { await ref.update({m}); }
+    catch(e){
+      if(e && e.code === 'invalid_argument'){ try { await ref.set({m}); } catch(e2) { continue; } }
+      else if(e && (e.code === 'not_granted' || e.code === 'revoked' || e.code === 'capability_disabled')) return;
+      else continue; /* lecture seule ou souci ponctuel : on garde tout en local */
+    }
+  }
+}
+async function loadShared(){
+  if(!dbRef) return false;
+  try {
+    const snap = await dbRef.collection('dict').get();
+    snap.docs.forEach(d => {
+      const m = ((d.data() || {}).m) || {}, isCo = d.id.startsWith('co_');
+      for(const [sk, v] of Object.entries(m)){
+        if(!v) continue;
+        const k = v.k || sk;
+        if(isCo){ if(SECTOR_LABELS.includes(v.s)) sharedCo[k] = v; }
+        else if(FN_LABELS.includes(v.f) && SEN_LABELS.includes(v.n)) sharedPos[k] = v;
+      }
+    });
+    sharedLoaded = true;
+    return true;
+  } catch(e){ return false; }
+}
+async function refreshShared(){
+  const ok = await loadShared();
+  if(!ok || isDemo) return;
+  /* Rattrapage : on partage les classements et corrections déjà faits sur cet appareil mais absents du dictionnaire */
+  const upCo = {}, upPos = {};
+  for(const [k, s] of Object.entries(userFix.co)) if(!(sharedCo[k] && sharedCo[k].src === 'user' && sharedCo[k].s === s)){ upCo[k] = {s, src:'user'}; sharedCo[k] = upCo[k]; }
+  for(const [k, s] of Object.entries(aiStore.co)) if(!sharedCo[k]){ upCo[k] = {s, src:'ai'}; sharedCo[k] = upCo[k]; }
+  for(const [k, p] of Object.entries(userFix.pos)) if(!(sharedPos[k] && sharedPos[k].src === 'user' && sharedPos[k].f === p[0] && sharedPos[k].n === p[1])){ upPos[k] = {f:p[0], n:p[1], src:'user'}; sharedPos[k] = upPos[k]; }
+  for(const [k, p] of Object.entries(aiStore.pos)) if(!sharedPos[k]){ upPos[k] = {f:p[0], n:p[1], src:'ai', v:2}; sharedPos[k] = upPos[k]; }
+  if(Object.keys(upCo).length) pushShared('co', upCo);
+  if(Object.keys(upPos).length) pushShared('pos', upPos);
+  applyAI(contacts); setupColor(); syncChips(); render();
+  const known = new Set(contacts.filter(c => c.company && sharedCo[nkey(c.company)]).map(c => nkey(c.company))).size;
+  if(known) toast(`Dictionnaire partagé : ${known} de tes entreprises étaient déjà classées`);
+}
+/* Priorité : ta correction > correction partagée > dictionnaire intégré > mot-clé d’un secteur ajouté récemment > classement IA (local puis partagé) > mots-clés */
+const NEW_SECTORS = new Set(['Juridique','Finance & investissement','Immobilier & construction','Agroalimentaire','Tourisme, hôtellerie & restauration']);
+function resolveCo(k){
+  if(!k) return null;
+  const sc = sharedCo[k];
+  if(userFix.co[k]) return userFix.co[k];
+  if(sc && sc.src === 'user') return sc.s;
+  const b = builtinSector(k);
+  if(b) return b;
+  const kw = classify(SECTORS, k, null);
+  if(kw && NEW_SECTORS.has(kw)) return kw;
+  return aiStore.co[k] || (sc && sc.s) || null;
+}
+function resolvePos(k){
+  if(!k) return null;
+  const sp = sharedPos[k];
+  return userFix.pos[k] || (sp && sp.src === 'user' && [sp.f, sp.n]) || aiStore.pos[k] || (sp && !(sp.f === 'Autre' && !(sp.v >= 2)) && [sp.f, sp.n]) || null;
+}
+function applyAI(list){
+  let n = 0;
+  list.forEach(c => {
+    const co = resolveCo(nkey(c.company)), p = resolvePos(nkey(c.position));
+    if(co && !c.sectorGiven) c.sector = co;
+    if(p){ c.fn = p[0]; c.seniority = p[1]; }
+    if(co || p) n++;
+  });
+  return n;
+}
+/* Économie de tokens : on n’envoie pas à Claude ce que les mots-clés reconnaissent déjà de façon fiable.
+   Un mot-clé fort (« banque », « université », « avocats »…) suffit ; un mot vague (« tech », « digital », « partners »…) part à Claude. */
+const WEAK_CO = /\b(tech\w*|digital|data|labs?|apps?|platform|partners|advisory|studios?|ai|cloud|saas|group|groupe|services?|solutions?|consulting|conseil|agence|agency|\.io|\.ai)\b/g;
+const strongCo = name => !!classify(SECTORS, norm(name).replace(WEAK_CO, ' '), null);
+const strongPos = c => c.fn !== 'Autre' && c.seniority !== 'Confirmé' && c.seniority !== 'Non renseignée';
+function aiPending(){
+  const cos = new Set(), poss = new Set();
+  contacts.forEach(c => {
+    if(c.company && !resolveCo(nkey(c.company)) && !strongCo(c.company)) cos.add(c.company);
+    if(c.position && !resolvePos(nkey(c.position)) && !strongPos(c)) poss.add(c.position);
+  });
+  return {cos:[...cos], poss:[...poss]};
+}
+/* Liste déroulante de correction dans la fiche d’un contact */
+function fixSelect(kind, raw, opts, cur, label){
+  if(!raw) return esc(cur);
+  return `<select class="fixsel" data-fix="${kind}" data-raw="${esc(raw)}" aria-label="${esc(label)}">${opts.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+}
+/* Consignes avec des numéros de catégorie : plus fiable que de recopier un libellé exact (accents, majuscules, « et » au lieu de « & ») */
+const numbered = labels => labels.map((l, i) => `${i + 1} = ${l}`).join(' ; ');
+const coPrompt = items => `Tu classes des entreprises par secteur d’activité.
+Secteurs (réponds par le numéro) : ${numbered(SECTOR_LABELS)}.
+Règles : choisis le secteur principal de l’entreprise. Si tu ne la connais pas, déduis-le de son nom (école, banque, cabinet, constructeur…). Une société de services numériques ou un cabinet de conseil est Conseil ; un cabinet d’avocats ou de notaires est Juridique ; un fonds, une société de gestion ou de capital-risque est Finance & investissement ; un promoteur, une foncière, une agence immobilière ou une entreprise du BTP est Immobilier & construction ; un industriel de l’alimentation ou des boissons est Agroalimentaire ; un hôtel, un restaurant, un voyagiste ou un parc de loisirs est Tourisme, hôtellerie & restauration ; une école ou un organisme public est Secteur public & éducation. Réponds ${SECTOR_LABELS.length} (Non classé) seulement si c’est vraiment impossible (par exemple « Indépendant », « Confidentiel », « Freelance »).
+Réponds uniquement par un tableau JSON, un objet par entreprise, dans l’ordre : [{"i": 1, "s": 3}]
+
+Entreprises :
+${items.map((x, i) => `${i + 1}. ${x}`).join('\n')}`;
+const posPrompt = items => `Tu analyses des intitulés de poste, en français ou en anglais.
+Pour chacun, donne :
+- "f" : le numéro de la fonction : ${numbered(FN_LABELS)}.
+- "n" : le numéro de la séniorité : 1 = Junior (stagiaire, alternant, junior, débutant) ; 2 = Confirmé (contributeur sans encadrement) ; 3 = Senior (senior, lead, expert, principal, sans équipe) ; 4 = Manager (encadre une équipe) ; 5 = Direction (directeur, head of, VP) ; 6 = Dirigeant (CEO, DG, fondateur, président, associé dirigeant).
+Un « Product Manager » ou un « Chef de projet » sans équipe est Confirmé. Un indépendant ou freelance est Senior sauf indication contraire.
+Pour la fonction, sers-toi de tout indice (domaine, métier, spécialité, même en anglais ou abrégé). Réponds ${FN_LABELS.length} (Autre) seulement si l’intitulé ne contient vraiment aucun indice de métier (par exemple « Manager », « Responsable », « Associate » tout court).
+Réponds uniquement par un tableau JSON, un objet par intitulé, dans l’ordre : [{"i": 1, "f": 2, "n": 2}]
+
+Intitulés :
+${items.map((x, i) => `${i + 1}. ${x}`).join('\n')}`;
+/* Accepte un numéro (1, "1") ou un libellé approchant (« energie et industrie ») */
+const lblKey = s => norm(s).replace(/\bet\b|&/g, '').replace(/[^a-z0-9]/g, '');
+function pickLabel(v, labels){
+  if(v == null) return null;
+  if(typeof v === 'number' || /^\s*\d+\s*$/.test(String(v))) return labels[Number(v) - 1] || null;
+  const k = lblKey(String(v));
+  return labels.find(l => lblKey(l) === k) || null;
+}
+const asList = res => Array.isArray(res) ? res : (res && typeof res === 'object' ? (Object.values(res).find(Array.isArray) || []) : []);
+async function runAI(){
+  if(!sampleFn || aiRun) return;
+  const {cos, poss} = aiPending();
+  const chunk = (a, n) => { const out = []; for(let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
+  const jobs = [...chunk(cos, 120).map(items => ({kind:'co', items})), ...chunk(poss, 100).map(items => ({kind:'pos', items}))];
+  if(!jobs.length){ toast('Tout ton réseau est déjà classé par Claude'); return; }
+  aiRun = {done:0, total:jobs.length, ctl:new AbortController(), error:null};
+  const fresh = {co:{}, pos:{}};
+  renderBar(contacts.filter(pass));
+  for(const job of jobs){
+    if(aiRun.ctl.signal.aborted) break;
+    try {
+      const res = await sampleFn.json(job.kind === 'co' ? coPrompt(job.items) : posPrompt(job.items), {modelTier:'quick', signal:aiRun.ctl.signal});
+      asList(res).forEach(r => {
+        const it = job.items[Number(r && r.i) - 1];
+        if(!it) return;
+        if(job.kind === 'co'){ const s = pickLabel(r.s, SECTOR_LABELS); if(s){ aiStore.co[nkey(it)] = s; fresh.co[nkey(it)] = {s, src:'ai'}; } }
+        else { const f = pickLabel(r.f, FN_LABELS), sn = pickLabel(r.n, SEN_LABELS); if(f && sn){ aiStore.pos[nkey(it)] = [f, sn]; fresh.pos[nkey(it)] = {f, n:sn, src:'ai', v:2}; } }
+      });
+      saveAI();
+      /* Partage au fil de l’eau : chaque lot terminé est enregistré dans le dictionnaire, même si la suite est interrompue */
+      const batch = {};
+      for(const it of job.items){ const k = nkey(it), v = job.kind === 'co' ? fresh.co[k] : fresh.pos[k]; if(v && !((job.kind === 'co' ? sharedCo : sharedPos)[k] || {}).src?.startsWith('user')) batch[k] = v; }
+      if(Object.keys(batch).length){ Object.assign(job.kind === 'co' ? sharedCo : sharedPos, batch); pushShared(job.kind, batch); }
+    } catch(e){
+      const code = e && e.code;
+      if(code === 'cancelled') break;
+      if(code !== 'invalid_json' && code !== 'refused' && code !== 'empty_completion'){ aiRun.error = code || 'upstream_error'; break; }
+    }
+    aiRun.done++;
+    renderBar(contacts.filter(pass));
+  }
+  /* (les lots ont déjà été partagés au fil de l’eau) */
+  const err = aiRun.error, stopped = aiRun.ctl.signal.aborted;
+  aiRun = null;
+  const n = applyAI(contacts);
+  setupColor(); syncChips(); render();
+  if(err === 'not_granted' || err === 'sampling_disabled' || err === 'not_declared' || err === 'capability_disabled'){ aiHidden = true; renderBar(contacts.filter(pass)); toast('Claude n’est pas disponible ici : la classification par mots-clés est conservée'); }
+  else if(err === 'rate_limited') toast('Limite d’utilisation atteinte : relance plus tard, le travail déjà fait est gardé');
+  else if(err) toast('Classification interrompue : relance pour terminer, le travail déjà fait est gardé');
+  else if(!Object.keys(fresh.co).length && !Object.keys(fresh.pos).length && !stopped) toast('Claude n’a renvoyé aucun classement exploitable : réessaie dans un moment');
+  else toast(stopped ? 'Classification arrêtée : les résultats déjà obtenus sont appliqués' : `Classification terminée : ${Object.keys(fresh.co).length} entreprises et ${Object.keys(fresh.pos).length} intitulés classés par Claude`);
+}
+function aiCard(){
+  if(isDemo || !sampleFn || aiHidden || !contacts.length) return '';
+  if(aiRun){
+    const p = Math.round(aiRun.done / Math.max(1, aiRun.total) * 100);
+    return `<div class="demo" role="status"><div><strong>Claude classe ton réseau…</strong><span>Lot ${Math.min(aiRun.done + 1, aiRun.total)} sur ${aiRun.total}. Seuls les noms d’entreprises et les intitulés de poste sont envoyés, jamais les noms de tes contacts.</span><span class="aiprog"><span style="width:${p}%"></span></span></div>
+      <div class="demo-actions"><button class="btn sm" type="button" data-act="aistop">Arrêter</button></div></div>`;
+  }
+  const {cos, poss} = aiPending();
+  if(!cos.length && !poss.length) return '';
+  const nc = contacts.filter(c => c.sector === 'Non classé').length;
+  return `<div class="demo" role="note"><div><strong>Affine la classification avec Claude</strong><span>${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». Claude peut reconnaître les entreprises et lire les intitulés de poste pour estimer secteur, fonction et séniorité. Seuls les noms d’entreprises et les intitulés de poste lui sont envoyés.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="ai">Affiner avec Claude</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Masquer ce message">✕</button></div></div>`;
+}
+
+/* ---------- Top bar ---------- */
+function renderBar(vis){
+  const af = activeFilters();
+  const demo = isDemo && !demoHidden ? `<div class="demo" role="note">
+      <div><strong>Tu explores un réseau de démonstration</strong><span>150 contacts fictifs. Importe ton export LinkedIn avec le bouton en haut à droite pour voir ton propre réseau.</span></div>
+      <div class="demo-actions">
+        <button class="btn sm" type="button" data-act="help">Comment l’obtenir</button>
+        <button class="btn icon-btn sm" type="button" data-act="dismiss" aria-label="Masquer ce message">✕</button>
+      </div></div>` : '';
+  $('#bar').innerHTML = `${demo}${aiCard()}<div class="toprow">
+    <span class="count"><strong>${vis.length}</strong> contact${vis.length > 1 ? 's' : ''}${vis.length !== contacts.length ? ` sur ${contacts.length}` : ''}</span>
+    ${af.map(f => `<button class="afchip" type="button" data-clear="${f.k}" data-v="${esc(f.v)}" aria-label="Retirer le filtre ${esc(f.label)}">${esc(f.label)}<span class="x" aria-hidden="true">✕</span></button>`).join('')}
+    ${af.length > 1 ? '<button class="linkbtn" type="button" data-act="clearall">Tout effacer</button>' : ''}
+    <div class="viewtoggle" role="group" aria-label="Mode d’affichage">
+      <button type="button" data-view="graph" aria-pressed="${state.view === 'graph'}">Graphe</button>
+      <button type="button" data-view="list" aria-pressed="${state.view === 'list'}">Liste</button>
+    </div></div>`;
+  $('#fabCount').textContent = af.length; $('#fabCount').hidden = !af.length;
+  $('#clearAllSide').hidden = !af.length;
+  $('#closePanel').textContent = `Voir ${vis.length} contact${vis.length > 1 ? 's' : ''}`;
+}
+
+/* ---------- Graph ---------- */
+const canvas = $('#canvas');
+const svg = d3.select('#graph');
+const root = svg.append('g');
+const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append('g'), gGauge = root.append('g'), gNodes = root.append('g'), gCounts = root.append('g'), gBadges = root.append('g'), gLabels = root.append('g');
+let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
+function syncTopN(total){
+  const f = document.getElementById('fld-topn'), r = document.getElementById('topN');
+  if(!f || !r) return;
+  f.hidden = total <= 6;
+  r.max = Math.max(3, total);
+  const n = Math.min(state.topN, total);
+  r.value = n;
+  document.getElementById('topNVal').textContent = n >= total ? `toutes (${total})` : `${n} sur ${total}`;
+}
+function updateOverview(){ const b = document.getElementById('overview'); if(b) b.hidden = state.view !== 'graph' || zk <= fitK * 1.2; }
+const zoom = d3.zoom().scaleExtent([0.15, 5]).on('zoom', e => { root.attr('transform', e.transform); zk = e.transform.k; styleLabels(); hideTip(); updateOverview(); });
+svg.call(zoom).on('dblclick.zoom', null).on('click', e => { if(e.target === svg.node()) clearSelection(); });
+
+let nodes = [], links = [], linkSel = null, nodeSel = null, labelSel = null, countSel = null, badgeSel = null, needFit = true;
+let gathered = [], collSel = null, tipSel = null, tipHub = null, tipR = 0, collLbl = null, collR = 0, selBlob = null;
+/* Sélection d’un contact : il part au bout de sa branche, ses collègues forment un cercle autour de lui, puis tout revient en place */
+function releaseColleagues(){
+  if(!gathered.length && !tipHub) return;
+  gathered.forEach(n => { if(n.homeX != null){ n.ax = n.homeX; n.ay = n.homeY; n.homeX = n.homeY = null; } });
+  gathered = [];
+  if(tipHub){ tipHub.extra = 0; tipHub = null; }
+  if(selBlob){ selBlob = null; drawRings(); }
+  gColl.selectAll('*').remove(); collSel = null; tipSel = null; collLbl = null;
+  setXY(); sim.alpha(0.5).restart(); positionLabels();
+}
+function gatherColleagues(sn, cn){
+  if(!sn || state.view !== 'graph') return;
+  const hn = nodes.find(n => n.id === sn.hub);
+  const r = sn.r, step = 2 * r + 5;
+  const R0 = cn.length ? Math.max(sn.r + r + 12, cn.length * step / (2 * Math.PI)) : 0;
+  /* Le profil reste dans son cluster : il se place au bout de la branche de sa grappe (son centre), ses collègues l’entourent */
+  if(hn && hn.blobs && hn.blobs.length){
+    const lv = DIMS[state.colorBy].get(sn.c);
+    const s = hn.blobs.find(b => b.lv === lv);
+    if(s){ sn.homeX = sn.ax; sn.homeY = sn.ay; sn.ax = hn.ax + s.cx; sn.ay = hn.ay + s.cy; gathered.push(sn); selBlob = {key:hn.id + '|' + s.lv, r:Math.max(s.br, R0 + r + 5)}; }
+  }
+  const a0 = -Math.PI / 2;
+  /* Collègues classés par niveau (ordre de la légende : Junior → Dirigeant pour la séniorité), depuis midi dans le sens horaire */
+  const cget = DIMS[state.colorBy].get;
+  cn = [...cn].sort((p, q) => (colorDomain.indexOf(cget(p.c)) - colorDomain.indexOf(cget(q.c))) || p.c.name.localeCompare(q.c.name, 'fr'));
+  cn.forEach((n, i) => {
+    const a = a0 + i * 2 * Math.PI / cn.length;
+    n.homeX = n.ax; n.homeY = n.ay;
+    n.ax = sn.ax + R0 * Math.cos(a); n.ay = sn.ay + R0 * Math.sin(a);
+    gathered.push(n);
+  });
+  collSel = gColl.selectAll('line.coll').data(cn, d => d.id).join('line').attr('class', 'coll');
+  if(cn.length){
+    collR = R0 + r;
+    collLbl = gColl.append('text').attr('class', 'colllbl').text(`${cn.length} collègue${cn.length > 1 ? 's' : ''} chez ${sn.c.company}`);
+    styleLabels();
+  }
+  setXY(); sim.alpha(0.7).restart(); positionLabels(); drawRings();
+}
+const pos = new Map();
+const W = () => svg.node().clientWidth || 600, H = () => svg.node().clientHeight || 500;
+const sim = d3.forceSimulation().alphaDecay(0.035).on('tick', ticked);
+
+const drag = d3.drag()
+  .filter((e, d) => !e.ctrlKey && !e.button && d.type !== 'me')
+  .on('start', (e, d) => { if(!e.active) sim.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; hideTip(); })
+  .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+  .on('end', (e, d) => { if(!e.active) sim.alphaTarget(0); d.fx = d.type === 'hub' ? d.ax : null; d.fy = d.type === 'hub' ? d.ay : null; });
+
+function positionLabels(){
+  const k = Math.max(zk, 0.35);
+  /* Noms horizontaux tant qu’ils ne se touchent pas ; sinon, noms dans l’axe de leur branche (mode radial) */
+  if(labelSel) labelSel.each(function(d){
+    const a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0) + 8 / k;
+    const x = d.x + c * R, y = d.y + s * R, el = d3.select(this).attr('x', x).attr('y', y);
+    if(labelRadial){ const flip = c < 0; el.attr('transform', `rotate(${a * 180 / Math.PI + (flip ? 180 : 0)} ${x} ${y})`).style('text-anchor', flip ? 'end' : 'start').style('dominant-baseline', 'central'); }
+    else el.attr('transform', null).style('text-anchor', c > 0.3 ? 'start' : c < -0.3 ? 'end' : 'middle').style('dominant-baseline', s > 0.3 ? 'hanging' : s < -0.3 ? 'auto' : 'central');
+  });
+  if(countSel) countSel.attr('x', d => d.x).attr('y', d => d.y).selectAll('tspan').attr('x', function(){ return this.parentNode.__data__.x; });
+  if(badgeSel) badgeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+}
+/* Géométrie d’un nom : point d’ancrage dans le graphe et largeur réelle à l’écran */
+function lblGeo(el){
+  const d = el.__data__, a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0);
+  let w = 0; try { w = el.getComputedTextLength() * zk; } catch(e) { w = 0; }
+  if(!w || !isFinite(w)) w = (el.textContent || '').length * 7.4;
+  return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w};
+}
+/* Boîte d’un nom en pixels d’écran, relative à son ancrage, en mode horizontal ou radial */
+function lblOffsets(g, radial){
+  const ox = g.c * 8, oy = g.s * 8;
+  if(radial){ const ex = ox + g.c * g.w, ey = oy + g.s * g.w; return {l:Math.min(ox, ex) - 7, r:Math.max(ox, ex) + 7, t:Math.min(oy, ey) - 7, b:Math.max(oy, ey) + 7}; }
+  const hh = 17, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -g.w : -g.w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
+  return {l:ox + l, r:ox + l + g.w, t:oy + t, b:oy + t + hh};
+}
+/* Vrai si deux noms horizontaux se chevaucheraient avec ce zoom */
+function hClash(geos, tr){
+  const bx = geos.map(g => { const o = lblOffsets(g, false), sx = tr.x + tr.k * g.bx, sy = tr.y + tr.k * g.by; return {L:sx + o.l, R:sx + o.r, T:sy + o.t, B:sy + o.b}; });
+  for(let i = 0; i < bx.length; i++) for(let j = i + 1; j < bx.length; j++){ const a = bx[i], b = bx[j]; if(a.L < b.R + 3 && b.L < a.R + 3 && a.T < b.B + 2 && b.T < a.B + 2) return true; }
+  return false;
+}
+function layoutLabels(){
+  if(!labelSel) return;
+  const els = labelSel.nodes();
+  els.forEach(el => { el.style.display = ''; });
+  const tr = d3.zoomTransform(svg.node());
+  const geos = els.map(lblGeo);
+  labelRadial = hClash(geos, tr);
+  if(!labelRadial) return;
+  /* Garde-fou en cas de très fort dézoom : si deux noms radiaux partent trop près, on masque celui du plus petit groupe */
+  const anchor = g => [tr.x + tr.k * g.bx + g.c * 8, tr.y + tr.k * g.by + g.s * 8];
+  const order = geos.map((g, i) => i).sort((i, j) => (geos[j].d.id === state.selected) - (geos[i].d.id === state.selected) || geos[j].d.count - geos[i].d.count);
+  const kept = [];
+  order.forEach(i => { const p = anchor(geos[i]); if(kept.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < 16)) els[i].style.display = 'none'; else kept.push(p); });
+}
+function styleLabels(){
+  if(!labelSel) return;
+  const k = Math.max(zk, 0.35);
+  labelSel.style('font-size', `${13 / k}px`).style('stroke-width', `${4 / k}px`);
+  gColl.selectAll('text.colllbl').style('font-size', `${12 / k}px`).style('stroke-width', `${4 / k}px`);
+  /* Chiffres des groupes : taille compensée au dézoom, sans déborder du cercle */
+  if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => `${Math.min(d.r * 1.15, Math.max(Math.min(13, Math.max(9.5, d.r * 0.8)), 11 / k))}px`);
+  layoutLabels();
+  positionLabels();
+}
+function ticked(){
+  if(linkSel) linkSel.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+  if(nodeSel) nodeSel.attr('cx', d => d.x).attr('cy', d => d.y);
+  if(collSel){ const sn = nodes.find(n => n.id === state.selected); if(sn) collSel.attr('x1', sn.x).attr('y1', sn.y).attr('x2', d => d.x).attr('y2', d => d.y); }
+  if(collLbl){ const sn = nodes.find(n => n.id === state.selected); if(sn) collLbl.attr('x', sn.x).attr('y', sn.y + collR + 16 / Math.max(zk, 0.35)); }
+  if(tipSel && tipHub){ const sn = nodes.find(n => n.id === state.selected); if(sn) tipSel.attr('x1', tipHub.x).attr('y1', tipHub.y).attr('x2', sn.x).attr('y2', sn.y); }
+  positionLabels();
+  if(needFit && sim.alpha() < 0.06){ needFit = false; if(!state.selected) fit(); }
+}
+
+/* Branches réparties à angles égaux autour de « Moi », du plus petit au plus grand groupe, dans le sens horaire depuis midi */
+function layoutHubs(hubs, cx, cy, meR){
+  const sorted = [...hubs].sort((a, b) => a.count - b.count || a.key.localeCompare(b.key, 'fr'));
+  const n = sorted.length;
+  const GAP = 10, LABEL = 4;
+  const room = hn => hn.outer + LABEL;
+  const [cmin, cmax] = d3.extent(sorted, hn => Math.sqrt(hn.count));
+  /* Au-delà de 12 branches : quinconce, une branche sur deux courte, l’autre longue. Angles égaux et ordre croissant conservés. */
+  const stagger = false; /* quinconce désactivée : toutes les branches sur un seul cercle */
+  const th = 2 * Math.PI / Math.max(n, 1);
+  sorted.forEach((hn, i) => {
+    hn.angle = -Math.PI / 2 + i * th; hn.rank = i + 1;
+    hn.weight = cmax > cmin ? (Math.sqrt(hn.count) - cmin) / (cmax - cmin) : 1;
+    /* Nombre impair : la seule paire voisine sur le même anneau est celle des deux plus petits groupes */
+    hn.tier = !stagger ? 0 : n % 2 === 0 ? i % 2 : (i === 0 ? 0 : (i + 1) % 2);
+  });
+  const tierR = [0, 0];
+  const maxRoomT = [0, 1].map(t => d3.max(sorted.filter(hn => hn.tier === t), room) || 0);
+  for(const t of [0, 1]){
+    const ring = sorted.filter(hn => hn.tier === t);
+    if(!ring.length) continue;
+    let Rp = 0;
+    if(ring.length > 1) for(let i = 0; i < ring.length; i++){
+      const a = ring[i], b = ring[(i + 1) % ring.length];
+      let dth = ((b.angle - a.angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      if(dth === 0) dth = 2 * Math.PI;
+      Rp = Math.max(Rp, (room(a) + room(b) + GAP) / (2 * Math.sin(dth / 2)));
+    }
+    tierR[t] = Math.max(Rp, meR + maxRoomT[t] + 14);
+  }
+  const minSep = stagger ? (maxRoomT[0] + maxRoomT[1]) * 0.6 : 0;
+  const keepOrder = () => { if(stagger) tierR[1] = Math.max(tierR[1], tierR[0] + minSep); };
+  keepOrder();
+  const place = hn => { hn.ri = tierR[hn.tier]; hn.ax = cx + hn.ri * Math.cos(hn.angle); hn.ay = cy + hn.ri * Math.sin(hn.angle); hn.fx = hn.ax; hn.fy = hn.ay; };
+  sorted.forEach(place);
+  /* Passe anti-chevauchement : on agrandit l’anneau concerné (toutes ses branches gardent la même longueur) */
+  for(let it = 0; it < 400; it++){
+    const incT = [0, 0];
+    for(let i = 0; i < n; i++) for(let j = i + 1; j < n; j++){
+      const a = sorted[i], b = sorted[j];
+      const need = room(a) + room(b) + GAP, d = Math.hypot(a.ax - b.ax, a.ay - b.ay);
+      if(d < need){ const t = a.tier === b.tier ? a.tier : 1; incT[t] = Math.max(incT[t], Math.min(need - d, 40) + 1); }
+    }
+    if(!incT[0] && !incT[1]) break;
+    tierR[0] += incT[0]; tierR[1] += incT[1];
+    keepOrder(); sorted.forEach(place);
+  }
+}
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+/* Contacts disposés en cercle(s) autour de leur groupe, triés par couleur puis par nom */
+function ringSlots(count, r0, cr){
+  const step = 2 * cr + 4, out = [];
+  let rad = r0, ring = 0;
+  while(out.length < count){
+    const cap = Math.max(6, Math.floor(2 * Math.PI * rad / step));
+    const n = Math.min(cap, count - out.length);
+    for(let j = 0; j < n; j++) out.push({rad, ang:-Math.PI / 2 + j * 2 * Math.PI / n + (ring % 2 ? Math.PI / n : 0)});
+    rad += step; ring++;
+  }
+  return out;
+}
+function applyLayout(){
+  const cx = W() / 2, cy = H() / 2;
+  const me = nodes.find(n => n.type === 'me');
+  if(me){ me.fx = cx; me.fy = cy; }
+  const hubs = nodes.filter(n => n.type === 'hub');
+  const groups = d3.group(nodes.filter(n => n.type === 'c'), n => n.hub);
+  const cget = DIMS[state.colorBy].get;
+  const byLevel = state.groupBy !== state.colorBy;
+  /* Seuls les niveaux présents après filtrage ont un cercle : pas d’anneaux vides inutiles */
+  const present = new Set(nodes.filter(n => n.type === 'c').map(n => cget(n.c)));
+  const levels = byLevel ? colorDomain.filter(v => present.has(v)) : ['all'];
+  const lvOf = byLevel ? m => cget(m.c) : () => 'all';
+  hubs.forEach(hn => {
+    const ms = groups.get(hn.id) || [];
+    const cr = ms.length ? ms[0].r : 5.5;
+    const step = 2 * cr + 1.5;
+    const byLvl = d3.group(ms, lvOf);
+    const ordered = [], local = [], blobs = [];
+    const byName = arr => arr.sort((a, b) => a.c.name.localeCompare(b.c.name, 'fr'));
+    const subs = levels.map(lv => ({lv, arr:byName(byLvl.get(lv) || [])})).filter(s => s.arr.length)
+      .sort((a, b) => a.arr.length - b.arr.length || levels.indexOf(a.lv) - levels.indexOf(b.lv));
+    const c = step * 0.7;
+    /* Même avec un seul niveau (ex. filtre « Manager »), les contacts forment une vraie grappe reliée au groupe :
+       la sélection d’un profil le place toujours au centre de sa grappe */
+    if(!byLevel || subs.length === 0){
+      /* Un seul niveau : contacts serrés en tournesol autour du groupe */
+      const arr = subs.length ? subs[0].arr : [];
+      const r0 = hn.r + 10 + cr, A = step * step * 1.1;
+      arr.forEach((m, i) => { const rr = Math.sqrt(r0 * r0 + (i + 0.5) * A / Math.PI), th = i * GOLDEN; local.push({x:rr * Math.cos(th), y:rr * Math.sin(th)}); ordered.push(m); });
+      hn.outer = (arr.length ? Math.sqrt(r0 * r0 + arr.length * A / Math.PI) : hn.r) + cr;
+    } else {
+      /* Plusieurs niveaux : une grappe homogène par niveau, disposées autour du groupe */
+      const g = 10, pad = 4; /* g : espace entre deux grappes ; pad : marge dessinée autour des contacts d’une grappe */
+      subs.forEach(s => { s.sr = c * Math.sqrt(Math.max(0.5, s.arr.length - 0.5)) + cr; s.br = s.sr + pad; });
+      const tot = d3.sum(subs, s => s.br + g / 2);
+      /* La grappe la plus proche reste à distance de la jauge du groupe (rayon + 5,5 px) */
+      let D = hn.r + 12 + d3.max(subs, s => s.br);
+      subs.forEach(s => { s.th = 2 * Math.PI * (s.br + g / 2) / tot; if(s.th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(s.th / 2)); });
+      let a0 = -Math.PI / 2 - subs[0].th / 2;
+      subs.forEach(s => {
+        const mid = a0 + s.th / 2; a0 += s.th;
+        s.cx = D * Math.cos(mid); s.cy = D * Math.sin(mid);
+        s.arr.forEach((m, i) => { const rr = c * Math.sqrt(i + 0.5), th = i * GOLDEN; local.push({x:s.cx + rr * Math.cos(th), y:s.cy + rr * Math.sin(th)}); ordered.push(m); });
+        blobs.push(s);
+      });
+      hn.outer = D + d3.max(subs, s => s.br) + 1;
+    }
+    hn.members = ordered; hn.local = local; hn.blobs = blobs;
+  });
+  layoutHubs(hubs, cx, cy, me ? me.r : 26);
+  hubs.forEach(hn => {
+    /* Grappes ordonnées comme une horloge : la plus petite à midi, puis de plus en plus grosses dans le sens horaire */
+    const rot = 0;
+    const cs = Math.cos(rot), sn = Math.sin(rot);
+    hn.rot = rot;
+    hn.members.forEach((n, i) => {
+      const p = hn.local[i];
+      n.ax = hn.ax + p.x * cs - p.y * sn;
+      n.ay = hn.ay + p.x * sn + p.y * cs;
+      if(!pos.has(n.id)){ n.x = n.ax; n.y = n.ay; }
+    });
+  });
+}
+function drawRings(){
+  const data = nodes.filter(n => n.type === 'hub').flatMap(hn => (hn.blobs || []).map(s => {
+    const cs = Math.cos(hn.rot || 0), sn = Math.sin(hn.rot || 0);
+    return {key:hn.id + '|' + s.lv, hub:hn, lv:s.lv, rad:(selBlob && selBlob.key === hn.id + '|' + s.lv ? selBlob.r : s.br), x:hn.ax + s.cx * cs - s.cy * sn, y:hn.ay + s.cx * sn + s.cy * cs};
+  }));
+  gRings.selectAll('line').data(data, d => d.key).join('line').classed('spoke', true)
+    .attr('x1', d => d.hub.ax).attr('y1', d => d.hub.ay).attr('x2', d => d.x).attr('y2', d => d.y);
+  gRings.selectAll('circle').data(data, d => d.key).join('circle').classed('blob', true)
+    .attr('r', d => d.rad).attr('cx', d => d.x).attr('cy', d => d.y)
+    .style('fill', d => colorFn(d.lv)).style('stroke', d => colorFn(d.lv));
+  if(selBlob) gRings.selectAll('circle.blob').filter(d => d.key === selBlob.key).raise();
+  /* Jauge circulaire autour de chaque groupe : sa part des contacts affichés */
+  const hubs = nodes.filter(n => n.type === 'hub');
+  const G = hn => hn.r + 4;
+  gGauge.selectAll('circle.track').data(hubs, d => d.id).join('circle').attr('class', 'track')
+    .attr('r', G).attr('cx', d => d.ax).attr('cy', d => d.ay);
+  gGauge.selectAll('circle.gauge').data(hubs, d => d.id).join('circle').attr('class', 'gauge')
+    .attr('r', G).attr('cx', d => d.ax).attr('cy', d => d.ay)
+    .attr('stroke-dasharray', d => { const C = 2 * Math.PI * G(d); return `${Math.max(0.5, d.share * C)} ${C}`; })
+    .attr('transform', d => `rotate(-90 ${d.ax} ${d.ay})`);
+}
+function setXY(){
+  sim.force('x', d3.forceX(d => d.type === 'c' ? d.ax : W() / 2).strength(d => d.type === 'c' ? 0.3 : 0))
+     .force('y', d3.forceY(d => d.type === 'c' ? d.ay : H() / 2).strength(d => d.type === 'c' ? 0.3 : 0));
+}
+
+function renderGraph(vis){
+  gathered = []; tipHub = null; tipSel = null; collLbl = null; selBlob = null; gColl.selectAll('*').remove(); collSel = null;
+  nodes.forEach(n => pos.set(n.id, {x:n.x, y:n.y}));
+  const dim = DIMS[state.groupBy];
+  const raw = d3.rollup(vis, v => v.length, dim.get);
+  const min = dim.minHub || 1, other = dim.other || 'Autres';
+  /* Top N : seuls les N plus grands groupes ont leur branche, les autres sont réunis dans « Autres » */
+  const eligible = [...raw].filter(([k, n]) => n >= min).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr'));
+  const keepKeys = new Set(eligible.slice(0, state.topN).map(([k]) => k));
+  const otherKeys = [...raw.keys()].filter(k => !keepKeys.has(k));
+  const hubOf = c => { const k = dim.get(c); return keepKeys.has(k) ? k : other; };
+  const hubCount = new Map();
+  vis.forEach(c => { const k = hubOf(c); hubCount.set(k, (hubCount.get(k) || 0) + 1); });
+
+  const w = W(), h = H();
+  const keep = o => { const p = pos.get(o.id); if(p){ o.x = p.x; o.y = p.y; } else { o.x = w / 2 + (Math.random() - .5) * 240; o.y = h / 2 + (Math.random() - .5) * 240; } return o; };
+  const hubNodes = [...hubCount].map(([k, n]) => keep({id:'h:' + k, type:'hub', key:k, count:n, share:n / Math.max(1, vis.length), r:11 + Math.sqrt(n) * 2.6}));
+  const otherHub = hubNodes.find(hn => hn.key === other && !keepKeys.has(other));
+  if(otherHub) otherHub.others = otherKeys.map(k => [k, raw.get(k)]).sort((a, b) => b[1] - a[1]);
+  [...hubNodes].sort((a, b) => b.count - a.count).forEach((hn, i) => { hn.rankDesc = i; });
+  labelLimit = false; /* chaque branche affiche toujours son nom */
+  syncTopN(eligible.length);
+  const cr = coarse ? 7 : 5.5;
+  const cNodes = vis.map(c => keep({id:'c:' + c.id, type:'c', c, hub:'h:' + hubOf(c), r:cr}));
+  const me = {id:'me', type:'me', r:meProfile.name ? 38 : 26, x:w / 2, y:h / 2, fx:w / 2, fy:h / 2};
+  nodes = [me, ...hubNodes, ...cNodes];
+  applyLayout();
+  drawRings();
+  links = [...hubNodes.map(hn => ({key:'me>' + hn.id, source:'me', target:hn.id, me:true})), ...cNodes.map(n => ({key:n.id, source:n.id, target:n.hub}))];
+  const sameDim = state.groupBy === state.colorBy;
+  const logoMode = state.groupBy === 'company', otherKey = DIMS.company.other;
+
+  linkSel = gLinks.selectAll('line').data(links, d => d.key).join('line').attr('class', d => d.me ? 'link me' : (sameDim ? 'link' : 'link sub'))
+    .style('stroke-width', d => d.me ? `${1.2 + 2.8 * ((hubNodes.find(hn => 'me>' + hn.id === d.key) || {}).weight || 0)}px` : null);
+  nodeSel = gNodes.selectAll('circle').data(nodes, d => d.id)
+    .join(enter => enter.append('circle').call(drag)
+      .on('click', onNodeClick)
+      .on('pointerenter pointermove', showTip)
+      .on('pointerleave', hideTip))
+    .attr('r', d => d.r)
+    .attr('class', d => (d.type === 'hub' ? 'hub' : d.type === 'me' ? 'me' : 'contact') + (d.id === state.selected ? ' sel' : ''))
+    .attr('fill', d => d.type === 'c' ? colorOf(d.c) : null)
+    .style('stroke', d => d.type === 'hub' && sameDim ? colorFn(d.key) : null)
+    .style('fill', d => d.type !== 'hub' ? null : logoMode ? 'var(--surface)' : CM_OK ? `color-mix(in srgb, var(--accent) ${Math.round(6 + (d.weight || 0) * 32)}%, var(--hub))` : null)
+    .style('stroke-width', d => d.type === 'hub' && sameDim ? '3px' : null);
+  nodeSel.filter(d => d.type === 'hub').raise();
+  nodeSel.filter(d => d.type === 'me').raise();
+
+  countSel = gCounts.selectAll('text').data([me, ...(logoMode ? [] : hubNodes)], d => d.id).join('text')
+    .attr('class', d => d.type === 'me' ? 'hubCount meText' : 'hubCount')
+    .style('fill', null)
+    .style('font-size', d => d.type === 'me' ? (meProfile.name ? '11.5px' : '14px') : `${Math.min(13, Math.max(9.5, d.r * 0.8))}px`)
+    .each(function(d){
+      const t = d3.select(this);
+      t.selectAll('tspan').remove();
+      if(d.type !== 'me'){ t.text(d.count); return; }
+      const nm = (meProfile.name || '').trim();
+      if(!nm){ t.text('Moi'); return; }
+      t.text(null);
+      const parts = nm.split(/\s+/), cut = s => s.length > 12 ? s.slice(0, 11) + '…' : s;
+      const l2 = parts.slice(1).join(' ');
+      t.append('tspan').attr('x', d.x).attr('dy', l2 ? '-0.6em' : 0).text(cut(parts[0]));
+      if(l2) t.append('tspan').attr('x', d.x).attr('dy', '1.2em').text(cut(l2));
+    });
+  const labelled = hubNodes;
+  labelSel = gLabels.selectAll('text').data(labelled, d => d.id).join('text').attr('class', 'hubLabel')
+    .each(function(d){
+      const t = d3.select(this); t.text(null);
+      const nm = d.others ? `${d.key} (${d.others.length})` : d.key;
+      t.append('tspan').text(nm.length > 30 ? nm.slice(0, 29) + '…' : nm);
+      t.append('tspan').attr('class', 'lblPct').text(' ' + pct(d.count, vis.length));
+    });
+  styleLabels();
+
+  /* Mode entreprise : un badge monogramme coloré par entreprise, avec le nombre de contacts en pastille */
+  badgeSel = gBadges.selectAll('g.badge').data(logoMode ? hubNodes : [], d => d.id)
+    .join(enter => { const g = enter.append('g').attr('class', 'badge'); g.append('rect'); g.append('text').attr('class', 'mono'); g.append('rect').attr('class', 'lbg').style('display', 'none'); g.append('image').attr('class', 'logo').style('display', 'none'); g.append('circle').attr('class', 'cnt'); g.append('text').attr('class', 'cntText'); return g; });
+  badgeSel.select('rect').attr('x', d => -d.r * 0.82).attr('y', d => -d.r * 0.82).attr('width', d => d.r * 1.64).attr('height', d => d.r * 1.64).attr('rx', d => d.r * 0.49)
+    .style('fill', d => d.key === otherKey ? 'var(--muted)' : brandColor(d.key));
+  badgeSel.select('text.mono').text(d => d.key === otherKey ? '…' : mono(d.key)).attr('y', d => -d.r * 0.12)
+    .style('font-size', d => `${Math.max(7, d.r * (mono(d.key).length > 2 ? 0.5 : 0.66))}px`);
+  badgeSel.select('circle.cnt').attr('cx', 0).attr('cy', d => d.r * 0.62).attr('r', 7);
+  badgeSel.select('text.cntText').attr('x', 0).attr('y', d => d.r * 0.62).text(d => d.count);
+  /* Vrai logo par-dessus le badge si le service est configuré ; en cas d’échec, le monogramme reste visible */
+  badgeSel.each(function(d){
+    const g = d3.select(this), url = d.key === otherKey ? '' : logoUrl(d.key);
+    const img = g.select('image.logo'), bg = g.select('rect.lbg');
+    bg.attr('x', -d.r * 0.82).attr('y', -d.r * 0.82).attr('width', d.r * 1.64).attr('height', d.r * 1.64).attr('rx', d.r * 0.49);
+    img.attr('x', -d.r * 0.58).attr('y', -d.r * 0.66).attr('width', d.r * 1.16).attr('height', d.r * 1.0).attr('preserveAspectRatio', 'xMidYMid meet');
+    if(!url){ img.attr('href', null).style('display', 'none'); bg.style('display', 'none'); return; }
+    if(img.attr('href') === url) return;
+    img.style('display', 'none'); bg.style('display', 'none');
+    img.on('load', () => { img.style('display', null); bg.style('display', null); })
+       .on('error', () => { logoFails.add(domainOf(d.key)); img.attr('href', null).style('display', 'none'); bg.style('display', 'none'); })
+       .attr('href', url);
+  });
+  positionLabels();
+  sim.nodes(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).strength(0))
+    .force('charge', null)
+    .force('collide', null);
+  setXY();
+  sim.alpha(pos.size ? 0.6 : 1).restart();
+}
+
+/* Zone réellement visible du graphe : on retire la place occupée par la légende (à droite ou en bas, selon ce qui laisse le plus d’espace) */
+function viewport(){
+  const w = W(), h = H();
+  const lg = document.getElementById('legend');
+  if(!lg || lg.hidden || state.view !== 'graph' || !lg.offsetWidth) return {x:0, y:0, w, h};
+  const lw = lg.offsetWidth + 28, lh = lg.offsetHeight + 28;
+  const a = {x:0, y:0, w:Math.max(160, w - lw), h}, b = {x:0, y:0, w, h:Math.max(160, h - lh)};
+  return Math.min(a.w, a.h) >= Math.min(b.w, b.h) ? a : b;
+}
+/* Boîte de chaque nom de groupe : point d’ancrage dans le graphe + décalage et largeur en pixels d’écran */
+function labelBoxes(radial){
+  if(!labelSel) return [];
+  return labelSel.nodes().map(el => { const g = lblGeo(el), o = lblOffsets(g, radial); return {x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}; });
+}
+function fit(){
+  if(!nodes.length || state.view !== 'graph') return;
+  const px = n => n.ax ?? n.fx ?? n.x, py = n => n.ay ?? n.fy ?? n.y;
+  /* Cadrage qui inclut les noms des groupes (largeur réelle à l’écran) : aucun nom coupé au bord */
+  const vb = viewport();
+  const base = nodes.map(n => ({x0:px(n) - n.r, x1:px(n) + n.r, y0:py(n) - n.r, y1:py(n) + n.r, l:0, r:0, t:0, b:0}));
+  const M = 14;
+  const solve = radial => {
+    const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b})));
+    const ext = k => {
+      let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
+      for(const it of items){ L = Math.min(L, k * it.x0 + it.l); R = Math.max(R, k * it.x1 + it.r); T = Math.min(T, k * it.y0 + it.t); B = Math.max(B, k * it.y1 + it.b); }
+      return {L, R, T, B};
+    };
+    const ok = k => { const e = ext(k); return e.R - e.L <= vb.w - 2 * M && e.B - e.T <= vb.h - 2 * M; };
+    let lo = 0.05, hi = 2.6;
+    if(ok(hi)) lo = hi; else for(let i = 0; i < 26; i++){ const mid = (lo + hi) / 2; if(ok(mid)) lo = mid; else hi = mid; }
+    const e = ext(lo);
+    return d3.zoomIdentity.translate(vb.x + (vb.w - (e.R - e.L)) / 2 - e.L, vb.y + (vb.h - (e.B - e.T)) / 2 - e.T).scale(lo);
+  };
+  /* Cadrage avec noms horizontaux ; s’ils se chevauchent à ce zoom, cadrage pour des noms radiaux */
+  let t = solve(false);
+  if(labelSel && hClash(labelSel.nodes().map(lblGeo), t)) t = solve(true);
+  fitK = t.k;
+  (reduceMotion ? svg : svg.transition().duration(600)).call(zoom.transform, t);
+}
+
+function focus(ids){
+  if(!nodeSel || state.view !== 'graph') return;
+  ids.add('me');
+  nodeSel.classed('dim', n => !ids.has(n.id));
+  linkSel.classed('dim', l => !(ids.has(l.source.id) && ids.has(l.target.id)));
+  labelSel.classed('dim', n => !ids.has(n.id));
+  countSel.classed('dim', n => !ids.has(n.id));
+  if(badgeSel) badgeSel.classed('dim', n => !ids.has(n.id));
+  /* Grappes : seule celle du profil sélectionné (ou celles du groupe sélectionné) restent visibles ;
+     les autres membres de la grappe du profil sont masqués pour ne pas passer sous le cercle des collègues */
+  const selNode = nodes.find(n => n.id === state.selected && n.type === 'c');
+  const lvSel = selNode ? DIMS[state.colorBy].get(selNode.c) : null;
+  gRings.selectAll('circle.blob, line.spoke').classed('dim', d => !ids.has(d.hub.id) || (selNode && !(d.hub.id === selNode.hub && d.lv === lvSel)));
+  nodeSel.classed('ghost', n => !!selNode && n.type === 'c' && !ids.has(n.id) && n.hub === selNode.hub && DIMS[state.colorBy].get(n.c) === lvSel);
+}
+function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.classed('dim', false); labelSel.classed('dim', false); countSel.classed('dim', false); if(badgeSel) badgeSel.classed('dim', false); nodeSel.classed('ghost', false); gRings.selectAll('circle.blob, line.spoke').classed('dim', false); } }
+function select(id){ releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); styleLabels(); }
+/* Après un nouveau rendu (filtre, redimensionnement…), on réapplique la surbrillance et le cercle de collègues de la sélection */
+function reapplySelection(){
+  const sel = state.selected;
+  if(!sel || state.view !== 'graph') return;
+  const node = nodes.find(n => n.id === sel);
+  if(!node) return;
+  if(node.type === 'c'){
+    const co = node.c.company;
+    const cn = co ? nodes.filter(n => n.type === 'c' && n !== node && n.c.company === co) : [];
+    focus(new Set([node.id, node.hub, ...cn.map(n => n.id)]));
+    gatherColleagues(node, cn);
+  } else if(node.type === 'hub'){
+    focus(new Set([node.id, ...nodes.filter(n => n.type === 'c' && n.hub === node.id).map(n => n.id)]));
+  }
+}
+function clearSelection(){ select(null); clearFocus(); closeDrawer(); if(state.view === 'graph') fit(); }
+
+/* Zoom animé sur le nœud sélectionné, centré dans la zone laissée libre par la fiche */
+function zoomToNode(n){
+  if(!n || state.view !== 'graph') return;
+  const mobile = window.matchMedia('(max-width:760px)').matches;
+  const open = drawer.classList.contains('open');
+  const vb = open ? {x:0, y:0, w:W(), h:H()} : viewport();
+  const lgEl = document.getElementById('legend');
+  const lgW = open && !mobile && lgEl && !lgEl.hidden && lgEl.offsetWidth ? lgEl.offsetWidth + 28 : 0;
+  const visW = open && !mobile ? Math.max(200, vb.w - drawer.offsetWidth - lgW) : vb.w;
+  const visH = open && mobile ? Math.max(140, vb.h - drawer.offsetHeight) : vb.h;
+  const x = n.ax ?? n.fx ?? n.x, y = n.ay ?? n.fy ?? n.y;
+  let k;
+  /* Profil déplacé au bout de sa branche : on cadre le groupe, la branche prolongée et le cercle des collègues */
+  if(n.type === 'c' && tipHub && state.selected === n.id){
+    const span = Math.hypot(x - tipHub.ax, y - tipHub.ay) + (tipHub.outer || tipHub.r) + tipR + 30;
+    const kk = Math.min(2.8, Math.max(0.4, Math.min(visW, visH) * 0.9 / span));
+    const mx = (x + tipR * Math.cos(tipHub.angle) + tipHub.ax - (tipHub.outer || tipHub.r) * Math.cos(tipHub.angle)) / 2;
+    const my = (y + tipR * Math.sin(tipHub.angle) + tipHub.ay - (tipHub.outer || tipHub.r) * Math.sin(tipHub.angle)) / 2;
+    const tt = d3.zoomIdentity.translate(vb.x + visW / 2 - kk * mx, vb.y + visH / 2 - kk * my).scale(kk);
+    (reduceMotion ? svg : svg.transition().duration(700).ease(d3.easeCubicInOut)).call(zoom.transform, tt);
+    return;
+  }
+  if(n.type === 'hub') k = Math.min(3, Math.max(0.6, Math.min(visW, visH) * 0.8 / (2 * (n.outer || n.r * 3))));
+  else if(n.type === 'me') k = Math.max(zk, 1.6);
+  else k = Math.min(4, Math.max(zk, Math.min(2.8, Math.max(1.4, Math.min(visW, visH) / 300))));
+  /* Cadrage qui garde visibles : le nœud (et son cercle de collègues), l’étiquette des collègues et le nom du groupe.
+     Si tout ne tient pas dans la zone libre, on dézoome un peu plutôt que de pousser la scène sous la légende. */
+  const M = 12, items = [];
+  const hid = n.type === 'hub' ? n.id : n.hub;
+  const lblEl = labelSel && hid ? labelSel.nodes().find(el => el.__data__ && el.__data__.id === hid) : null;
+  if(lblEl){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
+  const orb = n.type === 'hub' ? (n.outer || n.r) + 6 : (collLbl ? collR + 6 : n.r + 30);
+  items.push({x, y, l:0, r:0, t:0, b:0, rad:orb});
+  if(n.type === 'c' && collLbl){ const w = (collLbl.text() || '').length * 7.2; items.push({x, y, l:-w / 2, r:w / 2, t:0, b:20, dy:collR + 6}); }
+  const ext = kk => {
+    let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
+    for(const it of items){ const rad = (it.rad || 0) * kk, sx = kk * it.x, sy = kk * it.y + (it.dy || 0) * kk; L = Math.min(L, sx + it.l - rad); R = Math.max(R, sx + it.r + rad); T = Math.min(T, sy + it.t - rad); B = Math.max(B, sy + it.b + rad); }
+    return {L, R, T, B};
+  };
+  for(let i = 0; i < 10; i++){ const e = ext(k); if(e.R - e.L <= visW - 2 * M && e.B - e.T <= visH - 2 * M) break; k *= 0.88; }
+  const e = ext(k);
+  let tx = vb.x + visW / 2 - k * x, ty = vb.y + visH / 2 - k * y;
+  if(tx + e.L < vb.x + M) tx = vb.x + M - e.L; if(tx + e.R > vb.x + visW - M) tx = vb.x + visW - M - e.R;
+  if(ty + e.T < vb.y + M) ty = vb.y + M - e.T; if(ty + e.B > vb.y + visH - M) ty = vb.y + visH - M - e.B;
+  const t = d3.zoomIdentity.translate(tx, ty).scale(k);
+  (reduceMotion ? svg : svg.transition().duration(700).ease(d3.easeCubicInOut)).call(zoom.transform, t);
+}
+
+function onNodeClick(e, d){
+  e.stopPropagation(); hideTip();
+  if(d.type === 'me'){ showMe(); return; }
+  d.type === 'hub' ? showHub(d) : showContact(d.c);
+}
+
+/* Tooltip (mouse only) */
+const tip = $('#tip');
+function showTip(e, d){
+  if(e.pointerType && e.pointerType !== 'mouse') return;
+  const [x, y] = d3.pointer(e, canvas);
+  tip.innerHTML = d.type === 'me' ? `<strong>${esc(meProfile.name || 'Toi')}</strong><span>${meProfile.position ? esc(meProfile.position) + '. ' : ''}Clique pour voir ta fiche.</span>` : d.type === 'hub'
+    ? `<strong>${esc(d.key)}</strong><span>${d.count} contact${d.count > 1 ? 's' : ''}. Clique pour explorer ce groupe.</span>`
+    : `<strong>${esc(d.c.name)}</strong><span>${esc(d.c.position || 'Poste non renseigné')}${d.c.company ? ' chez ' + esc(d.c.company) : ''}</span>`;
+  const w = canvas.clientWidth;
+  tip.style.left = Math.max(8, Math.min(x + 16, w - 260)) + 'px';
+  tip.style.top = (y + 16) + 'px';
+  tip.classList.add('on');
+}
+function hideTip(){ tip.classList.remove('on'); }
+
+/* ---------- Legend, panel, list ---------- */
+function updateLegend(vis){
+  const cdim = DIMS[state.colorBy];
+  const canFilter = isFilterDim(state.colorBy);
+  const sel = canFilter ? state.include[state.colorBy] : new Set();
+  const base = canFilter ? contacts.filter(c => pass(c, state.colorBy)) : vis;
+  const counts = d3.rollup(base, v => v.length, cdim.get);
+  const shown = colorDomain.filter(v => counts.get(v));
+  const max = legendAll ? 999 : 8;
+  const maxL = d3.max(shown, v => counts.get(v)) || 1;
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
+    const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${colorFn(v)}"></span><span class="dot" style="background:${colorFn(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
+    return `<li>${canFilter ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`}</li>`;
+  }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : `Voir les ${shown.length - 8} autres`}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}<p class="more" style="margin:8px 6px 0">Jauge et teinte d’un groupe : sa part des contacts affichés</p></div>`;
+  $('#legend').hidden = !base.length;
+}
+
+function updatePanel(vis){
+  const dated = vis.filter(c => c.date).sort((a, b) => a.date - b.date);
+  const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company), v => v.length, c => c.company), d => d[1]);
+  const last = dated[dated.length - 1];
+  $('#summary').innerHTML = `<dl class="stats">
+    <dt>Top entreprise</dt><dd>${topCo ? `${esc(topCo[0])} (${topCo[1]})` : 'Aucune'}</dd>
+    ${dated.length ? `<dt>Plus ancien</dt><dd><button class="linkbtn" type="button" data-cid="${dated[0].id}">${esc(dated[0].name)}</button>, ${dated[0].year}</dd>
+    <dt>Plus récent</dt><dd><button class="linkbtn" type="button" data-cid="${last.id}">${esc(last.name)}</button>, ${last.year}</dd>` : ''}
+    <dt>Tagués</dt><dd>${vis.filter(c => tagOf(c)).length}</dd></dl>`;
+  const base = contacts.filter(c => { const y = c.year; c.year = null; const ok = pass(c); c.year = y; return ok && y; });
+  const yc = d3.rollup(base, v => v.length, c => c.year);
+  const ymax = d3.max(allYears, y => yc.get(y) || 0) || 1;
+  $('#timeline').innerHTML = allYears.length > 1 ? `<div class="timeline">${allYears.map(y => { const n = yc.get(y) || 0;
+      return `<button class="tl${y < state.yMin || y > state.yMax ? ' off' : ''}" type="button" data-year="${y}" title="${y} : ${n} connexion${n > 1 ? 's' : ''}" aria-label="${y}, ${n} connexions" style="height:${Math.max(4, n / ymax * 100)}%"></button>`; }).join('')}</div>
+    <div class="tlAxis"><span>${allYears[0]}</span><span>${allYears[allYears.length - 1]}</span></div>
+    <p class="hint" style="margin:6px 0 0">Touche une année pour l’isoler, touche-la de nouveau pour tout revoir.</p>` : '';
+}
+
+function personRow(o){
+  const url = /^https:\/\//.test(o.url) ? o.url : '';
+  const t = tagOf(o);
+  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}</strong><span>${esc(o.position || 'Poste non renseigné')}${o.company ? ', ' + esc(o.company) : ''}</span></span><span class="cval"><span class="dot" style="background:${colorOf(o)}"></span>${esc(DIMS[state.colorBy].get(o))}</span>${t ? `<span class="tagpill">${esc(t)}</span>` : ''}</button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : ''}</li>`;
+}
+function peopleList(items, title, limit, keepOrder){
+  if(!items.length) return '';
+  const sorted = keepOrder ? items : [...items].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  return `${title ? `<h3>${title}</h3>` : ''}<ul class="people">${sorted.slice(0, limit).map(personRow).join('')}</ul>`
+    + (items.length > limit ? `<p class="more">et ${items.length - limit} autres</p>` : '');
+}
+
+function renderList(vis){
+  const dim = DIMS[state.groupBy];
+  const groups = d3.groups(vis, dim.get).sort((a, b) => (TAIL.includes(a[0]) - TAIL.includes(b[0])) || b[1].length - a[1].length);
+  $('#list').innerHTML = groups.map(([k, arr]) => `<section class="lgroup"><h3>${state.groupBy === state.colorBy ? `<span class="dot" style="background:${colorFn(k)}"></span>` : ''}${esc(k)} <span class="n">${arr.length}</span></h3>${peopleList(arr, '', 500)}</section>`).join('');
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const vis = contacts.filter(pass);
+  canvas.dataset.mode = state.view;
+  updateOverview();
+  renderBar(vis);
+  updatePanel(vis);
+  updateLegend(vis);
+  $('#empty').hidden = vis.length > 0;
+  if(state.view === 'list') renderList(vis);
+  else { renderGraph(vis); needFit = false; if(!state.selected && !drawer.classList.contains('open')) fit(); }
+  if(state.selected && !nodes.some(n => n.id === state.selected)) select(null);
+  if(state.view === 'graph'){ clearFocus(); reapplySelection(); }
+}
+
+/* ---------- Drawer ---------- */
+const drawer = $('#drawer'), dbody = $('#drawerBody');
+function openDrawer(html){
+  dbody.innerHTML = html;
+  canvas.classList.add('has-drawer');
+  drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); drawer.scrollTop = 0;
+  const t = $('#dtitle'); if(t) t.focus({preventScroll:true});
+}
+function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); canvas.classList.remove('has-drawer'); }
+const fmtDate = d => d ? d.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'Inconnue';
+
+function showContact(c){
+  const node = nodes.find(n => n.id === 'c:' + c.id);
+  select('c:' + c.id);
+  const ids = new Set(['c:' + c.id]);
+  if(node) ids.add(node.hub);
+  const sameCo = c.company ? contacts.filter(o => o !== c && o.company === c.company) : [];
+  const sameSchool = c.school ? contacts.filter(o => o !== c && o.school === c.school) : [];
+  sameCo.forEach(o => ids.add('c:' + o.id));
+  focus(ids);
+  gatherColleagues(node, c.company ? nodes.filter(n => n.type === 'c' && n !== node && n.c.company === c.company) : []);
+  const url = /^https:\/\//.test(c.url) ? c.url : '';
+  const t = tagOf(c);
+  const visCo = sameCo.filter(o => nodes.some(n => n.id === 'c:' + o.id)).length;
+  const firstName = (c.first || c.name.split(' ')[0] || '').trim();
+  /* Petite clé de lecture : que signifient les couleurs des points mis en avant */
+  const cdimK = DIMS[state.colorBy];
+  const shownIds = new Set(nodes.map(n => n.id));
+  const coVals = colorDomain.filter(v => [c, ...sameCo].some(o => shownIds.has('c:' + o.id) && cdimK.get(o) === v));
+  const keyHtml = visCo ? `<span class="hlkey"><span class="hlkt">Couleur des points : ${esc(cdimK.label.toLowerCase())}</span>${coVals.map(v => `<span class="hlki"><span class="dot" style="background:${colorFn(v)}"></span>${esc(v)}</span>`).join('')}</span>` : '';
+  const hlNote = state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(c.company)}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Son point est placé au centre de sa grappe le temps de la sélection. Les autres contacts sont atténués, ce n’est pas un filtre.${keyHtml}</span></p>` : '';
+  openDrawer(`
+    <div class="dhead">${avatar(c, true)}
+      <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || 'Poste non renseigné')}${c.company ? ' chez ' + esc(c.company) : ''}</p></div></div>
+    ${hlNote}
+    ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">Voir le profil LinkedIn ${ICON_EXT}</a>`
+          : `<p class="hint">${isDemo ? 'Contact fictif : le lien vers le profil LinkedIn apparaîtra avec ton propre fichier.' : 'Aucun lien de profil dans le fichier pour ce contact.'}</p>`}
+    <h3>Tag</h3>
+    <div class="tagrow">${TAGS.map(x => `<button class="tag" type="button" data-tc="${c.id}" data-tag="${esc(x)}" aria-pressed="${t === x}">${esc(x)}</button>`).join('')}</div>
+    <dl class="facts">
+      <dt>Secteur</dt><dd>${c.sectorGiven ? esc(c.sector) : fixSelect('co', c.company, SECTOR_LABELS, c.sector, 'Secteur de ' + c.company)}</dd>
+      <dt>Fonction</dt><dd>${fixSelect('fn', c.position, FN_LABELS, c.fn, 'Fonction pour ' + c.position)}</dd>
+      <dt>Séniorité</dt><dd>${fixSelect('sen', c.position, SEN_LABELS, c.seniority, 'Séniorité pour ' + c.position)}</dd>
+      <dt>Connecté le</dt><dd>${fmtDate(c.date)}</dd>
+      ${c.location ? `<dt>Ville</dt><dd>${esc(c.location)}</dd>` : ''}
+      ${c.country ? `<dt>Pays</dt><dd>${esc(c.country)}</dd>` : ''}
+      ${c.school ? `<dt>Formation</dt><dd>${esc(c.school)}</dd>` : ''}
+      ${c.exp ? `<dt>Expérience</dt><dd>${esc(c.exp)}</dd>` : ''}
+    </dl>
+    ${peopleList(sameCo, `Aussi chez ${esc(c.company)} (${sameCo.length})`, 8)}
+    ${peopleList(sameSchool, `Même formation (${sameSchool.length})`, 6)}
+    <p class="note">Secteur, fonction et séniorité sont estimés. Une estimation te semble fausse ? Corrige-la ci-dessus : la correction s’applique à tous les contacts de la même entreprise ou du même intitulé de poste,. L’icône est déduite du prénom et reste neutre quand il est mixte ou inconnu.</p>`);
+  zoomToNode(node);
+}
+
+function showHub(h){
+  select(h.id);
+  const members = nodes.filter(n => n.type === 'c' && n.hub === h.id).map(n => n.c);
+  focus(new Set([h.id, ...members.map(c => 'c:' + c.id)]));
+  const cdim = DIMS[state.colorBy];
+  const counts = d3.rollup(members, v => v.length, cdim.get);
+  const rows = colorDomain.filter(v => counts.get(v));
+  const canFilter = isFilterDim(state.groupBy) && h.key !== (DIMS[state.groupBy].other || 'Autres');
+  openDrawer(`
+    ${state.groupBy === 'company' && h.key !== DIMS.company.other ? `<span class="logo-badge" style="background:${brandColor(h.key)}" aria-hidden="true"><span class="mtext">${esc(mono(h.key))}</span>${logoUrl(h.key) ? `<img class="logo-img" src="${esc(logoUrl(h.key))}" alt="" hidden>` : ''}</span>` : ''}
+    <h2 id="dtitle" tabindex="-1">${esc(h.key)}</h2>
+    <p class="pos">${members.length} contact${members.length > 1 ? 's' : ''} dans ce groupe, soit ${pct(members.length, contacts.length)} de ton réseau</p>
+    ${canFilter ? `<button class="btn block" type="button" data-only="${state.groupBy}" data-v="${esc(h.key)}" style="margin-top:12px">N’afficher que ce groupe</button>` : ''}
+    ${h.others ? `<p class="pos" style="margin-top:6px">Cette branche réunit ${h.others.length} groupes plus petits.</p>
+      <button class="btn primary block" type="button" data-act="showall" style="margin-top:10px">Afficher toutes les branches</button>
+      <h3>Groupes réunis ici</h3>
+      <ul class="people">${h.others.map(([k, n]) => `<li><button class="lrow" type="button" ${isFilterDim(state.groupBy) ? `data-only="${state.groupBy}" data-v="${esc(k)}"` : ''} title="N’afficher que ce groupe"><span class="who"><strong>${esc(k)}</strong><span>${n} contact${n > 1 ? 's' : ''}</span></span></button></li>`).join('')}</ul>` : ''}
+    <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
+    <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${counts.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
+    <div class="legendlist">${rows.slice(0, 8).map(v => `<div><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), members.length)}</span></div>`).join('')}</div>
+    ${peopleList(members, 'Contacts', 40)}`);
+  const li = dbody.querySelector('.logo-img');
+  if(li){
+    const ok = () => { li.hidden = false; li.parentNode.classList.add('has-img'); };
+    li.onload = ok;
+    li.onerror = () => { logoFails.add(domainOf(h.key)); li.remove(); };
+    if(li.complete && li.naturalWidth) ok();
+  }
+  zoomToNode(h);
+}
+
+/* ---------- Fiche « Moi » ---------- */
+const ME_KEY = 'synapses-me-v1';
+let meProfile = {};
+try { meProfile = JSON.parse(localStorage.getItem(ME_KEY) || '{}') || {}; } catch(e) { meProfile = {}; }
+
+function showMe(){
+  select('me'); clearFocus();
+  const p = meProfile, total = contacts.length;
+  const url = /^https:\/\//.test(p.url || '') ? p.url : '';
+  const top = k => {
+    const r = d3.greatest(d3.rollup(contacts.filter(c => !TAIL.includes(DIMS[k].get(c))), v => v.length, DIMS[k].get), d => d[1]);
+    return r ? `${esc(r[0])} (${pct(r[1], total)})` : 'Aucun';
+  };
+  const years = contacts.map(c => c.year).filter(Boolean);
+  const groups = new Set(contacts.map(DIMS[state.groupBy].get)).size;
+  const cdim = DIMS[state.colorBy];
+  const cc = d3.rollup(contacts, v => v.length, cdim.get);
+  const rows = colorDomain.filter(v => cc.get(v));
+  const g = genderOf({first:(p.name || '').split(' ')[0]});
+  openDrawer(`
+    <div class="dhead"><span class="av lg2" style="background:var(--accent)" role="img" aria-label="Toi">${SIL[g || 'n']}</span>
+      <div><h2 id="dtitle" tabindex="-1">${esc(p.name || 'Moi')}</h2>
+      <p class="pos">${p.position ? esc(p.position) + (p.company ? ' chez ' + esc(p.company) : '') : 'Complète ton profil en bas de cette fiche.'}</p>${p.location || p.industry ? `<p class="pos">${esc([p.location, p.industry].filter(Boolean).join(', '))}</p>` : ''}</div></div>
+    ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">Voir mon profil LinkedIn ${ICON_EXT}</a>` : ''}
+    <h3>Mon réseau</h3>
+    <dl class="facts">
+      <dt>Contacts</dt><dd>${total}</dd>
+      <dt>Groupes</dt><dd>${groups} (par ${DIMS[state.groupBy].label.toLowerCase()})</dd>
+      <dt>Secteur principal</dt><dd>${top('sector')}</dd>
+      <dt>Fonction principale</dt><dd>${top('fn')}</dd>
+      <dt>Entreprise phare</dt><dd>${top('company')}</dd>
+      ${years.length ? `<dt>Réseau construit</dt><dd>de ${d3.min(years)} à ${d3.max(years)}</dd>` : ''}
+      <dt>Contacts tagués</dt><dd>${contacts.filter(c => tagOf(c)).length}</dd>
+    </dl>
+    <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
+    <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${cc.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
+    <div class="legendlist">${rows.slice(0, 8).map(v => `<div><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(v)}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>
+    <h3>Mon profil</h3>
+    <div class="meform">
+      <label for="me-name">Nom</label><input id="me-name" type="text" autocomplete="name" value="${esc(p.name || '')}">
+      <label for="me-pos">Poste</label><input id="me-pos" type="text" autocomplete="organization-title" value="${esc(p.position || '')}">
+      <label for="me-co">Entreprise</label><input id="me-co" type="text" autocomplete="organization" value="${esc(p.company || '')}">
+      <label for="me-url">Lien de ton profil LinkedIn</label><input id="me-url" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/…" value="${esc(p.url || '')}">
+      <button class="btn primary block" type="button" data-act="saveme">Enregistrer mon profil</button>
+      <p class="hint" style="margin-top:10px">Ces informations restent sur cet appareil.</p>
+    </div>`);
+  dbody.querySelectorAll('.meform input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') saveMe(); }));
+  zoomToNode(nodes.find(n => n.type === 'me'));
+}
+function saveMe(){
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  let url = v('me-url');
+  if(url){ url = url.replace(/^http:\/\//i, 'https://'); if(!/^https:\/\//i.test(url)) url = 'https://' + url; }
+  meProfile = {...meProfile, name:v('me-name'), position:v('me-pos'), company:v('me-co'), url};
+  try { localStorage.setItem(ME_KEY, JSON.stringify(meProfile)); } catch(e) {}
+  toast('Profil enregistré');
+  render();
+  showMe();
+}
+
+function showHelp(msg){
+  select(null); clearFocus();
+  openDrawer(`
+    ${msg ? `<p class="hint" style="color:#C2417A;font-weight:700">${msg}</p>` : ''}
+    <h2 id="dtitle" tabindex="-1">Récupérer tes contacts LinkedIn</h2>
+    <ol>
+      <li>Sur LinkedIn, ouvre Préférences, puis Confidentialité des données, puis « Obtenir une copie de vos données ».</li>
+      <li>Coche uniquement « Relations » et demande l’archive. Elle arrive par email en une dizaine de minutes.</li>
+      <li>Importe directement l’archive .zip reçue, ou seulement le fichier Connections.csv qu’elle contient. Tu peux aussi la déposer sur cette page.</li>
+    </ol>
+    <p class="pos">Pour afficher ton nom et ton poste au centre du graphe, demande plutôt l’archive complète : elle contient aussi ton profil, que l’app lit automatiquement.</p>
+    <h3>Ce que contient l’export</h3>
+    <p class="pos">Nom, entreprise actuelle, poste, date de connexion et lien du profil. Secteur, fonction et séniorité sont estimés à partir de ces champs.</p>
+    <h3>Aller plus loin</h3>
+    <p class="pos">Pour filtrer par pays, ville, formation ou expérience, ajoute dans le CSV des colonnes « Localisation » (par exemple « Paris, France »), « Pays », « Formation », « Expérience » (en années) ou « Secteur » avant l’import. Le pays est déduit automatiquement de la localisation.</p>
+    <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>`);
+}
+
+function findEntry(){
+  const raw = $('#target').value.trim(), t = norm(raw);
+  if(!t){ $('#target').focus(); return; }
+  closePanel();
+  const rank = ['Dirigeant','Direction','Manager','Senior','Confirmé','Junior','Non renseignée'];
+  const m = contacts.filter(c => [c.company, c.sector, c.school].some(x => norm(x).includes(t)))
+    .sort((a, b) => rank.indexOf(a.seniority) - rank.indexOf(b.seniority));
+  const ids = new Set(m.map(c => 'c:' + c.id));
+  nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
+  select(null); focus(ids);
+  openDrawer(`<h2 id="dtitle" tabindex="-1">Portes d’entrée vers ${esc(raw)}</h2>
+    <p class="pos">${m.length ? `${m.length} contact${m.length > 1 ? 's' : ''} lié${m.length > 1 ? 's' : ''} à ta recherche, les plus seniors en premier.` : 'Aucun contact ne correspond. Essaie un nom d’entreprise plus court, un secteur ou une école.'}</p>
+    ${peopleList(m, '', 30, true)}`);
+}
+
+/* ---------- Mobile sheet ---------- */
+function openPanel(){ $('#panel').classList.add('open'); $('#backdrop').hidden = false; $('#fab').setAttribute('aria-expanded', 'true'); }
+function closePanel(){ $('#panel').classList.remove('open'); $('#backdrop').hidden = true; $('#fab').setAttribute('aria-expanded', 'false'); }
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200); }
+
+/* ---------- Load ---------- */
+function load(list, demo){
+  contacts = list; isDemo = demo;
+  if(!demo){ applyAI(list); if(dbRef) refreshShared(); }
+  nodes = []; pos.clear(); needFit = true; state.selected = null;
+  gLinks.selectAll('*').remove(); gNodes.selectAll('*').remove(); gLabels.selectAll('*').remove(); gCounts.selectAll('*').remove();
+  setupControls(); closeDrawer(); render();
+}
+const readText = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(f); });
+function kindOf(text){
+  const head = norm(text.replace(/^\uFEFF/, '').split(/\r?\n/).find(l => /first name|prenom|company name|headline/.test(norm(l))) || '');
+  if(/headline/.test(head) && /first name|prenom/.test(head)) return 'profile';
+  if(/company name/.test(head) && /title/.test(head)) return 'positions';
+  if(/first name|prenom/.test(head)) return 'connections';
+  return '';
+}
+const parseRows = text => Papa.parse(text.replace(/^\uFEFF/, ''), {header:true, skipEmptyLines:true}).data;
+function profileFrom(texts){
+  const out = {};
+  if(texts.profile){
+    const r = parseRows(texts.profile)[0] || {}; const g = k => (r[k] || '').toString().trim();
+    const name = `${g('First Name')} ${g('Last Name')}`.trim();
+    if(name) out.name = name;
+    if(g('Headline')) out.headline = g('Headline');
+    if(g('Industry')) out.industry = g('Industry');
+    if(g('Geo Location')) out.location = g('Geo Location');
+  }
+  if(texts.positions){
+    const rows = parseRows(texts.positions);
+    /* Seul un poste sans date de fin est un poste actuel ; sinon on garde le titre du profil (Headline) */
+    const cur = rows.find(r => !(r['Finished On'] || '').trim());
+    if(cur){
+      if((cur['Title'] || '').trim()) out.position = cur['Title'].trim();
+      if((cur['Company Name'] || '').trim()) out.company = cur['Company Name'].trim();
+    }
+  }
+  if(!out.position && out.headline) out.position = out.headline;
+  return out;
+}
+async function handleFiles(fileList){
+  const files = [...(fileList || [])];
+  if(!files.length) return;
+  const texts = {};
+  try {
+    for(const f of files){
+      if(/\.zip$/i.test(f.name) || /zip/.test(f.type)){
+        const zip = await JSZip.loadAsync(await f.arrayBuffer());
+        for(const [path, entry] of Object.entries(zip.files)){
+          const base = path.split('/').pop().toLowerCase();
+          if(entry.dir || !['connections.csv','profile.csv','positions.csv'].includes(base)) continue;
+          const t = await entry.async('string'); const k = kindOf(t);
+          if(k && !texts[k]) texts[k] = t;
+        }
+      } else {
+        const t = await readText(f); const k = kindOf(t);
+        if(k && !texts[k]) texts[k] = t;
+      }
+    }
+  } catch(err){ showHelp('Le fichier n’a pas pu être lu. Réessaie avec l’archive .zip de LinkedIn ou le fichier Connections.csv.'); return; }
+  const prof = profileFrom(texts);
+  const hasProf = Object.keys(prof).length > 0;
+  if(hasProf){ meProfile = {...meProfile, ...prof}; try { localStorage.setItem(ME_KEY, JSON.stringify(meProfile)); } catch(e) {} }
+  let list = [];
+  if(texts.connections){ try { list = parseLinkedIn(texts.connections); } catch(e) { list = []; } }
+  if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
+  closePanel();
+  if(list.length){ state.view = 'graph'; load(list, false); } else render();
+  if(list.length) toast(`${list.length} contacts importés${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}`);
+  else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
+  if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
+}
+
+/* ---------- Events ---------- */
+$('#file').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+$('#closeDrawer').addEventListener('click', clearSelection);
+$('#recenter').addEventListener('click', fit);
+$('#overview').addEventListener('click', clearSelection);
+$('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4));
+$('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4));
+$('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
+$('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
+$('#topN').addEventListener('input', e => { state.topN = +e.target.value; select(null); closeDrawer(); render(); });
+$('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } render(); });
+$('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } render(); });
+let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); render(); }, 180); });
+$('#targetBtn').addEventListener('click', findEntry);
+$('#target').addEventListener('keydown', e => { if(e.key === 'Enter') findEntry(); });
+$('#fab').addEventListener('click', openPanel);
+$('#closePanel').addEventListener('click', closePanel);
+$('#backdrop').addEventListener('click', closePanel);
+
+document.addEventListener('click', e => {
+  const act = e.target.closest('[data-act]');
+  if(act){
+    const a = act.dataset.act;
+    if(a === 'import') $('#file').click();
+    else if(a === 'help'){ closePanel(); showHelp(); }
+    else if(a === 'dismiss'){ demoHidden = true; render(); }
+    else if(a === 'clearall') clearAll();
+    else if(a === 'saveme') saveMe();
+    else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
+    else if(a === 'legendall'){ legendAll = !legendAll; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
+    else if(a === 'showall'){ state.topN = 999; select(null); closeDrawer(); render(); }
+    else if(a === 'ai') runAI();
+    else if(a === 'aistop'){ if(aiRun) aiRun.ctl.abort(); }
+    else if(a === 'aihide'){ aiHidden = true; renderBar(contacts.filter(pass)); }
+    return;
+  }
+  const view = e.target.closest('[data-view]');
+  if(view){ if(state.view !== view.dataset.view){ state.view = view.dataset.view; if(state.view === 'graph') needFit = true; render(); } return; }
+  const clr = e.target.closest('[data-clear]');
+  if(clr){ clearFilter(clr.dataset.clear, clr.dataset.v); return; }
+  const tagBtn = e.target.closest('[data-tc]');
+  if(tagBtn){
+    const c = contacts.find(o => o.id === +tagBtn.dataset.tc);
+    if(c){ const now = setTag(c, tagBtn.dataset.tag); syncChips(); if(state.colorBy === 'tag' || state.groupBy === 'tag') setupColor(); render(); showContact(c); toast(now ? `Tag « ${now} » ajouté` : 'Tag retiré'); }
+    return;
+  }
+  const tl = e.target.closest('[data-year]');
+  if(tl){
+    const y = +tl.dataset.year;
+    if(state.yMin === y && state.yMax === y){ state.yMin = allYears[0]; state.yMax = allYears[allYears.length - 1]; } else { state.yMin = state.yMax = y; }
+    syncYears(); render(); return;
+  }
+  const only = e.target.closest('[data-only]');
+  if(only){ const k = only.dataset.only; state.include[k].clear(); state.include[k].add(only.dataset.v); syncChips(); select(null); closeDrawer(); needFit = true; render(); return; }
+  const ck = e.target.closest('[data-cleark]');
+  if(ck){ state.include[ck.dataset.cleark].clear(); syncChips(); render(); return; }
+  const f = e.target.closest('[data-k]');
+  if(f){ toggleInclude(f.dataset.k, f.dataset.v); return; }
+  const person = e.target.closest('[data-cid]');
+  if(person){ const c = contacts.find(o => o.id === +person.dataset.cid); if(c){ closePanel(); showContact(c); } }
+});
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(drawer.classList.contains('open')) clearSelection(); else closePanel();
+});
+/* Correction manuelle d’un secteur, d’une fonction ou d’une séniorité depuis la fiche */
+document.addEventListener('change', e => {
+  const s = e.target.closest && e.target.closest('select[data-fix]');
+  if(!s) return;
+  const kind = s.dataset.fix, raw = s.dataset.raw, k = nkey(raw), v = s.value;
+  if(!k) return;
+  let n = 0;
+  if(kind === 'co'){
+    userFix.co[k] = v; sharedCo[k] = {s:v, src:'user'};
+    pushShared('co', {[k]: {s:v, src:'user'}});
+    n = contacts.filter(c => nkey(c.company) === k).length;
+  } else {
+    const ref = contacts.find(c => nkey(c.position) === k);
+    const cur = resolvePos(k) || [ref ? ref.fn : 'Autre', ref ? ref.seniority : 'Confirmé'];
+    const f = kind === 'fn' ? v : cur[0], sn = kind === 'sen' ? v : cur[1];
+    userFix.pos[k] = [f, sn]; sharedPos[k] = {f, n:sn, src:'user'};
+    pushShared('pos', {[k]: {f, n:sn, src:'user'}});
+    n = contacts.filter(c => nkey(c.position) === k).length;
+  }
+  saveFix();
+  const sel = state.selected, cid = sel && sel.startsWith('c:') ? +sel.slice(2) : null;
+  applyAI(contacts); setupColor(); syncChips(); render();
+  const c = contacts.find(o => o.id === cid);
+  if(c) showContact(c);
+  toast(`Correction appliquée à ${n} contact${n > 1 ? 's' : ''}${dbRef ? ' et partagée' : ''}`);
+});
+
+/* Drag and drop */
+let dragDepth = 0;
+const dz = $('#dropzone');
+window.addEventListener('dragenter', e => { if(e.dataTransfer && [...e.dataTransfer.types].includes('Files')){ dragDepth++; dz.hidden = false; } });
+window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if(!dragDepth) dz.hidden = true; });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; dz.hidden = true; if(e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+
+new ResizeObserver(() => {
+  if(!nodes.length || state.view !== 'graph') return;
+  applyLayout(); drawRings();
+  /* Si un profil est sélectionné, on reforme son cercle de collègues sur la nouvelle disposition */
+  gathered.forEach(n => { n.homeX = n.homeY = null; }); gathered = [];
+  gColl.selectAll('*').remove(); collSel = null; collLbl = null; selBlob = null;
+  reapplySelection();
+  setXY(); sim.alpha(0.3).restart();
+  needFit = true;
+}).observe(canvas);
+
+load(demoContacts(), true);
+})();
+</script>
+</body>
+</html>
