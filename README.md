@@ -5,7 +5,7 @@ Visualise ton réseau LinkedIn sous forme de graphe neuronal, à partir de ton e
 - Gratuit, sans inscription.
 - Ton fichier est lu dans ton navigateur : il n’est envoyé nulle part, et les noms de tes contacts ne quittent jamais ton appareil.
 - Option « Choisir une IA » : avec ta propre clé API Claude (Anthropic), ChatGPT (OpenAI) ou Gemini (Google), une IA classe les entreprises et intitulés de poste que le dictionnaire ne reconnaît pas. Seuls ces noms et intitulés sont envoyés au fournisseur choisi ; ta clé n’est envoyée qu’à lui et n’est gardée sur ton appareil que si tu le demandes.
-- Option « Logos des entreprises » (désactivée par défaut) : les logos viennent de [Brandfetch](https://brandfetch.com), qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.
+- Logos des entreprises (activés par défaut, désactivables dans Affichage) : les logos viennent de [Brandfetch](https://brandfetch.com), qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.
 - Option « Partager mes corrections » (désactivée par défaut) : quand tu corriges un secteur, une fonction ou une séniorité, seuls le nom de l’entreprise ou l’intitulé du poste et la catégorie choisie sont proposés au dictionnaire partagé.
 - Outil indépendant, non affilié à LinkedIn.
 

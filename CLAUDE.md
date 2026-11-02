@@ -15,10 +15,10 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   la page appelle directement le fournisseur choisi depuis le navigateur ; seuls partent les noms d’entreprises et intitulés de poste non reconnus.
   La clé n’est envoyée qu’à ce fournisseur et n’est gardée (localStorage) que si l’utilisateur coche « Se souvenir de ma clé ». Un vrai « connecter mon compte » n’existe pas chez ces fournisseurs.
   Modèles proposés (`PROVIDERS` dans `index.html`) : à revoir quand les fournisseurs en retirent.
-- **Logos des entreprises (Brandfetch Logo API)** : option « Logos des entreprises » du panneau Affichage, **décochée par défaut**.
+- **Logos des entreprises (Brandfetch Logo API)** : option « Logos des entreprises » du panneau Affichage, **cochée par défaut** (choix de Vincent du 3 novembre 2026), décochable ; l’utilisateur est informé à côté de la case et dans « Tes données ».
   Cochée, chaque logo affiché envoie à `cdn.brandfetch.io` le domaine de l’entreprise (et l’IP du visiteur), jamais le nom d’un contact.
   Client ID public dans `LOGO_CONFIG` ; `fallback/404` pour qu’une marque inconnue garde son monogramme ; aucun domaine deviné pour « Freelance », « Confidentiel »… (`NOT_A_COMPANY`).
-- **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), l’API Supabase ci-dessus, l’API du fournisseur d’IA choisi par l’utilisateur et Brandfetch si l’option logos est cochée.
+- **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), l’API Supabase ci-dessus, l’API du fournisseur d’IA choisi par l’utilisateur et Brandfetch (option logos, cochée par défaut).
 - **Outil indépendant, non affilié à LinkedIn** : pas de logo LinkedIn, pas de formulation laissant croire à un partenariat.
 - Tout le code est public : ne jamais y mettre de clé d’API, de jeton ou de donnée personnelle. Seule exception : la clé **publishable** Supabase (`sb_publishable_…`), publique par conception. Jamais la clé secrète (`sb_secret_…`).
 
