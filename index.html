@@ -151,6 +151,12 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .demo-actions{display:flex;gap:8px;align-items:center}
 .sharebox{display:flex;gap:10px;font-weight:400;align-items:flex-start;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:13px;color:var(--muted);line-height:1.45;cursor:pointer}
 .sharebox input{margin-top:2px;width:16px;height:16px;flex:none;accent-color:var(--accent)}
+.aiprov{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
+.aiopt{display:flex;gap:8px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:13px}
+.aiopt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.aiopt input{margin-top:2px;accent-color:var(--accent)}
+.aiopt span{display:flex;flex-direction:column}
+.aiopt span span{color:var(--muted);font-size:12px}
 .aiprog{display:block;height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}
 .aiprog span{display:block;height:100%;background:var(--accent);transition:width .3s ease}
 .canvas{position:relative;flex:1;min-height:0;overflow:hidden}
@@ -836,6 +842,111 @@ let sampleFn = null, aiRun = null, aiHidden = false;
   try { if(window.claude && typeof window.claude.use === 'function') sampleFn = await window.claude.use('sample'); } catch(e) { sampleFn = null; }
   if(sampleFn && contacts.length) renderBar(contacts.filter(pass));
 })();
+/* ---------- Classement par une IA, avec la clé API de l’utilisateur ----------
+   Claude, ChatGPT et Gemini ne permettent pas à un site de se connecter à un abonnement : l’utilisateur colle sa propre clé API.
+   La page appelle directement le fournisseur choisi depuis le navigateur. Seuls partent les noms d’entreprises et les intitulés de poste
+   non reconnus, jamais les noms, profils ou emails des contacts. La clé n’est envoyée qu’à ce fournisseur et n’est gardée sur
+   l’appareil que si l’utilisateur le demande. */
+const LLM_KEY = 'synapses-llm-v1';
+const PROVIDERS = {
+  anthropic:{name:'Claude', vendor:'Anthropic', keyUrl:'https://console.anthropic.com/settings/keys', keyHint:'sk-ant-…',
+    models:[['claude-opus-5-5', 'Claude Opus 5.5 (recommandé)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (plus économique)']]},
+  openai:{name:'ChatGPT', vendor:'OpenAI', keyUrl:'https://platform.openai.com/api-keys', keyHint:'sk-…',
+    models:[['gpt-6.1-terra', 'GPT-6.1 Terra (recommandé)'], ['gpt-6-luna', 'GPT-6 Luna (plus économique)']]},
+  gemini:{name:'Gemini', vendor:'Google', keyUrl:'https://aistudio.google.com/apikey', keyHint:'AIza…',
+    models:[['gemini-3.6-flash', 'Gemini 3.6 Flash (recommandé)'], ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (plus économique)']]}
+};
+let llm = {provider:'anthropic', model:'claude-opus-5-5', key:'', remember:false};
+try {
+  const st = JSON.parse(localStorage.getItem(LLM_KEY) || 'null');
+  if(st && PROVIDERS[st.provider]) llm = {provider:st.provider, model:PROVIDERS[st.provider].models.some(m => m[0] === st.model) ? st.model : PROVIDERS[st.provider].models[0][0], key:st.key || '', remember:!!st.key};
+} catch(e) {}
+const saveLLM = () => { try { localStorage.setItem(LLM_KEY, JSON.stringify({provider:llm.provider, model:llm.model, ...(llm.remember && llm.key ? {key:llm.key} : {})})); } catch(e) {} };
+const aiName = () => sampleFn ? 'Claude' : PROVIDERS[llm.provider].name;
+const llmReady = () => !!sampleFn || !!llm.key;
+const llmError = code => Object.assign(new Error(code), {code});
+/* Réponse JSON d’un modèle : tableau ou objet, éventuellement entouré de texte ou de balises de code */
+function parseLLMJson(text){
+  const t = (text || '').trim();
+  for(const [a, b] of [['[', ']'], ['{', '}']]){
+    const i = t.indexOf(a), j = t.lastIndexOf(b);
+    if(i >= 0 && j > i){ try { return JSON.parse(t.slice(i, j + 1)); } catch(e) {} }
+  }
+  throw llmError('invalid_json');
+}
+async function callLLM(prompt, signal){
+  const {provider, model, key} = llm;
+  let url, headers = {'Content-Type':'application/json'}, body;
+  if(provider === 'anthropic'){
+    url = 'https://api.anthropic.com/v1/messages';
+    headers = {...headers, 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true'};
+    body = {model, max_tokens:16000, output_config:{effort:'low'}, messages:[{role:'user', content:prompt}]};
+    /* Opus 5.5 : si un filtre de sécurité refuse la demande, l’API la rejoue sur un autre modèle */
+    if(model === 'claude-opus-5-5'){ headers['anthropic-beta'] = 'server-side-fallback-2026-07-01'; body.fallbacks = 'default'; }
+  } else if(provider === 'openai'){
+    url = 'https://api.openai.com/v1/chat/completions';
+    headers.Authorization = 'Bearer ' + key;
+    body = {model, messages:[{role:'user', content:prompt}]};
+  } else {
+    url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    headers['x-goog-api-key'] = key;
+    body = {contents:[{role:'user', parts:[{text:prompt}]}], generationConfig:{responseMimeType:'application/json'}};
+  }
+  let r;
+  try { r = await fetch(url, {method:'POST', headers, body:JSON.stringify(body), signal}); }
+  catch(e){ throw llmError(e && e.name === 'AbortError' ? 'cancelled' : 'network'); }
+  const d = await r.json().catch(() => ({}));
+  if(!r.ok){
+    const msg = JSON.stringify(d).toLowerCase();
+    if(r.status === 401 || r.status === 403 || (r.status === 400 && /api[_ ]?key|authentication/.test(msg))) throw llmError('bad_key');
+    if(/insufficient_quota|credit balance|billing/.test(msg)) throw llmError('no_credit');
+    if(r.status === 429 || r.status === 529) throw llmError('rate_limited');
+    if(r.status === 404) throw llmError('bad_model');
+    throw llmError('upstream_error');
+  }
+  let text = '';
+  if(provider === 'anthropic'){
+    if(d.stop_reason === 'refusal') throw llmError('refused');
+    text = (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+  } else if(provider === 'openai'){
+    text = (((d.choices || [])[0] || {}).message || {}).content || '';
+  } else {
+    const c = (d.candidates || [])[0];
+    if(!c) throw llmError('refused');
+    text = ((c.content || {}).parts || []).map(x => x.text || '').join('');
+  }
+  if(!text.trim()) throw llmError('empty_completion');
+  return parseLLMJson(text);
+}
+/* Panneau de choix de l’IA et de la clé */
+function showAI(){
+  select(null); clearFocus();
+  const {cos, poss} = aiPending(), P = PROVIDERS[llm.provider];
+  openDrawer(`
+    <h2 id="dtitle" tabindex="-1">Classer avec une IA</h2>
+    <p class="pos">${cos.length} entreprise${cos.length > 1 ? 's' : ''} et ${poss.length} intitulé${poss.length > 1 ? 's' : ''} de poste ne sont pas reconnus par le dictionnaire. Une IA peut les classer par secteur, fonction et séniorité.</p>
+    <h3>Ton IA</h3>
+    <div class="aiprov" role="radiogroup" aria-label="Fournisseur d’IA">${Object.entries(PROVIDERS).map(([id, x]) => `<label class="aiopt"><input type="radio" name="llmprov" value="${id}" data-llm="provider"${id === llm.provider ? ' checked' : ''}><span><strong>${x.name}</strong><span>${x.vendor}</span></span></label>`).join('')}</div>
+    <div class="meform">
+      <label for="llm-model">Modèle</label>
+      <select id="llm-model" data-llm="model">${P.models.map(([id, l]) => `<option value="${id}"${id === llm.model ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      <label for="llm-key">Clé API ${P.vendor}</label>
+      <input id="llm-key" type="password" data-llm="key" autocomplete="off" spellcheck="false" placeholder="${esc(P.keyHint)}" value="${esc(llm.key)}">
+    </div>
+    <p class="hint" style="margin-top:8px">Pas encore de clé ? <a href="${P.keyUrl}" target="_blank" rel="noopener">Crée-la chez ${P.vendor}</a>. ${P.name} ne permet pas à un site de se connecter à ton abonnement : la clé API est facturée à l’usage par ${P.vendor}, en général de quelques centimes à moins d’un euro pour un réseau de 1 500 contacts.</p>
+    <label class="sharebox"><input type="checkbox" data-llm="remember"${llm.remember ? ' checked' : ''}> <span>Se souvenir de ma clé sur cet appareil</span></label>
+    <h3>Ce qui est envoyé</h3>
+    <p class="pos">À ${P.vendor} uniquement : les noms d’entreprises et les intitulés de poste non reconnus. Jamais le nom, le profil ou l’email de tes contacts. Ta clé n’est envoyée qu’à ${P.vendor}.</p>
+    ${shareBox()}
+    <button class="btn primary block" type="button" data-act="airun" style="margin-top:16px">Lancer la classification</button>`);
+}
+function readAIForm(){
+  const prov = document.querySelector('input[data-llm=provider]:checked'), m = document.getElementById('llm-model'), k = document.getElementById('llm-key'), rem = document.querySelector('input[data-llm=remember]');
+  if(prov) llm.provider = prov.value;
+  if(m) llm.model = m.value;
+  if(k) llm.key = k.value.trim();
+  if(rem) llm.remember = rem.checked;
+}
 /* Corrections manuelles (prioritaires) et dictionnaire partagé entre utilisateurs de l’artefact (capacité db) */
 const FIX_KEY = 'synapses-fix-v1';
 let userFix = {co:{}, pos:{}};
@@ -883,7 +994,7 @@ async function pushNow(kind, entries){
   if(!shareOn || isDemo) return;
   const rows = [], marks = [];
   for(const [k, v] of Object.entries(entries)){
-    if(!k || k.length > 120) continue;
+    if(!k || k.length > 120 || (kind === 'co' && !SECTOR_LABELS.includes(v.s)) || v.s === 'Non classé') continue;
     const val = kind === 'co' ? v.s : v.f + '|' + v.n, mark = `${kind}|${k}|${val}`;
     if(sentStore[mark]) continue;
     const libelle = labelOf(kind, k).slice(0, 150);
@@ -893,9 +1004,13 @@ async function pushNow(kind, entries){
   }
   for(let i = 0; i < rows.length; i += 200){
     try {
-      const r = await sbFetch('/contributions', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(rows.slice(i, i + 200))});
-      if(!r.ok) continue;
-      marks.slice(i, i + 200).forEach(m => { sentStore[m] = 1; });
+      const part = rows.slice(i, i + 200), pm = marks.slice(i, i + 200);
+      const post = b => sbFetch('/contributions', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(b)});
+      const r = await post(part);
+      if(r.ok) pm.forEach(m => { sentStore[m] = 1; });
+      /* une ligne refusée par la base ne bloque pas les autres */
+      else if(r.status === 400) for(let j = 0; j < part.length; j++){ const r1 = await post([part[j]]); if(r1.ok || r1.status === 400) sentStore[pm[j]] = 1; }
+      else continue;
       try { localStorage.setItem(SENT_KEY, JSON.stringify(sentStore)); } catch(e) {}
     } catch(e) { return; } /* hors ligne : on réessaiera au prochain import */
   }
@@ -1002,23 +1117,26 @@ function pickLabel(v, labels){
 }
 const asList = res => Array.isArray(res) ? res : (res && typeof res === 'object' ? (Object.values(res).find(Array.isArray) || []) : []);
 async function runAI(){
-  if(!sampleFn || aiRun) return;
+  if(aiRun) return;
+  if(!llmReady()){ showAI(); return; }
   const {cos, poss} = aiPending();
   const chunk = (a, n) => { const out = []; for(let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
   const jobs = [...chunk(cos, 120).map(items => ({kind:'co', items})), ...chunk(poss, 100).map(items => ({kind:'pos', items}))];
-  if(!jobs.length){ toast('Tout ton réseau est déjà classé par Claude'); return; }
+  if(!jobs.length){ toast('Tout ton réseau est déjà classé'); return; }
+  const modelName = sampleFn ? null : llm.model;
   aiRun = {done:0, total:jobs.length, ctl:new AbortController(), error:null};
   const fresh = {co:{}, pos:{}};
   renderBar(contacts.filter(pass));
   for(const job of jobs){
     if(aiRun.ctl.signal.aborted) break;
     try {
-      const res = await sampleFn.json(job.kind === 'co' ? coPrompt(job.items) : posPrompt(job.items), {modelTier:'quick', signal:aiRun.ctl.signal});
+      const prompt = job.kind === 'co' ? coPrompt(job.items) : posPrompt(job.items);
+      const res = sampleFn ? await sampleFn.json(prompt, {modelTier:'quick', signal:aiRun.ctl.signal}) : await callLLM(prompt, aiRun.ctl.signal);
       asList(res).forEach(r => {
         const it = job.items[Number(r && r.i) - 1];
         if(!it) return;
-        if(job.kind === 'co'){ const s = pickLabel(r.s, SECTOR_LABELS); if(s){ aiStore.co[nkey(it)] = s; fresh.co[nkey(it)] = {s, src:'ai'}; } }
-        else { const f = pickLabel(r.f, FN_LABELS), sn = pickLabel(r.n, SEN_LABELS); if(f && sn){ aiStore.pos[nkey(it)] = [f, sn]; fresh.pos[nkey(it)] = {f, n:sn, src:'ai', v:2}; } }
+        if(job.kind === 'co'){ const s = pickLabel(r.s, SECTOR_LABELS); if(s){ aiStore.co[nkey(it)] = s; fresh.co[nkey(it)] = {s, src:'ai', model:modelName}; } }
+        else { const f = pickLabel(r.f, FN_LABELS), sn = pickLabel(r.n, SEN_LABELS); if(f && sn){ aiStore.pos[nkey(it)] = [f, sn]; fresh.pos[nkey(it)] = {f, n:sn, src:'ai', v:2, model:modelName}; } }
       });
       saveAI();
       /* Partage au fil de l’eau : chaque lot terminé est enregistré dans le dictionnaire, même si la suite est interrompue */
@@ -1034,28 +1152,32 @@ async function runAI(){
     renderBar(contacts.filter(pass));
   }
   /* (les lots ont déjà été partagés au fil de l’eau) */
-  const err = aiRun.error, stopped = aiRun.ctl.signal.aborted;
+  const err = aiRun.error, stopped = aiRun.ctl.signal.aborted, who = aiName(), P = PROVIDERS[llm.provider];
   aiRun = null;
   const n = applyAI(contacts);
   setupColor(); syncChips(); render();
   if(err === 'not_granted' || err === 'sampling_disabled' || err === 'not_declared' || err === 'capability_disabled'){ aiHidden = true; renderBar(contacts.filter(pass)); toast('Claude n’est pas disponible ici : la classification par mots-clés est conservée'); }
+  else if(err === 'bad_key'){ toast(`Clé API refusée par ${P.vendor} : vérifie-la`); showAI(); }
+  else if(err === 'no_credit') toast(`Crédit épuisé sur ton compte ${P.vendor} : recharge-le, puis relance`);
+  else if(err === 'bad_model') toast(`Ce modèle n’est pas disponible sur ton compte ${P.vendor} : choisis-en un autre`);
+  else if(err === 'network') toast(`${P.vendor} ne répond pas : vérifie ta connexion, puis relance`);
   else if(err === 'rate_limited') toast('Limite d’utilisation atteinte : relance plus tard, le travail déjà fait est gardé');
   else if(err) toast('Classification interrompue : relance pour terminer, le travail déjà fait est gardé');
-  else if(!Object.keys(fresh.co).length && !Object.keys(fresh.pos).length && !stopped) toast('Claude n’a renvoyé aucun classement exploitable : réessaie dans un moment');
-  else toast(stopped ? 'Classification arrêtée : les résultats déjà obtenus sont appliqués' : `Classification terminée : ${Object.keys(fresh.co).length} entreprises et ${Object.keys(fresh.pos).length} intitulés classés par Claude`);
+  else if(!Object.keys(fresh.co).length && !Object.keys(fresh.pos).length && !stopped) toast(`${who} n’a renvoyé aucun classement exploitable : réessaie dans un moment`);
+  else toast(stopped ? 'Classification arrêtée : les résultats déjà obtenus sont appliqués' : `Classification terminée : ${Object.keys(fresh.co).length} entreprises et ${Object.keys(fresh.pos).length} intitulés classés par ${who}`);
 }
 function aiCard(){
-  if(isDemo || !sampleFn || aiHidden || !contacts.length) return '';
+  if(isDemo || aiHidden || !contacts.length) return '';
   if(aiRun){
     const p = Math.round(aiRun.done / Math.max(1, aiRun.total) * 100);
-    return `<div class="demo" role="status"><div><strong>Claude classe ton réseau…</strong><span>Lot ${Math.min(aiRun.done + 1, aiRun.total)} sur ${aiRun.total}. Seuls les noms d’entreprises et les intitulés de poste sont envoyés, jamais les noms de tes contacts.</span><span class="aiprog"><span style="width:${p}%"></span></span></div>
+    return `<div class="demo" role="status"><div><strong>${aiName()} classe ton réseau…</strong><span>Lot ${Math.min(aiRun.done + 1, aiRun.total)} sur ${aiRun.total}. Seuls les noms d’entreprises et les intitulés de poste sont envoyés, jamais les noms de tes contacts.</span><span class="aiprog"><span style="width:${p}%"></span></span></div>
       <div class="demo-actions"><button class="btn sm" type="button" data-act="aistop">Arrêter</button></div></div>`;
   }
   const {cos, poss} = aiPending();
   if(!cos.length && !poss.length) return '';
   const nc = contacts.filter(c => c.sector === 'Non classé').length;
-  return `<div class="demo" role="note"><div><strong>Affine la classification avec Claude</strong><span>${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». Claude peut reconnaître les entreprises et lire les intitulés de poste pour estimer secteur, fonction et séniorité. Seuls les noms d’entreprises et les intitulés de poste lui sont envoyés.</span></div>
-    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="ai">Affiner avec Claude</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Masquer ce message">✕</button></div></div>`;
+  return `<div class="demo" role="note"><div><strong>Affine la classification avec une IA</strong><span>${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». Claude, ChatGPT ou Gemini, avec ta clé API, peut reconnaître les entreprises et lire les intitulés de poste. Seuls les noms d’entreprises et les intitulés de poste sont envoyés.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="${sampleFn ? 'ai' : 'aisetup'}">${sampleFn ? 'Affiner avec Claude' : 'Choisir une IA'}</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Masquer ce message">✕</button></div></div>`;
 }
 
 /* ---------- Top bar ---------- */
@@ -2001,6 +2123,12 @@ document.addEventListener('click', e => {
     else if(a === 'legendall'){ legendAll = !legendAll; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'showall'){ state.topN = 999; select(null); closeDrawer(); render(); }
     else if(a === 'ai') runAI();
+    else if(a === 'aisetup'){ closePanel(); showAI(); }
+    else if(a === 'airun'){
+      readAIForm();
+      if(!llm.key){ toast(`Colle ta clé API ${PROVIDERS[llm.provider].vendor} pour continuer`); document.getElementById('llm-key')?.focus(); return; }
+      saveLLM(); closeDrawer(); runAI();
+    }
     else if(a === 'aistop'){ if(aiRun) aiRun.ctl.abort(); }
     else if(a === 'aihide'){ aiHidden = true; renderBar(contacts.filter(pass)); }
     return;
@@ -2037,6 +2165,10 @@ document.addEventListener('keydown', e => {
 /* Correction manuelle d’un secteur, d’une fonction ou d’une séniorité depuis la fiche */
 document.addEventListener('change', e => {
   if(e.target.matches && e.target.matches('input[data-share]')){ setShare(e.target.checked); return; }
+  /* Changement de fournisseur : modèle par défaut et nouvelle clé */
+  if(e.target.matches && e.target.matches('input[data-llm=provider]')){
+    readAIForm(); llm.model = PROVIDERS[llm.provider].models[0][0]; llm.key = ''; llm.remember = false; showAI(); return;
+  }
   const s = e.target.closest && e.target.closest('select[data-fix]');
   if(!s) return;
   const kind = s.dataset.fix, raw = s.dataset.raw, k = nkey(raw), v = s.value;

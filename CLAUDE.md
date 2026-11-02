@@ -11,7 +11,11 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   - lecture : la page télécharge les ajouts validés (`dict_entreprises`, `dict_postes`) sans rien envoyer de l’utilisateur ;
   - écriture : uniquement si l’utilisateur coche « Partager mes corrections » (désactivé par défaut) ; seuls partent un nom d’entreprise ou un intitulé de poste et la catégorie choisie, dans `contributions` ;
   - une contribution n’entre dans le dictionnaire qu’après validation par Vincent (`statut = 'validee'`). Schéma et droits : `supabase/schema.sql`.
-- **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), et l’API Supabase ci-dessus.
+- **Classement par IA (« Choisir une IA »)**, à l’initiative de l’utilisateur et avec **sa propre clé API** (Anthropic, OpenAI ou Google) :
+  la page appelle directement le fournisseur choisi depuis le navigateur ; seuls partent les noms d’entreprises et intitulés de poste non reconnus.
+  La clé n’est envoyée qu’à ce fournisseur et n’est gardée (localStorage) que si l’utilisateur coche « Se souvenir de ma clé ». Un vrai « connecter mon compte » n’existe pas chez ces fournisseurs.
+  Modèles proposés (`PROVIDERS` dans `index.html`) : à revoir quand les fournisseurs en retirent.
+- **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), l’API Supabase ci-dessus et l’API du fournisseur d’IA choisi par l’utilisateur.
 - **Outil indépendant, non affilié à LinkedIn** : pas de logo LinkedIn, pas de formulation laissant croire à un partenariat.
 - Tout le code est public : ne jamais y mettre de clé d’API, de jeton ou de donnée personnelle. Seule exception : la clé **publishable** Supabase (`sb_publishable_…`), publique par conception. Jamais la clé secrète (`sb_secret_…`).
 
@@ -24,7 +28,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   Pour enrichir la classification, modifier ces fichiers, pas `index.html`. Ne jamais y ajouter un nom de personne.
 - Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > ajout validé du dictionnaire partagé (Supabase) > dictionnaire `data/entreprises.json` (variantes « Groupe X », « x.fr », « A - B » comprises) > mots-clés.
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
-- Le code lié à claude.ai (`window.claude`, capacité `sample`) est inactif ici : l’app fonctionne sans lui.
+- Le code lié à claude.ai (`window.claude`, capacité `sample`) est inactif ici : sur le site public, le classement par IA passe par `callLLM` et la clé de l’utilisateur.
 
 ## Règles de design acquises (validées avec Vincent)
 - Aucun chevauchement entre nœuds, grappes, jauges et noms de groupes (vérifier après chaque changement de disposition).
