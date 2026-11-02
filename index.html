@@ -1235,8 +1235,49 @@ function releaseColleagues(){
   gathered = [];
   if(tipHub){ tipHub.extra = 0; tipHub = null; }
   if(selBlob){ selBlob = null; drawRings(); }
-  gColl.selectAll('*').remove(); collSel = null; tipSel = null; collLbl = null;
+  gColl.selectAll('*').remove(); collSel = null; tipSel = null; collLbl = null; collSide = null;
   setXY(); sim.alpha(0.5).restart(); positionLabels();
+}
+/* Étiquette « N collègues chez … » : hors du cercle de la grappe, du premier côté libre (dessous, dessus, droite, gauche),
+   sans toucher le nœud du groupe, sa jauge ni son nom */
+let collSide = null;
+function collPlace(kTarget){
+  const sn = collLbl && nodes.find(n => n.id === state.selected);
+  if(!sn) return null;
+  const base = Math.max(collR, selBlob ? selBlob.r : 0), k = Math.max(zk, 0.35);
+  if(collSide && !kTarget) return {side:collSide, R:base + 4 / k};
+  /* Côté choisi pour le zoom visé (celui que retient zoomToNode), à la taille qu’auront alors l’étiquette et le nom du groupe, puis gardé fixe */
+  const kt = kTarget || Math.max(zk, 1.4), kr = Math.max(kt, 0.35), h = 15 / kr, Rr = base + 4 / kr;
+  let w = 0; try { w = collLbl.node().getComputedTextLength() * k / kr; } catch(e) { w = 0; }
+  if(!w || !isFinite(w)) w = (collLbl.text() || '').length * 7.2 / kr;
+  const x = sn.ax ?? sn.x, y = sn.ay ?? sn.y, hub = nodes.find(n => n.id === sn.hub);
+  const pad = 4 / kr; /* marge visible entre l’étiquette et ce qu’elle doit éviter */
+  const circles = hub ? [{cx:hub.ax ?? hub.x, cy:hub.ay ?? hub.y, r:hub.r + 7 + pad}] : [];
+  let lb = null;
+  const lblEl = hub && labelSel && !labelRadial ? labelSel.nodes().find(el => el.__data__ === hub) : null;
+  /* Nom du groupe ramené à sa taille après le zoom (il rétrécit autour de son point d’ancrage) */
+  if(lblEl){ try {
+    const b = lblEl.getBBox(), f = Math.max(zk, LK) / Math.max(kt, LK), ax = +lblEl.getAttribute('x'), ay = +lblEl.getAttribute('y');
+    lb = {x0:ax + (b.x - ax) * f - pad, y0:ay + (b.y - ay) * f - pad, x1:ax + (b.x + b.width - ax) * f + pad, y1:ay + (b.y + b.height - ay) * f + pad};
+  } catch(e) { lb = null; } }
+  const sides = [
+    {side:'below', box:{x0:x - w / 2, x1:x + w / 2, y0:y + Rr, y1:y + Rr + h}},
+    {side:'above', box:{x0:x - w / 2, x1:x + w / 2, y0:y - Rr - h, y1:y - Rr}},
+    {side:'right', box:{x0:x + Rr, x1:x + Rr + w, y0:y - h / 2, y1:y + h / 2}},
+    {side:'left', box:{x0:x - Rr - w, x1:x - Rr, y0:y - h / 2, y1:y + h / 2}}
+  ];
+  const hitC = (b, c) => { const dx = Math.max(b.x0 - c.cx, 0, c.cx - b.x1), dy = Math.max(b.y0 - c.cy, 0, c.cy - b.y1); return dx * dx + dy * dy < c.r * c.r; };
+  const hitR = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  const best = sides.find(o => !circles.some(c => hitC(o.box, c)) && !(lb && hitR(o.box, lb))) || sides[0];
+  collSide = best.side;
+  return {side:collSide, R:Rr};
+}
+function placeCollLbl(){
+  const p = collPlace(), sn = p && nodes.find(n => n.id === state.selected);
+  if(!sn) return;
+  const pos = {below:[sn.x, sn.y + p.R, 'middle', 'hanging'], above:[sn.x, sn.y - p.R, 'middle', 'auto'],
+               right:[sn.x + p.R, sn.y, 'start', 'central'], left:[sn.x - p.R, sn.y, 'end', 'central']}[p.side];
+  collLbl.attr('x', pos[0]).attr('y', pos[1]).style('text-anchor', pos[2]).style('dominant-baseline', pos[3]);
 }
 function gatherColleagues(sn, cn){
   if(!sn || state.view !== 'graph') return;
@@ -1262,6 +1303,7 @@ function gatherColleagues(sn, cn){
   collSel = gColl.selectAll('line.coll').data(cn, d => d.id).join('line').attr('class', 'coll');
   if(cn.length){
     collR = R0 + r;
+    collSide = null;
     collLbl = gColl.append('text').attr('class', 'colllbl').text(`${cn.length} collègue${cn.length > 1 ? 's' : ''} chez ${sn.c.company}`);
     styleLabels();
   }
@@ -1338,7 +1380,7 @@ function ticked(){
   if(linkSel) linkSel.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
   if(nodeSel) nodeSel.attr('cx', d => d.x).attr('cy', d => d.y);
   if(collSel){ const sn = nodes.find(n => n.id === state.selected); if(sn) collSel.attr('x1', sn.x).attr('y1', sn.y).attr('x2', d => d.x).attr('y2', d => d.y); }
-  if(collLbl){ const sn = nodes.find(n => n.id === state.selected); if(sn) collLbl.attr('x', sn.x).attr('y', sn.y + collR + 16 / Math.max(zk, 0.35)); }
+  if(collLbl) placeCollLbl();
   if(tipSel && tipHub){ const sn = nodes.find(n => n.id === state.selected); if(sn) tipSel.attr('x1', tipHub.x).attr('y1', tipHub.y).attr('x2', sn.x).attr('y2', sn.y); }
   positionLabels();
   if(needFit && sim.alpha() < 0.06){ needFit = false; if(!state.selected) fit(); }
@@ -1495,7 +1537,7 @@ function setXY(){
 }
 
 function renderGraph(vis){
-  gathered = []; tipHub = null; tipSel = null; collLbl = null; selBlob = null; gColl.selectAll('*').remove(); collSel = null;
+  gathered = []; tipHub = null; tipSel = null; collLbl = null; collSide = null; selBlob = null; gColl.selectAll('*').remove(); collSel = null;
   nodes.forEach(n => pos.set(n.id, {x:n.x, y:n.y}));
   const dim = DIMS[state.groupBy];
   const raw = d3.rollup(vis, v => v.length, dim.get);
@@ -1711,13 +1753,20 @@ function zoomToNode(n){
   if(lblEl){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
   const orb = n.type === 'hub' ? (n.outer || n.r) + 6 : (collLbl ? collR + 6 : n.r + 30);
   items.push({x, y, l:0, r:0, t:0, b:0, rad:orb});
-  if(n.type === 'c' && collLbl){ const w = (collLbl.text() || '').length * 7.2; items.push({x, y, l:-w / 2, r:w / 2, t:0, b:20, dy:collR + 6}); }
+  /* Étiquette des collègues : son côté dépend du zoom essayé */
+  const collItem = kk => {
+    if(n.type !== 'c' || !collLbl) return [];
+    const p = collPlace(kk), w = (collLbl.text() || '').length * 7.2, R = p ? p.R : collR + 6;
+    return [{below:{x, y, l:-w / 2, r:w / 2, t:0, b:20, dy:R}, above:{x, y, l:-w / 2, r:w / 2, t:-20, b:0, dy:-R},
+             right:{x, y, l:0, r:w, t:-10, b:10, dx:R}, left:{x, y, l:-w, r:0, t:-10, b:10, dx:-R}}[p ? p.side : 'below']];
+  };
   const ext = kk => {
     let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
-    for(const it of items){ const rad = (it.rad || 0) * kk, sx = kk * it.x, sy = kk * it.y + (it.dy || 0) * kk; L = Math.min(L, sx + it.l - rad); R = Math.max(R, sx + it.r + rad); T = Math.min(T, sy + it.t - rad); B = Math.max(B, sy + it.b + rad); }
+    for(const it of [...items, ...collItem(kk)]){ const rad = (it.rad || 0) * kk, sx = kk * it.x + (it.dx || 0) * kk, sy = kk * it.y + (it.dy || 0) * kk; L = Math.min(L, sx + it.l - rad); R = Math.max(R, sx + it.r + rad); T = Math.min(T, sy + it.t - rad); B = Math.max(B, sy + it.b + rad); }
     return {L, R, T, B};
   };
-  for(let i = 0; i < 10; i++){ const e = ext(k); if(e.R - e.L <= visW - 2 * M && e.B - e.T <= visH - 2 * M) break; k *= 0.88; }
+  /* On dézoome jusqu’à ce que tout tienne dans la zone libre (sans s’arrêter avant) */
+  for(let i = 0; i < 40 && k > 0.15; i++){ const e = ext(k); if(e.R - e.L <= visW - 2 * M && e.B - e.T <= visH - 2 * M) break; k = Math.max(0.15, k * 0.88); }
   const e = ext(k);
   let tx = vb.x + visW / 2 - k * x, ty = vb.y + visH / 2 - k * y;
   if(tx + e.L < vb.x + M) tx = vb.x + M - e.L; if(tx + e.R > vb.x + visW - M) tx = vb.x + visW - M - e.R;
@@ -2209,7 +2258,7 @@ new ResizeObserver(() => {
   applyLayout(); drawRings();
   /* Si un profil est sélectionné, on reforme son cercle de collègues sur la nouvelle disposition */
   gathered.forEach(n => { n.homeX = n.homeY = null; }); gathered = [];
-  gColl.selectAll('*').remove(); collSel = null; collLbl = null; selBlob = null;
+  gColl.selectAll('*').remove(); collSel = null; collLbl = null; collSide = null; selBlob = null;
   reapplySelection();
   setXY(); sim.alpha(0.3).restart();
   needFit = true;
