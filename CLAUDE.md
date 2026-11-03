@@ -2,7 +2,9 @@
 
 ## Le produit
 Synapses visualise un réseau LinkedIn en graphe neuronal à partir de l’export LinkedIn de l’utilisateur (archive .zip ou Connections.csv).
-Site public gratuit : https://vincentnguyenpro.github.io/synapses/ (GitHub Pages, branche `main`, dossier racine).
+Site public gratuit (GitHub Pages, branche `main`, dossier racine) :
+  - https://vincentnguyenpro.github.io/synapses/ : landing page de présentation (`index.html`), le lien à partager, notamment aux recruteurs ;
+  - https://vincentnguyenpro.github.io/synapses/app/ : l’outil (`app/index.html`).
 Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des échanges : français.
 
 ## Principes non négociables
@@ -14,21 +16,24 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - **Classement par IA (« Choisir une IA »)**, à l’initiative de l’utilisateur et avec **sa propre clé API** (Anthropic, OpenAI ou Google) :
   la page appelle directement le fournisseur choisi depuis le navigateur ; seuls partent les noms d’entreprises et intitulés de poste non reconnus.
   La clé n’est envoyée qu’à ce fournisseur et n’est gardée (localStorage) que si l’utilisateur coche « Se souvenir de ma clé ». Un vrai « connecter mon compte » n’existe pas chez ces fournisseurs.
-  Modèles proposés (`PROVIDERS` dans `index.html`) : à revoir quand les fournisseurs en retirent.
+  Modèles proposés (`PROVIDERS` dans `app/index.html`) : à revoir quand les fournisseurs en retirent.
 - **Logos des entreprises (Brandfetch Logo API)** : option « Logos des entreprises » du panneau Affichage, **cochée par défaut** (choix de Vincent du 3 novembre 2026), décochable ; l’utilisateur est informé à côté de la case et dans « Tes données ».
   Cochée, chaque logo affiché envoie à `cdn.brandfetch.io` le domaine de l’entreprise (et l’IP du visiteur), jamais le nom d’un contact.
   Client ID public dans `LOGO_CONFIG` ; `fallback/404` pour qu’une marque inconnue garde son monogramme ; aucun domaine deviné pour « Freelance », « Confidentiel »… (`NOT_A_COMPANY`).
+- **Compteur anonyme des réseaux visualisés** (choix de Vincent du 3 novembre 2026) : après un import réussi, l’outil appelle `compter_soumission()` (au plus une fois par jour et par navigateur) ; rien d’autre n’est envoyé. La landing page lit le total et affiche une invitation tant qu’il est sous 50. Mentionné dans « Tes données ». Schéma : `supabase/compteur.sql`. Ne jamais afficher un chiffre gonflé.
 - **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), l’API Supabase ci-dessus, l’API du fournisseur d’IA choisi par l’utilisateur et Brandfetch (option logos, cochée par défaut).
 - **Outil indépendant, non affilié à LinkedIn** : pas de logo LinkedIn, pas de formulation laissant croire à un partenariat.
 - Tout le code est public : ne jamais y mettre de clé d’API, de jeton ou de donnée personnelle. Seule exception : la clé **publishable** Supabase (`sb_publishable_…`), publique par conception. Jamais la clé secrète (`sb_secret_…`).
 
 ## Architecture
-- Un seul fichier `index.html` (HTML, CSS et JS inline), sans étape de compilation.
+- Outil : un seul fichier `app/index.html` (HTML, CSS et JS inline), sans étape de compilation. Il charge `../data/*.json` et les icônes de la racine.
+- Landing page : `index.html` à la racine, page statique avec les captures de démonstration de `assets/demo/` (réseau fictif uniquement, jamais de vraies données) ; bouton « Essayer la démo » → `app/`, « Importer mon export » → `app/#importer`.
+  Pour refaire les captures : démo, 1600 × 1000, navigateur visible (Brandfetch bloque les navigateurs headless), WebP en 1600 et 900 px.
 - Import : `handleFiles` lit le .zip (JSZip) et y cherche `Connections.csv`, `Profile.csv`, `Positions.csv`.
   Format réel de Connections.csv : 3 lignes de notes, puis `First Name,Last Name,URL,Email Address,Company,Position,Connected On`, dates du type `17 Jan 2026`.
 - Dictionnaires de classification dans `data/` (fichiers statiques chargés au démarrage par `loadDictionary`) :
   `data/entreprises.json` (entreprise → secteur, mots-clés de secteur) et `data/postes.json` (mots-clés de fonction, règles de séniorité).
-  Pour enrichir la classification, modifier ces fichiers, pas `index.html`. Ne jamais y ajouter un nom de personne.
+  Pour enrichir la classification, modifier ces fichiers, pas `app/index.html`. Ne jamais y ajouter un nom de personne.
 - Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > ajout validé du dictionnaire partagé (Supabase) > dictionnaire `data/entreprises.json` (variantes « Groupe X », « x.fr », « A - B » comprises) > mots-clés.
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
 - Le code lié à claude.ai (`window.claude`, capacité `sample`) est inactif ici : sur le site public, le classement par IA passe par `callLLM` et la clé de l’utilisateur.
