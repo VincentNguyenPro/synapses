@@ -335,7 +335,10 @@ button.lg:hover{background:var(--surface-2)}
   .zoombar .zin,.zoombar .zout{display:none}
   .legendbox{right:12px;left:auto;bottom:16px;max-width:calc(100% - 160px)}
   .legendbox li:nth-child(n+5){display:none}
-  .canvas.has-drawer .legendbox{right:12px;bottom:auto;top:12px}
+  /* Fiche ouverte sur téléphone : elle occupe le bas de l’écran ; le bouton Filtres la masquerait et la légende (déjà détaillée
+     dans la fiche) chevaucherait les boutons du haut */
+  .canvas.has-drawer .legendbox{display:none}
+  body.drawer-open .fab{display:none}
   .drawer{top:auto;left:0;width:auto;max-height:78%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
   .list{padding:8px 12px 96px}
 }
@@ -1761,11 +1764,13 @@ function zoomToNode(n){
   if(!n || state.view !== 'graph') return;
   const mobile = window.matchMedia('(max-width:760px)').matches;
   const open = drawer.classList.contains('open');
-  const vb = open ? {x:0, y:0, w:W(), h:H()} : viewport();
+  /* Téléphone, fiche ouverte : le haut du graphe est occupé par le bouton « Vue d’ensemble », on cadre en dessous */
+  const topRes = open && mobile ? 56 : 0;
+  const vb = open ? {x:0, y:topRes, w:W(), h:H()} : viewport();
   const lgEl = document.getElementById('legend');
   const lgW = open && !mobile && lgEl && !lgEl.hidden && lgEl.offsetWidth ? lgEl.offsetWidth + 28 : 0;
   const visW = open && !mobile ? Math.max(200, vb.w - drawer.offsetWidth - lgW) : vb.w;
-  const visH = open && mobile ? Math.max(140, vb.h - drawer.offsetHeight) : vb.h;
+  const visH = open && mobile ? Math.max(140, vb.h - drawer.offsetHeight - topRes) : vb.h;
   const x = n.ax ?? n.fx ?? n.x, y = n.ay ?? n.fy ?? n.y;
   let k;
   /* Profil déplacé au bout de sa branche : on cadre le groupe, la branche prolongée et le cercle des collègues */
@@ -1905,11 +1910,11 @@ function render(){
 const drawer = $('#drawer'), dbody = $('#drawerBody');
 function openDrawer(html){
   dbody.innerHTML = html;
-  canvas.classList.add('has-drawer');
+  canvas.classList.add('has-drawer'); document.body.classList.add('drawer-open');
   drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); drawer.scrollTop = 0;
   const t = $('#dtitle'); if(t) t.focus({preventScroll:true});
 }
-function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); canvas.classList.remove('has-drawer'); }
+function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); canvas.classList.remove('has-drawer'); document.body.classList.remove('drawer-open'); }
 const fmtDate = d => d ? d.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'Inconnue';
 
 function showContact(c){
