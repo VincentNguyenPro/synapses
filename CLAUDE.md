@@ -36,6 +36,9 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   Pour enrichir la classification, modifier ces fichiers, pas `app/index.html`. Ne jamais y ajouter un nom de personne.
 - Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > ajout validé du dictionnaire partagé (Supabase) > dictionnaire `data/entreprises.json` (variantes « Groupe X », « x.fr », « A - B » comprises) > mots-clés.
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
+- Performance (mesurée jusqu’à 5 000 contacts, ~10 000 éléments SVG) : ne jamais mettre `opacity` sur les éléments du graphe
+  (chaque élément est alors dessiné à part) — estomper avec `fill-opacity` / `stroke-opacity` ; pas de fondu au-delà de 2 500 contacts
+  (classe `heavy`) ; `ticked` ne réécrit que les points qui ont bougé ; la largeur des noms de groupes est mise en cache (`__w13`).
 - Le code lié à claude.ai (`window.claude`, capacité `sample`) est inactif ici : sur le site public, le classement par IA passe par `callLLM` et la clé de l’utilisateur.
 
 ## Règles de design acquises (validées avec Vincent)
