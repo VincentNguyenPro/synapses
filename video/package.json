@@ -1,0 +1,6 @@
+{
+  "name": "synapses-video",
+  "private": true,
+  "description": "Montage et rendu de la vidéo de démo",
+  "dependencies": { "playwright-core": "1.48.2" }
+}
