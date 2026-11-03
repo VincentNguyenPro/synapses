@@ -46,6 +46,10 @@ img{max-width:100%;height:auto;display:block}
 .nav a{color:var(--muted);text-decoration:none;font-weight:700;font-size:15px}
 .nav a:hover{color:var(--ink)}
 @media (min-width:900px){ .nav{display:flex} }
+/* Le bouton de l’en-tête n’apparaît qu’une fois les boutons du héros sortis de l’écran : pas de doublon */
+.navcta{opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .2s,visibility .2s}
+.navcta.show{opacity:1;visibility:visible;transform:none}
+@media (prefers-reduced-motion: reduce){ .navcta{transition:none} }
 
 /* Boutons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 22px;border-radius:999px;font:inherit;font-weight:800;font-size:16px;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s}
@@ -185,7 +189,7 @@ footer a.me strong{color:var(--ink)}
       <a href="#confidentialite">Confidentialité</a>
       <a href="#faq">Questions</a>
     </nav>
-    <a class="btn primary sm" href="app/">Essayer</a>
+    <a class="btn primary sm navcta" href="app/" tabindex="-1" aria-hidden="true">Essayer la démo</a>
   </div>
 </header>
 
@@ -196,7 +200,7 @@ footer a.me strong{color:var(--ink)}
         <span class="eyebrow">Ton réseau LinkedIn, vu comme un réseau de neurones</span>
         <h1 id="titre">Trouve qui peut t’ouvrir <em>la bonne porte</em> dans ton réseau LinkedIn</h1>
         <p class="lead">Synapses transforme tes contacts en carte interactive&nbsp;: secteurs, entreprises, séniorité. Repère en quelques secondes qui solliciter pour un job, un client ou un rendez-vous.</p>
-        <div class="ctas">
+        <div class="ctas" id="hero-ctas">
           <a class="btn primary" href="app/">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>
             Essayer la démo
@@ -453,6 +457,12 @@ footer a.me strong{color:var(--ink)}
   const top = document.getElementById('top');
   const onScroll = () => top.classList.toggle('scrolled', window.scrollY > 4);
   window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  /* Bouton « Essayer la démo » de l’en-tête : visible seulement quand ceux du héros ne le sont plus */
+  const navcta = document.querySelector('.navcta'), heroCtas = document.getElementById('hero-ctas');
+  const setCta = on => { navcta.classList.toggle('show', on); navcta.tabIndex = on ? 0 : -1; navcta.toggleAttribute('aria-hidden', !on); };
+  if('IntersectionObserver' in window) new IntersectionObserver(([e]) => setCta(!e.isIntersecting), {rootMargin:'-64px 0px 0px 0px'}).observe(heroCtas);
+  else setCta(true);
 
   /* Compteur anonyme des réseaux visualisés (supabase/compteur.sql). Sous le seuil, une invitation remplace le chiffre ;
      si la base ne répond pas, la ligne reste vide. */
