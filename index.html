@@ -67,6 +67,8 @@ img{max-width:100%;height:auto;display:block}
 .shot{border-radius:var(--radius);overflow:hidden;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
 .shot a{display:block}
 .hero .shot{margin:40px auto 0;max-width:1040px}
+.shot.film video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#FAFAF7}
+.credit{color:var(--muted);font-size:13.5px;margin:12px 0 0}
 
 /* Étapes */
 section{padding:64px 0}
@@ -138,11 +140,15 @@ footer a.me strong{color:var(--ink)}
         <a class="btn ghost" href="app/#importer">Importer mon export LinkedIn</a>
       </div>
       <p class="count" data-count aria-live="polite"></p>
-      <div class="shot">
-        <a href="assets/demo/2-reseau.webp" target="_blank" rel="noopener" aria-label="Agrandir la capture du graphe">
-          <img src="assets/demo/2-reseau.webp" srcset="assets/demo/2-reseau-900.webp 900w, assets/demo/2-reseau.webp 1600w" sizes="(max-width:1100px) 100vw, 1040px" width="1600" height="1000" alt="Le graphe Synapses : « Moi » au centre, dix branches de secteurs autour, chaque contact en point coloré par séniorité" fetchpriority="high">
-        </a>
+      <div class="shot film">
+        <!-- Vidéo hébergée sur le site : rien n’est chargé avant le clic sur lecture, aucun lecteur tiers -->
+        <video controls playsinline preload="none" width="1920" height="1080" poster="assets/demo/synapses-demo-affiche.webp" aria-label="Vidéo de démonstration de Synapses, 1 min 48">
+          <source src="assets/demo/synapses-demo.mp4" type="video/mp4">
+          <track kind="captions" src="assets/demo/synapses-demo.vtt" srclang="fr" label="Français">
+          <a href="assets/demo/synapses-demo.mp4">Télécharger la vidéo de démonstration</a>
+        </video>
       </div>
+      <p class="credit">Démonstration en 1 min 48 sur un réseau fictif · voix générée avec ElevenLabs</p>
     </div>
   </section>
 
