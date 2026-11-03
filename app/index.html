@@ -682,6 +682,8 @@ let PREFIX_STOP = new Set();
 async function loadDictionary(){
   const get = async f => { const r = await fetch(f); if(!r.ok) throw new Error(f + ' : ' + r.status); return r.json(); };
   const [co, po] = await Promise.all([get('../data/entreprises.json'), get('../data/postes.json')]);
+  /* Domaines des logos : facultatif, sans eux les monogrammes s’affichent */
+  get('../data/domaines.json').then(d => { COMPANY_DOMAINS.clear(); for(const [n, dom] of Object.entries(d.domaines || {})) COMPANY_DOMAINS.set(nkey(n), dom); if(contacts.length && state.groupBy === 'company') render(); }).catch(() => {});
   SECTORS = co.mots_cles.map(m => [m.secteur, new RegExp(m.motif)]);
   BUILTIN.clear();
   for(const [sec, names] of Object.entries(co.secteurs)) names.forEach(n => { const k = nkey(n); if(k && !BUILTIN.has(k)) BUILTIN.set(k, sec); });
@@ -714,34 +716,26 @@ function builtinSector(k){
   for(const t of new Set([k, noTld, noLead, ...parts])){ const r = builtinMatch(t); if(r) return r; }
   return null;
 }
-const COMPANY_DOMAINS = {
-  'capgemini':'capgemini.com', 'accenture':'accenture.com', 'bnp paribas':'bnpparibas.com', 'societe generale':'societegenerale.com',
-  'axa':'axa.com', 'engie':'engie.com', 'equans':'equans.com', 'totalenergies':'totalenergies.com', 'doctolib':'doctolib.fr',
-  'dataiku':'dataiku.com', 'back market':'backmarket.com', 'qonto':'qonto.com', 'alan':'alan.com', 'mirakl':'mirakl.com',
-  'contentsquare':'contentsquare.com', 'jcdecaux':'jcdecaux.com', 'orange':'orange.com', 'sncf':'sncf.com', 'blablacar':'blablacar.com',
-  'l oreal':'loreal.com', 'lvmh':'lvmh.com', 'decathlon':'decathlon.com', 'carrefour':'carrefour.com', 'sanofi':'sanofi.com',
-  'ubisoft':'ubisoft.com', 'publicis':'publicisgroupe.com', 'publicis groupe':'publicisgroupe.com', 'wavestone':'wavestone.com',
-  'station f':'stationf.co', 'google':'google.com', 'microsoft':'microsoft.com', 'amazon':'amazon.com', 'aws':'aws.amazon.com',
-  'airbus':'airbus.com', 'thales':'thalesgroup.com', 'safran':'safran-group.com', 'renault':'renault.com', 'stellantis':'stellantis.com',
-  'michelin':'michelin.com', 'danone':'danone.com', 'deloitte':'deloitte.com', 'kpmg':'kpmg.com', 'pwc':'pwc.com', 'ey':'ey.com',
-  'mckinsey':'mckinsey.com', 'bcg':'bcg.com', 'sopra steria':'soprasteria.com', 'air france':'airfrance.com', 'bouygues':'bouygues.com',
-  'vinci':'vinci.com', 'schneider electric':'se.com', 'credit agricole':'credit-agricole.com', 'natixis':'natixis.com', 'allianz':'allianz.com',
-  'edf':'edf.fr', 'ratp':'ratp.fr', 'salesforce':'salesforce.com', 'criteo':'criteo.com', 'ovhcloud':'ovhcloud.com',
-  'dassault systemes':'3ds.com', 'veolia':'veolia.com', 'saint gobain':'saint-gobain.com', 'pernod ricard':'pernod-ricard.com',
-  'kering':'kering.com', 'hermes':'hermes.com', 'chanel':'chanel.com', 'sephora':'sephora.com', 'leroy merlin':'leroymerlin.fr',
-  'fnac':'fnac.com', 'darty':'darty.com', 'auchan':'auchan.fr', 'datadog':'datadoghq.com', 'atlassian':'atlassian.com', 'ibm':'ibm.com',
-  'oracle':'oracle.com', 'sap':'sap.com', 'meta':'meta.com', 'apple':'apple.com', 'alstom':'alstom.com', 'cgi':'cgi.com', 'devoteam':'devoteam.com'
-};
-const LEGAL = /\b(sa|sas|sasu|se|group|groupe|inc|ltd|llc|gmbh|france|international)\b/g;
+/* Domaines officiels des entreprises (data/domaines.json, chargé par loadDictionary) */
+const COMPANY_DOMAINS = new Map();
 const NOT_A_COMPANY = /\b(independant\w*|freelance\w*|self[- ]?employed|auto[- ]?entrepreneur\w*|confidenti\w*|prive|private|stealth|en recherche|open to work|retraite\w*|retired|etudiant\w*|student|top secret|none|aucune?)\b|^[^a-z0-9]*$/;
+/* Domaine officiel d’une entreprise, pour son logo. Aucun domaine n’est deviné : « laposte.com » n’est pas La Poste,
+   et un mauvais logo est pire qu’un monogramme. Variantes reconnues : « Groupe X », « X Groupe », « X (sigle) », « A - B », début de nom. */
 function domainOf(name){
-  const n = nkey(name); if(!n) return '';
-  if(COMPANY_DOMAINS[n]) return COMPANY_DOMAINS[n];
-  const first = n.split(' ')[0]; if(COMPANY_DOMAINS[first]) return COMPANY_DOMAINS[first];
-  /* Valeurs qui ne sont pas une entreprise : aucun domaine deviné, sinon on afficherait le logo d’un site sans rapport */
-  if(NOT_A_COMPANY.test(n)) return '';
-  const slug = n.replace(LEGAL, '').replace(/[^a-z0-9]/g, '');
-  return slug.length >= 2 ? slug + '.com' : '';
+  const k = nkey(name); if(!k || NOT_A_COMPANY.test(k)) return '';
+  const noTld = k.replace(/\.(fr|com|io|co|net|org|ai|eu|ch|be|ca)$/, '');
+  const noLead = noTld.replace(/^(le groupe|groupe|group|the) /, '').replace(/ (groupe|group|sa|sas|se)$/, '');
+  const parts = noLead.split(/ [-|–—:] | ?[()]/).map(x => x.trim()).filter(Boolean);
+  for(const t of new Set([k, noTld, noLead, ...parts])){
+    if(COMPANY_DOMAINS.has(t)) return COMPANY_DOMAINS.get(t);
+    const w = t.split(' ');
+    for(let n = w.length - 1; n >= 1; n--){
+      const pre = w.slice(0, n).join(' ');
+      if(n === 1 && PREFIX_STOP.has(pre)) continue;
+      if(COMPANY_DOMAINS.has(pre)) return COMPANY_DOMAINS.get(pre);
+    }
+  }
+  return '';
 }
 const logoFails = new Set();
 function logoUrl(name){
@@ -1216,7 +1210,7 @@ function aiCard(){
   const {cos, poss} = aiPending();
   if(!cos.length && !poss.length) return '';
   const nc = contacts.filter(c => c.sector === 'Non classé').length;
-  return `<div class="demo" role="note"><div><strong>Affine la classification avec une IA</strong><span>${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». Claude, ChatGPT ou Gemini, avec ta clé API, peut reconnaître les entreprises et lire les intitulés de poste. Seuls les noms d’entreprises et les intitulés de poste sont envoyés.</span></div>
+  return `<div class="demo" role="note"><div><strong>Affine la classification avec une IA</strong><span>${nc ? `${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». ` : 'Certaines entreprises ou certains intitulés de poste ne sont pas reconnus. '}Claude, ChatGPT ou Gemini, avec ta clé API, peut reconnaître les entreprises et lire les intitulés de poste. Seuls les noms d’entreprises et les intitulés de poste sont envoyés.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="${sampleFn ? 'ai' : 'aisetup'}">${sampleFn ? 'Affiner avec Claude' : 'Choisir une IA'}</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Masquer ce message">✕</button></div></div>`;
 }
 

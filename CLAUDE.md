@@ -19,7 +19,8 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   Modèles proposés (`PROVIDERS` dans `app/index.html`) : à revoir quand les fournisseurs en retirent.
 - **Logos des entreprises (Brandfetch Logo API)** : option « Logos des entreprises » du panneau Affichage, **cochée par défaut** (choix de Vincent du 3 novembre 2026), décochable ; l’utilisateur est informé à côté de la case et dans « Tes données ».
   Cochée, chaque logo affiché envoie à `cdn.brandfetch.io` le domaine de l’entreprise (et l’IP du visiteur), jamais le nom d’un contact.
-  Client ID public dans `LOGO_CONFIG` ; `fallback/404` pour qu’une marque inconnue garde son monogramme ; aucun domaine deviné pour « Freelance », « Confidentiel »… (`NOT_A_COMPANY`).
+  Client ID public dans `LOGO_CONFIG` ; `fallback/404` pour qu’une marque inconnue garde son monogramme.
+  Domaines dans `data/domaines.json` (vérifiés à la main) : **aucun domaine n’est deviné** (« laposte.com » affichait le logo d’une autre marque) ; une entreprise absente garde son monogramme. Pour ajouter un logo, ajouter son domaine officiel dans ce fichier.
 - **Compteur anonyme des réseaux visualisés** (choix de Vincent du 3 novembre 2026) : après un import réussi, l’outil appelle `compter_soumission()` (au plus une fois par jour et par navigateur) ; rien d’autre n’est envoyé. La landing page lit le total et affiche une invitation tant qu’il est sous 50. Mentionné dans « Tes données ». Schéma : `supabase/compteur.sql`. Ne jamais afficher un chiffre gonflé.
 - **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), l’API Supabase ci-dessus, l’API du fournisseur d’IA choisi par l’utilisateur et Brandfetch (option logos, cochée par défaut).
 - **Outil indépendant, non affilié à LinkedIn** : pas de logo LinkedIn, pas de formulation laissant croire à un partenariat.
