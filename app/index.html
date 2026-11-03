@@ -759,18 +759,32 @@ const SIL = {
   n:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8.5" r="3.8"/><path d="M5 20.5c.6-3.8 3.4-6.3 7-6.3s6.4 2.5 7 6.3"/></svg>'
 };
 function avatar(c, big){ const g = genderOf(c); return `<span class="av${big ? ' lg2' : ''}" style="background:${colorOf(c)}" role="img" aria-label="${g === 'f' ? 'Femme' : g === 'm' ? 'Homme' : 'Contact'}">${SIL[g || 'n']}</span>`; }
-const colorOf = c => colorFn(DIMS[state.colorBy].get(c));
+const colorOf = c => colorFn(colorLevel(c));
 
+/* Couleur d’un contact. Une dimension à beaucoup de valeurs (entreprise, formation, ville…) garde ses COLOR_MAX valeurs
+   les plus fréquentes ; les autres sont réunies en une seule grappe grise « Autres » (sinon une grappe par entreprise :
+   plus de 1 000 grappes, graphe illisible). */
+const COLOR_MAX = 10;
+let colorOther = null, colorTop = null;
+let colorLevel = c => DIMS[state.colorBy].get(c);
 function setupColor(){
   const key = state.colorBy;
   colorDomain = domainFor(key, contacts);
+  colorOther = null; colorTop = null;
+  if(key !== 'year' && colorDomain.length > PALETTE.length){
+    colorTop = new Set(colorDomain.filter(v => !TAIL.includes(v)).slice(0, COLOR_MAX));
+    colorOther = DIMS[key].other || 'Autres';
+    colorDomain = [...colorTop, colorOther];
+  }
+  const get = DIMS[key].get;
+  colorLevel = colorTop ? c => { const v = get(c); return colorTop.has(v) ? v : colorOther; } : get;
   if(key === 'year'){
     const ys = colorDomain.filter(y => y !== 'Inconnue').map(Number);
     const [a, b] = d3.extent(ys);
     const s = d3.scaleSequential(d3.interpolateViridis).domain([a ?? 0, (b ?? 1) === a ? a + 1 : b]);
     colorFn = v => v === 'Inconnue' ? GREY : s(+v);
   } else {
-    colorFn = v => { const i = colorDomain.indexOf(v); return (i < 0 || i >= PALETTE.length || TAIL.includes(v)) ? GREY : PALETTE[i]; };
+    colorFn = v => { const i = colorDomain.indexOf(v); return (i < 0 || i >= PALETTE.length || TAIL.includes(v) || v === colorOther) ? GREY : PALETTE[i]; };
   }
 }
 
@@ -1324,13 +1338,13 @@ function gatherColleagues(sn, cn){
   const R0 = cn.length ? Math.max(sn.r + r + 12, cn.length * step / (2 * Math.PI)) : 0;
   /* Le profil reste dans son cluster : il se place au bout de la branche de sa grappe (son centre), ses collègues l’entourent */
   if(hn && hn.blobs && hn.blobs.length){
-    const lv = DIMS[state.colorBy].get(sn.c);
+    const lv = colorLevel(sn.c);
     const s = hn.blobs.find(b => b.lv === lv);
     if(s){ sn.homeX = sn.ax; sn.homeY = sn.ay; sn.ax = hn.ax + s.cx; sn.ay = hn.ay + s.cy; gathered.push(sn); selBlob = {key:hn.id + '|' + s.lv, r:Math.max(s.br, R0 + r + 5)}; }
   }
   const a0 = -Math.PI / 2;
   /* Collègues classés par niveau (ordre de la légende : Junior → Dirigeant pour la séniorité), depuis midi dans le sens horaire */
-  const cget = DIMS[state.colorBy].get;
+  const cget = colorLevel;
   cn = [...cn].sort((p, q) => (colorDomain.indexOf(cget(p.c)) - colorDomain.indexOf(cget(q.c))) || p.c.name.localeCompare(q.c.name, 'fr'));
   cn.forEach((n, i) => {
     const a = a0 + i * 2 * Math.PI / cn.length;
@@ -1499,7 +1513,7 @@ function applyLayout(){
   if(me){ me.fx = cx; me.fy = cy; }
   const hubs = nodes.filter(n => n.type === 'hub');
   const groups = d3.group(nodes.filter(n => n.type === 'c'), n => n.hub);
-  const cget = DIMS[state.colorBy].get;
+  const cget = colorLevel;
   const byLevel = state.groupBy !== state.colorBy;
   /* Seuls les niveaux présents après filtrage ont un cercle : pas d’anneaux vides inutiles */
   const present = new Set(nodes.filter(n => n.type === 'c').map(n => cget(n.c)));
@@ -1748,9 +1762,9 @@ function focus(ids){
   /* Grappes : seule celle du profil sélectionné (ou celles du groupe sélectionné) restent visibles ;
      les autres membres de la grappe du profil sont masqués pour ne pas passer sous le cercle des collègues */
   const selNode = nodes.find(n => n.id === state.selected && n.type === 'c');
-  const lvSel = selNode ? DIMS[state.colorBy].get(selNode.c) : null;
+  const lvSel = selNode ? colorLevel(selNode.c) : null;
   gRings.selectAll('circle.blob, line.spoke').classed('dim', d => !ids.has(d.hub.id) || (selNode && !(d.hub.id === selNode.hub && d.lv === lvSel)));
-  nodeSel.classed('ghost', n => !!selNode && n.type === 'c' && !ids.has(n.id) && n.hub === selNode.hub && DIMS[state.colorBy].get(n.c) === lvSel);
+  nodeSel.classed('ghost', n => !!selNode && n.type === 'c' && !ids.has(n.id) && n.hub === selNode.hub && colorLevel(n.c) === lvSel);
 }
 function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.classed('dim', false); labelSel.classed('dim', false); countSel.classed('dim', false); if(badgeSel) badgeSel.classed('dim', false); nodeSel.classed('ghost', false); gRings.selectAll('circle.blob, line.spoke').classed('dim', false); } }
 function select(id){ releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); styleLabels(); }
@@ -1856,13 +1870,13 @@ function updateLegend(vis){
   const canFilter = isFilterDim(state.colorBy);
   const sel = canFilter ? state.include[state.colorBy] : new Set();
   const base = canFilter ? contacts.filter(c => pass(c, state.colorBy)) : vis;
-  const counts = d3.rollup(base, v => v.length, cdim.get);
+  const counts = d3.rollup(base, v => v.length, colorLevel);
   const shown = colorDomain.filter(v => counts.get(v));
   const max = legendAll ? 999 : 8;
   const maxL = d3.max(shown, v => counts.get(v)) || 1;
   $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
     const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${colorFn(v)}"></span><span class="dot" style="background:${colorFn(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
-    return `<li>${canFilter ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`}</li>`;
+    return `<li>${canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`}</li>`;
   }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : `Voir les ${shown.length - 8} autres`}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}<p class="more" style="margin:8px 6px 0">Jauge et teinte d’un groupe : sa part des contacts affichés</p></div>`;
   $('#legend').hidden = !base.length;
 }
@@ -1985,7 +1999,7 @@ function showHub(h){
   const members = nodes.filter(n => n.type === 'c' && n.hub === h.id).map(n => n.c);
   focus(new Set([h.id, ...members.map(c => 'c:' + c.id)]));
   const cdim = DIMS[state.colorBy];
-  const counts = d3.rollup(members, v => v.length, cdim.get);
+  const counts = d3.rollup(members, v => v.length, colorLevel);
   const rows = colorDomain.filter(v => counts.get(v));
   const canFilter = isFilterDim(state.groupBy) && h.key !== (DIMS[state.groupBy].other || 'Autres');
   openDrawer(`
@@ -2040,7 +2054,7 @@ function showMe(){
   const years = contacts.map(c => c.year).filter(Boolean);
   const groups = new Set(contacts.map(DIMS[state.groupBy].get)).size;
   const cdim = DIMS[state.colorBy];
-  const cc = d3.rollup(contacts, v => v.length, cdim.get);
+  const cc = d3.rollup(contacts, v => v.length, colorLevel);
   const rows = colorDomain.filter(v => cc.get(v));
   const g = genderOf({first:(p.name || '').split(' ')[0]});
   openDrawer(`
