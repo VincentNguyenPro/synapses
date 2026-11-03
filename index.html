@@ -7,7 +7,7 @@
 <meta name="description" content="Synapses range tes contacts LinkedIn par secteur, entreprise et séniorité pour te montrer qui peut t’ouvrir une porte : un job, un client, un rendez-vous. Gratuit, sans inscription, ton fichier reste dans ton navigateur.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#EEF1F5">
+<meta name="theme-color" content="#F3F6FC">
 <link rel="canonical" href="https://vincentnguyenpro.github.io/synapses/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
@@ -28,7 +28,8 @@
 /* Direction « The product performs » (taste-skill, graine 2047074269) : la page montre l’outil qui travaille.
    Une teinte de fond, une encre, un accent (le bleu de la marque) ; surfaces séparées par un pas de teinte, jamais par un filet. */
 :root{
-  --bg:#EEF1F5; --surface:#FFFFFF; --tone:#E2E7EE; --tone-2:#D6DDE7; --ink:#17212E; --muted:#475668;
+  /* Gris teintés du bleu de la marque, plus lumineux qu’un gris neutre */
+  --bg:#F3F6FC; --surface:#FFFFFF; --tone:#E5EBF8; --tone-2:#D5DFF4; --ink:#17212E; --muted:#46577A;
   --accent:#2F5BEA; --accent-ink:#2448C4; --on-accent:#FFFFFF; --field:#141C27; --field-ink:#E9EEF5; --field-muted:#A9B6C6;
   --step-small:clamp(0.8125rem,0.79rem + 0.1vw,0.875rem);
   --step-body:clamp(1.0625rem,1rem + 0.25vw,1.1875rem);
@@ -153,7 +154,8 @@ p{margin:0}
 .sit h2{font-size:var(--step-head);line-height:1.02}
 .sit h2 .soft{color:var(--muted);display:block}
 .sit .body{display:grid;gap:20px;margin-top:56px}
-@media (min-width:860px){ .sit .body{grid-template-columns:210px minmax(0,1fr);gap:40px} }
+/* Onglets et texte alignés sur la première ligne de base : le titre de l’onglet est au niveau de la première ligne du paragraphe */
+@media (min-width:860px){ .sit .body{grid-template-columns:210px minmax(0,1fr);gap:40px;align-items:first baseline} }
 .tabs{display:grid;gap:6px;align-content:start}
 @media (max-width:859px){ .tabs{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .tabs button{text-align:left;font:inherit;border:0;border-radius:var(--radius);background:var(--tone);color:var(--ink);padding:14px 16px;min-height:72px;cursor:pointer;transition:background .2s,color .2s}
@@ -165,7 +167,8 @@ p{margin:0}
 @media (max-width:859px){ .tabs button{padding:10px 14px;min-height:64px} }
 .panel p.say{font-size:var(--step-lead);line-height:1.35;max-width:30em;margin-bottom:22px}
 .bands{list-style:none;padding:0;margin:0;display:grid;gap:4px}
-.bands li{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:16px;align-items:center;min-height:76px;padding:12px 20px;border-radius:var(--radius);background:var(--surface)}
+/* Séniorité et entreprise sur la ligne du nom (et non au milieu du bloc nom + poste) */
+.bands li{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:16px;align-items:first baseline;align-content:center;min-height:76px;padding:12px 20px;border-radius:var(--radius);background:var(--surface)}
 .bands li:nth-child(even){background:var(--tone)}
 .bands .lvl{display:flex;align-items:center;gap:10px;font-weight:700;font-variant-numeric:tabular-nums}
 .bands .lvl i{width:12px;height:12px;border-radius:50%;flex:none}
