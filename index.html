@@ -128,6 +128,10 @@ p{margin:0}
 .play:hover{background:var(--accent-ink);transform:translate(-50%,-50%) scale(1.05)}
 .play:active{transform:translate(-50%,-50%) scale(.98)}
 .player.on .play{display:none}
+/* Aperçu muet de 8 s en boucle (131 Ko) : il remplace l’affiche quand le lecteur est à l’écran ; le film garde le son au clic */
+.teaser{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
+.player.teasing .teaser{opacity:1}
+.player.on .teaser{display:none}
 .vitrine .wrap.top{margin-top:clamp(72px,9vw,128px)}
 .vitrine h3{font-size:var(--step-lead);font-weight:800;letter-spacing:-.01em}
 .vitrine .wrap.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:20px}
@@ -311,8 +315,11 @@ footer{padding:0 10px 10px}
 .tile ul a:hover{text-decoration:underline}
 .tile.by p{font-size:var(--step-body)}
 .tile.by a{font-weight:800}
-.tile.word{grid-column:1/-1;background:var(--ink);color:#fff;min-height:200px;align-items:center;justify-content:center}
-.tile.word span{font-size:clamp(3.5rem,9vw,9rem);font-weight:800;letter-spacing:-.04em;line-height:1}
+.tile.word{grid-column:1/-1;background:var(--ink);color:#fff;min-height:200px;flex-direction:row;align-items:center;justify-content:center;gap:.28em;font-size:clamp(3.5rem,9vw,9rem)}
+/* Logo de la marque à côté du nom : même carré bleu que dans l’en-tête, à la hauteur des majuscules */
+.tile.word .wmark{width:.82em;height:.82em;border-radius:.2em;background:var(--accent);display:grid;place-items:center;flex:none}
+.tile.word .wmark svg{width:58%;height:58%}
+.tile.word .wname{font-weight:800;letter-spacing:-.04em;line-height:1}
 .tile.go{grid-column:1/-1;background:var(--accent);color:#fff;text-decoration:none;min-height:200px;transition:background .2s}
 .tile.go:hover{background:var(--accent-ink)}
 .tile.go b{font-size:var(--step-lead);font-weight:800}
@@ -390,6 +397,7 @@ footer{padding:0 10px 10px}
           <track kind="captions" src="assets/demo/synapses-demo.vtt" srclang="fr" label="Français">
           <a href="assets/demo/synapses-demo.mp4">Télécharger la vidéo de démonstration</a>
         </video>
+        <video class="teaser" id="teaser" muted loop playsinline preload="none" poster="assets/demo/synapses-apercu-affiche.webp" aria-hidden="true" tabindex="-1"><source src="assets/demo/synapses-apercu.mp4" type="video/mp4"></video>
         <button type="button" class="play" id="play" aria-label="Lire la vidéo de démonstration, 1 min 48"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Lire la vidéo</span></button>
       </div>
     </div>
@@ -574,7 +582,7 @@ footer{padding:0 10px 10px}
     <div class="tile say"><p>Synapses lit ton export LinkedIn dans ton navigateur et en fait une carte de ton réseau.</p><p class="legal">Outil indépendant, non affilié à LinkedIn. Voix de la vidéo&nbsp;: ElevenLabs.</p></div>
     <nav class="tile nav" aria-label="Pied de page"><ul><li><a href="#situations">Situations</a></li><li><a href="#demarrer">Démarrer</a></li><li><a href="#confidentialite">Confidentialité</a></li><li><a href="#questions">Questions</a></li><li><a href="app/">Ouvrir l’outil</a></li></ul></nav>
     <div class="tile by"><p>Conçu et développé par <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>, Product Manager, avec Claude Code.</p><p>Le code est public&nbsp;: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div>
-    <div class="tile word" aria-hidden="true"><span>Synapses</span></div>
+    <div class="tile word" aria-hidden="true"><span class="wmark"><svg viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span><span class="wname">Synapses</span></div>
     <a class="tile go" href="app/"><b>Essayer la démo</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
   </div>
 </footer>
@@ -689,9 +697,19 @@ footer{padding:0 10px 10px}
   });
 
   /* ---------- Vidéo : le gros bouton lance la lecture avec le son, puis laisse les commandes ---------- */
-  const film = $('#film'), player = $('.player');
+  const film = $('#film'), player = $('.player'), teaser = $('#teaser');
   $('#play').addEventListener('click', () => { player.classList.add('on'); film.play().catch(() => {}); film.focus(); });
-  film.addEventListener('play', () => player.classList.add('on'));
+  film.addEventListener('play', () => { player.classList.add('on'); teaser.pause(); });
+  /* Aperçu : lecture quand le lecteur est visible, pause sinon. Jamais si l’utilisateur demande moins d’animations
+     ou économise ses données : l’affiche fixe reste alors. */
+  const saveData = !!(navigator.connection && navigator.connection.saveData);
+  if(!reduce && !saveData){
+    teaser.addEventListener('playing', () => player.classList.add('teasing'), {once:true});
+    new IntersectionObserver(([e]) => {
+      if(player.classList.contains('on')) return;
+      if(e.isIntersecting) teaser.play().catch(() => {}); else teaser.pause();
+    }, {threshold:.35}).observe(player);
+  }
 
   /* ---------- Vitrine : le panneau au centre est éclairé, sa légende suit ---------- */
   const row = $('#row'), figs = $$('#row figure');
