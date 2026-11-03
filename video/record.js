@@ -38,7 +38,7 @@ const INIT = `
     addEventListener('mousemove', e => { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; }, true);
     addEventListener('mousedown', e => {
       const r = document.createElement('div');
-      Object.assign(r.style, {position:'fixed', left:e.clientX - 18 + 'px', top:e.clientY - 18 + 'px', width:'36px', height:'36px', borderRadius:'50%', border:'3px solid #FF6600', zIndex:2147483646, pointerEvents:'none', transition:'transform .5s ease-out, opacity .5s ease-out', transform:'scale(.3)', opacity:'1'});
+      Object.assign(r.style, {position:'fixed', left:e.clientX - 18 + 'px', top:e.clientY - 18 + 'px', width:'36px', height:'36px', borderRadius:'50%', border:'3px solid #2F5BEA', zIndex:2147483646, pointerEvents:'none', transition:'transform .5s ease-out, opacity .5s ease-out', transform:'scale(.3)', opacity:'1'});
       document.body.appendChild(r);
       requestAnimationFrame(() => { r.style.transform = 'scale(1.4)'; r.style.opacity = '0'; });
       setTimeout(() => r.remove(), 600);
@@ -229,7 +229,7 @@ const INIT = `
       /* Départ : le réseau de démonstration, avec son bandeau, comme à la première visite */
       __S.unhide(); __S.load(__S.demoContacts(), true);
       const g = document.createElement('div'); g.id = '__drag';
-      g.innerHTML = '<i style="flex:none;width:34px;height:40px;border-radius:7px;background:#FF6600;color:#fff;font:800 10px/40px system-ui;text-align:center;font-style:normal">ZIP</i><span>Basic_LinkedInDataExport.zip</span>';
+      g.innerHTML = '<i style="flex:none;width:34px;height:40px;border-radius:7px;background:#2F5BEA;color:#fff;font:800 10px/40px system-ui;text-align:center;font-style:normal">ZIP</i><span>Basic_LinkedInDataExport.zip</span>';
       Object.assign(g.style, { position:'fixed', zIndex:2147483640, pointerEvents:'none', display:'none', alignItems:'center', gap:'10px', padding:'10px 14px', background:'#fff', borderRadius:'12px', boxShadow:'0 14px 34px rgba(0,0,0,.2)', font:'700 14px system-ui', transform:'translate(14px,14px) rotate(-3deg)' });
       document.body.appendChild(g);
       addEventListener('mousemove', e => { g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px'; }, true);

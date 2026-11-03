@@ -29,21 +29,34 @@ Les trois premières secondes sont l’image de couverture (miniature dans les m
 - LinkedIn : au moment de publier la vidéo, téléverse `out/miniature-16x9.png` (ou `miniature-1x1.png`) comme miniature.
 - Le MP4 embarque aussi la couverture comme pochette (Finder, VLC).
 
-## Enregistrer et assembler
+## Fabriquer la bande-son et la vidéo
 
-1. Enregistre la voix d’une traite en lisant la vidéo muette (`out/synapses-16x9-sans-voix.mp4`) pour caler le rythme, par exemple avec Dictaphone ou QuickTime, et exporte `voix.m4a` dans ce dossier.
-2. Une seule fois : `cd video && npm install` (il faut aussi ffmpeg et Google Chrome). Lance ensuite le serveur local à la racine du dépôt, puis le rendu avec la voix :
+Une seule fois : `cd video && npm install` (il faut aussi ffmpeg, Python avec numpy et scipy, et Google Chrome).
+
+1. La voix : ElevenLabs, voix « Charlie », modèle v3, phrase par phrase et calée sur ce tableau. La clé est lue dans `~/.config/synapses/elevenlabs.env`, jamais dans le dépôt.
+
+```bash
+node video/voix-ia.js Charlie
+```
+
+2. La musique, composée par code et calée sur les mêmes scènes, puis le mélange (la musique baisse quand la voix parle) :
+
+```bash
+python3 video/musique.py && sh video/mixer.sh
+```
+
+3. Le rendu des deux formats ; le script sert lui-même les fichiers en local :
+
+```bash
+node video/render.js 169 video/out/bande-son.m4a && node video/render.js 11 video/out/bande-son.m4a
+```
+
+Pour enregistrer ta propre voix à la place : lis le tableau sur la vidéo muette (`node video/render.js 169` la produit), exporte `voix-ia.m4a` dans `video/out/`, puis reprends à l’étape 2.
+
+## Refilmer les plans de l’app
+
+Après un changement de l’app, `node video/record.js` refilme les plans dans `clips/`. Il lui faut un serveur local à la racine du dépôt :
 
 ```bash
 python3 -m http.server 8765
 ```
-
-```bash
-node video/render.js 169 video/voix.m4a && node video/render.js 11 video/voix.m4a
-```
-
-La même piste sert aux deux formats : le minutage est identique.
-
-## Refilmer les plans de l’app
-
-Après un changement de l’app, `node video/record.js` refilme les sept plans dans `clips/` (serveur local lancé).
