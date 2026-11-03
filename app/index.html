@@ -537,6 +537,8 @@ function buildContact(r, i){
     first: (r.first || '').toString().trim(),
     name: `${(r.first || '').toString().trim()} ${(r.last || '').toString().trim()}`.trim(),
     url: (r.url || '').toString().trim(),
+    /* Email : présent seulement si le contact a autorisé son partage sur LinkedIn ; lu et affiché ici, jamais envoyé ni enregistré */
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((r.email || '').toString().trim()) ? (r.email || '').toString().trim() : '',
     company, position, date: d, year: d ? d.getFullYear() : null,
     ...splitLoc(r.location, r.country),
     school: (r.school || '').toString().trim(),
@@ -557,7 +559,8 @@ function parseLinkedIn(text){
   const find = (...alts) => fields.find(f => alts.includes(norm(f)));
   const F = {
     first: find('first name','prenom'), last: find('last name','nom','nom de famille'),
-    url: find('url','profil','profile url','lien'), company: find('company','entreprise','societe'),
+    url: find('url','profil','profile url','lien'), email: find('email address','email','e-mail','adresse email','adresse e-mail','courriel'),
+    company: find('company','entreprise','societe'),
     position: find('position','poste','titre','title'), connected: find('connected on','date de connexion','connecte le'),
     location: find('location','localisation','ville','lieu'), country: find('country','pays'), school: find('school','ecole','formation','education'),
     sector: find('sector','secteur','industry','industrie'),
@@ -565,7 +568,7 @@ function parseLinkedIn(text){
   };
   const out = [];
   res.data.forEach((r, i) => {
-    const c = buildContact({first:r[F.first], last:r[F.last], url:r[F.url], company:r[F.company], position:r[F.position],
+    const c = buildContact({first:r[F.first], last:r[F.last], url:r[F.url], email:r[F.email], company:r[F.company], position:r[F.position],
       connected:r[F.connected], location:r[F.location], country:r[F.country], school:r[F.school], sector:r[F.sector], exp:r[F.exp]}, i);
     if(c.name) out.push(c);
   });
@@ -1966,6 +1969,7 @@ function showContact(c){
       <dt>Connecté le</dt><dd>${fmtDate(c.date)}</dd>
       ${c.location ? `<dt>Ville</dt><dd>${esc(c.location)}</dd>` : ''}
       ${c.country ? `<dt>Pays</dt><dd>${esc(c.country)}</dd>` : ''}
+      ${c.email ? `<dt>Email</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>` : ''}
       ${c.school ? `<dt>Formation</dt><dd>${esc(c.school)}</dd>` : ''}
       ${c.exp ? `<dt>Expérience</dt><dd>${esc(c.exp)}</dd>` : ''}
     </dl>
@@ -2020,7 +2024,7 @@ function wipeData(){
   location.reload();
 }
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Ton profil, tes tags et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite. Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Ton profil, tes tags et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite. Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
     <p class="pos">En regroupant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -2095,7 +2099,7 @@ function showHelp(msg){
     </ol>
     <p class="pos">Pour afficher ton nom et ton poste au centre du graphe, demande plutôt l’archive complète : elle contient aussi ton profil, que l’app lit automatiquement.</p>
     <h3>Ce que contient l’export</h3>
-    <p class="pos">Nom, entreprise actuelle, poste, date de connexion et lien du profil. Secteur, fonction et séniorité sont estimés à partir de ces champs.</p>
+    <p class="pos">Nom, entreprise actuelle, poste, date de connexion et lien du profil, ainsi que l’email des contacts qui ont autorisé son partage. Secteur, fonction et séniorité sont estimés à partir de ces champs.</p>
     <h3>Aller plus loin</h3>
     <p class="pos">Pour filtrer par pays, ville, formation ou expérience, ajoute dans le CSV des colonnes « Localisation » (par exemple « Paris, France »), « Pays », « Formation », « Expérience » (en années) ou « Secteur » avant l’import. Le pays est déduit automatiquement de la localisation.</p>
     <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>

@@ -33,6 +33,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   Vidéo : le film (`assets/demo/synapses-demo.mp4`, voix off, sous-titres) ne se lance qu’au clic ; un aperçu muet de 8 s en boucle (`synapses-apercu.mp4`, extrait 1:03–1:11 recadré sur l’outil) tourne quand le lecteur est visible, jamais avec « moins d’animations » ou l’économie de données.
 - Import : `handleFiles` lit le .zip (JSZip) et y cherche `Connections.csv`, `Profile.csv`, `Positions.csv`.
   Format réel de Connections.csv : 3 lignes de notes, puis `First Name,Last Name,URL,Email Address,Company,Position,Connected On`, dates du type `17 Jan 2026`.
+  `Email Address` n’est rempli que pour les contacts qui ont autorisé son partage : l’email s’affiche alors dans la fiche (lien `mailto:`), sans jamais être enregistré ni envoyé.
 - Dictionnaires de classification dans `data/` (fichiers statiques chargés au démarrage par `loadDictionary`) :
   `data/entreprises.json` (entreprise → secteur, mots-clés de secteur) et `data/postes.json` (mots-clés de fonction, règles de séniorité).
   Pour enrichir la classification, modifier ces fichiers, pas `app/index.html`. Ne jamais y ajouter un nom de personne.
