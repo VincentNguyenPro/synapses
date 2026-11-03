@@ -171,7 +171,9 @@ const INIT = `
     await sleep(300);
     const pt = await page.evaluate(() => {
       const all = __S.contacts(), n = (k, v) => all.filter(c => c[k] === v).length;
-      const vis = __S.nodes().selectAll('circle.contact').nodes().filter(el => getComputedStyle(el).opacity > .5);
+      /* Un contact du secteur zoomé, réellement à l’écran (l’app atténue les autres par fill-opacity, plus par opacity) */
+      const inView = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left > 320 && r.right < innerWidth - 300 && r.top > 80 && r.bottom < innerHeight - 20; };
+      const vis = __S.nodes().selectAll('circle.contact').nodes().filter(el => el.__data__.c.sector === 'Tech & logiciel' && inView(el));
       const el = vis.sort((a, b) => (n('company', b.__data__.c.company) * 10 + n('school', b.__data__.c.school)) - (n('company', a.__data__.c.company) * 10 + n('school', a.__data__.c.school)))[0];
       const r = el.getBoundingClientRect();
       return [r.x + r.width / 2, r.y + r.height / 2];
