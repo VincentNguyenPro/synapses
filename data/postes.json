@@ -55,7 +55,7 @@
  "seniorite": [
   {
    "niveau": "Dirigeant",
-   "motif": "\\b(ceo|cto|coo|cfo|cmo|cpo|cio|chief|founder|co-?founder|fondat\\w*|co-?fondat\\w*|president\\w*|directeur general|directrice generale|managing director|general manager|partner|associe\\w*|owner|gerant\\w*)\\b"
+   "motif": "\\b(ceo|cto|coo|cfo|cmo|cpo|cio|chief|founder|co-?founder|fondat\\w*|co-?fondat\\w*|president\\w*|directeur general|directrice generale|managing director|general manager|(?<!business )partner|associe\\w*|(?<!(?:product|process|data|service|system|platform|content|feature|risk) )owner|gerant\\w*)\\b"
   },
   {
    "niveau": "Direction",
