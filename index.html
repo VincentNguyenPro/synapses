@@ -107,6 +107,9 @@ footer{border-top:1px solid var(--line);padding:32px 0 40px;color:var(--muted);f
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;align-items:center}
 footer strong{color:var(--ink)}
 footer p{margin:0}
+footer a.me{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+footer a.me:hover{text-decoration-color:var(--accent)}
+footer a.me strong{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -253,7 +256,7 @@ footer p{margin:0}
 
 <footer>
   <div class="wrap">
-    <p>Conçu et développé par <strong>Vincent Nguyen</strong>, Product Manager, avec Claude Code.</p>
+    <p>Conçu et développé par <a class="me" href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener"><strong>Vincent Nguyen</strong></a>, Product Manager, avec Claude Code.</p>
     <p>Outil indépendant, non affilié à LinkedIn.</p>
   </div>
 </footer>
