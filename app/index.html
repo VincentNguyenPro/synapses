@@ -2073,15 +2073,16 @@ function renderGraph(vis){
      au moins LOGO_PX à l’écran une fois le graphe cadré ; la disposition est recalculée avec ces tailles (aucun chevauchement).
      Le poids d’une entreprise reste lisible par la jauge, la teinte, l’épaisseur de branche et le pourcentage. */
   if(state.groupBy === 'company' && hubNodes.length > 1){
+    /* Agrandissement borné : le zoom de cadrage ne doit pas baisser de plus de 20 %, sinon les noms des branches rétréciraient */
     hubNodes.forEach(h => { h.baseR = h.r; });
-    for(let it = 0; it < 4; it++){
-      const k = estimateFitK();
-      const want = Math.min(260, LOGO_PX / 2 / k);
-      let changed = false;
-      hubNodes.forEach(h => { if(h.key === other) return; const nr = Math.max(h.baseR, want); if(Math.abs(nr - h.r) > 0.5){ h.r = nr; changed = true; } });
-      if(!changed) break;
-      applyLayout();
+    const k0 = estimateFitK(), setR = want => hubNodes.forEach(h => { if(h.key !== other) h.r = Math.max(h.baseR, want); });
+    let want = Math.min(260, LOGO_PX / 2 / k0), best = 0;
+    for(let it = 0; it < 6; it++){
+      setR(want); applyLayout();
+      if(estimateFitK() >= k0 * 0.8){ best = want; break; }
+      want = Math.max(0, (want + best) / 2);
     }
+    if(best !== want){ setR(best); applyLayout(); }
   }
   drawRings();
   links = [...hubNodes.map(hn => ({key:'me>' + hn.id, source:'me', target:hn.id, me:true})), ...cNodes.map(n => ({key:n.id, source:n.id, target:n.hub}))];

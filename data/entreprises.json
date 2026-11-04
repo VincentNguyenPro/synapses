@@ -2878,7 +2878,7 @@
   },
   {
    "nom": "RATP",
-   "motif": "\\bratp\\b"
+   "motif": "\\bratp(group)?\\b"
   },
   {
    "nom": "La Poste",
