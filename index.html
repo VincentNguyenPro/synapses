@@ -9,8 +9,12 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#F3F6FC">
 <link rel="canonical" href="https://vincentnguyenpro.github.io/synapses/">
+<link rel="alternate" hreflang="fr" href="https://vincentnguyenpro.github.io/synapses/">
+<link rel="alternate" hreflang="en" href="https://vincentnguyenpro.github.io/synapses/en/">
+<link rel="alternate" hreflang="x-default" href="https://vincentnguyenpro.github.io/synapses/en/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_US">
 <meta property="og:site_name" content="Synapses">
 <meta property="og:url" content="https://vincentnguyenpro.github.io/synapses/">
 <meta property="og:title" content="Synapses, ton réseau LinkedIn en carte">
@@ -71,7 +75,11 @@ p{margin:0}
 .links a:hover{color:var(--ink)}
 .bar .btn{min-height:42px;padding:0 18px;font-size:15px;margin-left:auto;display:none}
 .bar .btn.show{display:inline-flex;animation:in .3s var(--ease)}
-@media (min-width:960px){ .links{display:flex} .bar .btn{margin-left:0} }
+/* Langue : FR · EN, l’autre version de la page (en/index.html, générée par outils/landing-en.py) */
+.lang{margin-left:auto;font-size:14px;font-weight:700;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:var(--radius);background:var(--tone);transition:color .15s,background .15s}
+.lang:hover{color:var(--ink);background:var(--tone-2)}
+.lang + .btn{margin-left:0}
+@media (min-width:960px){ .links{display:flex} .bar .btn{margin-left:0} .lang{margin-left:0} }
 
 /* ---------- Héros : titre court en haut à gauche, l’outil qui travaille occupe le reste ---------- */
 .hero{padding:clamp(20px,3svh,36px) 0}
@@ -584,6 +592,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <a href="#confidentialite">Confidentialité</a>
       <a href="#questions">Questions</a>
     </nav>
+    <a class="lang" href="en/" hreflang="en" lang="en" aria-label="English version">EN</a>
     <a class="btn navcta" href="app/" tabindex="-1" aria-hidden="true">Essayer la démo</a>
   </div>
 </header>

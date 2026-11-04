@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Synapses, your LinkedIn network as a map</title>
+<meta name="description" content="Synapses sorts your LinkedIn contacts by industry, company and seniority to show you who can open a door: a job, a client, a meeting. Free, no sign-up, your file stays in your browser.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="theme-color" content="#F3F6FC">
+<link rel="canonical" href="https://vincentnguyenpro.github.io/synapses/en/">
+<link rel="alternate" hreflang="fr" href="https://vincentnguyenpro.github.io/synapses/">
+<link rel="alternate" hreflang="en" href="https://vincentnguyenpro.github.io/synapses/en/">
+<link rel="alternate" hreflang="x-default" href="https://vincentnguyenpro.github.io/synapses/en/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="fr_FR">
+<meta property="og:site_name" content="Synapses">
+<meta property="og:url" content="https://vincentnguyenpro.github.io/synapses/en/">
+<meta property="og:title" content="Synapses, your LinkedIn network as a map">
+<meta property="og:description" content="Your LinkedIn contacts sorted by industry, company and seniority. Free, no sign-up, your file stays in your browser.">
+<meta property="og:image" content="https://vincentnguyenpro.github.io/synapses/og-image-en.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Synapses: “Your LinkedIn network, as a map.”, the Try the demo button and the tool grouping contacts by industry">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="../assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Manrope, police de la marque (licence OFL, ../assets/fonts/OFL-Manrope.txt), hébergée sur le site : aucune police tierce */
+@font-face{font-family:"Manrope";src:url("../assets/fonts/manrope-latin.woff2") format("woff2");font-weight:400 800;font-display:swap}
+
+/* Direction « The product performs » (taste-skill, graine 2047074269) : la page montre l’outil qui travaille.
+   Une teinte de fond, une encre, un accent (le bleu de la marque) ; surfaces séparées par un pas de teinte, jamais par un filet. */
+:root{
+  /* Gris teintés du bleu de la marque, plus lumineux qu’un gris neutre */
+  --bg:#F3F6FC; --surface:#FFFFFF; --tone:#E5EBF8; --tone-2:#D5DFF4; --ink:#17212E; --muted:#46577A;
+  --accent:#2F5BEA; --accent-ink:#2448C4; --on-accent:#FFFFFF; --field:#141C27; --field-ink:#E9EEF5; --field-muted:#A9B6C6;
+  --step-small:clamp(0.8125rem,0.79rem + 0.1vw,0.875rem);
+  --step-body:clamp(1.0625rem,1rem + 0.25vw,1.1875rem);
+  --step-lead:clamp(1.25rem,1.1rem + 0.7vw,1.625rem);
+  --step-head:clamp(2rem,1.3rem + 3.2vw,4rem);
+  --step-display:clamp(2.6rem,1.1rem + 4.6vw,5.4rem);
+  --radius:6px; --gutter:clamp(16px,3.2vw,48px); --gap:clamp(120px,14vw,200px); --pad:clamp(48px,8svh,88px);
+  --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:var(--step-body);line-height:1.5;-webkit-font-smoothing:antialiased}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.025em;line-height:1;text-wrap:balance}
+p{margin:0}
+.wrap{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:var(--radius)}
+::selection{background:var(--accent);color:var(--on-accent)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Boutons : plats, une couleur, l’angle de la page */
+.btn{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 24px;border-radius:var(--radius);background:var(--accent);color:var(--on-accent);font:inherit;font-weight:700;text-decoration:none;border:0;cursor:pointer;transition:transform .18s var(--ease),background .18s}
+.btn:hover{background:var(--accent-ink);transform:translateY(-2px)}
+.btn:active{transform:translateY(0) scale(.98)}
+.more{font-weight:700;text-decoration:none;display:inline-flex;gap:8px;align-items:center}
+.more span{transition:transform .18s var(--ease)}
+.more:hover span{transform:translateX(4px)}
+
+/* Barre : nom, quelques liens, une action (qui n’apparaît qu’une fois celles du héros sorties de l’écran) */
+.bar{position:sticky;top:0;z-index:10;background:var(--bg)}
+.bar .wrap{display:flex;align-items:center;gap:28px;height:68px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;text-decoration:none;letter-spacing:-.01em}
+.mark{width:30px;height:30px;border-radius:var(--radius);background:var(--accent);display:grid;place-items:center}
+.links{display:none;gap:26px;margin-left:auto;font-size:16px;font-weight:600}
+.links a{text-decoration:none;color:var(--muted);transition:color .15s}
+.links a:hover{color:var(--ink)}
+.bar .btn{min-height:42px;padding:0 18px;font-size:15px;margin-left:auto;display:none}
+.bar .btn.show{display:inline-flex;animation:in .3s var(--ease)}
+/* Langue : FR · EN, l’autre version de la page (en/index.html, générée par outils/landing-en.py) */
+.lang{margin-left:auto;font-size:14px;font-weight:700;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:var(--radius);background:var(--tone);transition:color .15s,background .15s}
+.lang:hover{color:var(--ink);background:var(--tone-2)}
+.lang + .btn{margin-left:0}
+@media (min-width:960px){ .links{display:flex} .bar .btn{margin-left:0} .lang{margin-left:0} }
+
+/* ---------- Héros : titre court en haut à gauche, l’outil qui travaille occupe le reste ---------- */
+.hero{padding:clamp(20px,3svh,36px) 0}
+/* Le contenu est centré : la vidéo grandit avec la hauteur de l’écran pour remplir la page, marges égales en haut et en bas */
+.hero-grid{display:grid;gap:36px 48px;align-items:start}
+/* Deux blocs côte à côte, centrés verticalement : à gauche titre, texte et action ; à droite la vidéo */
+@media (min-width:1080px){
+  .hero-grid{grid-template-columns:minmax(380px,1fr) auto;align-items:center}
+  .hero .hero-text h1{font-size:clamp(44px,4vw,64px)}
+  /* Largeur de la vidéo : celle que permet la hauteur disponible (barre, marges et compteur déduits), sans dépasser la page */
+  .hero-media{width:min(calc(min(100vw, 1360px) - 2 * var(--gutter) - 380px - 48px), calc((100svh - 68px - 2 * clamp(20px,3svh,36px) - 140px) * 16 / 9))}
+}
+.hero .lead{margin-top:24px}
+.hero h1{font-size:var(--step-display);line-height:.95;max-width:16ch}
+.hero .lead{font-size:var(--step-lead);line-height:1.4;max-width:24em}
+.hero .acts{display:flex;flex-wrap:wrap;align-items:center;gap:16px 28px;margin-top:36px}
+.hero .note{font-size:var(--step-small);color:var(--muted);margin-top:22px;max-width:30em}
+.count{font-size:var(--step-small);color:var(--muted);margin-top:8px;min-height:1.4em}
+.count strong{color:var(--ink)}
+/* Gros compteur sous la vidéo : le nombre réel de réseaux visualisés */
+.tally{display:flex;align-items:center;gap:18px;margin-top:14px;padding:14px 20px;background:var(--surface);border-radius:var(--radius);box-shadow:0 0 0 1px var(--tone-2)}
+.tally[hidden]{display:none}
+/* Afficheur à palettes : tuiles bleues, moitié haute plus claire, fente horizontale au milieu */
+.flap{display:flex;gap:6px;flex:none;perspective:400px}
+.fd{position:relative;width:clamp(40px,3.4vw,52px);height:clamp(54px,4.6vw,70px);border-radius:7px;background:linear-gradient(180deg,#3E68EE 0 50%,var(--accent) 50% 100%);color:#fff;display:grid;place-items:center;font-size:clamp(1.9rem,1.2rem + 1.6vw,2.8rem);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.fd::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:rgba(10,20,60,.35)}
+.fd.blank{background:linear-gradient(180deg,#3E68EE 0 50%,var(--accent) 50% 100%);opacity:.55}
+.fd i{font-style:normal;display:block}
+.fd.flip i{animation:flip .18s var(--ease)}
+@keyframes flip{0%{transform:rotateX(80deg);opacity:.3}100%{transform:none;opacity:1}}
+.tally span{display:block;font-weight:700;line-height:1.3}
+.tally small{display:block;color:var(--muted);font-size:var(--step-small);margin-top:3px;line-height:1.35}
+
+/* Le fragment vivant : le graphe du réseau de démo, cliquable (data-ui : conventions de l’outil à l’intérieur) */
+.live{background:var(--surface);color:#17212E;border-radius:var(--radius);display:grid;overflow:hidden;font-size:14px;line-height:1.35}
+.live .key{display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px 12px;width:100%;margin-top:4px;min-height:calc(4 * 1.35em + 12px)} /* quatre lignes réservées : la légende ne bouge pas d’un critère à l’autre */
+.live .key span{display:inline-flex;align-items:center;gap:6px;color:#46577A}
+.live .key i{width:9px;height:9px;border-radius:50%}
+@media (min-width:760px){ .live{grid-template-columns:minmax(0,1fr) 280px} .live .rail{contain:size;overflow:hidden} .live .side{min-height:0;overflow-y:auto} } /* la carte garde la hauteur du graphe : la liste ne la fait plus varier, elle défile si besoin */
+.live .stage{position:relative;padding:16px 12px;display:grid;place-items:center}
+/* Colonne de droite : réglage de couleur et légende en haut, puis la liste du secteur choisi (le graphe garde toute la hauteur) */
+.live .rail{background:#F4F7FA;display:flex;flex-direction:column;min-width:0}
+.live .rail .tools{border-bottom:1px solid #E1E7EE}
+.live svg{display:block;width:100%;height:auto;max-height:calc(100svh - 302px)}
+.live .tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:16px;color:#5B6B7C;font-size:13px}
+.live .tools button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid #D5DDE5;background:#fff;color:#17212E;cursor:pointer;transition:background .15s,border-color .15s} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
+.live .tools button[aria-pressed="true"]{background:#E4EAFD;border-color:#2F5BEA;color:#2448C4}
+.live .side{flex:1;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:200px}
+.live .side h3{font-size:16px;letter-spacing:-.01em;line-height:1.2}
+.live .side .sub{color:#5B6B7C;font-size:13px}
+.live .side ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:8px}
+.live .side li{display:flex;gap:10px;align-items:center}
+.live .side li i{flex:none;width:10px;height:10px;border-radius:50%}
+.live .side li b{display:block;font-weight:700;font-size:13.5px}
+.live .side li span{color:#5B6B7C;font-size:12.5px}
+/* Secteur choisi : pastille bleue, numéro blanc, halo doux et nom en bleu (plus de cadre de focus du navigateur au clic) */
+.hub{cursor:pointer;outline:none}
+.hub circle.h{fill:#DCE4FB;stroke:#17212E;stroke-width:1.4;transition:fill .2s,stroke .2s}
+.hub circle.halo{fill:#2F5BEA;fill-opacity:0;transition:fill-opacity .25s}
+.hub:hover circle.h{fill:#AFC1F6}
+.hub:hover circle.halo{fill-opacity:.08}
+.hub.on circle.h{fill:#2F5BEA;stroke:#2F5BEA}
+.hub.on circle.halo{fill-opacity:.16}
+.hub.on .n{fill:#fff}
+.hub.on text:not(.n){fill:#2448C4}
+.hub text{font-size:12.5px;font-weight:700;fill:#17212E;transition:fill .2s}
+.hub text tspan.p{fill:#2F5BEA}
+.hub .n{font-size:11px;font-weight:800;text-anchor:middle;dominant-baseline:central}
+.dot{transition:fill .35s ease}
+.blob{transition:fill .35s ease}
+.spoke{stroke:#2F5BEA;stroke-opacity:.45;transition:stroke-opacity .2s}
+.spoke.on{stroke-opacity:1}
+.hub:focus-visible{outline:none}
+.hub:focus-visible circle.h{stroke:#2F5BEA;stroke-width:3}
+
+/* ---------- Vitrine : un champ sombre, une rangée de panneaux qui défile ---------- */
+.vitrine{background:var(--field);color:var(--field-ink);margin-top:var(--pad);padding:var(--pad) 0}
+/* Carrousel : largeur de l’écran éclairé calculée sur la hauteur disponible (titre et légende compacts) */
+.vitrine.shots{--gx:clamp(24px,4vw,64px);--fw:min(1200px,90vw,calc((100svh - 270px) * 1.6));margin-top:0;padding:clamp(20px,3.5svh,40px) 0}
+.vitrine.shots .wrap.top h3{font-size:clamp(1.4rem,1rem + 1vw,2rem)}
+.vitrine h2{font-size:var(--step-head);max-width:14ch}
+.film{display:grid;gap:16px 56px;scroll-margin-top:88px}
+@media (min-width:960px){ .film{row-gap:6px} .film .live{margin-top:14px} } /* la phrase sous le titre */
+/* Section du graphe : un bandeau de titre compact, le graphe prend le reste de l’écran */
+.vitrine:not(.shots){padding:clamp(28px,4.5svh,48px) 0}
+/* Grand écran : la section du graphe occupe exactement l’écran (sous la barre) ; la carte s’étire pour remplir, la suivante ne déborde plus */
+@media (min-width:960px){
+  .vitrine:not(.shots){min-height:calc(100svh - 68px);display:flex;flex-direction:column}
+  .vitrine:not(.shots) .film{flex:1;grid-template-rows:auto auto 1fr;width:100%}
+  .vitrine:not(.shots) .live{min-height:0}
+}
+.film h2{font-size:clamp(1.75rem,1rem + 1.8vw,2.6rem);max-width:none;line-height:1.1}
+.film > p{color:var(--field-muted);max-width:none;font-size:var(--step-body);line-height:1.4}
+/* La vidéo occupe la colonne droite du héros, à côté du titre (codes YC : on voit le produit tout de suite) */
+.player{position:relative;width:100%;border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--tone-2);scroll-margin-top:88px}
+.player video{width:100%;height:auto;aspect-ratio:16/9}
+/* Bouton discret, en étiquette dans le coin bas gauche (le bleu reste à « Essayer la démo ») ; tout l’aperçu est cliquable */
+.play{position:absolute;left:16px;bottom:16px;z-index:2;display:flex;align-items:center;gap:8px;white-space:nowrap;padding:0 18px 0 12px;min-height:44px;border:0;border-radius:999px;background:rgba(23,33,46,.82);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s,transform .2s var(--ease)}
+.play svg{width:18px;height:18px}
+.player:not(.on){cursor:pointer}
+.player:not(.on)::after{content:"";position:absolute;inset:0;z-index:1}
+.player:not(.on):hover .play,.play:focus-visible{background:var(--ink);transform:scale(1.05)}
+.play:active{transform:scale(.98)}
+@media (max-width:600px){ .play{min-height:38px;padding:0 14px 0 10px;gap:6px;font-size:13px;left:10px;bottom:10px} .play svg{width:15px;height:15px} }
+.player.on .play{display:none}
+/* Aperçu muet de 8 s en boucle : il remplace l’affiche quand le lecteur est à l’écran ; le film garde le son au clic */
+.teaser{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
+.player.teasing .teaser{opacity:1}
+.player.on .teaser{display:none}
+.vitrine h3{font-size:var(--step-lead);font-weight:800;letter-spacing:-.01em}
+.vitrine .wrap.top{display:flex;justify-content:center;text-align:center}
+.vitrine .nav{display:flex;gap:10px}
+.vitrine .nav button{width:52px;height:52px;border-radius:var(--radius);border:0;background:#243042;color:#fff;font:inherit;font-size:22px;cursor:pointer;transition:background .15s,transform .15s}
+.vitrine .nav button:hover{background:#2F3D52}
+.vitrine .nav button:active{transform:scale(.95)}
+.row{display:flex;gap:var(--gx);overflow-x:auto;scroll-snap-type:x mandatory;padding:clamp(22px,3.4svh,36px) calc(50vw - var(--fw) / 2) clamp(10px,1.4svh,16px);scrollbar-width:none;align-items:center}
+.row::-webkit-scrollbar{display:none}
+.row figure{flex:none;width:var(--fw);margin:0;scroll-snap-align:center;opacity:.32;transition:opacity .5s var(--ease),transform .5s var(--ease);transform:scale(.94)}
+.row figure.on{opacity:1;transform:none}
+.row figure .pic{border-radius:var(--radius);overflow:hidden;background:#fff}
+.row figure img,.row figure video{width:100%;height:auto;aspect-ratio:16/10;object-fit:cover}
+.row figure video{aspect-ratio:16/9;background:#FAFAF7}
+.caption{min-height:3.2em}
+.caption h3{font-size:var(--step-body);font-weight:800;letter-spacing:-.01em;line-height:1.3}
+.caption p{color:var(--field-muted);margin-top:2px;font-size:var(--step-small)}
+/* Sous l’écran éclairé, sur sa largeur : la légende à gauche, les flèches à droite */
+.vitrine .foot{display:flex;align-items:center;gap:24px;width:min(var(--fw),calc(100% - 2 * var(--gutter)));padding:0;margin:0 auto}
+.vitrine .foot .caption{flex:1}
+.vitrine .nav button{width:44px;height:44px;font-size:19px}
+/* Flèches de part et d’autre de l’écran éclairé, dans l’espace entre les écrans, centrées sur sa hauteur : elles ne le masquent pas */
+.carousel{position:relative}
+.carousel .nav{justify-content:center;margin:4px 0 12px}
+@media (min-width:960px){
+  .carousel .nav{margin:0}
+  .carousel .nav button{position:absolute;z-index:2;top:calc(clamp(22px,3.4svh,36px) + var(--fw) / 3.2);transform:translate(-50%,-50%);border-radius:50%;background:#2A3648;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+  .carousel .nav button[data-go="-1"]{left:calc(50vw - var(--fw) / 2 - var(--gx) / 2)}
+  .carousel .nav button[data-go="1"]{left:calc(50vw + var(--fw) / 2 + var(--gx) / 2)}
+  .carousel .nav button:hover{background:#34425A}
+  .carousel .nav button:active{transform:translate(-50%,-50%) scale(.95)}
+}
+
+/* ---------- Situations : onglets à gauche, bandes à droite ---------- */
+.sit{padding:var(--pad) 0}
+.sit .head{display:flex;flex-wrap:wrap;gap:24px;align-items:end;justify-content:space-between}
+.sit h2{font-size:var(--step-head);line-height:1.02}
+.sit h2 .soft{color:var(--muted)}
+.sit .body{display:grid;gap:20px;margin-top:20px}
+/* La phrase occupe une rangée au-dessus : les onglets démarrent au niveau de la première bande (sous-grille) */
+@media (min-width:860px){
+  .sit .body{grid-template-columns:210px minmax(0,1fr);grid-template-rows:auto auto;column-gap:40px;row-gap:0}
+  .sit .tabs{grid-column:1;grid-row:2}
+  .sit .body>.rise:last-child{grid-column:2;grid-row:1/3;display:grid;grid-template-rows:subgrid}
+  .sit .panel:not([hidden]){grid-row:1/3;display:grid;grid-template-rows:subgrid}
+  .sit .panel p.say{min-height:calc(2 * 1.35em)} /* deux lignes réservées : les onglets ne bougent pas d’un onglet à l’autre */
+}
+.tabs{display:grid;gap:6px;align-content:start}
+@media (max-width:859px){ .tabs{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.tabs button{text-align:left;font:inherit;border:0;border-radius:var(--radius);background:var(--tone);color:var(--ink);padding:14px 16px;min-height:72px;cursor:pointer;transition:background .2s,color .2s}
+.tabs button b{display:block;font-size:var(--step-body);font-weight:800}
+.tabs button span{display:block;font-size:var(--step-small);color:var(--muted);margin-top:2px}
+.tabs button:hover{background:var(--tone-2)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+.tabs button[aria-selected="true"] span{color:#C3CEDC}
+@media (max-width:859px){ .tabs button{padding:10px 14px;min-height:64px} }
+.panel p.say{font-size:var(--step-lead);line-height:1.35;max-width:40em;margin-bottom:12px}
+.bands{list-style:none;padding:0;margin:0;display:grid;gap:4px;align-content:start}
+/* Séniorité et entreprise sur la ligne du nom (et non au milieu du bloc nom + poste) */
+.bands li{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:16px;align-items:first baseline;align-content:center;min-height:52px;padding:7px 20px;border-radius:var(--radius);background:var(--surface)}
+.bands li:nth-child(even){background:var(--tone)}
+.bands .lvl{display:flex;align-items:center;gap:10px;font-weight:700;font-variant-numeric:tabular-nums}
+.bands .lvl i{width:12px;height:12px;border-radius:50%;flex:none}
+.bands .who b{display:block;font-weight:700}
+.bands .who span{display:block;font-size:var(--step-small);color:var(--muted)}
+.bands .co{font-size:var(--step-small);color:var(--muted);text-align:right}
+@media (max-width:640px){ .bands li{grid-template-columns:1fr;gap:4px;padding:14px 16px} .bands .co{text-align:left} }
+
+/* ---------- Démarrer : un fragment épinglé qui change d’état ---------- */
+.how{padding:var(--pad) 0}
+.how .grid{display:grid;gap:24px}
+@media (min-width:960px){ .how .grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-rows:auto 1fr;gap:0 56px} .how h2{grid-column:1} .steps{grid-column:1} .pin{grid-column:2;grid-row:1/3} }
+.how h2{font-size:var(--step-head)}
+.steps{list-style:none;padding:0;margin:0}
+.steps{margin-top:28px;display:grid;gap:6px}
+.steps li{display:flex;flex-direction:column;gap:8px;padding:18px 22px;border-radius:var(--radius);color:var(--muted);cursor:pointer;transition:color .3s,background .3s}
+.steps li:hover{background:var(--tone)}
+.steps li.on{color:var(--ink);background:var(--tone)}
+.steps li strong{font-size:var(--step-lead);letter-spacing:-.02em;line-height:1.15;font-weight:800}
+.steps li p{font-size:var(--step-body);max-width:30em}
+.steps a{font-weight:700;color:var(--accent-ink)}
+.pin{align-self:stretch;background:var(--tone);border-radius:var(--radius);min-height:380px;display:grid;place-items:center;padding:clamp(16px,3vw,40px)}
+@media (max-width:959px){ .how .grid{display:flex;flex-direction:column} .pin{min-height:300px} }
+.app{width:100%;max-width:440px;background:#fff;border-radius:12px;padding:22px;font-size:14px;line-height:1.45;color:#17212E;display:none}
+.app.on{display:block;animation:in .5s var(--ease)}
+/* Étape 3 : la carte « Mon réseau » et, à sa droite, une roulette de noms fictifs */
+.app.net-app{max-width:640px;background:none;padding:0}
+.app.net-app.on{display:flex;gap:14px;align-items:stretch}
+.netcard{flex:1;min-width:0;background:#fff;border-radius:12px;padding:22px}
+.netcard .stats div{cursor:pointer;transition:background .2s,box-shadow .2s}
+.netcard .stats div:hover,.netcard .stats div.on{background:#E4EAFD;box-shadow:inset 0 0 0 1.5px #2F5BEA}
+.wheel{--row:34px;position:relative;width:200px;flex:none;contain:size;background:#fff;border-radius:12px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.wheel::before{content:"";position:absolute;left:8px;right:8px;top:50%;height:var(--row);margin-top:calc(var(--row) / -2);border-radius:8px;background:#E4EAFD;z-index:0}
+.wheel ul{position:relative;z-index:1;list-style:none;margin:0;padding:0;animation:roll var(--dur,60s) linear infinite}
+.wheel li{height:var(--row);display:flex;align-items:center;gap:8px;padding:0 18px;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wheel li i{width:8px;height:8px;border-radius:50%;flex:none}
+.wheel li small{color:#5B6B7C;font-weight:500;font-size:12px;overflow:hidden;text-overflow:ellipsis}
+@keyframes roll{to{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){ .wheel ul{animation:none} }
+/* Étape 1 : la capture (anonymisée) de la page LinkedIn, plus large que les autres fragments */
+.app.shot{max-width:640px;margin:0;padding:8px}
+.app.shot img{width:100%;height:auto;border-radius:6px;box-shadow:0 0 0 1px #E1E7EE}
+.app.shot figcaption{font-size:12.5px;color:#5B6B7C;padding:8px 6px 2px}
+.app h4{margin:0 0 10px;font-size:17px;letter-spacing:-.01em}
+.app ol{margin:0;padding-left:20px;display:grid;gap:8px;color:#3A4757}
+.app .drop{border:2px dashed #2F5BEA;border-radius:12px;background:#EEF2FE;padding:28px 18px;text-align:center;color:#2448C4;font-weight:700}
+.app .file{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 12px;border-radius:10px;background:#F4F7FA;font-weight:600}
+.app .file i{width:30px;height:36px;border-radius:6px;background:#2F5BEA;color:#fff;font:800 9px/36px inherit;text-align:center;font-style:normal;flex:none}
+.app .ok{margin-top:12px;color:#1E7F55;font-weight:700}
+.app .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:6px}
+.app .stats div{background:#F4F7FA;border-radius:10px;padding:12px}
+.app .stats b{display:block;font-size:24px;letter-spacing:-.02em}
+.app .stats span{color:#5B6B7C;font-size:12.5px}
+/* Grand écran : les quatre tuiles de « Mon réseau » empilées (chiffre et libellé sur une ligne), la roulette prend la largeur libérée */
+@media (min-width:960px){
+  .app.net-app{max-width:720px}
+  .netcard{flex:none;width:240px;padding:20px}
+  .netcard .stats{grid-template-columns:1fr;gap:6px}
+  .netcard .stats div{display:flex;align-items:baseline;gap:10px;padding:10px 14px}
+  .netcard .stats b{display:inline;font-size:22px}
+  .wheel{flex:1;width:auto;min-width:0}
+}
+@keyframes in{from{opacity:0;transform:translateY(12px)}}
+
+/* ---------- Fonctions : six cellules, fragments en damier ---------- */
+.feat{padding:var(--pad) 0}
+.feat h2{font-size:var(--step-head);margin-bottom:56px}
+.cells{display:grid;gap:8px}
+@media (min-width:720px){ .cells{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (min-width:1080px){ .cells{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.cell{background:var(--tone);border-radius:var(--radius);min-height:440px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.cell .t{padding:26px 26px 22px}
+.cell h3{font-size:var(--step-body);font-weight:800;letter-spacing:-.01em;line-height:1.3}
+.cell .t p{margin-top:8px}
+.cell.rev{flex-direction:column-reverse}
+@media (min-width:1080px){ .cells .cell:nth-child(2),.cells .cell:nth-child(4),.cells .cell:nth-child(6){flex-direction:column-reverse} .cells .cell.rev{flex-direction:column} }
+/* Grand écran : la section tient sur un écran ; liste des six réglages à gauche, l’illustration du réglage choisi à droite */
+@media (min-width:960px){
+  .feat h2{margin-bottom:32px}
+  .cells{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-rows:repeat(6,auto);gap:4px 40px}
+  .cells::before{content:"";grid-column:2;grid-row:1/7;background:var(--accent);border-radius:var(--radius)} /* panneau en bleu de la marque : le fragment blanc ressort */
+  .cell{display:contents}
+  .cell .t{grid-column:1;padding:14px 20px;border-radius:var(--radius);cursor:pointer;transition:background .2s}
+  .cell .t:hover{background:var(--tone)}
+  .cell.on .t{background:var(--surface);box-shadow:inset 4px 0 0 var(--accent)} .cell.on h3{color:var(--accent-ink)} /* réglage choisi : fond blanc, trait bleu, titre bleu */
+  .cell .t p{display:none}
+  .cell.on .t p{display:block}
+  .cell .frag{grid-column:2;grid-row:1/7;align-self:center;justify-self:center;width:min(420px,80%);margin:0;display:none}
+  .cell.on .frag{display:block;animation:in .35s var(--ease)}
+}
+.frag{background:#fff;color:#17212E;font-size:14px;line-height:1.4;margin:26px;border-radius:12px;padding:16px 18px}
+.frag label,.frag .lbl{display:block;font-weight:700;font-size:13px;margin-bottom:6px}
+.frag .sel{border:1px solid #2F5BEA;border-radius:10px;padding:9px 12px;font-weight:600;display:flex;justify-content:space-between} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
+.frag .menu{margin-top:6px;border-radius:10px;background:#fff;box-shadow:0 12px 30px rgba(23,33,46,.14);padding:6px} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
+.frag .menu div{padding:7px 10px 7px 28px;border-radius:7px;position:relative}
+.frag .menu div.on{font-weight:800}
+.frag .menu div.on::before{content:"";position:absolute;left:12px;top:11px;width:5px;height:9px;border:solid #2F5BEA;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.frag .menu div.hv{background:#E4EAFD;color:#2448C4}
+.frag .lg{display:grid;gap:6px}
+.frag .lg div{display:grid;grid-template-columns:12px 1fr auto auto;gap:8px;align-items:center;font-size:13.5px}
+.frag .lg i{width:10px;height:10px;border-radius:50%}
+.frag .lg em{font-style:normal;color:#5B6B7C;font-variant-numeric:tabular-nums}
+.frag .lg u{grid-column:2/5;height:3px;border-radius:3px;text-decoration:none;display:block;margin-top:-4px}
+.frag input[type=range]{width:100%;accent-color:#2F5BEA}
+.frag .chips{display:grid;gap:6px}
+.frag .chip{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid #D5DDE5;font-size:13.5px} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
+.frag .chip.on{border-color:#2F5BEA;background:#EEF2FE}
+.frag .chip .box{width:16px;height:16px;border-radius:4px;border:1.5px solid #8A97A6;display:grid;place-items:center;font-size:11px;color:#fff}
+.frag .chip.on .box{background:#2F5BEA;border-color:#2F5BEA}
+.frag .chip.on .box::after{content:"";width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.frag .chip em{margin-left:auto;font-style:normal;color:#5B6B7C}
+.frag dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:10px 0 0}
+.frag dt{color:#5B6B7C}
+.frag dd{margin:0;font-weight:600}
+.frag .tags{display:flex;flex-wrap:wrap;gap:6px}
+.frag .tags span{padding:6px 12px;border-radius:999px;border:1px solid #D5DDE5;font-size:13px} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
+.frag .tags span.on{background:#2F5BEA;border-color:#2F5BEA;color:#fff}
+.frag .who{display:flex;gap:10px;align-items:center}
+.frag .who i{width:38px;height:38px;border-radius:50%;background:#12A39A;flex:none;display:grid;place-items:center}
+.frag .who i svg{width:24px;height:24px}
+/* Fiche : collègues de la même entreprise et anciens de la même école, en pastilles colorées par séniorité */
+.frag .ptitle{margin-top:12px;font-weight:700;font-size:13px}
+.frag .peers{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.frag .peers span{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;border-radius:999px;background:#F4F7FA;font-size:12.5px;font-weight:600}
+.frag .peers i{width:16px;height:16px;border-radius:50%;flex:none}
+.frag .peers .more{padding:3px 10px;color:#5B6B7C}
+.frag .who b{display:block}
+.frag .who span{color:#5B6B7C;font-size:13px}
+
+/* ---------- Confidentialité : un champ de couleur, un vrai tableau ---------- */
+.priv{margin-top:var(--pad);background:var(--accent);color:#fff;padding:var(--pad) 0}
+.priv .grid{display:grid;gap:40px}
+/* Le titre, puis la phrase en dessous, puis le tableau */
+.priv h2{font-size:var(--step-head);max-width:15ch}
+@media (min-width:960px){ .priv h2{max-width:none} .priv .grid{gap:28px} .priv .lead{margin-top:14px} } /* grand écran : titre sur une ligne, la section tient sur un écran */
+.priv .lead{font-size:var(--step-lead);line-height:1.4;margin-top:20px;max-width:40em}
+table{width:100%;border-collapse:collapse;font-size:var(--step-body)}
+th{text-align:left;font-size:var(--step-small);font-weight:700;color:#DDE6FF;padding:0 18px 12px 0;border-bottom:2px solid rgba(255,255,255,.55)}
+td{padding:18px 18px 18px 0;vertical-align:top;border-bottom:1px solid rgba(255,255,255,.3)}
+td:first-child{font-weight:800;width:32%}
+td.never{font-weight:800}
+@media (max-width:720px){
+  thead{display:none}
+  tr{display:block;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.3)}
+  td{display:block;border:0;padding:3px 0;width:auto!important}
+  td[data-l]::before{content:attr(data-l) "\00a0: ";color:#DDE6FF;font-weight:600}
+}
+
+/* ---------- Questions : titre épinglé, tuiles qui s’ouvrent ---------- */
+.faq{padding:var(--pad) 0}
+.faq .grid{display:grid;gap:32px}
+@media (min-width:960px){ .faq .grid{grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:56px} .faq h2{position:sticky;top:96px} }
+.faq h2{font-size:var(--step-head);align-self:start}
+.qs{display:grid;gap:8px}
+details{background:var(--tone);border-radius:var(--radius);transition:background .25s}
+details[open]{background:var(--accent);color:#fff}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;min-height:76px;padding:18px 24px;font-size:var(--step-lead);font-weight:700;letter-spacing:-.01em;line-height:1.25}
+summary::-webkit-details-marker{display:none}
+summary .pm{position:relative;width:18px;height:18px;flex:none}
+summary .pm::before,summary .pm::after{content:"";position:absolute;left:0;top:7.5px;width:18px;height:3px;border-radius:2px;background:currentColor;transition:transform .25s var(--ease)}
+summary .pm::after{transform:rotate(90deg)}
+details[open] summary .pm::after{transform:rotate(0)}
+details p{padding:0 24px 24px;max-width:52ch}
+
+/* ---------- Fin : une phrase dont les trous sont les actions ---------- */
+.end{padding:var(--pad) 0}
+.end .wrap{display:grid;gap:28px 56px;align-items:end}
+@media (min-width:960px){ .end .wrap{grid-template-columns:minmax(0,7fr) minmax(0,5fr)} }
+.end h2{font-size:var(--step-display);line-height:1.08;max-width:15ch}
+.end h2 a{display:inline-block;padding:0 .25em;border-radius:var(--radius);text-decoration:none;transition:transform .18s var(--ease),background .18s}
+.end h2 a.go{background:var(--accent);color:#fff}
+.end h2 a.go:hover{background:var(--accent-ink)}
+.end h2 a.alt{background:var(--tone)}
+.end h2 a.alt:hover{background:var(--tone-2)}
+.end h2 a:hover{transform:translateY(-3px)}
+.end p{max-width:36em;font-size:var(--step-lead);line-height:1.4}
+
+/* Écrans peu hauts (portables 1280 × 800) : chaque section tient encore sur un écran */
+@media (min-width:960px) and (max-height:860px){
+  .bands li{min-height:44px;padding:4px 20px}
+  .bands .who b,.bands .who span{display:inline}
+  .bands .who span::before{content:" · "}
+  .tabs button{min-height:60px;padding:10px 16px}
+  .steps li{padding:12px 20px;gap:4px}
+  .pin{min-height:320px}
+  td{padding:12px 18px 12px 0}
+  .priv .grid{gap:28px}
+}
+
+/* Chaque section occupe exactement un écran sous la barre (ordinateur et mobile), contenu centré verticalement ; la suivante ne déborde plus.
+   « Ouvre la démo » garde sa hauteur : sur grand écran elle partage le dernier écran avec le pied de page. */
+main > section:not(.end){min-height:calc(100svh - 68px);display:flex;flex-direction:column;justify-content:center}
+main > section:not(.end) > .wrap:not(.foot){width:100%}
+.vitrine,.priv{margin-top:0}
+.faq{justify-content:flex-start} /* les réponses s’ouvrent sans faire bouger la liste */
+
+/* ---------- Pied de page : deux rangées de tuiles ---------- */
+footer{padding:0 10px 10px}
+.tiles{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:960px){ .tiles{grid-template-columns:repeat(12,minmax(0,1fr))} }
+.tile{background:var(--tone);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:220px}
+.tile.say{grid-column:1/-1}
+.tile.say p{font-size:var(--step-lead);line-height:1.35;max-width:22em}
+.tile.say .legal{font-size:var(--step-small);color:var(--muted)}
+.tile ul{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-weight:600}
+.tile ul a{text-decoration:none}
+.tile ul a:hover{text-decoration:underline}
+.tile.by p{font-size:var(--step-body)}
+.tile.by a{font-weight:800}
+.tile.word{grid-column:1/-1;background:var(--ink);color:#fff;min-height:200px;flex-direction:row;align-items:center;justify-content:center;gap:.28em;font-size:clamp(3.5rem,9vw,9rem)}
+/* Logo de la marque à côté du nom : même carré bleu que dans l’en-tête, à la hauteur des majuscules */
+.tile.word .wmark{width:.82em;height:.82em;border-radius:.2em;background:var(--accent);display:grid;place-items:center;flex:none}
+.tile.word .wmark svg{width:58%;height:58%}
+.tile.word .wname{font-weight:800;letter-spacing:-.04em;line-height:1}
+.tile.go{grid-column:1/-1;background:var(--accent);color:#fff;text-decoration:none;min-height:200px;transition:background .2s}
+.tile.go:hover{background:var(--accent-ink)}
+/* Le pied de page garde les marges gauche et droite de la page */
+footer{padding:0 0 var(--gutter)}
+footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
+/* Grand écran : « Ouvre la démo » et le pied de page tiennent ensemble sur le dernier écran (hauteur de la section calculée par fitEnd) */
+@media (min-width:960px){
+  .tile{min-height:0}
+  .tile.word,.tile.go{min-height:clamp(110px,15svh,160px)}
+  .tile.word{font-size:clamp(3rem,5.6vw,6rem)}
+  .end{display:flex;flex-direction:column;justify-content:center}
+}
+/* « Essayer la démo » : texte et flèche centrés dans la tuile */
+.tile.go{flex-direction:row;align-items:center;justify-content:center;gap:14px}
+.tile.go b{font-size:var(--step-lead);font-weight:800}
+.tile.go svg{width:40px;height:40px;flex:none;transition:transform .25s var(--ease)}
+.tile.go:hover svg{transform:translate(6px,-6px)}
+@media (min-width:960px){
+  .tile.say{grid-column:1/5} .tile.nav{grid-column:5/8} .tile.by{grid-column:8/13}
+  .tile.word{grid-column:1/9;min-height:clamp(120px,17svh,180px)} .tile.go{grid-column:9/13;min-height:clamp(120px,17svh,180px)}
+  .tile:not(.word):not(.go){padding:20px 24px}
+  .tile ul{gap:4px}
+  .tile.say p{font-size:var(--step-body)}
+}
+
+/* ---------- Mouvement : entrées échelonnées, seulement si le script tourne et sans réduction demandée ---------- */
+.js .rise{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease);transition-delay:calc(var(--i,0) * 80ms)}
+.js .rise.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  .js .rise{opacity:1;transform:none;transition:none}
+  .dot,.blob,.row figure,.app.on{transition:none;animation:none}
+  .btn,.more span,.tile.go svg,.end h2 a{transition:none}
+}
+/* ---------- Mobile : chaque section tient sur un écran de téléphone ---------- */
+@media (max-width:959px){
+  :root{--pad:clamp(24px,4svh,40px)}
+  .hero{padding:20px 0}
+  .hero-grid{gap:20px}
+  .hero .lead{font-size:var(--step-body)}
+  .hero .acts{margin-top:20px}
+  .hero .note{margin-top:14px}
+  .hero-grid{gap:16px}
+  .tally{gap:12px;margin-top:10px;padding:10px 14px}
+  .flap{gap:3px}
+  .fd{width:24px;height:34px;font-size:1.2rem;border-radius:5px}
+  /* Tuiles et libellé sur une ligne, la note sur toute la largeur en dessous */
+  .tally{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:12px;row-gap:6px}
+  .tally > div:not(.flap){display:contents}
+  .tally small{grid-column:1/-1}
+  .tally span{font-size:var(--step-small)}
+  .tally small{font-size:12px;margin-top:1px}
+  /* Graphe : la liste du secteur choisi garde une hauteur fixe et défile */
+  .film > p{font-size:var(--step-small)}
+  .live .tools{padding:12px 14px}
+  .live .side{max-height:132px;min-height:0;overflow-y:auto;padding:12px 14px}
+  /* Situations : les quatre en une rangée de boutons, un contact sur deux lignes courtes, cinq contacts */
+  .sit h2{font-size:clamp(1.6rem,7vw,2.2rem)}
+  .sit .tabs{display:flex;overflow-x:auto;gap:6px;scrollbar-width:none}
+  .sit .tabs::-webkit-scrollbar{display:none}
+  .sit .tabs button{flex:none;min-height:0;padding:9px 14px}
+  .sit .tabs button span{display:none}
+  .panel p.say{font-size:var(--step-body);margin-bottom:10px}
+  .bands li{grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:0;min-height:0;padding:7px 14px}
+  .bands .who{grid-column:1/-1;order:-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bands .who b,.bands .who span{display:inline}
+  .bands .who span::before{content:" · "}
+  .bands .lvl,.bands .co{font-size:var(--step-small)}
+  .bands .lvl{font-weight:600}
+  .bands .co{text-align:left}
+  .bands li:nth-child(n+6){display:none}
+  /* Démarrer : seul le geste choisi montre son texte */
+  .how h2{font-size:clamp(1.6rem,7vw,2.2rem)}
+  .steps{margin-top:16px}
+  .steps li{padding:10px 14px;gap:4px}
+  .steps li strong{font-size:var(--step-body)}
+  .steps li p{display:none;font-size:var(--step-small)}
+  .steps li.on p{display:block}
+  .pin{min-height:0;padding:12px;margin-top:12px}
+  .app{padding:16px;font-size:13px}
+  .app.net-app.on{flex-direction:column;gap:8px}
+  .netcard{padding:16px}
+  .wheel{width:auto;height:104px}
+  /* Réglages : un carrousel horizontal, une tuile à la fois, la suivante dépasse */
+  .feat h2{font-size:clamp(1.6rem,7vw,2.2rem);margin-bottom:20px}
+  .cells{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 calc(-1 * var(--gutter));padding:0 var(--gutter);scroll-padding:0 var(--gutter)}
+  .cells::-webkit-scrollbar{display:none}
+  .cell{flex:0 0 86%;min-height:0;scroll-snap-align:start;justify-content:flex-start}
+  .cell .t{padding:18px 18px 4px}
+  .cell .t p{font-size:var(--step-small)}
+  .frag{margin:14px 18px 18px}
+  .frag .menu div:nth-child(n+6){display:none}
+  .frag.fiche dl{gap:2px 12px;font-size:13px}
+  .frag.fiche .ptitle{margin-top:8px}
+  /* Confidentialité : tableau resserré */
+  .priv h2{font-size:clamp(1.6rem,7vw,2.2rem)}
+  .priv .grid{gap:16px}
+  .priv .lead{font-size:var(--step-body);margin-top:10px}
+  table{font-size:var(--step-small)}
+  tr{padding:9px 0}
+  td{padding:1px 0}
+  /* Questions */
+  summary{min-height:52px;padding:12px 16px;font-size:var(--step-body)}
+  details p{padding:0 16px 14px;font-size:var(--step-small)}
+  /* Fin et pied de page */
+  .end h2{font-size:clamp(2rem,9vw,2.8rem)}
+  .end p{font-size:var(--step-body)}
+  .tile{min-height:0;padding:18px}
+  .tile.say p{font-size:var(--step-body)}
+  .tile.nav,.tile.by{grid-column:1/-1}
+  .tile.nav ul{grid-template-columns:1fr 1fr}
+  .tile.word{display:none}
+  .tile.go{min-height:64px}
+}
+</style>
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+
+<header class="bar" id="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Synapses, home">
+      <span class="mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span>
+      Synapses
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#situations">Use cases</a>
+      <a href="#demarrer">Get started</a>
+      <a href="#confidentialite">Privacy</a>
+      <a href="#questions">FAQ</a>
+    </nav>
+    <a class="lang" href="../" hreflang="fr" lang="fr" aria-label="Version française">FR</a>
+    <a class="btn navcta" href="../app/" tabindex="-1" aria-hidden="true">Try the demo</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="titre">
+    <div class="wrap hero-grid">
+      <div class="hero-text">
+        <h1 id="titre" class="rise">Your LinkedIn network, as&nbsp;a&nbsp;map.</h1>
+        <p class="lead rise" style="--i:1">Synapses sorts your contacts by industry, company and seniority to show you who can open a door: a job, a client, a meeting.</p>
+        <div class="acts rise" style="--i:2" id="hero-ctas">
+          <a class="btn" href="../app/">Try the demo</a>
+        </div>
+        <p class="note rise" style="--i:3">Free, no account. Your file is read in your browser and never sent anywhere. The tool itself is in French for now.</p>
+      </div>
+
+      <div class="hero-media">
+      <div class="player rise" style="--i:2" id="video">
+        <video id="film" controls playsinline preload="none" width="1920" height="1080" poster="../assets/demo/synapses-demo-affiche.webp" aria-label="Synapses demo video on a fictional network, 1 min 48, in French">
+          <source src="../assets/demo/synapses-demo.mp4" type="video/mp4">
+          <track kind="captions" src="../assets/demo/synapses-demo.vtt" srclang="fr" label="Français">
+          <a href="../assets/demo/synapses-demo.mp4">Download the demo video</a>
+        </video>
+        <video class="teaser" id="teaser" muted loop playsinline preload="none" poster="../assets/demo/synapses-apercu-affiche.webp?v=4" aria-hidden="true" tabindex="-1"><source src="../assets/demo/synapses-apercu.mp4?v=4" type="video/mp4"></video>
+        <button type="button" class="play" id="play" aria-label="Play the demo video, in French, 1 min 48"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Watch the video (French) · 1:48</span></button>
+      </div>
+      <!-- Compteur réel (supabase/compteur.sql), affiché seulement si la base répond : jamais de chiffre inventé -->
+      <div class="tally" id="tally" hidden aria-live="polite"><div class="flap" data-tally role="img" aria-label="0 networks"></div><div><span>LinkedIn networks already mapped with Synapses</span><small>Anonymous counter: +1 for each successful import, at most once a day per browser.</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vitrine" aria-labelledby="vitrine-titre">
+    <div class="wrap film">
+      <h2 id="vitrine-titre" class="rise">Try it here, on a fictional network</h2>
+      <p class="rise" style="--i:1">150 made-up contacts. Click an industry to see who you know there, change the color of the dots.</p>
+      <div class="live rise" style="--i:2" data-ui aria-label="Interactive preview of the demo network: 150 fictional contacts">
+        <div class="stage"><svg id="graph" viewBox="0 0 820 560" role="img" aria-label="Graph: Me at the center, ten industries around, each contact as a dot"></svg></div>
+        <div class="rail">
+          <div class="tools" role="group" aria-label="Color contacts by">
+            <span>Color by</span>
+            <button type="button" data-by="sen" aria-pressed="true">Seniority</button>
+            <button type="button" data-by="fn" aria-pressed="false">Function</button>
+            <div class="key" id="key" aria-label="Color legend"></div>
+          </div>
+          <aside class="side" aria-live="polite" id="side"></aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vitrine shots" aria-labelledby="ecrans-titre">
+    <div class="wrap top">
+      <h3 class="rise" id="ecrans-titre">The tool, screen by screen</h3>
+    </div>
+    <div class="carousel">
+    <div class="row" id="row" tabindex="0" aria-label="Synapses screens, horizontal scroll">
+      <figure data-t="An industry up close" data-d="Click a group to zoom in: its contacts line up by seniority, the side panel lists the people.">
+        <div class="pic"><img src="../assets/demo/3-groupe-900.webp" srcset="../assets/demo/3-groupe-900.webp 900w, ../assets/demo/3-groupe.webp 1600w" sizes="(min-width:1024px) 880px, 86vw" width="900" height="563" loading="lazy" alt="The Tech and software industry selected, with its panel and its seniority clusters"></div>
+      </figure>
+      <figure data-t="A contact’s colleagues" data-d="Pick someone: their colleagues at the same company form a circle around them, from junior to executive.">
+        <div class="pic"><img src="../assets/demo/4-collegues-900.webp" srcset="../assets/demo/4-collegues-900.webp 900w, ../assets/demo/4-collegues.webp 1600w" sizes="(min-width:1024px) 880px, 86vw" width="900" height="563" loading="lazy" alt="A selected contact, surrounded by colleagues from the same company"></div>
+      </figure>
+      <figure data-t="Filters that combine" data-d="Juniors and seniors only: the graph rearranges and recenters at once.">
+        <div class="pic"><img src="../assets/demo/5-filtre-900.webp" srcset="../assets/demo/5-filtre-900.webp 900w, ../assets/demo/5-filtre.webp 1600w" sizes="(min-width:1024px) 880px, 86vw" width="900" height="563" loading="lazy" alt="The network filtered on juniors and seniors"></div>
+      </figure>
+      <figure data-t="By company, logos included" data-d="Each company becomes a node with its logo. You see where your contacts cluster.">
+        <div class="pic"><img src="../assets/demo/6-entreprises-900.webp" srcset="../assets/demo/6-entreprises-900.webp 900w, ../assets/demo/6-entreprises.webp 1600w" sizes="(min-width:1024px) 880px, 86vw" width="900" height="563" loading="lazy" alt="The network grouped by company, each node showing the company’s logo"></div>
+      </figure>
+      <figure data-t="Help to get your export" data-d="The help panel explains where to request the archive from LinkedIn, and what to do with it.">
+        <div class="pic"><img src="../assets/demo/1-import-900.webp" srcset="../assets/demo/1-import-900.webp 900w, ../assets/demo/1-import.webp 1600w" sizes="(min-width:1024px) 880px, 86vw" width="900" height="563" loading="lazy" alt="The help panel explaining how to get your LinkedIn export"></div>
+      </figure>
+    </div>
+    <div class="nav"><button type="button" data-go="-1" aria-label="Previous screen">←</button><button type="button" data-go="1" aria-label="Next screen">→</button></div>
+    </div>
+    <div class="wrap foot">
+      <div class="caption" id="cap" aria-live="polite"><h3></h3><p></p></div>
+    </div>
+  </section>
+
+  <section class="sit" id="situations" aria-labelledby="situations-titre">
+    <div class="wrap">
+      <div class="head">
+        <h2 id="situations-titre" class="rise"><span class="soft">Four situations.</span> What you see.</h2>
+      </div>
+      <div class="body">
+        <div class="tabs rise" role="tablist" aria-label="Use cases">
+          <button type="button" role="tab" id="t-job" aria-controls="p-job" aria-selected="true"><b>Apply</b><span>at BlaBlaCar</span></button>
+          <button type="button" role="tab" id="t-biz" aria-controls="p-biz" aria-selected="false" tabindex="-1"><b>Prospect</b><span>in banking</span></button>
+          <button type="button" role="tab" id="t-rdv" aria-controls="p-rdv" aria-selected="false" tabindex="-1"><b>Meeting</b><span>at BNP Paribas</span></button>
+          <button type="button" role="tab" id="t-net" aria-controls="p-net" aria-selected="false" tabindex="-1"><b>Grow</b><span>your network</span></button>
+        </div>
+        <div class="rise" style="--i:1">
+          <div class="panel" role="tabpanel" id="p-job" aria-labelledby="t-job">
+            <p class="say">You click a BlaBlaCar contact: their colleagues appear, sorted by seniority. You know who to ask for a referral.</p>
+            <ul class="bands" data-rows="job"></ul>
+          </div>
+          <div class="panel" role="tabpanel" id="p-biz" aria-labelledby="t-biz" hidden>
+            <p class="say">You keep the Banking and insurance industry and the Senior to Executive levels: these are the decision-makers to call.</p>
+            <ul class="bands" data-rows="biz"></ul>
+          </div>
+          <div class="panel" role="tabpanel" id="p-rdv" aria-labelledby="t-rdv" hidden>
+            <p class="say">You group by company and open BNP Paribas: all your contacts there, with their roles, before you walk into the meeting.</p>
+            <ul class="bands" data-rows="rdv"></ul>
+          </div>
+          <div class="panel" role="tabpanel" id="p-net" aria-labelledby="t-net" hidden>
+            <p class="say">The thinnest branches show where you’re missing people. Here, healthcare and the public sector.</p>
+            <ul class="bands" data-rows="net"></ul>
+          </div>
+        </div>
+      </div>
+      <p class="count" style="margin-top:16px">Examples from the demo network, 150 fictional contacts.</p>
+    </div>
+  </section>
+
+  <section class="how" id="demarrer" aria-labelledby="demarrer-titre">
+    <div class="wrap grid">
+        <h2 id="demarrer-titre" class="rise">Three steps, no account</h2>
+        <ol class="steps" id="steps">
+          <li class="on" data-s="0" tabindex="0"><strong>First, request your export.</strong><p>On LinkedIn: Settings, Data privacy, “Get a copy of your data”. Tick “Connections”. <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Open the LinkedIn page&nbsp;↗</a></p></li>
+          <li data-s="1" tabindex="0"><strong>Then drop the archive.</strong><p>The .zip as is, once LinkedIn’s email arrives, usually about ten minutes later. It’s read on your device.</p></li>
+          <li data-s="2" tabindex="0"><strong>Finally, explore your map.</strong><p>Group, color, filter, open a contact’s profile. While you wait for the email, the demo already works.</p></li>
+        </ol>
+      <div class="pin" aria-hidden="true">
+        <!-- Capture de la page LinkedIn de Vincent, anonymisée : logo LinkedIn, barre du haut et photos de profil retirés -->
+        <figure class="app shot on" data-s="0">
+          <img src="../assets/demo/linkedin-export-900.webp" srcset="../assets/demo/linkedin-export-900.webp 900w, ../assets/demo/linkedin-export.webp 1400w" sizes="(min-width:960px) 640px, 92vw" width="900" height="497" loading="lazy" alt="LinkedIn’s “Download your data” page, in Settings, Data privacy (French interface)">
+          <figcaption>On LinkedIn: Settings, Data privacy. When the archive is ready, “Download archive”.</figcaption>
+        </figure>
+        <div class="app" data-ui data-s="1">
+          <div class="drop">Drop your Connections.csv file</div>
+          <div class="file"><i>ZIP</i>Basic_LinkedInDataExport.zip</div>
+          <p class="ok">150 contacts imported</p>
+        </div>
+        <div class="app net-app" data-ui data-s="2">
+          <div class="netcard">
+            <h4>My network</h4>
+            <div class="stats">
+              <div data-k="contacts" class="on"><b>150</b><span>contacts</span></div>
+              <div data-k="secteurs"><b>10</b><span>industries</span></div>
+              <div data-k="entreprises"><b>30</b><span>companies</span></div>
+              <div data-k="direction"><b>31</b><span>in leadership roles</span></div>
+            </div>
+          </div>
+          <!-- Roulette : les noms fictifs du réseau de démo défilent ; le survol d’une tuile change ce qui défile -->
+          <div class="wheel" aria-hidden="true"><ul id="wheel"></ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feat" aria-labelledby="fonctions-titre">
+    <div class="wrap">
+      <h2 id="fonctions-titre" class="rise">The settings that matter</h2>
+      <div class="cells">
+        <article class="cell rise">
+          <div class="t"><h3>Group by whatever you want</h3><p>Industry, company, function, seniority, year connected, city, education. The graph rebuilds around you.</p></div>
+          <div class="frag" data-ui><label>Group by</label><div class="sel">Industry <span aria-hidden="true">⌄</span></div>
+            <div class="menu"><div class="on">Industry</div><div>Company</div><div class="hv">Function</div><div>Seniority</div><div>Year connected</div><div>City</div><div>Education</div></div></div>
+        </article>
+        <article class="cell alt rise" style="--i:1">
+          <div class="t"><h3>Color by another criterion</h3><p>Each dot takes the color of its seniority, its function or the year you connected. The legend gives the counts.</p></div>
+          <div class="frag" data-ui><span class="lbl">Color and clusters: seniority</span>
+            <div class="lg" id="legend"></div></div>
+        </article>
+        <article class="cell rise" style="--i:2">
+          <div class="t"><h3>Keep the essentials, or see it all</h3><p>The branches slider gathers small groups into “Other”, or shows your whole network.</p></div>
+          <div class="frag" data-ui><label for="br">Branches shown: <span id="brv">9 of 28</span></label><input id="br" type="range" min="3" max="28" value="9" aria-describedby="brv"><p style="margin-top:8px;color:#5B6B7C;font-size:13px">Grouped by company</p></div>
+        </article>
+        <article class="cell rise">
+          <div class="t"><h3>A contact’s full profile</h3><p>Industry, function, seniority, city, education, connection date, and your other contacts from the same company and school.</p></div>
+          <div class="frag fiche" data-ui><div class="who"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3c-3.4 0-5.6 2.7-5.6 6.2 0 2.6.7 4.6 1.8 5.6h7.6c1.1-1 1.8-3 1.8-5.6C17.6 5.7 15.4 3 12 3z" fill="#fff" fill-opacity=".55"/><circle cx="12" cy="9" r="3.6" fill="#fff"/><path d="M4.5 21c0-4 3.3-7 7.5-7s7.5 3 7.5 7z" fill="#fff"/></svg></i><div><b>Juliette Guerin</b><span>Software Engineer at Doctolib</span></div></div>
+            <dl><dt>Industry</dt><dd>Tech &amp; software</dd><dt>Function</dt><dd>Tech</dd><dt>Seniority</dt><dd>Mid-level</dd><dt>City</dt><dd>Lyon</dd><dt>Education</dt><dd>CentraleSupélec</dd><dt>Connected</dt><dd>in 2019</dd></dl>
+            <p class="ptitle">Also at Doctolib (6)</p>
+            <div class="peers"><span><i style="background:#6C4FD8"></i>Paul Diallo</span><span><i style="background:#12A39A"></i>Emma Lambert</span><span><i style="background:#12A39A"></i>Hugo Roux</span><span class="more">+3</span></div>
+            <p class="ptitle">Also from CentraleSupélec (3)</p>
+            <div class="peers"><span><i style="background:#6C4FD8"></i>Hugo Faure</span><span><i style="background:#C2417A"></i>Karim Moreau</span><span><i style="background:#D9A21B"></i>Léa Fournier</span></div></div>
+        </article>
+        <article class="cell alt rise" style="--i:1">
+          <div class="t"><h3>Filters that stack up</h3><p>Tick juniors and seniors, add an industry or a function: only the contacts that pass every filter remain.</p></div>
+          <div class="frag" data-ui><span class="lbl">Seniority</span><div class="chips">
+            <div class="chip on"><span class="box"></span>Junior<em>12</em></div><div class="chip"><span class="box"></span>Mid-level<em>77</em></div><div class="chip on"><span class="box"></span>Senior<em>12</em></div><div class="chip"><span class="box"></span>Manager<em>18</em></div><div class="chip"><span class="box"></span>Director<em>24</em></div><div class="chip"><span class="box"></span>Executive<em>7</em></div></div>
+            <p style="margin-top:10px;font-weight:700">24 contacts of 150</p></div>
+        </article>
+        <article class="cell rise" style="--i:2">
+          <div class="t"><h3>Your own tags</h3><p>Mark a contact as client, prospect, mentor or to follow up, then group or filter by tag.</p></div>
+          <div class="frag" data-ui><span class="lbl">Tag</span><div class="tags"><span>Client</span><span class="on">Prospect</span><span>Partner</span><span>Mentor</span><span>Recruiter</span><span>Follow up</span></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="priv" id="confidentialite" aria-labelledby="confidentialite-titre">
+    <div class="wrap grid">
+      <div class="top">
+        <h2 id="confidentialite-titre" class="rise">What leaves your browser</h2>
+        <p class="lead rise" style="--i:1">No server receives your file. Here is everything the page can send, line by line.</p>
+      </div>
+      <table class="rise" style="--i:2">
+        <thead><tr><th scope="col">What</th><th scope="col">Sent to</th><th scope="col">When</th></tr></thead>
+        <tbody>
+          <tr><td>Your contacts: names, profiles, emails</td><td data-l="Sent to" class="never">Nobody</td><td data-l="When" class="never">Never</td></tr>
+          <tr><td>Company domains, for example doctolib.fr</td><td data-l="Sent to">Brandfetch, for the logos</td><td data-l="When">As long as the Logos option is ticked. It is by default, and unticks in one click.</td></tr>
+          <tr><td>Company names and job titles that weren’t recognized</td><td data-l="Sent to">The AI you choose, with your own key</td><td data-l="When">Only if you run the AI classification</td></tr>
+          <tr><td>Your classification corrections</td><td data-l="Sent to">Synapses’ shared dictionary</td><td data-l="When">Only if you tick “Share my corrections”</td></tr>
+          <tr><td>+1 on the counter of mapped networks</td><td data-l="Sent to">An anonymous counter</td><td data-l="When">After an import, at most once a day</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="faq" id="questions" aria-labelledby="questions-titre">
+    <div class="wrap grid">
+      <h2 id="questions-titre" class="rise">Questions</h2>
+      <div class="qs">
+        <details name="faq" class="rise"><summary>Is it really free?<span class="pm" aria-hidden="true"></span></summary><p>Yes. No account, no subscription, no ads. Only the optional AI classification uses your own key, with the provider you choose.</p></details>
+        <details name="faq" class="rise" style="--i:1"><summary>Is Synapses linked to LinkedIn?<span class="pm" aria-hidden="true"></span></summary><p>No. It’s an independent tool, not affiliated with LinkedIn. It doesn’t connect to your account: it only reads the export you download.</p></details>
+        <details name="faq" class="rise" style="--i:2"><summary>How long does the export take?<span class="pm" aria-hidden="true"></span></summary><p>Requesting it takes two minutes. The connections archive arrives by email, usually about ten minutes later.</p></details>
+        <details name="faq" class="rise" style="--i:3"><summary>What if an industry is guessed wrong?<span class="pm" aria-hidden="true"></span></summary><p>Industry, function and seniority are estimates. Correct them in the contact’s profile: the correction applies to the whole company or job title. You can also refine them with an AI, using your own key.</p></details>
+        <details name="faq" class="rise" style="--i:4"><summary>Can I try it without my export?<span class="pm" aria-hidden="true"></span></summary><p>Yes. The demo opens straight onto a fictional network of 150 contacts, with every feature.</p></details>
+        <details name="faq" class="rise" style="--i:5"><summary>What about on a phone?<span class="pm" aria-hidden="true"></span></summary><p>The graph adapts to the screen, and a List view shows everything as text. To get and drop the archive, a computer is still easier.</p></details>
+        <details name="faq" class="rise" style="--i:6"><summary>Is the tool in English?<span class="pm" aria-hidden="true"></span></summary><p>Not yet: its interface is in French for now, and an English version is planned. Your export works the same, and English job titles are recognized.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="end" aria-labelledby="fin-titre">
+    <div class="wrap">
+      <h2 id="fin-titre" class="rise">Open <a class="go" href="../app/">the demo</a> or <a class="alt" href="../app/#importer">your export</a></h2>
+      <div class="rise" style="--i:1"><p>The demo runs on 150 fictional contacts. Your export stays in your browser.</p><p class="count" data-count aria-live="polite"></p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="tiles">
+    <div class="tile say"><p>Synapses reads your LinkedIn export in your browser and turns it into a map of your network.</p><p class="legal">Independent tool, not affiliated with LinkedIn.<br>Video voice: ElevenLabs.</p></div>
+    <nav class="tile nav" aria-label="Footer"><ul><li><a href="#situations">Use cases</a></li><li><a href="#demarrer">Get started</a></li><li><a href="#confidentialite">Privacy</a></li><li><a href="#questions">FAQ</a></li><li><a href="../app/">Open the tool</a></li></ul></nav>
+    <div class="tile by"><p>Designed and built by <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, with Claude Code.</p><p>The code is public: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div>
+    <div class="tile word" aria-hidden="true"><span class="wmark"><svg viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span><span class="wname">Synapses</span></div>
+    <a class="tile go" href="../app/"><b>Try the demo</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Version anglaise : les secteurs, fonctions, séniorités et postes du réseau de démo sont traduits ici */
+  const EN = {"Conseil":"Consulting","Banque & assurance":"Banking & insurance","Santé":"Healthcare","Retail & conso":"Retail & consumer","Tech & logiciel":"Tech & software","Télécom & médias":"Telecom & media","Transport & mobilité":"Transport & mobility","Énergie & industrie":"Energy & industry","Secteur public & éducation":"Public sector & education","Non classé":"Unclassified","Produit":"Product","Direction générale":"General management","Opérations":"Operations","RH":"HR","Confirmé":"Mid-level","Direction":"Director","Dirigeant":"Executive","Directeur commercial":"Sales Director","Développeur full-stack":"Full-stack Developer","Stagiaire produit":"Product Intern","Consultant senior":"Senior Consultant","Contrôleur de gestion":"Financial Controller","Directeur des opérations":"Operations Director","Responsable marketing":"Marketing Manager","Chargée de recrutement":"Recruiter","Directrice financière":"Finance Director","Alternant data":"Data Apprentice","Manager conseil":"Consulting Manager","Chef de projet digital":"Digital Project Manager","Analyste financier":"Financial Analyst","CEO & co-fondateur":"CEO & Co-founder"};
+  /* Réseau de démonstration de l’outil : 150 contacts fictifs [nom, entreprise, poste, secteur, fonction, séniorité] */
+  const DEMO = [["Bastien Henry","Accenture","Directeur commercial","Conseil","Sales","Direction"],["Zoé Laurent","AXA","Business Developer","Banque & assurance","Tech","Confirmé"],["Emma Robin","Sanofi","Growth Marketing Manager","Santé","Marketing","Confirmé"],["Inès Laurent","Decathlon","Développeur full-stack","Retail & conso","Tech","Confirmé"],["Antoine Martin","Accenture","Stagiaire produit","Conseil","Produit","Junior"],["Romain Bernard","Alan","Développeur full-stack","Banque & assurance","Tech","Confirmé"],["Emma Lambert","Doctolib","Account Executive","Tech & logiciel","Sales","Confirmé"],["Hugo Faure","Dataiku","Head of Product","Tech & logiciel","Produit","Direction"],["Julien Muller","Capgemini","CEO & co-fondateur","Conseil","Direction générale","Dirigeant"],["Nicolas Moreau","Orange","Product Owner","Télécom & médias","Direction générale","Confirmé"],["Léa Fournier","BlaBlaCar","Consultant senior","Transport & mobilité","Conseil","Senior"],["Arthur Faure","Decathlon","Product Owner","Retail & conso","Direction générale","Confirmé"],["Karim Roux","BNP Paribas","Contrôleur de gestion","Banque & assurance","Finance","Confirmé"],["Emma Robin","Orange","UX Designer","Télécom & médias","Produit","Confirmé"],["Lucas Dubois","Atelier Kairn","Business Developer","Non classé","Tech","Confirmé"],["Paul Faure","Qonto","Directeur des opérations","Banque & assurance","Opérations","Direction"],["Emma Garnier","SNCF","Account Executive","Transport & mobilité","Sales","Confirmé"],["Yasmine Fournier","Capgemini","Account Executive","Conseil","Sales","Confirmé"],["Juliette Lambert","Sanofi","Product Owner","Santé","Direction générale","Confirmé"],["Sofia Fournier","LVMH","Data Analyst","Retail & conso","Data","Confirmé"],["Chloé Morel","Capgemini","CTO","Conseil","Tech","Dirigeant"],["Mehdi Lefebvre","Atelier Kairn","Directeur commercial","Non classé","Sales","Direction"],["Maxime Dubois","AXA","Directeur des opérations","Banque & assurance","Opérations","Direction"],["Léa Robin","TotalEnergies","Responsable marketing","Énergie & industrie","Marketing","Manager"],["Paul Blanc","Atelier Kairn","Product Owner","Non classé","Direction générale","Confirmé"],["Clara Rousseau","BNP Paribas","Développeur full-stack","Banque & assurance","Tech","Confirmé"],["Emma Fontaine","SNCF","Senior Product Manager","Transport & mobilité","Produit","Senior"],["Léa Moreau","Contentsquare","Chargée de recrutement","Tech & logiciel","RH","Confirmé"],["Karim Perrin","Carrefour","Directeur des opérations","Retail & conso","Opérations","Direction"],["Karim Moreau","Qonto","Engineering Manager","Banque & assurance","Tech","Manager"],["Camille Diallo","Equans","Talent Acquisition Manager","Énergie & industrie","RH","Manager"],["Yasmine Chevalier","JCDecaux","Directrice financière","Télécom & médias","Finance","Direction"],["Nicolas Simon","BlaBlaCar","Product Owner","Transport & mobilité","Direction générale","Confirmé"],["Maxime Michel","Accenture","Alternant data","Conseil","Data","Junior"],["Lina Martin","Dataiku","CEO & co-fondateur","Tech & logiciel","Direction générale","Dirigeant"],["Léa Moreau","Engie","Manager conseil","Énergie & industrie","Conseil","Manager"],["Antoine Martin","Engie","Senior Product Manager","Énergie & industrie","Produit","Senior"],["Camille Mercier","Ministère de l’Économie","Product Manager","Secteur public & éducation","Produit","Confirmé"],["Mehdi Faure","Publicis","Product Owner","Télécom & médias","Direction générale","Confirmé"],["Maxime Rousseau","Qonto","Manager conseil","Banque & assurance","Conseil","Manager"],["Manon Chevalier","LVMH","Senior Product Manager","Retail & conso","Produit","Senior"],["Hugo Muller","Publicis","Tech Lead","Télécom & médias","Tech","Senior"],["Léa Martin","Equans","CTO","Énergie & industrie","Tech","Dirigeant"],["Alice Boyer","AXA","Account Executive","Banque & assurance","Sales","Confirmé"],["Chloé Fournier","AXA","Engineering Manager","Banque & assurance","Tech","Manager"],["Julien Lopez","LVMH","Senior Product Manager","Retail & conso","Produit","Senior"],["Nathan Lefebvre","Ministère de l’Économie","CEO & co-fondateur","Secteur public & éducation","Direction générale","Dirigeant"],["Clara Bernard","BlaBlaCar","Stagiaire produit","Transport & mobilité","Produit","Junior"],["Hugo Roux","Doctolib","Data Analyst","Tech & logiciel","Data","Confirmé"],["Paul Guerin","Société Générale","Product Manager","Banque & assurance","Produit","Confirmé"],["Thomas Morel","Sanofi","Alternant data","Santé","Data","Junior"],["Maxime Blanc","Back Market","Engineering Manager","Tech & logiciel","Tech","Manager"],["Camille Perrin","Engie","Engineering Manager","Énergie & industrie","Tech","Manager"],["Nathan Bernard","Capgemini","Product Owner","Conseil","Direction générale","Confirmé"],["Lucas Faure","BNP Paribas","Manager conseil","Banque & assurance","Conseil","Manager"],["Karim Laurent","Contentsquare","Product Owner","Tech & logiciel","Direction générale","Confirmé"],["Maxime Michel","Orange","Directrice financière","Télécom & médias","Finance","Direction"],["Adrien Rousseau","Dataiku","Engineering Manager","Tech & logiciel","Tech","Manager"],["Nathan Morel","Dataiku","Développeur full-stack","Tech & logiciel","Tech","Confirmé"],["Juliette Michel","Orange","Tech Lead","Télécom & médias","Tech","Senior"],["Chloé Nguyen","Qonto","Talent Acquisition Manager","Banque & assurance","RH","Manager"],["Emma Fournier","Back Market","Directeur commercial","Tech & logiciel","Sales","Direction"],["Yasmine Perrin","AXA","UX Designer","Banque & assurance","Produit","Confirmé"],["Julien Fontaine","BlaBlaCar","Account Executive","Transport & mobilité","Sales","Confirmé"],["Nathan Roux","Mirakl","Product Manager","Tech & logiciel","Produit","Confirmé"],["Clara Lopez","Doctolib","Business Developer","Tech & logiciel","Tech","Confirmé"],["Mehdi Lopez","AXA","Data Scientist","Banque & assurance","Data","Confirmé"],["Lucas Diallo","BlaBlaCar","Customer Success Manager","Transport & mobilité","Sales","Confirmé"],["Yasmine Fournier","L’Oréal","Engineering Manager","Retail & conso","Tech","Manager"],["Adrien Blanc","Doctolib","Product Owner","Tech & logiciel","Direction générale","Confirmé"],["Inès Blanc","BlaBlaCar","Stagiaire produit","Transport & mobilité","Produit","Junior"],["Margaux Simon","BNP Paribas","Product Manager","Banque & assurance","Produit","Confirmé"],["Julien Roux","BNP Paribas","Software Engineer","Banque & assurance","Tech","Confirmé"],["Chloé Benali","Atelier Kairn","Chef de projet digital","Non classé","Opérations","Confirmé"],["Nicolas Moreau","Orange","Product Owner","Télécom & médias","Direction générale","Confirmé"],["Sofia Moreau","Decathlon","Software Engineer","Retail & conso","Tech","Confirmé"],["Adrien Garnier","BNP Paribas","Head of Product","Banque & assurance","Produit","Direction"],["Nicolas Simon","Engie","Manager conseil","Énergie & industrie","Conseil","Manager"],["Lina Fontaine","Orange","Head of Product","Télécom & médias","Produit","Direction"],["Léa Diallo","Société Générale","Data Scientist","Banque & assurance","Data","Confirmé"],["Bastien Nguyen","BlaBlaCar","Product Owner","Transport & mobilité","Direction générale","Confirmé"],["Bastien Michel","Capgemini","Chef de projet digital","Conseil","Opérations","Confirmé"],["Sofia Blanc","Accenture","Product Manager","Conseil","Produit","Confirmé"],["Bastien Bernard","Atelier Kairn","Product Owner","Non classé","Direction générale","Confirmé"],["Nicolas Perrin","BlaBlaCar","Data Scientist","Transport & mobilité","Data","Confirmé"],["Hugo Michel","L’Oréal","Analyste financier","Retail & conso","Finance","Confirmé"],["Arthur Guerin","Station F","Contrôleur de gestion","Tech & logiciel","Finance","Confirmé"],["Zoé Benali","Station F","CTO","Tech & logiciel","Tech","Dirigeant"],["Antoine Lopez","Publicis","Directeur des opérations","Télécom & médias","Opérations","Direction"],["Emma Nguyen","LVMH","Stagiaire produit","Retail & conso","Produit","Junior"],["Manon Lopez","BNP Paribas","Engineering Manager","Banque & assurance","Tech","Manager"],["Clara Robin","Ministère de l’Économie","Contrôleur de gestion","Secteur public & éducation","Finance","Confirmé"],["Alice Simon","TotalEnergies","Business Developer","Énergie & industrie","Tech","Confirmé"],["Maxime Michel","BNP Paribas","UX Designer","Banque & assurance","Produit","Confirmé"],["Nicolas Mercier","SNCF","Chef de projet digital","Transport & mobilité","Opérations","Confirmé"],["Adrien Henry","Equans","Tech Lead","Énergie & industrie","Tech","Senior"],["Juliette Guerin","Doctolib","Software Engineer","Tech & logiciel","Tech","Confirmé"],["Maxime Leroy","BlaBlaCar","Directeur commercial","Transport & mobilité","Sales","Direction"],["Clara Garnier","Capgemini","Directeur des opérations","Conseil","Opérations","Direction"],["Camille Fontaine","Ministère de l’Économie","Tech Lead","Secteur public & éducation","Tech","Senior"],["Léa Guerin","Qonto","Chef de projet digital","Banque & assurance","Opérations","Confirmé"],["Arthur Martin","TotalEnergies","Data Analyst","Énergie & industrie","Data","Confirmé"],["Sarah Muller","BlaBlaCar","Alternant data","Transport & mobilité","Data","Junior"],["Camille Martin","Publicis","Alternant data","Télécom & médias","Data","Junior"],["Chloé Morel","Wavestone","Consultant senior","Conseil","Conseil","Senior"],["Manon Nguyen","Back Market","Tech Lead","Tech & logiciel","Tech","Senior"],["Mehdi Blanc","Station F","Stagiaire produit","Tech & logiciel","Produit","Junior"],["Inès Lambert","Capgemini","Product Owner","Conseil","Direction générale","Confirmé"],["Lina Martin","Carrefour","CEO & co-fondateur","Retail & conso","Direction générale","Dirigeant"],["Margaux Laurent","Station F","Chargée de recrutement","Tech & logiciel","RH","Confirmé"],["Nathan Simon","Doctolib","Analyste financier","Tech & logiciel","Finance","Confirmé"],["Emma Simon","Back Market","Engineering Manager","Tech & logiciel","Tech","Manager"],["Zoé Morel","JCDecaux","Analyste financier","Télécom & médias","Finance","Confirmé"],["Arthur Faure","BNP Paribas","Consultant senior","Banque & assurance","Conseil","Senior"],["Thomas Henry","Publicis","Directrice financière","Télécom & médias","Finance","Direction"],["Léa Martin","Atelier Kairn","Head of Product","Non classé","Produit","Direction"],["Nicolas Faure","L’Oréal","Engineering Manager","Retail & conso","Tech","Manager"],["Bastien Moreau","AXA","Directeur des opérations","Banque & assurance","Opérations","Direction"],["Paul Diallo","Doctolib","Head of Product","Tech & logiciel","Produit","Direction"],["Lina Laurent","Contentsquare","Développeur full-stack","Tech & logiciel","Tech","Confirmé"],["Zoé Faure","TotalEnergies","Product Manager","Énergie & industrie","Produit","Confirmé"],["Margaux Lambert","Ministère de l’Économie","Customer Success Manager","Secteur public & éducation","Sales","Confirmé"],["Léa Leroy","Ubisoft","Stagiaire produit","Télécom & médias","Produit","Junior"],["Manon Mercier","Ubisoft","Customer Success Manager","Télécom & médias","Sales","Confirmé"],["Inès Martin","Accenture","Contrôleur de gestion","Conseil","Finance","Confirmé"],["Antoine Fontaine","Wavestone","Product Manager","Conseil","Produit","Confirmé"],["Nicolas Muller","Wavestone","Product Owner","Conseil","Direction générale","Confirmé"],["Zoé Roux","Dataiku","Responsable marketing","Tech & logiciel","Marketing","Manager"],["Zoé Muller","BlaBlaCar","Data Analyst","Transport & mobilité","Data","Confirmé"],["Bastien Leroy","Decathlon","Business Developer","Retail & conso","Tech","Confirmé"],["Romain Martin","LVMH","Product Owner","Retail & conso","Direction générale","Confirmé"],["Emma Lopez","Ubisoft","Growth Marketing Manager","Télécom & médias","Marketing","Confirmé"],["Bastien Lefebvre","Station F","Chargée de recrutement","Tech & logiciel","RH","Confirmé"],["Mehdi Laurent","Contentsquare","Data Analyst","Tech & logiciel","Data","Confirmé"],["Nicolas Lopez","SNCF","Customer Success Manager","Transport & mobilité","Sales","Confirmé"],["Manon Chevalier","Publicis","Head of Product","Télécom & médias","Produit","Direction"],["Léa Blanc","Accenture","Responsable marketing","Conseil","Marketing","Manager"],["Romain Robin","Ministère de l’Économie","Directrice financière","Secteur public & éducation","Finance","Direction"],["Mehdi Lambert","AXA","Growth Marketing Manager","Banque & assurance","Marketing","Confirmé"],["Nathan Lefebvre","TotalEnergies","Product Owner","Énergie & industrie","Direction générale","Confirmé"],["Hugo Lopez","Ubisoft","Développeur full-stack","Télécom & médias","Tech","Confirmé"],["Romain Boyer","Ministère de l’Économie","Stagiaire produit","Secteur public & éducation","Produit","Junior"],["Karim Diallo","JCDecaux","Alternant data","Télécom & médias","Data","Junior"],["Paul Lefebvre","Atelier Kairn","Head of Product","Non classé","Produit","Direction"],["Zoé Lopez","Ministère de l’Économie","Product Owner","Secteur public & éducation","Direction générale","Confirmé"],["Inès Rousseau","Sanofi","Analyste financier","Santé","Finance","Confirmé"],["Sofia Lambert","Publicis","Product Manager","Télécom & médias","Produit","Confirmé"],["Lina Lambert","Engie","Directeur des opérations","Énergie & industrie","Opérations","Direction"],["Karim Henry","JCDecaux","Head of Product","Télécom & médias","Produit","Direction"],["Clara Lambert","Capgemini","Head of Product","Conseil","Produit","Direction"]].map(([n, co, pos, sec, fn, sen]) => ({n, co, pos:EN[pos] || pos, sec:EN[sec] || sec, fn:EN[fn] || fn, sen:EN[sen] || sen}));
+  const PALETTE = ['#2F5BEA','#12A39A','#D9A21B','#C2417A','#6C4FD8','#3E9B4F','#E2702F','#4A86B5','#A0703F','#8C5FA8'];
+  const SEN = ['Junior','Mid-level','Senior','Manager','Director','Executive'];
+  const count = (list, k) => list.reduce((m, c) => m.set(c[k], (m.get(c[k]) || 0) + 1), new Map());
+  const pct = (n, t) => `${Math.round(n / t * 100)}%`;
+  const domain = {sen:SEN, fn:[...count(DEMO, 'fn')].sort((a, b) => b[1] - a[1]).map(x => x[0])};
+  const colour = (by, v) => PALETTE[domain[by].indexOf(v) % PALETTE.length] || '#8A97A6';
+  const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+
+  /* ---------- Le graphe vivant du héros ---------- */
+  const svg = $('#graph'), NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+  const W = 820, H = 560, CX = W / 2, CY = H / 2 + 6, R = 170;
+  const sectors = [...count(DEMO, 'sec')].sort((a, b) => a[1] - b[1]);     /* ordre croissant depuis midi, sens horaire, comme dans l’outil */
+  let by = 'sen', selected = 'Tech & software';
+  const dots = [], blobs = [], hubs = new Map(), spokes = new Map();
+  const gL = el('g', {}, svg), gB = el('g', {}, svg), gD = el('g', {}, svg), gH = el('g', {}, svg);
+  sectors.forEach(([sec, n], i) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / sectors.length;
+    const hx = CX + R * Math.cos(a), hy = CY + R * Math.sin(a), hr = 9 + Math.sqrt(n) * 1.6;
+    spokes.set(sec, el('line', {x1:CX, y1:CY, x2:hx, y2:hy, class:'spoke', 'stroke-width':(1.2 + n / 9).toFixed(2)}, gL));
+    /* Une grappe par valeur de séniorité autour du secteur, comme dans l’outil */
+    const members = DEMO.filter(c => c.sec === sec);
+    const groups = SEN.map(v => members.filter(c => c.sen === v)).filter(g => g.length);
+    groups.forEach((g, j) => {
+      const ga = a + (j - (groups.length - 1) / 2) * 0.62, gd = hr + 14 + Math.sqrt(g.length) * 4.2;
+      const gx = hx + gd * Math.cos(ga), gy = hy + gd * Math.sin(ga), gr = 5 + Math.sqrt(g.length) * 4.1;
+      const b = el('circle', {cx:gx.toFixed(1), cy:gy.toFixed(1), r:gr.toFixed(1), class:'blob', 'fill-opacity':'.16'}, gB);
+      b.__g = g; blobs.push(b);
+      g.forEach((c, k) => {
+        const rr = 3.6 * Math.sqrt(k + .5), th = k * 2.39996;
+        const d = el('circle', {cx:(gx + rr * Math.cos(th)).toFixed(1), cy:(gy + rr * Math.sin(th)).toFixed(1), r:'2.6', class:'dot'}, gD);
+        d.__c = c; dots.push(d);
+      });
+    });
+    const h = el('g', {class:'hub', tabindex:'0', role:'button', 'aria-label':`${sec}, ${n} contacts`}, gH);
+    el('circle', {cx:hx.toFixed(1), cy:hy.toFixed(1), r:(hr + 7).toFixed(1), class:'halo'}, h);
+    el('circle', {cx:hx.toFixed(1), cy:hy.toFixed(1), r:hr.toFixed(1), class:'h'}, h);
+    el('text', {x:hx.toFixed(1), y:hy.toFixed(1), class:'n'}, h).textContent = n;
+    const lx = CX + (R + 62) * Math.cos(a), ly = CY + (R + 62) * Math.sin(a) + (Math.abs(Math.cos(a)) < .25 ? Math.sign(Math.sin(a)) * 8 : 0);
+    const anchor = Math.abs(Math.cos(a)) < .25 ? 'middle' : Math.cos(a) > 0 ? 'start' : 'end';
+    const t = el('text', {x:lx.toFixed(1), y:(ly + 4).toFixed(1), 'text-anchor':anchor}, h);
+    t.textContent = sec + ' ';
+    el('tspan', {class:'p'}, t).textContent = pct(n, DEMO.length);
+    h.addEventListener('click', () => pick(sec));
+    h.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(sec); } });
+    hubs.set(sec, h);
+  });
+  const me = el('g', {}, gH);
+  el('circle', {cx:CX, cy:CY, r:'18', fill:'#2F5BEA'}, me);
+  el('text', {x:CX, y:CY, fill:'#fff', 'font-size':'11', 'font-weight':'800', 'text-anchor':'middle', 'dominant-baseline':'central'}, me).textContent = 'Me';
+
+  function paint(){
+    dots.forEach(d => d.setAttribute('fill', colour(by, d.__c[by])));
+    blobs.forEach(b => { const v = b.__g[0][by]; const same = b.__g.every(c => c[by] === v); b.setAttribute('fill', same ? colour(by, v) : '#8A97A6'); });
+    $$('.tools button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.by === by)));
+    $('#key').innerHTML = domain[by].map(v => `<span><i style="background:${colour(by, v)}"></i>${esc(v)}</span>`).join('');
+    side();
+  }
+  function side(){
+    const list = DEMO.filter(c => c.sec === selected).sort((a, b) => SEN.indexOf(b.sen) - SEN.indexOf(a.sen));
+    $('#side').innerHTML = `<h3>${esc(selected)}</h3><p class="sub">${list.length} contacts, ${pct(list.length, DEMO.length)} of the network</p>
+      <ul>${list.slice(0, 6).map(c => `<li><i style="background:${colour(by, c[by])}"></i><div><b>${esc(c.n)}</b><span>${esc(c.pos)}, ${esc(c.co)}</span></div></li>`).join('')}</ul>
+      ${list.length > 6 ? `<p class="sub">and ${list.length - 6} more</p>` : ''}`;
+  }
+  function pick(sec){
+    selected = sec;
+    hubs.forEach((h, s) => h.classList.toggle('on', s === sec));
+    spokes.forEach((l, s) => l.classList.toggle('on', s === sec));
+    side();
+  }
+  $$('.tools button').forEach(b => b.addEventListener('click', () => { by = b.dataset.by; paint(); }));
+  pick(selected); paint();
+  /* Le cadre du dessin colle à son contenu (noms des secteurs compris) : le graphe occupe toute la place disponible */
+  { const b = svg.getBBox(), m = 10; svg.setAttribute('viewBox', `${(b.x - m).toFixed(0)} ${(b.y - m).toFixed(0)} ${(b.width + 2 * m).toFixed(0)} ${(b.height + 2 * m).toFixed(0)}`); }
+
+  /* ---------- Légende de la cellule « Colorer par » : les vrais comptes de la démo ---------- */
+  const sc = count(DEMO, 'sen');
+  const scMax = Math.max(...sc.values());
+  $('#legend').innerHTML = SEN.map(v => `<div><i style="background:${colour('sen', v)}"></i><span>${v}</span><em>${sc.get(v) || 0}</em><em>${pct(sc.get(v) || 0, DEMO.length)}</em><u style="background:${colour('sen', v)};width:${Math.round((sc.get(v) || 0) / scMax * 100)}%"></u></div>`).join('');
+  const br = $('#br'); br.addEventListener('input', () => { $('#brv').textContent = +br.value >= 28 ? 'all (28)' : `${br.value} of 28`; });
+
+  /* ---------- Situations : les bandes viennent du réseau de démo ---------- */
+  const band = (lvl, colourOf, who, sub, co) => `<li><span class="lvl"><i style="background:${colourOf}"></i>${esc(lvl)}</span><span class="who"><b>${esc(who)}</b><span>${esc(sub)}</span></span><span class="co">${esc(co)}</span></li>`;
+  const bySen = (a, b) => SEN.indexOf(a.sen) - SEN.indexOf(b.sen);
+  /* Six contacts aux séniorités variées : on prend tour à tour un contact de chaque niveau présent, puis on range de Junior à Dirigeant */
+  const varied = (list, k = 6) => {
+    const groups = SEN.map(s => list.filter(c => c.sen === s)).filter(g => g.length), out = [];
+    for(let i = 0; out.length < Math.min(k, list.length); i++) groups.forEach(g => { if(g[i] && out.length < k) out.push(g[i]); });
+    return out.sort(bySen);
+  };
+  const rows = {
+    job: varied(DEMO.filter(c => c.co === 'BlaBlaCar')),
+    biz: varied(DEMO.filter(c => c.sec === 'Banking & insurance' && SEN.indexOf(c.sen) >= SEN.indexOf('Senior'))),
+    rdv: varied(DEMO.filter(c => c.co === 'BNP Paribas'))
+  };
+  for(const k in rows) $(`[data-rows="${k}"]`).innerHTML = rows[k].map(c => band(c.sen, colour('sen', c.sen), c.n, c.pos, c.co)).join('');
+  const secs = [...count(DEMO, 'sec')].sort((a, b) => a[1] - b[1]).slice(0, 5);
+  $('[data-rows="net"]').innerHTML = secs.map(([s, n]) => band(pct(n, DEMO.length), n <= 8 ? '#C2417A' : '#8A97A6', s, `${n} contacts`, n <= 8 ? 'to grow' : '')).join('');
+  const tabs = $$('[role=tab]');
+  const show = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; $('#' + x.getAttribute('aria-controls')).hidden = !on; }); };
+  /* Hauteur fixe d’un onglet à l’autre : la phrase et la liste réservent la place de la plus longue des quatre situations */
+  const panels = $$('.sit .panel');
+  const equalize = () => {
+    const parts = ['.say', '.bands'].map(sel => panels.map(p => p.querySelector(sel)));
+    parts.flat().forEach(e => { e.style.minHeight = ''; });
+    const was = panels.map(p => p.hidden), max = [0, 0];
+    panels.forEach(p => { panels.forEach(q => { q.hidden = q !== p; }); parts.forEach((list, i) => { max[i] = Math.max(max[i], p.querySelector(i ? '.bands' : '.say').offsetHeight); }); });
+    panels.forEach((p, i) => { p.hidden = was[i]; });
+    parts.forEach((list, i) => list.forEach(e => { e.style.minHeight = max[i] + 'px'; }));
+  };
+  equalize();
+  let eqTick; addEventListener('resize', () => { cancelAnimationFrame(eqTick); eqTick = requestAnimationFrame(equalize); });
+  if(document.fonts) document.fonts.ready.then(equalize);
+
+  /* Dernier écran : la section de fin prend la hauteur que le pied de page lui laisse */
+  const endSec = $('.end'), foot = $('footer');
+  const fitEnd = () => { endSec.style.minHeight = innerWidth >= 960 ? Math.max(0, innerHeight - 68 - foot.offsetHeight) + 'px' : ''; };
+  fitEnd();
+  let endTick; addEventListener('resize', () => { cancelAnimationFrame(endTick); endTick = requestAnimationFrame(fitEnd); });
+  if(document.fonts) document.fonts.ready.then(fitEnd);
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => show(t));
+    t.addEventListener('keydown', e => { const d = {ArrowDown:1, ArrowRight:1, ArrowUp:-1, ArrowLeft:-1}[e.key]; if(d){ e.preventDefault(); const n = tabs[(i + d + tabs.length) % tabs.length]; show(n); n.focus(); } });
+  });
+
+  /* ---------- Vidéo : le gros bouton lance la lecture avec le son, puis laisse les commandes ---------- */
+  const film = $('#film'), player = $('.player'), teaser = $('#teaser');
+  const start = () => { player.classList.add('on'); film.play().catch(() => {}); film.focus(); };
+  $('#play').addEventListener('click', e => { e.stopPropagation(); start(); });
+  /* Un clic n’importe où sur l’aperçu lance aussi le film (une fois lancé, les commandes de la vidéo reprennent la main) */
+  player.addEventListener('click', () => { if(!player.classList.contains('on')) start(); });
+  film.addEventListener('play', () => { player.classList.add('on'); teaser.pause(); });
+  /* Aperçu : lecture quand le lecteur est visible, pause sinon. Jamais si l’utilisateur demande moins d’animations
+     ou économise ses données : l’affiche fixe reste alors. */
+  const saveData = !!(navigator.connection && navigator.connection.saveData);
+  if(!reduce && !saveData){
+    teaser.addEventListener('playing', () => player.classList.add('teasing'), {once:true});
+    new IntersectionObserver(([e]) => {
+      if(player.classList.contains('on')) return;
+      if(e.isIntersecting) teaser.play().catch(() => {}); else teaser.pause();
+    }, {threshold:.35}).observe(player);
+  }
+
+  /* ---------- Vitrine : le panneau au centre est éclairé, sa légende suit ---------- */
+  const row = $('#row'), figs = $$('#row figure');
+  const caption = f => { $('#cap h3').innerHTML = f.dataset.t; $('#cap p').innerHTML = f.dataset.d; };
+  const centre = () => { const mid = row.getBoundingClientRect().left + row.clientWidth / 2; let best = figs[0], d = Infinity;
+    figs.forEach(f => { const r = f.getBoundingClientRect(), dd = Math.abs(r.left + r.width / 2 - mid); if(dd < d){ d = dd; best = f; } });
+    figs.forEach(f => f.classList.toggle('on', f === best)); caption(best); return best; };
+  let tick; row.addEventListener('scroll', () => { cancelAnimationFrame(tick); tick = requestAnimationFrame(centre); }, {passive:true});
+  addEventListener('resize', centre); centre();
+  $$('.vitrine .nav button').forEach(b => b.addEventListener('click', () => {
+    const cur = figs.indexOf(centre()), nxt = figs[Math.max(0, Math.min(figs.length - 1, cur + +b.dataset.go))];
+    row.scrollTo({left:nxt.offsetLeft - (row.clientWidth - nxt.offsetWidth) / 2, behavior:reduce ? 'auto' : 'smooth'});
+  }));
+
+  /* ---------- Démarrer : les trois gestes tiennent sur un écran ; un clic (ou le survol) choisit l’état du fragment ---------- */
+  const steps = $$('#steps li'), apps = $$('.pin .app');
+  const step = li => { steps.forEach(x => x.classList.toggle('on', x === li)); apps.forEach(a => a.classList.toggle('on', a.dataset.s === li.dataset.s)); };
+  steps.forEach(li => {
+    li.addEventListener('click', e => { if(!e.target.closest('a')) step(li); });
+    li.addEventListener('mouseenter', () => step(li));
+    li.addEventListener('focus', () => step(li));
+  });
+
+  /* ---------- Roulette de « Mon réseau » : défilement en boucle des noms fictifs du réseau de démo ;
+     survoler (ou toucher) une tuile choisit ce qui défile ---------- */
+  const wheel = $('#wheel');
+  const uniq = (list, key) => [...new Map(list.map(c => [key(c), c])).values()];
+  const reel = {
+    contacts: () => uniq(DEMO, c => c.n).map(c => [c.n, c.co, colour('sen', c.sen)]),
+    secteurs: () => [...count(DEMO, 'sec')].sort((a, b) => b[1] - a[1]).map(([s, n]) => [s, `${n} contacts`, '#2F5BEA']),
+    entreprises: () => [...count(DEMO, 'co')].sort((a, b) => b[1] - a[1]).map(([s, n]) => [s, `${n}`, '#12A39A']),
+    direction: () => DEMO.filter(c => c.sen === 'Director' || c.sen === 'Executive').map(c => [c.n, c.pos, colour('sen', c.sen)])
+  };
+  const spin = k => {
+    const rows = reel[k](), li = rows.map(([a, b, col]) => `<li><i style="background:${col}"></i>${esc(a)}<small>${esc(b)}</small></li>`).join('');
+    wheel.innerHTML = li + li;   /* deux fois la liste : la boucle ne saute pas */
+    wheel.style.setProperty('--dur', `${Math.max(12, rows.length * 1.4)}s`);
+    $$('.netcard [data-k]').forEach(d => d.classList.toggle('on', d.dataset.k === k));
+  };
+  $$('.netcard [data-k]').forEach(d => ['mouseenter', 'click', 'focus'].forEach(ev => d.addEventListener(ev, () => spin(d.dataset.k))));
+  spin('contacts');
+
+  /* ---------- Réglages : sur grand écran, une liste à gauche et l’illustration du réglage choisi à droite ---------- */
+  const cells = $$('.cell');
+  const cell = c => cells.forEach(x => x.classList.toggle('on', x === c));
+  cells.forEach(c => { const t = c.querySelector('.t'); t.tabIndex = 0;
+    t.addEventListener('click', () => cell(c)); t.addEventListener('mouseenter', () => cell(c)); t.addEventListener('focus', () => cell(c)); });
+  cell(cells[0]);
+
+  /* ---------- Entrées échelonnées ---------- */
+  const rise = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); rise.unobserve(e.target); } }), {rootMargin:'0px 0px -8% 0px'});
+  $$('.rise').forEach(r => rise.observe(r));
+
+  /* ---------- Barre : l’action n’apparaît qu’une fois celles du héros sorties de l’écran ---------- */
+  const navcta = $('.navcta');
+  const setCta = on => { navcta.classList.toggle('show', on); navcta.tabIndex = on ? 0 : -1; navcta.toggleAttribute('aria-hidden', !on); };
+  new IntersectionObserver(([e]) => setCta(!e.isIntersecting), {rootMargin:'-68px 0px 0px 0px'}).observe($('#hero-ctas'));
+
+  /* ---------- Compteur anonyme des réseaux visualisés (supabase/compteur.sql) : le total réel, en grand sous la vidéo
+     (choix de Vincent du 4 novembre 2026) ; si la base ne répond pas, rien n’est affiché. ---------- */
+  const SB_URL = 'https://afvmshbacxaznhmlgkzc.supabase.co/rest/v1';
+  const SB_KEY = 'sb_publishable_U9XvfQWQ3gqA1u0wRq5JCA_YgdWdVe2';
+  /* Afficheur à palettes : cinq tuiles, les premières vides ; chaque chiffre défile de 0 jusqu’au sien, de gauche à droite */
+  const put = n => {
+    $$('[data-count]').forEach(e => { e.innerHTML = `<strong>${n.toLocaleString('en-US')}</strong> networks already mapped`; });
+    const tally = $('#tally'), flap = $('[data-tally]');
+    const digits = String(n).padStart(5, ' ').slice(-Math.max(5, String(n).length)).split('');
+    flap.setAttribute('aria-label', `${n.toLocaleString('en-US')} networks`);
+    flap.innerHTML = digits.map(d => `<span class="fd${d === ' ' ? ' blank' : ''}"><i>${d === ' ' ? '' : (reduce ? d : '0')}</i></span>`).join('');
+    tally.hidden = false;
+    if(reduce) return;
+    const tiles = $$('.fd', flap);
+    let timers = [];
+    /* Rejoue depuis 0 : les palettes repartent de 0 à chaque retour du compteur à l’écran */
+    /* Comme un compteur kilométrique : les unités d’abord, puis les dizaines, les centaines… chaque palette part quand la précédente a fini */
+    const play = () => {
+      timers.forEach(clearTimeout); timers = [];
+      let start = 250;
+      for(let i = digits.length - 1; i >= 0; i--){
+        const d = digits[i];
+        if(d === ' ') continue;
+        /* 1, 2… jusqu’au chiffre ; un 0 fait un tour complet (1… 9, 0) pour que toutes les palettes bougent */
+        const seq = +d ? Array.from({length:+d}, (_, k) => k + 1) : [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+        let k = 0; const el = tiles[i].firstChild; el.textContent = '0';
+        timers.push(setTimeout(function tick(){
+          el.textContent = seq[k++]; tiles[i].classList.remove('flip'); void tiles[i].offsetWidth; tiles[i].classList.add('flip');
+          if(k < seq.length) timers.push(setTimeout(tick, 90));
+        }, start));
+        start += seq.length * 90 + 120;
+      }
+    };
+    new IntersectionObserver(([e]) => { if(e.isIntersecting) play(); }, {threshold:.6}).observe(tally);
+  };
+  const ctl = new AbortController(); setTimeout(() => ctl.abort(), 6000);
+  fetch(SB_URL + '/compteur?select=total', {headers:{apikey:SB_KEY}, signal:ctl.signal})
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(rs => {
+      const n = rs && rs[0] ? Number(rs[0].total) : NaN;
+      if(!isFinite(n)) return;
+      put(n);
+    })
+    .catch(() => {});
+})();
+</script>
+</body>
+</html>
