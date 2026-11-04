@@ -1747,7 +1747,7 @@ const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append(
 let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
 /* Noms des groupes : taille fixe à l’écran (13 px) tant que le zoom reste au-dessus de LK, puis ils rétrécissent avec le graphe.
    lblScale(k) donne ce facteur de taille pour un zoom k : le cadrage s’en sert pour ne jamais couper un nom. */
-const LK = 0.1, lblScale = k => Math.min(1, k / LK);
+const LK = 0.085, lblScale = k => Math.min(1, k / LK);
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
 /* Curseur « Branches affichées » : nombre de groupes autour de « Moi » ; quand un groupe est ouvert dans la légende,
    il règle le nombre de grappes de ce groupe (openTop), comme « Afficher 10 grappes de plus » */
@@ -1933,8 +1933,8 @@ function styleLabels(){
   /* Chiffres des groupes : taille compensée au dézoom, sans déborder du cercle */
   /* Nombre au centre d’un groupe : environ la moitié du rayon, au moins 13 px à l’écran, et toujours dans le cercle selon son nombre de chiffres */
   if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => { const fit = d.r * 1.55 / Math.max(2, String(d.count).length * 0.62); return `${Math.min(fit, Math.max(d.r * 0.5, 13 / k))}px`; });
-  /* Rond « Moi » : au dézoom, il garde au moins ~80 % de sa taille d’écran normale, pour rester lisible au centre du graphe */
-  const meF = Math.max(1, 0.8 / zk);
+  /* Rond « Moi » : au dézoom, il garde au moins ~120 % de sa taille d’écran normale, pour rester lisible au centre du graphe */
+  const meF = Math.max(1, 1.2 / zk);
   if(nodeSel) nodeSel.filter(d => d.type === 'me').attr('r', d => d.r * meF);
   if(countSel) countSel.filter(d => d.type === 'me').style('font-size', d => `${(d.r > 30 ? 11.5 : 14) * meF}px`);
   /* Vue d’ensemble (fort dézoom) : le chiffre dans un rond de quelques pixels serait illisible ; il passe à côté du nom */
