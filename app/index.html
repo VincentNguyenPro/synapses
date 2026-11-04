@@ -355,7 +355,9 @@ button.lg:hover{background:var(--surface-2)}
      dans la fiche) chevaucherait les boutons du haut */
   .canvas.has-drawer .legendbox{display:none}
   body.drawer-open .fab{display:none}
-  .drawer{top:auto;left:0;width:auto;max-height:78%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
+  /* Fiche ouverte sur téléphone : les bandeaux (démo, IA, réseau à garder) laissent la place au graphe au-dessus de la fiche */
+  body.drawer-open #bar .demo{display:none}
+  .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
   .list{padding:8px 12px 96px}
 }
 </style>
@@ -864,7 +866,7 @@ function setupColor(){
 
 function buildChips(k, id){
   const fld = document.getElementById('fld-' + k);
-  if(fld){ fld.hidden = !!DIMS[k].optional && !contacts.some(c => c[DIMS[k].optional]); if(fld.hidden) return; }
+  if(fld){ fld.hidden = !!DIMS[k].optional && !contacts.some(c => c[DIMS[k].optional]); if(fld.hidden){ document.getElementById(id).innerHTML = ''; return; } }
   const el = document.getElementById(id);
   if(k === 'tag' && !contacts.some(c => tagOf(c))){
     el.innerHTML = '<p class="hint" style="margin:0">Ouvre la fiche d’un contact pour lui attribuer un tag (client, mentor…). Tu pourras ensuite filtrer ici.</p>';
@@ -1046,7 +1048,7 @@ function startView(){
   const m = location.hash.match(/^#vue=([\w-]+)/);
   if(m){
     history.replaceState(null, '', location.pathname + location.search);
-    try { const v = b64.dec(m[1]); if(v && typeof v === 'object'){ delete v.q; setTimeout(() => toast('Vue partagée appliquée. Importe ton export pour la voir sur ton réseau.'), 600); return v; } } catch(e) {}
+    try { const v = b64.dec(m[1]); if(v && typeof v === 'object'){ delete v.q; setTimeout(() => toast(isDemo ? 'Vue partagée appliquée. Importe ton export pour la voir sur ton réseau.' : 'Vue partagée appliquée à ton réseau'), 600); return v; } } catch(e) {}
   }
   try { const v = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); if(v && typeof v === 'object') return v; } catch(e) {}
   return null;
@@ -1491,7 +1493,7 @@ function renderBar(vis){
         <button class="btn sm" type="button" data-act="help">Comment l’obtenir</button>
         <button class="btn icon-btn sm" type="button" data-act="dismiss" aria-label="Masquer ce message">✕</button>
       </div></div>` : '';
-  const keep = keepCard();
+  const keep = aiRun ? '' : keepCard();
   $('#bar').innerHTML = `${demo}${keep || aiCard()}<div class="toprow">
     <span class="count"><strong>${vis.length}</strong> contact${vis.length > 1 ? 's' : ''}${vis.length !== contacts.length ? ` sur ${contacts.length}` : ''}</span>
     ${af.map(f => `<button class="afchip" type="button" data-clear="${f.k}" data-v="${esc(f.v)}" aria-label="Retirer le filtre ${esc(f.label)}">${esc(f.label)}<span class="x" aria-hidden="true">✕</span></button>`).join('')}
@@ -2465,7 +2467,7 @@ async function handleFiles(fileList){
   if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
   closePanel();
   if(list.length){ state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).catch(() => {}); } else render();
-  if(list.length) toast(`${list.length} contacts importés${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
+  if(list.length) toast(`${list.length} contact${list.length > 1 ? 's' : ''} importé${list.length > 1 ? 's' : ''}${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
   else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
   if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
 }
@@ -2605,6 +2607,9 @@ new ResizeObserver(() => {
   reapplySelection();
   setXY(); sim.alpha(0.3).restart();
   needFit = true;
+  /* Sélection en cours (par exemple fiche ouverte sur téléphone, qui masque les bandeaux) : on la recadre dans la nouvelle zone libre */
+  const sn = state.selected && drawer.classList.contains('open') ? nodes.find(n => n.id === state.selected) : null;
+  if(sn){ needFit = false; zoomToNode(sn); }
 }).observe(canvas);
 
 loadDictionary()
