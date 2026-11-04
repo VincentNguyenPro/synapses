@@ -2096,6 +2096,7 @@ function drawRings(){
     .style('fill', d => colorFn(d.lv)).style('stroke', d => colorFn(d.lv));
   if(selBlob) gRings.selectAll('circle.blob').filter(d => d.key === selBlob.key).raise();
   drawPins(data);
+  spokeHot(null);
   /* Fin cercle autour des grappes du groupe ouvert : la branche « Moi » s’y raccroche */
   gRings.selectAll('circle.envelope').data(nodes.filter(n => n.type === 'hub' && envR(n)), d => d.id).join('circle').attr('class', 'envelope')
     .attr('r', envR).attr('cx', d => d.ax).attr('cy', d => d.ay);
@@ -2502,7 +2503,11 @@ function showTip(e, d){
 }
 function hideTip(){ tip.classList.remove('on'); }
 /* Allume les traits groupe → grappe dont la clé (« groupe|valeur ») est dans keys ; null les éteint tous */
-function spokeHot(keys){ gRings.selectAll('line.spoke').classed('hot', d => !!keys && keys.has(d.key)); }
+/* L’entreprise ou la filiale choisie dans la légende (legendHL) garde son trait allumé, survol ou pas */
+function spokeHot(keys){
+  const pin = legendHL && state.view === 'graph' ? new Set(legendNodes(legendHL.kind, legendHL.v).map(n => n.hub + '|' + levelOf(n.c))) : null;
+  gRings.selectAll('line.spoke').classed('hot', d => (!!keys && keys.has(d.key)) || (!!pin && pin.has(d.key)));
+}
 /* Clic sur une grappe : comme un clic sur sa valeur dans la légende (surbrillance et zoom) ; la grappe « autres » se comporte comme le fond */
 function blobClick(e, d){
   e.stopPropagation(); hideTip();
@@ -2557,6 +2562,7 @@ function applyLegendHL(zoomTo){
   const ms = legendNodes(legendHL.kind, legendHL.v);
   if(!ms.length){ legendHL = null; return false; }
   focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
+  spokeHot(null);
   if(zoomTo) zoomToNodes(ms);
   return true;
 }
@@ -2564,6 +2570,7 @@ function applyLegendHL(zoomTo){
    le graphe revient à son état (valeur cliquée, groupe ouvert, sélection ou rien) */
 let legendHover = null;
 function restoreLegendFocus(){
+  spokeHot(null);
   if(state.view !== 'graph' || !nodeSel) return;
   if(applyLegendHL(false)) return;
   if(focusLegendGroup(false)) return;
