@@ -2680,9 +2680,11 @@ function showBlobTip(e, d){
 
 /* ---------- Legend, panel, list ---------- */
 /* Tri par nombre décroissant, valeurs « Autres » et non renseignées en dernier ; une dimension ordonnée (séniorité, année…) garde son ordre */
-function sortDesc(vals, counts){
+/* byCount : toujours par nombre décroissant, même pour une dimension ordonnée (légende en arbre : même ordre que les grappes du graphe) */
+function sortDesc(vals, counts, byCount){
   const d = DIMS[state.colorBy];
-  if(d.order || state.colorBy === 'year') return vals;
+  if(!byCount && d.order){ const ix = v => { const i = d.order.indexOf(v); return i < 0 ? 99 : i; }; return [...vals].sort((a, b) => ix(a) - ix(b)); }
+  if(!byCount && state.colorBy === 'year') return [...vals].sort();
   const last = v => v === colorOther || TAIL.includes(v) ? 1 : 0;
   return [...vals].sort((a, b) => last(a) - last(b) || counts.get(b) - counts.get(a) || String(a).localeCompare(String(b), 'fr'));
 }
@@ -2779,7 +2781,7 @@ function legendTree(vis){
     const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(h.key)}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
     if(!open) return `<li>${head}</li>`;
     const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
-    const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, openTop), rest = d3.sum(vals.slice(openTop), v => cnt.get(v));
+    const vals = sortDesc([...cnt.keys()], cnt, true), top = vals.slice(0, openTop), rest = d3.sum(vals.slice(openTop), v => cnt.get(v));
     /* Grappes possibles : valeurs d’au moins 2 contacts (une grappe d’un seul point n’a pas de sens) */
     const eligible = vals.filter(v => cnt.get(v) >= 1 && !TAIL.includes(v)).length;
     const canMore = Math.min(eligible, OPEN_MAX) - openTop, more = Math.min(10, canMore);
