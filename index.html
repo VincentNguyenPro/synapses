@@ -88,7 +88,14 @@ p{margin:0}
 /* Gros compteur sous la vidéo : le nombre réel de réseaux visualisés */
 .tally{display:flex;align-items:center;gap:18px;margin-top:14px;padding:14px 20px;background:var(--surface);border-radius:var(--radius);box-shadow:0 0 0 1px var(--tone-2)}
 .tally[hidden]{display:none}
-.tally b{font-size:clamp(2.4rem,1.4rem + 2.6vw,3.8rem);line-height:1;font-weight:800;letter-spacing:-.03em;color:var(--accent);font-variant-numeric:tabular-nums}
+/* Afficheur à palettes : tuiles bleues, moitié haute plus claire, fente horizontale au milieu */
+.flap{display:flex;gap:6px;flex:none;perspective:400px}
+.fd{position:relative;width:clamp(40px,3.4vw,52px);height:clamp(54px,4.6vw,70px);border-radius:7px;background:linear-gradient(180deg,#3E68EE 0 50%,var(--accent) 50% 100%);color:#fff;display:grid;place-items:center;font-size:clamp(1.9rem,1.2rem + 1.6vw,2.8rem);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.fd::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:rgba(10,20,60,.35)}
+.fd.blank{background:linear-gradient(180deg,#3E68EE 0 50%,var(--accent) 50% 100%);opacity:.55}
+.fd i{font-style:normal;display:block}
+.fd.flip i{animation:flip .18s var(--ease)}
+@keyframes flip{0%{transform:rotateX(80deg);opacity:.3}100%{transform:none;opacity:1}}
 .tally span{display:block;font-weight:700;line-height:1.3}
 .tally small{display:block;color:var(--muted);font-size:var(--step-small);margin-top:3px;line-height:1.35}
 
@@ -252,6 +259,10 @@ p{margin:0}
 @media (max-width:959px){ .how .grid{display:flex;flex-direction:column} .pin{min-height:300px} }
 .app{width:100%;max-width:440px;background:#fff;border-radius:12px;padding:22px;font-size:14px;line-height:1.45;color:#17212E;display:none}
 .app.on{display:block;animation:in .5s var(--ease)}
+/* Étape 1 : la capture (anonymisée) de la page LinkedIn, plus large que les autres fragments */
+.app.shot{max-width:640px;margin:0;padding:8px}
+.app.shot img{width:100%;height:auto;border-radius:6px;box-shadow:0 0 0 1px #E1E7EE}
+.app.shot figcaption{font-size:12.5px;color:#5B6B7C;padding:8px 6px 2px}
 .app h4{margin:0 0 10px;font-size:17px;letter-spacing:-.01em}
 .app ol{margin:0;padding-left:20px;display:grid;gap:8px;color:#3A4757}
 .app .drop{border:2px dashed #2F5BEA;border-radius:12px;background:#EEF2FE;padding:28px 18px;text-align:center;color:#2448C4;font-weight:700}
@@ -457,7 +468,12 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   .hero .note{margin-top:14px}
   .hero-grid{gap:16px}
   .tally{gap:12px;margin-top:10px;padding:10px 14px}
-  .tally b{font-size:2.2rem}
+  .flap{gap:3px}
+  .fd{width:24px;height:34px;font-size:1.2rem;border-radius:5px}
+  /* Tuiles et libellé sur une ligne, la note sur toute la largeur en dessous */
+  .tally{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:12px;row-gap:6px}
+  .tally > div:not(.flap){display:contents}
+  .tally small{grid-column:1/-1}
   .tally span{font-size:var(--step-small)}
   .tally small{font-size:12px;margin-top:1px}
   /* Graphe : la liste du secteur choisi garde une hauteur fixe et défile */
@@ -563,7 +579,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
         <button type="button" class="play" id="play" aria-label="Lire la vidéo de démonstration, 1 min 48"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Voir la vidéo · 1:48</span></button>
       </div>
       <!-- Compteur réel (supabase/compteur.sql), affiché seulement si la base répond : jamais de chiffre inventé -->
-      <div class="tally" id="tally" hidden aria-live="polite"><b data-tally>0</b><div><span>réseaux LinkedIn déjà visualisés avec Synapses</span><small>Compteur anonyme&nbsp;: +1 à chaque import réussi, au plus une fois par jour et par navigateur.</small></div></div>
+      <div class="tally" id="tally" hidden aria-live="polite"><div class="flap" data-tally role="img" aria-label="0 réseaux"></div><div><span>réseaux LinkedIn déjà visualisés avec Synapses</span><small>Compteur anonyme&nbsp;: +1 à chaque import réussi, au plus une fois par jour et par navigateur.</small></div></div>
       </div>
     </div>
   </section>
@@ -660,14 +676,11 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
           <li data-s="2" tabindex="0"><strong>Enfin, explore ta carte.</strong><p>Regroupe, colore, filtre, ouvre la fiche d’un contact. En attendant l’email, la démo marche déjà.</p></li>
         </ol>
       <div class="pin" aria-hidden="true">
-        <div class="app on" data-ui data-s="0">
-          <h4>Récupérer tes contacts LinkedIn</h4>
-          <ol>
-            <li>Sur LinkedIn, ouvre Préférences, puis Confidentialité des données, puis «&nbsp;Obtenir une copie de vos données&nbsp;».</li>
-            <li>Coche uniquement «&nbsp;Relations&nbsp;» et demande l’archive. Elle arrive par email en une dizaine de minutes.</li>
-            <li>Importe directement l’archive .zip reçue.</li>
-          </ol>
-        </div>
+        <!-- Capture de la page LinkedIn de Vincent, anonymisée : logo LinkedIn, barre du haut et photos de profil retirés -->
+        <figure class="app shot on" data-s="0">
+          <img src="assets/demo/linkedin-export-900.webp" srcset="assets/demo/linkedin-export-900.webp 900w, assets/demo/linkedin-export.webp 1400w" sizes="(min-width:960px) 640px, 92vw" width="900" height="497" loading="lazy" alt="Page « Télécharger mes données » de LinkedIn, dans Préférences, Confidentialité des données">
+          <figcaption>Sur LinkedIn&nbsp;: Préférences, Confidentialité des données. Quand l’archive est prête, «&nbsp;Télécharger les archives&nbsp;».</figcaption>
+        </figure>
         <div class="app" data-ui data-s="1">
           <div class="drop">Dépose ton fichier Connections.csv</div>
           <div class="file"><i>ZIP</i>Basic_LinkedInDataExport.zip</div>
@@ -971,13 +984,24 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
      (choix de Vincent du 4 novembre 2026) ; si la base ne répond pas, rien n’est affiché. ---------- */
   const SB_URL = 'https://afvmshbacxaznhmlgkzc.supabase.co/rest/v1';
   const SB_KEY = 'sb_publishable_U9XvfQWQ3gqA1u0wRq5JCA_YgdWdVe2';
+  /* Afficheur à palettes : cinq tuiles, les premières vides ; chaque chiffre défile de 0 jusqu’au sien, de gauche à droite */
   const put = n => {
     $$('[data-count]').forEach(e => { e.innerHTML = `<strong>${n.toLocaleString('fr-FR')}</strong> réseaux déjà visualisés`; });
-    const tally = $('#tally'), num = $('[data-tally]'); tally.hidden = false;
-    if(reduce || n < 2){ num.textContent = n.toLocaleString('fr-FR'); return; }
-    const t0 = performance.now(), dur = 1100;
-    const step = t => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); num.textContent = Math.round(n * e).toLocaleString('fr-FR'); if(k < 1) requestAnimationFrame(step); };
-    requestAnimationFrame(step);
+    const tally = $('#tally'), flap = $('[data-tally]');
+    const digits = String(n).padStart(5, ' ').slice(-Math.max(5, String(n).length)).split('');
+    flap.setAttribute('aria-label', `${n.toLocaleString('fr-FR')} réseaux`);
+    flap.innerHTML = digits.map(d => `<span class="fd${d === ' ' ? ' blank' : ''}"><i>${d === ' ' ? '' : (reduce ? d : '0')}</i></span>`).join('');
+    tally.hidden = false;
+    if(reduce) return;
+    const tiles = $$('.fd', flap);
+    digits.forEach((d, i) => {
+      if(d === ' ' || d === '0') return;
+      let v = 0; const el = tiles[i].firstChild;
+      setTimeout(function tick(){
+        v++; el.textContent = v; tiles[i].classList.remove('flip'); void tiles[i].offsetWidth; tiles[i].classList.add('flip');
+        if(v < +d) setTimeout(tick, 90);
+      }, 250 + i * 160);
+    });
   };
   const ctl = new AbortController(); setTimeout(() => ctl.abort(), 6000);
   fetch(SB_URL + '/compteur?select=total', {headers:{apikey:SB_KEY}, signal:ctl.signal})
