@@ -194,7 +194,9 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .tipline{stroke:var(--accent);stroke-width:2.5px;opacity:.85;pointer-events:none}
 .ring{fill:none;stroke:var(--link);stroke-width:1px;stroke-dasharray:2 4;pointer-events:none}
 .blob{fill-opacity:.13;stroke-opacity:.5;stroke-width:1.2px}
-.spoke{stroke:var(--link);stroke-width:1.4px;pointer-events:none}
+/* Trait groupe → grappe : masqué (la position des grappes autour du groupe suffit), montré seulement au survol d’une grappe ou d’une ligne de la légende */
+.spoke{stroke:var(--accent);stroke-opacity:.6;stroke-width:1.6px;pointer-events:none;display:none}
+.spoke.hot{display:inline}
 .link.sub{display:none}
 .track{fill:none;stroke:var(--line);stroke-width:3px;pointer-events:none}
 .gauge{fill:none;stroke:var(--accent);stroke-width:3px;stroke-linecap:round;pointer-events:none}
@@ -2079,7 +2081,7 @@ function drawRings(){
   gRings.selectAll('line').data(data, d => d.key).join('line').classed('spoke', true)
     .attr('x1', d => d.hub.ax).attr('y1', d => d.hub.ay).attr('x2', d => d.x).attr('y2', d => d.y);
   gRings.selectAll('circle').data(data, d => d.key).join(enter => enter.append('circle')
-      .on('pointerenter pointermove', showBlobTip).on('pointerleave', hideTip).on('click', blobClick)).classed('blob', true)
+      .on('pointerenter pointermove', showBlobTip).on('pointerleave', () => { hideTip(); spokeHot(null); }).on('click', blobClick)).classed('blob', true)
     .attr('r', d => d.rad).attr('cx', d => d.x).attr('cy', d => d.y)
     .style('fill', d => colorFn(d.lv)).style('stroke', d => colorFn(d.lv));
   if(selBlob) gRings.selectAll('circle.blob').filter(d => d.key === selBlob.key).raise();
@@ -2440,6 +2442,8 @@ function showTip(e, d){
   tip.classList.add('on');
 }
 function hideTip(){ tip.classList.remove('on'); }
+/* Allume les traits groupe → grappe dont la clé (« groupe|valeur ») est dans keys ; null les éteint tous */
+function spokeHot(keys){ gRings.selectAll('line.spoke').classed('hot', d => !!keys && keys.has(d.key)); }
 /* Clic sur une grappe : comme un clic sur sa valeur dans la légende (surbrillance et zoom) ; la grappe « autres » se comporte comme le fond */
 function blobClick(e, d){
   e.stopPropagation(); hideTip();
@@ -2454,6 +2458,7 @@ function showBlobTip(e, d){
   if(e.currentTarget.classList.contains('dim')) return hideTip();
   const n = (d.hub.members || []).filter(m => levelOf(m.c) === d.lv).length;
   const [x, y] = d3.pointer(e, canvas);
+  spokeHot(new Set([d.key]));
   tip.innerHTML = `<strong>${esc(d.lv)}</strong><span>${n} contact${n > 1 ? 's' : ''} dans ${esc(d.hub.key)}</span>`;
   tip.style.left = Math.max(8, Math.min(x + 16, canvas.clientWidth - 260)) + 'px';
   tip.style.top = (y + 16) + 'px';
@@ -2510,8 +2515,9 @@ document.addEventListener('pointerover', e => {
   const row = e.target.closest && e.target.closest('#legend [data-lghlv], #legend [data-lghl]');
   if(row === legendHover) return;
   legendHover = row;
-  if(!row){ restoreLegendFocus(); return; }
+  if(!row){ spokeHot(null); restoreLegendFocus(); return; }
   const kind = row.dataset.lghlv != null ? 'v' : 'e', ms = legendNodes(kind, kind === 'v' ? row.dataset.lghlv : row.dataset.lghl);
+  spokeHot(new Set(ms.map(n => n.hub + '|' + levelOf(n.c))));
   if(ms.length) focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
 });
 /* Zoom animé qui cadre un ensemble de contacts (la grappe d’une entreprise…) dans la zone libre, sans passer sous la légende */
