@@ -124,21 +124,18 @@ p{margin:0}
 /* La vidéo occupe la colonne droite du héros, à côté du titre (codes YC : on voit le produit tout de suite) */
 .player{position:relative;width:100%;border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--tone-2);scroll-margin-top:88px}
 .player video{width:100%;height:auto;aspect-ratio:16/9}
-.play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;white-space:nowrap;padding:0 30px 0 22px;min-height:76px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:var(--step-lead);font-weight:800;cursor:pointer;transition:transform .2s var(--ease),background .2s}
-.play svg{width:34px;height:34px}
-@media (max-width:600px){ .play{min-height:56px;padding:0 20px 0 14px;gap:8px;font-size:var(--step-body)} .play svg{width:24px;height:24px} }
-.play:hover{background:var(--accent-ink);transform:translate(-50%,-50%) scale(1.05)}
-.play:active{transform:translate(-50%,-50%) scale(.98)}
+/* Bouton discret, en étiquette dans le coin bas gauche (le bleu reste à « Essayer la démo ») ; tout l’aperçu est cliquable */
+.play{position:absolute;left:16px;bottom:16px;z-index:2;display:flex;align-items:center;gap:8px;white-space:nowrap;padding:0 18px 0 12px;min-height:44px;border:0;border-radius:999px;background:rgba(23,33,46,.82);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s,transform .2s var(--ease)}
+.play svg{width:18px;height:18px}
+.player:not(.on){cursor:pointer}
+.player:not(.on)::after{content:"";position:absolute;inset:0;z-index:1}
+.player:not(.on):hover .play,.play:focus-visible{background:var(--ink);transform:scale(1.05)}
+.play:active{transform:scale(.98)}
+@media (max-width:600px){ .play{min-height:38px;padding:0 14px 0 10px;gap:6px;font-size:13px;left:10px;bottom:10px} .play svg{width:15px;height:15px} }
 .player.on .play{display:none}
-/* Aperçu muet de 8 s en boucle (131 Ko) : il remplace l’affiche quand le lecteur est à l’écran ; le film garde le son au clic */
+/* Aperçu muet de 8 s en boucle : il remplace l’affiche quand le lecteur est à l’écran ; le film garde le son au clic */
 .teaser{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
 .player.teasing .teaser{opacity:1}
-/* Pendant l’aperçu, le bouton se range dans le coin bas gauche : l’image reste visible */
-.player.teasing .play{left:clamp(12px,2vw,24px);top:auto;bottom:clamp(12px,2vw,24px);transform:none;min-height:52px;padding:0 20px 0 14px;gap:8px;font-size:var(--step-body)}
-.player.teasing .play svg{width:22px;height:22px}
-.player.teasing .play:hover{transform:scale(1.04)}
-.player.teasing .play:active{transform:scale(.98)}
-@media (max-width:600px){ .player.teasing .play{min-height:38px;padding:0 14px 0 10px;gap:6px;font-size:var(--step-small);left:10px;bottom:10px} .player.teasing .play svg{width:16px;height:16px} }
 .player.on .teaser{display:none}
 .vitrine .wrap.top{margin-top:clamp(72px,9vw,128px)}
 .vitrine h3{font-size:var(--step-lead);font-weight:800;letter-spacing:-.01em}
@@ -391,7 +388,7 @@ footer{padding:0 10px 10px}
           <a href="assets/demo/synapses-demo.mp4">Télécharger la vidéo de démonstration</a>
         </video>
         <video class="teaser" id="teaser" muted loop playsinline preload="none" poster="assets/demo/synapses-apercu-affiche.webp" aria-hidden="true" tabindex="-1"><source src="assets/demo/synapses-apercu.mp4" type="video/mp4"></video>
-        <button type="button" class="play" id="play" aria-label="Lire la vidéo de démonstration, 1 min 48"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Lire la vidéo · 1&nbsp;min&nbsp;48</span></button>
+        <button type="button" class="play" id="play" aria-label="Lire la vidéo de démonstration, 1 min 48"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Voir la vidéo · 1:48</span></button>
       </div>
     </div>
   </section>
@@ -709,7 +706,10 @@ footer{padding:0 10px 10px}
 
   /* ---------- Vidéo : le gros bouton lance la lecture avec le son, puis laisse les commandes ---------- */
   const film = $('#film'), player = $('.player'), teaser = $('#teaser');
-  $('#play').addEventListener('click', () => { player.classList.add('on'); film.play().catch(() => {}); film.focus(); });
+  const start = () => { player.classList.add('on'); film.play().catch(() => {}); film.focus(); };
+  $('#play').addEventListener('click', e => { e.stopPropagation(); start(); });
+  /* Un clic n’importe où sur l’aperçu lance aussi le film (une fois lancé, les commandes de la vidéo reprennent la main) */
+  player.addEventListener('click', () => { if(!player.classList.contains('on')) start(); });
   film.addEventListener('play', () => { player.classList.add('on'); teaser.pause(); });
   /* Aperçu : lecture quand le lecteur est visible, pause sinon. Jamais si l’utilisateur demande moins d’animations
      ou économise ses données : l’affiche fixe reste alors. */
