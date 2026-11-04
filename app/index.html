@@ -274,6 +274,9 @@ button.lg:hover{background:var(--surface-2)}
 .legendbox :is(.lgg,.lgv,.lgsubbtn) .n{flex:none;min-width:40px;margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}
 .legendbox :is(.lgg,.lgv,.lgsubbtn) .pct{flex:none;width:44px;min-width:0;text-align:right;background:none;padding:0;font-variant-numeric:tabular-nums}
 .lgxsp{flex:none;width:22px}
+.lgrest{flex-basis:100%;min-width:0}
+.legendbox input.lgfind{display:block;width:calc(100% - 32px);box-sizing:border-box;margin:4px 0 4px 32px;padding:5px 9px;font-size:12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2)}
+.lgrest li[hidden]{display:none}
 .lgg .lgchev::after{content:"";position:absolute;left:13px;top:3px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
 .lgg[aria-expanded="true"] .lgchev::after{transform:rotate(45deg);top:1px}
 .lgg[aria-expanded="true"]{font-weight:700}
@@ -2416,6 +2419,23 @@ function zoomToNodes(ms){
   const t = d3.zoomIdentity.translate(vb.x + vb.w / 2 - k * (L + R) / 2, vb.y + vb.h / 2 - k * (T + B) / 2).scale(k);
   (reduceMotion ? svg : svg.transition().duration(700).ease(d3.easeCubicInOut)).call(zoom.transform, t);
 }
+/* Ligne « N autres » d’un groupe : un chevron déplie toutes les valeurs restantes (triées), avec une recherche ;
+   chaque valeur est cliquable comme les autres (surbrillance et zoom) */
+const legendFind = new Map();
+function restRow(h, others, cnt, total){
+  const rk = 'r:' + h.key, open = legendOpen.has(rk), sum = d3.sum(others, v => cnt.get(v)), q = legendFind.get(rk) || '';
+  const head = `<span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${others.length} autre${others.length > 1 ? 's' : ''}</span><span class="n">${sum}</span><span class="pct">${pct(sum, total)}</span></span>`;
+  const chev = `<button type="button" class="lgx" data-act="lgsub" data-v="${esc(rk)}" aria-expanded="${open}" aria-label="${open ? 'Replier' : 'Voir'} les ${others.length} autres"></button>`;
+  if(!open) return `<li class="lgwrap">${head}${chev}</li>`;
+  const items = others.map(v => { const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v; return `<li data-name="${esc(norm(v))}"${q && !norm(v).includes(norm(q)) ? ' hidden' : ''}><button type="button" class="lgsubbtn" data-lghlv="${esc(v)}" aria-pressed="${on}" title="Voir les contacts de ${esc(v)} dans le graphe"><span>${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), total)}</span></button></li>`; }).join('');
+  return `<li class="lgwrap">${head}${chev}<div class="lgrest"><input type="search" class="lgfind" data-rk="${esc(rk)}" value="${esc(q)}" placeholder="Chercher parmi les ${others.length}" aria-label="Chercher une valeur parmi les ${others.length} autres de ${esc(h.key)}"><ul class="lgsubs">${items}</ul></div></li>`;
+}
+document.addEventListener('input', e => {
+  const f = e.target.closest && e.target.closest('.lgfind'); if(!f) return;
+  legendFind.set(f.dataset.rk, f.value);
+  const t = norm(f.value);
+  f.parentNode.querySelectorAll('li[data-name]').forEach(li => { li.hidden = !!t && !li.dataset.name.includes(t); });
+});
 /* Légende en arbre (regroupement ≠ couleur) : la liste des groupes (secteurs…), du plus grand au plus petit ;
    un clic sur un groupe déplie ses valeurs de « Colorer par » (entreprises…), un clic sur une valeur la filtre */
 function legendTree(vis){
@@ -2443,7 +2463,7 @@ function legendTree(vis){
       if(subs.length < 2) return `<li class="lgwrap">${btn}<span class="lgxsp" aria-hidden="true"></span></li>`;
       const sk = 'e:' + h.key + '|' + v, so = legendOpen.has(sk) || on || (sel.size === 1 && sel.has(v));
       return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n, ms.length)).join('')}</ul>` : ''}</li>`;
-    }).join('')}${rest ? `<li class="lgwrap"><span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${vals.length - 15} autre${vals.length - 15 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, ms.length)}</span></span><span class="lgxsp" aria-hidden="true"></span></li>` : ''}</ul></li>`;
+    }).join('')}${rest ? restRow(h, vals.slice(15), cnt, ms.length) : ''}</ul></li>`;
   }).join('');
   /* Fil d’Ariane : où l’on se trouve (réseau › groupe › valeur › filiale), chaque niveau supérieur est cliquable pour remonter */
   const gOpen = [...legendOpen].find(x => x.startsWith('g:')), crumbs = [];
