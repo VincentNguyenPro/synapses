@@ -88,12 +88,12 @@ p{margin:0}
 
 /* Le fragment vivant : le graphe du réseau de démo, cliquable (data-ui : conventions de l’outil à l’intérieur) */
 .live{background:var(--surface);color:#17212E;border-radius:var(--radius);display:grid;overflow:hidden;font-size:14px;line-height:1.35}
-.live .key{display:flex;flex-wrap:wrap;gap:4px 14px;width:100%;margin-top:4px}
+.live .key{display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px 14px;width:100%;margin-top:4px;min-height:calc(2 * 1.35em + 4px)} /* deux lignes réservées : la légende ne bouge pas d’un critère à l’autre */
 .live .key span{display:inline-flex;align-items:center;gap:6px;color:#46577A}
 .live .key i{width:9px;height:9px;border-radius:50%}
-@media (min-width:760px){ .live{grid-template-columns:minmax(0,1fr) 250px} }
+@media (min-width:760px){ .live{grid-template-columns:minmax(0,1fr) 250px} .live .side{contain:size;overflow-y:auto} } /* la carte garde la hauteur du graphe : la liste ne la fait plus varier, elle défile si besoin */
 .live .stage{position:relative;padding:14px 8px 0}
-.live svg{display:block;width:100%;height:auto;max-height:min(620px,calc(100svh - 500px))}
+.live svg{display:block;width:100%;height:auto;max-height:calc(100svh - 372px)}
 .live .tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px 16px;color:#5B6B7C;font-size:13px}
 .live .tools button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid #D5DDE5;background:#fff;color:#17212E;cursor:pointer;transition:background .15s,border-color .15s} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
 .live .tools button[aria-pressed="true"]{background:#E4EAFD;border-color:#2F5BEA;color:#2448C4}
@@ -120,11 +120,16 @@ p{margin:0}
 
 /* ---------- Vitrine : un champ sombre, une rangée de panneaux qui défile ---------- */
 .vitrine{background:var(--field);color:var(--field-ink);margin-top:var(--pad);padding:var(--pad) 0}
-.vitrine.shots{margin-top:0;padding-top:0}
+/* Carrousel : largeur de l’écran éclairé calculée sur la hauteur disponible (titre et légende compacts) */
+.vitrine.shots{--fw:min(1200px,90vw,calc((100svh - 285px) * 1.6));margin-top:0;padding:clamp(20px,3.5svh,40px) 0}
+.vitrine.shots .wrap.top h3{font-size:clamp(1.4rem,1rem + 1vw,2rem)}
 .vitrine h2{font-size:var(--step-head);max-width:14ch}
 .film{display:grid;gap:16px 56px;scroll-margin-top:88px}
-@media (min-width:960px){ .film{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:end} .film .live{grid-column:1/-1;margin-top:clamp(16px,2.4vw,32px)} }
-.film > p{color:var(--field-muted);max-width:30em;font-size:var(--step-lead);line-height:1.4}
+@media (min-width:960px){ .film{grid-template-columns:auto minmax(0,1fr);align-items:baseline;column-gap:40px} .film .live{grid-column:1/-1;margin-top:8px} }
+/* Section du graphe : un bandeau de titre compact, le graphe prend le reste de l’écran */
+.vitrine:not(.shots){padding:clamp(28px,4.5svh,48px) 0}
+.film h2{font-size:clamp(1.75rem,1rem + 1.8vw,2.6rem);max-width:none;line-height:1.1}
+.film > p{color:var(--field-muted);max-width:none;font-size:var(--step-body);line-height:1.4}
 /* La vidéo occupe la colonne droite du héros, à côté du titre (codes YC : on voit le produit tout de suite) */
 .player{position:relative;width:100%;border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--tone-2);scroll-margin-top:88px}
 .player video{width:100%;height:auto;aspect-ratio:16/9}
@@ -147,19 +152,21 @@ p{margin:0}
 .vitrine .nav button{width:52px;height:52px;border-radius:var(--radius);border:0;background:#243042;color:#fff;font:inherit;font-size:22px;cursor:pointer;transition:background .15s,transform .15s}
 .vitrine .nav button:hover{background:#2F3D52}
 .vitrine .nav button:active{transform:scale(.95)}
-.row{--fw:min(880px,86vw,calc((100svh - 400px) * 1.6));display:flex;gap:clamp(24px,6vw,96px);overflow-x:auto;scroll-snap-type:x mandatory;padding:clamp(24px,3svh,40px) calc(50vw - var(--fw) / 2);scrollbar-width:none;align-items:center}
+.row{display:flex;gap:clamp(24px,4vw,64px);overflow-x:auto;scroll-snap-type:x mandatory;padding:clamp(14px,2svh,24px) calc(50vw - var(--fw) / 2);scrollbar-width:none;align-items:center}
 .row::-webkit-scrollbar{display:none}
 .row figure{flex:none;width:var(--fw);margin:0;scroll-snap-align:center;opacity:.32;transition:opacity .5s var(--ease),transform .5s var(--ease);transform:scale(.94)}
 .row figure.on{opacity:1;transform:none}
 .row figure .pic{border-radius:var(--radius);overflow:hidden;background:#fff}
 .row figure img,.row figure video{width:100%;height:auto;aspect-ratio:16/10;object-fit:cover}
 .row figure video{aspect-ratio:16/9;background:#FAFAF7}
-.caption{min-height:5.4em}
-.caption h3{font-size:var(--step-lead);font-weight:700;letter-spacing:-.01em;line-height:1.25}
-.caption p{color:var(--field-muted);margin:8px auto 0;max-width:34em}
-/* Légende et flèches centrées sous l’écran éclairé */
-.vitrine .foot{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
-.vitrine .foot .nav{order:2}
+.caption{min-height:3.2em}
+.caption h3{font-size:var(--step-body);font-weight:800;letter-spacing:-.01em;line-height:1.3}
+.caption p{color:var(--field-muted);margin-top:2px;font-size:var(--step-small)}
+/* Sous l’écran éclairé, sur sa largeur : la légende à gauche, les flèches à droite */
+.vitrine .foot{display:flex;align-items:center;gap:24px;width:min(var(--fw),calc(100% - 2 * var(--gutter)));padding:0;margin:0 auto}
+.vitrine .foot .caption{flex:1;order:1}
+.vitrine .foot .nav{order:2;flex:none}
+.vitrine .nav button{width:44px;height:44px;font-size:19px}
 
 /* ---------- Situations : onglets à gauche, bandes à droite ---------- */
 .sit{padding:var(--pad) 0}
@@ -709,6 +716,8 @@ footer{padding:0 10px 10px}
   }
   $$('.tools button').forEach(b => b.addEventListener('click', () => { by = b.dataset.by; paint(); }));
   pick(selected); paint();
+  /* Le cadre du dessin colle à son contenu (noms des secteurs compris) : le graphe occupe toute la place disponible */
+  { const b = svg.getBBox(), m = 10; svg.setAttribute('viewBox', `${(b.x - m).toFixed(0)} ${(b.y - m).toFixed(0)} ${(b.width + 2 * m).toFixed(0)} ${(b.height + 2 * m).toFixed(0)}`); }
 
   /* ---------- Légende de la cellule « Colorer par » : les vrais comptes de la démo ---------- */
   const sc = count(DEMO, 'sen');
