@@ -74,7 +74,8 @@ p{margin:0}
 @media (min-width:960px){ .links{display:flex} .bar .btn{margin-left:0} }
 
 /* ---------- Héros : titre court en haut à gauche, l’outil qui travaille occupe le reste ---------- */
-.hero{padding:clamp(24px,4svh,48px) 0} /* marges égales en haut et en bas : le contenu est centré dans l’écran */
+.hero{padding:clamp(20px,3svh,36px) 0}
+main > section.hero:not(.end){justify-content:flex-start} /* le titre et la vidéo démarrent juste sous la barre ; l’espace restant va en bas */
 .hero-grid{display:grid;gap:36px 48px;align-items:start}
 /* Deux blocs côte à côte, centrés verticalement : à gauche titre, texte et action ; à droite la vidéo */
 @media (min-width:1080px){ .hero-grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center} .hero h1{font-size:clamp(48px,4.6vw,76px)} }
