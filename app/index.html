@@ -193,7 +193,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .coll{stroke:var(--ink);stroke-width:1.2px;stroke-dasharray:3 3;opacity:.55;pointer-events:none}
 .tipline{stroke:var(--accent);stroke-width:2.5px;opacity:.85;pointer-events:none}
 .ring{fill:none;stroke:var(--link);stroke-width:1px;stroke-dasharray:2 4;pointer-events:none}
-.blob{fill-opacity:.13;stroke-opacity:.5;stroke-width:1.2px;pointer-events:none}
+.blob{fill-opacity:.13;stroke-opacity:.5;stroke-width:1.2px}
 .spoke{stroke:var(--link);stroke-width:1.4px;pointer-events:none}
 .link.sub{display:none}
 .track{fill:none;stroke:var(--line);stroke-width:3px;pointer-events:none}
@@ -1042,7 +1042,7 @@ let colorLevel = c => DIMS[state.colorBy].get(c);
 /* Grappes par groupe : quand « Colorer par » a trop de valeurs (entreprise…) et diffère du regroupement, chaque groupe garde
    une grappe pour chacune de ses HUB_MAX valeurs principales (au moins 2 contacts), les autres vont dans « Autres ».
    levelMap (id du contact → grappe) est recalculé à chaque dessin du graphe. */
-const HUB_MAX = 8, LEGEND_TOP = 15;
+const HUB_MAX = 8, LEGEND_TOP = 15, RING_MIN = 16;
 let openTop = LEGEND_TOP; /* nombre de valeurs (et de grappes) du groupe ouvert dans la légende ; « Afficher 10 grappes de plus » l’augmente */
 let levelMap = new Map(), colorAssign = new Map();
 const levelOf = c => levelMap.get(c.id) ?? colorLevel(c);
@@ -1741,7 +1741,7 @@ function syncTopN(total){
     f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, tot); r.value = n;
     lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
     document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
-    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()} d’au moins 2 contacts ; les autres sont réunies dans « autres ». Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, sur plusieurs anneaux au-delà de ${RING_MIN} ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
@@ -2020,18 +2020,40 @@ function applyLayout(){
       /* Plusieurs niveaux : une grappe homogène par niveau, disposées autour du groupe */
       const g = 10, pad = 4; /* g : espace entre deux grappes ; pad : marge dessinée autour des contacts d’une grappe */
       subs.forEach(s => { s.sr = c * Math.sqrt(Math.max(0.5, s.arr.length - 0.5)) + cr; s.br = s.sr + pad; });
-      const tot = d3.sum(subs, s => s.br + g / 2);
-      /* La grappe la plus proche reste à distance de la jauge du groupe (rayon + 5,5 px) */
-      let D = hn.r + 12 + d3.max(subs, s => s.br);
-      subs.forEach(s => { s.th = 2 * Math.PI * (s.br + g / 2) / tot; if(s.th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(s.th / 2)); });
-      let a0 = -Math.PI / 2 - subs[0].th / 2;
-      subs.forEach(s => {
-        const mid = a0 + s.th / 2; a0 += s.th;
-        s.cx = D * Math.cos(mid); s.cy = D * Math.sin(mid);
-        s.arr.forEach((m, i) => { const rr = c * Math.sqrt(i + 0.5), th = i * GOLDEN; local.push({x:s.cx + rr * Math.cos(th), y:s.cy + rr * Math.sin(th)}); ordered.push(m); });
-        blobs.push(s);
-      });
-      hn.outer = D + d3.max(subs, s => s.br) + 1;
+      const place = (ring, D) => {
+        const tot = d3.sum(ring, s => s.br + g / 2);
+        ring.forEach(s => { s.th = 2 * Math.PI * (s.br + g / 2) / tot; });
+        let a0 = -Math.PI / 2 - ring[0].th / 2;
+        ring.forEach(s => {
+          const mid = a0 + s.th / 2; a0 += s.th;
+          s.cx = D * Math.cos(mid); s.cy = D * Math.sin(mid);
+          s.arr.forEach((m, i) => { const rr = c * Math.sqrt(i + 0.5), th = i * GOLDEN; local.push({x:s.cx + rr * Math.cos(th), y:s.cy + rr * Math.sin(th)}); ordered.push(m); });
+          blobs.push(s);
+        });
+      };
+      if(subs.length <= RING_MIN){
+        /* Un seul anneau. La grappe la plus proche reste à distance de la jauge du groupe (rayon + 5,5 px) */
+        const tot = d3.sum(subs, s => s.br + g / 2);
+        let D = hn.r + 12 + d3.max(subs, s => s.br);
+        subs.forEach(s => { const th = 2 * Math.PI * (s.br + g / 2) / tot; if(th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(th / 2)); });
+        place(subs, D);
+        hn.outer = D + d3.max(subs, s => s.br) + 1;
+      } else {
+        /* Beaucoup de grappes (groupe ouvert dans la légende) : plusieurs anneaux, les plus grosses à l’intérieur.
+           Un anneau se remplit tant que ses grappes tiennent sur 90 % de sa circonférence ; le suivant s’écarte de la taille
+           des grappes des deux anneaux, si bien qu’aucune grappe n’en touche une autre. Dans chaque anneau, la plus petite est à midi. */
+        const bySize = [...subs].sort((a, b) => b.br - a.br || a.arr.length - b.arr.length);
+        let i = 0, prevD = null, prevBr = 0, last = null;
+        while(i < bySize.length){
+          const big = bySize[i].br, D = prevD == null ? hn.r + 12 + big : prevD + prevBr + g + big, cap = 2 * Math.PI * D * 0.9;
+          const ring = []; let used = 0;
+          while(i < bySize.length && (!ring.length || used + 2 * bySize[i].br + g <= cap)){ used += 2 * bySize[i].br + g; ring.push(bySize[i]); i++; }
+          ring.sort((a, b) => a.arr.length - b.arr.length || levels.indexOf(a.lv) - levels.indexOf(b.lv));
+          place(ring, D);
+          prevD = D; prevBr = big; last = {D, br:big};
+        }
+        hn.outer = last.D + last.br + 1;
+      }
     }
     hn.members = ordered; hn.local = local; hn.blobs = blobs;
   });
@@ -2056,7 +2078,8 @@ function drawRings(){
   }));
   gRings.selectAll('line').data(data, d => d.key).join('line').classed('spoke', true)
     .attr('x1', d => d.hub.ax).attr('y1', d => d.hub.ay).attr('x2', d => d.x).attr('y2', d => d.y);
-  gRings.selectAll('circle').data(data, d => d.key).join('circle').classed('blob', true)
+  gRings.selectAll('circle').data(data, d => d.key).join(enter => enter.append('circle')
+      .on('pointerenter pointermove', showBlobTip).on('pointerleave', hideTip).on('click', blobClick)).classed('blob', true)
     .attr('r', d => d.rad).attr('cx', d => d.x).attr('cy', d => d.y)
     .style('fill', d => colorFn(d.lv)).style('stroke', d => colorFn(d.lv));
   if(selBlob) gRings.selectAll('circle.blob').filter(d => d.key === selBlob.key).raise();
@@ -2113,9 +2136,10 @@ function renderGraph(vis){
     d3.group(cNodes, n => n.hub).forEach((ms, hid) => {
       const cnt = d3.rollup(ms, v => v.length, n => get(n.c));
       const isOpen = openHub && hid === 'h:' + openHub.slice(2);
-      if(isOpen) openHubInfo = {key:openHub.slice(2), eligible:[...cnt].filter(([v, k]) => k >= 2 && !TAIL.includes(v)).length};
+      const minK = isOpen ? 1 : 2; /* groupe ouvert : même une entreprise d’un seul contact peut avoir sa grappe (nom au survol) */
+      if(isOpen) openHubInfo = {key:openHub.slice(2), eligible:[...cnt].filter(([v, k]) => k >= minK && !TAIL.includes(v)).length};
       const cap = isOpen ? openTop : HUB_MAX;
-      const top = new Set([...cnt].filter(([v, k]) => k >= 2 && !TAIL.includes(v)).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr')).slice(0, cap).map(([v]) => v));
+      const top = new Set([...cnt].filter(([v, k]) => k >= minK && !TAIL.includes(v)).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr')).slice(0, cap).map(([v]) => v));
       ms.forEach(n => { const v = get(n.c); levelMap.set(n.c.id, top.has(v) ? v : colorOther); });
       hubTops.push(top);
     });
@@ -2416,6 +2440,25 @@ function showTip(e, d){
   tip.classList.add('on');
 }
 function hideTip(){ tip.classList.remove('on'); }
+/* Clic sur une grappe : comme un clic sur sa valeur dans la légende (surbrillance et zoom) ; la grappe « autres » se comporte comme le fond */
+function blobClick(e, d){
+  e.stopPropagation(); hideTip();
+  if(d.lv === colorOther || e.currentTarget.classList.contains('dim')){ clearSelection(); return; }
+  legendHL = legendHL && legendHL.kind === 'v' && legendHL.v === d.lv ? null : {kind:'v', v:d.lv};
+  updateLegend(contacts.filter(pass));
+  if(legendHL) applyLegendHL(!state.selected); else restoreLegendFocus();
+}
+/* Survol d’une grappe : le nom de sa valeur (entreprise…) et son nombre de contacts dans le groupe */
+function showBlobTip(e, d){
+  if(e.pointerType && e.pointerType !== 'mouse') return;
+  if(e.currentTarget.classList.contains('dim')) return hideTip();
+  const n = (d.hub.members || []).filter(m => levelOf(m.c) === d.lv).length;
+  const [x, y] = d3.pointer(e, canvas);
+  tip.innerHTML = `<strong>${esc(d.lv)}</strong><span>${n} contact${n > 1 ? 's' : ''} dans ${esc(d.hub.key)}</span>`;
+  tip.style.left = Math.max(8, Math.min(x + 16, canvas.clientWidth - 260)) + 'px';
+  tip.style.top = (y + 16) + 'px';
+  tip.classList.add('on');
+}
 
 /* ---------- Legend, panel, list ---------- */
 /* Tri par nombre décroissant, valeurs « Autres » et non renseignées en dernier ; une dimension ordonnée (séniorité, année…) garde son ordre */
@@ -2516,7 +2559,7 @@ function legendTree(vis){
     const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
     const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, openTop), rest = d3.sum(vals.slice(openTop), v => cnt.get(v));
     /* Grappes possibles : valeurs d’au moins 2 contacts (une grappe d’un seul point n’a pas de sens) */
-    const eligible = vals.filter(v => cnt.get(v) >= 2 && !TAIL.includes(v)).length;
+    const eligible = vals.filter(v => cnt.get(v) >= 1 && !TAIL.includes(v)).length;
     const moreHtml = levelMap.size && (eligible > openTop || openTop > LEGEND_TOP) ? `<li class="lgmore">${eligible > openTop ? `<button type="button" class="linkbtn" data-act="lgmore">Afficher ${Math.min(10, eligible - openTop)} grappe${Math.min(10, eligible - openTop) > 1 ? 's' : ''} de plus</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">Revenir à ${LEGEND_TOP}</button>` : ''}</li>` : '';
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li>${head}<ul class="lgvals">${top.map(v => {
