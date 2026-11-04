@@ -2443,7 +2443,7 @@ function renderGraph(vis){
     .each(function(d){
       const t = d3.select(this); t.text(null);
       /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
-      const nm = d.others ? `${d.key} (${d.others.length})` : d.key, max = narrowScreen() ? 15 : 30;
+      const nm = d.others ? `${d.key} (${d.others.length})` : d.key, max = narrowScreen() ? 15 : 40; /* noms sur deux lignes : la place permet le nom complet d’un secteur (« Tourisme, hôtellerie & restauration ») */
       t.append('tspan').attr('class', 'lblName').text(nm.length > max ? nm.slice(0, max - 1).trimEnd() + '…' : nm);
       t.append('tspan').attr('class', 'lblPct').text(pct(d.count, vis.length));
       /* Nombre de contacts à côté du nom, affiché quand le rond est trop petit à l’écran pour qu’on lise le chiffre dedans */
