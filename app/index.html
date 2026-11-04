@@ -197,7 +197,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 /* Trait groupe → grappe : masqué (la position des grappes autour du groupe suffit), montré seulement au survol d’une grappe ou d’une ligne de la légende */
 .spoke{stroke:var(--accent);stroke-opacity:.6;stroke-width:1.6px;pointer-events:none;display:none}
 .spoke.hot{display:inline}
-.pin{pointer-events:none}
+.pin{cursor:pointer}
+.pin .pmono,.pin .plogo{pointer-events:none}
 .hubcenter .hcdisc{fill:var(--surface);stroke:var(--accent);stroke-opacity:.45;stroke-width:1.5px;vector-effect:non-scaling-stroke;cursor:pointer}
 .hubcenter text{text-anchor:middle;dominant-baseline:central;pointer-events:none;fill:var(--ink)}
 .hubcenter .hcnum{font-weight:800;font-variant-numeric:tabular-nums}
@@ -2127,7 +2128,9 @@ function drawRings(){
 function drawPins(data){
   const pd = state.colorBy === 'company' && openHubInfo ? data.filter(d => d.hub.key === openHubInfo.key && d.lv !== colorOther) : [];
   const sel = gPins.selectAll('g.pin').data(pd, d => d.key).join(enter => {
-    const g = enter.append('g').attr('class', 'pin');
+    /* La pastille se comporte comme sa grappe : nom au survol, clic = clic sur l’entreprise dans la légende */
+    const g = enter.append('g').attr('class', 'pin')
+      .on('pointerenter pointermove', showBlobTip).on('pointerleave', () => { hideTip(); spokeHot(null); }).on('click', blobClick);
     g.append('circle').attr('class', 'pdisc'); g.append('text').attr('class', 'pmono');
     g.append('image').attr('class', 'plogo').attr('clip-path', 'url(#logoClip)').attr('preserveAspectRatio', 'xMidYMid meet').style('display', 'none');
     g.append('circle').attr('class', 'pring');
