@@ -1985,7 +1985,8 @@ function layoutLabels(){
   if(!labelSel) return;
   const els = labelSel.nodes();
   /* Nom du groupe ouvert : dans le disque central, ou masqué pendant la sélection d’un contact (la fiche le donne, et il toucherait le cercle des collègues) */
-  els.forEach(el => { const d = el.__data__; el.style.display = d && (hubCentered(d) || (envR(d) && /^c:/.test(state.selected || ''))) ? 'none' : ''; });
+  /* … ou masqué quand sa fiche est ouverte (la fiche le donne ; posé loin, au-delà de ses grappes, il semblait détaché) */
+  els.forEach(el => { const d = el.__data__; el.style.display = d && (hubCentered(d) || (envR(d) && /^c:/.test(state.selected || '')) || state.selected === d.id) ? 'none' : ''; });
   const tr = d3.zoomTransform(svg.node());
   const geos = els.map(lblGeo);
   labelRadial = hClash(geos, tr);
@@ -2019,8 +2020,9 @@ function styleLabels(){
    qui entoure ces grappes, au lieu de les traverser jusqu’au centre */
 /* Groupe dont le nom et les chiffres sont affichés dans le disque central (drawHubCenter) */
 /* Pas pendant la sélection d’un contact : son cercle de collègues prend la place et le disque le cacherait */
-const hubCentered = d => !!(envR(d) && d.inner > d.r + 6 && !/^c:/.test(state.selected || ''));
-const envR = hn => openHubInfo && hn.type === 'hub' && hn.key === openHubInfo.key && hn.blobs && hn.blobs.length > 1 ? hn.outer + 8 : 0;
+const hubCentered = d => !!(envR(d) && d.inner > d.r + 6 && !/^c:/.test(state.selected || '') && state.groupBy !== 'company');
+/* Groupe ouvert dans la légende ou sélectionné, avec ses grappes tout autour : la branche « Moi » s’arrête sur le cercle qui les entoure */
+const envR = hn => hn.type === 'hub' && hn.blobs && hn.blobs.length > 1 && ((openHubInfo && hn.key === openHubInfo.key) || (state.selected === hn.id && !hn.arc)) ? hn.outer + 8 : 0;
 function linkEnds(l){
   const s = l.source, t = l.target, sx = s._rx ?? s.x, sy = s._ry ?? s.y, tx = t._rx ?? t.x, ty = t._ry ?? t.y;
   const R = l.me ? envR(t) : 0;
@@ -2236,8 +2238,6 @@ function drawRings(){
   spokeHot(null);
   /* Fin cercle autour des grappes du groupe ouvert : la branche « Moi » s’y raccroche */
   drawHubCenter();
-  gRings.selectAll('circle.envelope').data(nodes.filter(n => n.type === 'hub' && envR(n)), d => d.id).join('circle').attr('class', 'envelope')
-    .attr('r', envR).attr('cx', d => d.ax).attr('cy', d => d.ay);
   /* Jauge circulaire autour de chaque groupe : sa part des contacts affichés */
   const hubs = nodes.filter(n => n.type === 'hub');
   const G = hn => hn.r + 4;
@@ -2276,7 +2276,14 @@ function drawPins(data){
 }
 /* Groupe ouvert : son nom, sa part et son nombre de contacts dans un disque au centre de son cercle de grappes (place libre),
    au lieu du petit rond et du nom posé à l’extérieur, illisibles quand il y a beaucoup de grappes */
+function drawEnvelope(){
+  gRings.selectAll('circle.envelope').data(nodes.filter(n => n.type === 'hub' && envR(n)), d => d.id).join('circle').attr('class', 'envelope')
+    .attr('r', envR).attr('cx', d => d.ax).attr('cy', d => d.ay);
+  /* Branches « Moi » recalculées tout de suite (la sélection ne fait pas bouger les nœuds) */
+  if(linkSel) linkSel.filter(l => l.me && typeof l.target === 'object').each(function(l){ const [x1, y1, x2, y2] = linkEnds(l); this.setAttribute('x1', x1); this.setAttribute('y1', y1); this.setAttribute('x2', x2); this.setAttribute('y2', y2); });
+}
 function drawHubCenter(){
+  drawEnvelope();
   const hubs = nodes.filter(n => n.type === 'hub' && hubCentered(n));
   const on = new Set(hubs.map(n => n.id));
   if(labelSel) labelSel.style('display', d => on.has(d.id) ? 'none' : null);
@@ -3037,10 +3044,11 @@ function showHub(h){
   focus(new Set([h.id, ...members.map(c => 'c:' + c.id)]));
   const cdim = DIMS[state.colorBy];
   const counts = d3.rollup(members, v => v.length, levelOf);
-  const rows = sortDesc([...counts.keys()], counts);
+  /* Même ordre que les grappes du graphe et que la légende : du plus grand au plus petit (liste et barre colorée) */
+  const rows = sortDesc([...counts.keys()], counts, true);
   /* Répartition : jusqu’à 20 valeurs réelles (pastille grise pour celles qui n’ont pas leur propre grappe), puis le reste */
   const real = d3.rollup(members, v => v.length, cdim.get);
-  const realRows = sortDesc([...real.keys()], real);
+  const realRows = sortDesc([...real.keys()], real, true);
   const top20 = realRows.slice(0, 20), rest = members.length - d3.sum(top20, v => real.get(v));
   const drawnHere = new Set(members.map(levelOf));
   const dotR = v => drawnHere.has(v) ? colorFn(v) : GREY;
