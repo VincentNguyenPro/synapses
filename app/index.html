@@ -2383,13 +2383,24 @@ const legendOpen = new Set();
 /* Filiale de la légende : un clic met ses contacts en surbrillance dans le graphe, un second clic l’annule */
 let legendHL = null; /* {kind:'v', v} : valeur de « Colorer par » (société mère…) ; {kind:'e', v} : filiale */
 const subLi = (e, n) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="Voir les contacts de ${esc(e)} dans le graphe"><span>${esc(e)}</span><span class="n">${n}</span></button></li>`;
-function applyLegendHL(){
+function applyLegendHL(zoomTo){
   if(!legendHL || state.view !== 'graph') return false;
   const get = DIMS[state.colorBy].get, {kind, v} = legendHL;
   const ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? n.c.company === v : get(n.c) === v));
   if(!ms.length){ legendHL = null; return false; }
   focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
+  if(zoomTo) zoomToNodes(ms);
   return true;
+}
+/* Zoom animé qui cadre un ensemble de contacts (la grappe d’une entreprise…) dans la zone libre, sans passer sous la légende */
+function zoomToNodes(ms){
+  if(!ms.length || state.view !== 'graph') return;
+  const px = n => n.ax ?? n.fx ?? n.x, py = n => n.ay ?? n.fy ?? n.y, pad = 40;
+  const L = d3.min(ms, n => px(n) - n.r), R = d3.max(ms, n => px(n) + n.r), T = d3.min(ms, n => py(n) - n.r), B = d3.max(ms, n => py(n) + n.r);
+  const vb = viewport();
+  const k = Math.max(0.15, Math.min(3, (vb.w - 2 * pad) / Math.max(1, R - L), (vb.h - 2 * pad) / Math.max(1, B - T)));
+  const t = d3.zoomIdentity.translate(vb.x + vb.w / 2 - k * (L + R) / 2, vb.y + vb.h / 2 - k * (T + B) / 2).scale(k);
+  (reduceMotion ? svg : svg.transition().duration(700).ease(d3.easeCubicInOut)).call(zoom.transform, t);
 }
 /* Légende en arbre (regroupement ≠ couleur) : la liste des groupes (secteurs…), du plus grand au plus petit ;
    un clic sur un groupe déplie ses valeurs de « Colorer par » (entreprises…), un clic sur une valeur la filtre */
@@ -2412,7 +2423,7 @@ function legendTree(vis){
     return `<li>${head}<ul class="lgvals">${top.map(v => {
       const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span>`;
       const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v;
-      const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="Voir les contacts de ${esc(v)} dans tout le graphe">${inner}</button>`;
+      const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="Voir les contacts de ${esc(v)} dans le graphe">${inner}</button>`;
       /* Groupe d’entreprises : un chevron déplie ses filiales */
       const subs = state.colorBy === 'company' ? entitiesOf(ms.filter(c => coOf(c) === v)) : [];
       if(subs.length < 2) return `<li>${btn}</li>`;
@@ -2420,7 +2431,7 @@ function legendTree(vis){
       return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n)).join('')}</ul>` : ''}</li>`;
     }).join('')}${rest ? `<li><span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${vals.length - 15} autre${vals.length - 15 > 1 ? 's' : ''}</span><span class="n">${rest}</span></span></li>` : ''}</ul></li>`;
   }).join('');
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}><p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour zoomer dessus et voir sa répartition par ${esc(cdim.label.toLowerCase())}, puis une valeur pour voir ses contacts dans tout le graphe.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}><p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour zoomer dessus et voir sa répartition par ${esc(cdim.label.toLowerCase())}, puis une valeur pour zoomer sur ses contacts.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
   $('#legend').hidden = !vis.length;
 }
 function updateLegend(vis){
@@ -2502,7 +2513,7 @@ function render(){
   if(state.view === 'list'){ levelMap = new Map(); colorAssign = new Map(); updateLegend(vis); renderList(vis); }
   else { renderGraph(vis); updateLegend(vis); needFit = false; if(!state.selected && !drawer.classList.contains('open')) fit(); }
   if(state.selected && !nodes.some(n => n.id === state.selected)) select(null);
-  if(state.view === 'graph'){ clearFocus(); reapplySelection(); if(!(legendHL && legendHL.kind === 'v')) focusLegendGroup(true); applyLegendHL(); }
+  if(state.view === 'graph'){ clearFocus(); reapplySelection(); if(!legendHL) focusLegendGroup(true); applyLegendHL(!state.selected); }
   renderViews(); rememberView();
 }
 
@@ -2978,7 +2989,7 @@ document.addEventListener('click', e => {
   if(only){ const k = only.dataset.only; state.include[k].clear(); state.include[k].add(only.dataset.v); syncChips(); select(null); closeDrawer(); needFit = true; render(); return; }
   const ck = e.target.closest('[data-cleark]');
   if(ck){ state.include[ck.dataset.cleark].clear(); syncChips(); render(); return; }
-  /* Légende en arbre : filiale = surbrillance sans changer le zoom ; société mère (ou toute valeur) = surbrillance dans tout le graphe, vue d’ensemble */
+  /* Légende en arbre : un clic sur une société mère (ou toute valeur) ou sur une filiale met ses contacts en surbrillance et zoome dessus ; un second clic revient au zoom sur le groupe */
   const hlb = e.target.closest('#legend [data-lghl], #legend [data-lghlv]');
   if(hlb){
     const kind = hlb.dataset.lghlv != null ? 'v' : 'e', v = kind === 'v' ? hlb.dataset.lghlv : hlb.dataset.lghl;
@@ -2987,8 +2998,8 @@ document.addEventListener('click', e => {
     /* Société mère choisie : ses filiales restent dépliées, même si l’on clique ensuite sur l’une d’elles */
     if(kind === 'v' && legendHL){ const g = [...legendOpen].find(x => x.startsWith('g:')); if(g) legendOpen.add('e:' + g.slice(2) + '|' + v); }
     updateLegend(contacts.filter(pass));
-    if(legendHL){ applyLegendHL(); if(kind === 'v' && !state.selected) fit(); }
-    else if(!focusLegendGroup(kind === 'v')){ if(state.selected) reapplySelection(); else { clearFocus(); fit(); } }
+    if(legendHL) applyLegendHL(!state.selected);
+    else if(!focusLegendGroup(true)){ if(state.selected) reapplySelection(); else { clearFocus(); fit(); } }
     return;
   }
   const f = e.target.closest('[data-k]');
