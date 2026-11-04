@@ -117,10 +117,10 @@ p{margin:0}
 .vitrine{background:var(--field);color:var(--field-ink);margin-top:var(--gap);padding:clamp(56px,7vw,96px) 0;min-height:96svh;display:flex;flex-direction:column;justify-content:center}
 .vitrine h2{font-size:var(--step-head);max-width:14ch}
 .film{display:grid;gap:16px 56px;scroll-margin-top:88px}
-@media (min-width:960px){ .film{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:end} .film .player{grid-column:1/-1;justify-self:center} }
+@media (min-width:960px){ .film{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:end} .film .live{grid-column:1/-1;margin-top:clamp(16px,2.4vw,32px)} }
 .film > p{color:var(--field-muted);max-width:30em;font-size:var(--step-lead);line-height:1.4}
-/* La vidéo entre en entier dans l’écran sous son titre */
-.player{position:relative;width:min(100%,calc((100svh - 380px) * 16 / 9));margin-top:clamp(16px,2.4vw,32px);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+/* La vidéo occupe la colonne droite du héros, à côté du titre (codes YC : on voit le produit tout de suite) */
+.player{position:relative;width:100%;align-self:start;border-radius:var(--radius);overflow:hidden;background:var(--surface);scroll-margin-top:88px}
 .player video{width:100%;height:auto;aspect-ratio:16/9}
 .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;white-space:nowrap;padding:0 30px 0 22px;min-height:76px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:var(--step-lead);font-weight:800;cursor:pointer;transition:transform .2s var(--ease),background .2s}
 .play svg{width:34px;height:34px}
@@ -377,12 +377,27 @@ footer{padding:0 10px 10px}
         <p class="lead rise" style="--i:1">Synapses range tes contacts par secteur, entreprise et séniorité pour te montrer qui peut t’ouvrir une porte&nbsp;: un job, un client, un rendez-vous.</p>
         <div class="acts rise" style="--i:2" id="hero-ctas">
           <a class="btn" href="app/">Essayer la démo</a>
-          <a class="more" href="#video">Voir la vidéo, 1&nbsp;min&nbsp;48 <span aria-hidden="true">↓</span></a>
         </div>
         <p class="note rise" style="--i:3">Gratuit, sans compte. Ton fichier est lu dans ton navigateur et n’est envoyé nulle part. <a href="app/#importer">Importer mon export</a></p>
         <p class="count" data-count aria-live="polite"></p>
       </div>
 
+      <div class="player rise" style="--i:2" id="video">
+        <video id="film" controls playsinline preload="none" width="1920" height="1080" poster="assets/demo/synapses-demo-affiche.webp" aria-label="Vidéo de démonstration de Synapses sur un réseau fictif, 1 min 48">
+          <source src="assets/demo/synapses-demo.mp4" type="video/mp4">
+          <track kind="captions" src="assets/demo/synapses-demo.vtt" srclang="fr" label="Français">
+          <a href="assets/demo/synapses-demo.mp4">Télécharger la vidéo de démonstration</a>
+        </video>
+        <video class="teaser" id="teaser" muted loop playsinline preload="none" poster="assets/demo/synapses-apercu-affiche.webp" aria-hidden="true" tabindex="-1"><source src="assets/demo/synapses-apercu.mp4" type="video/mp4"></video>
+        <button type="button" class="play" id="play" aria-label="Lire la vidéo de démonstration, 1 min 48"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Lire la vidéo · 1&nbsp;min&nbsp;48</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="vitrine" aria-labelledby="vitrine-titre">
+    <div class="wrap film">
+      <h2 id="vitrine-titre" class="rise">Essaie ici, sur un réseau fictif</h2>
+      <p class="rise" style="--i:1">150 contacts inventés. Clique sur un secteur pour voir qui tu y connais, change la couleur des points.</p>
       <div class="live rise" style="--i:2" data-ui aria-label="Aperçu interactif du réseau de démonstration : 150 contacts fictifs">
         <div>
           <div class="stage"><svg id="graph" viewBox="0 0 820 560" role="img" aria-label="Graphe : Moi au centre, dix secteurs autour, chaque contact en point"></svg></div>
@@ -393,22 +408,6 @@ footer{padding:0 10px 10px}
           </div>
         </div>
         <aside class="side" aria-live="polite" id="side"></aside>
-      </div>
-    </div>
-  </section>
-
-  <section class="vitrine" aria-labelledby="vitrine-titre">
-    <div class="wrap film" id="video">
-      <h2 id="vitrine-titre" class="rise">Synapses en 1&nbsp;min&nbsp;48</h2>
-      <p class="rise" style="--i:1">De la liste LinkedIn à la carte, puis chaque fonction, sur un réseau fictif. Avec le son, ou sous-titrée.</p>
-      <div class="player rise" style="--i:2">
-        <video id="film" controls playsinline preload="none" width="1920" height="1080" poster="assets/demo/synapses-demo-affiche.webp" aria-label="Vidéo de démonstration de Synapses sur un réseau fictif, 1 min 48">
-          <source src="assets/demo/synapses-demo.mp4" type="video/mp4">
-          <track kind="captions" src="assets/demo/synapses-demo.vtt" srclang="fr" label="Français">
-          <a href="assets/demo/synapses-demo.mp4">Télécharger la vidéo de démonstration</a>
-        </video>
-        <video class="teaser" id="teaser" muted loop playsinline preload="none" poster="assets/demo/synapses-apercu-affiche.webp" aria-hidden="true" tabindex="-1"><source src="assets/demo/synapses-apercu.mp4" type="video/mp4"></video>
-        <button type="button" class="play" id="play" aria-label="Lire la vidéo de démonstration, 1 min 48"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Lire la vidéo</span></button>
       </div>
     </div>
     <div class="wrap top">

@@ -33,7 +33,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - Outil : un seul fichier `app/index.html` (HTML, CSS et JS inline), sans étape de compilation. Il charge `../data/*.json` et les icônes de la racine.
 - Landing page : `index.html` à la racine, page statique avec les captures de démonstration de `assets/demo/` (réseau fictif uniquement, jamais de vraies données) ; bouton « Essayer la démo » → `app/`, « Importer mon export » → `app/#importer`.
   Pour refaire les captures : démo, 1600 × 1000, navigateur visible (Brandfetch bloque les navigateurs headless), WebP en 1600 et 900 px.
-  Vidéo : le film (`assets/demo/synapses-demo.mp4`, voix off, sous-titres) ne se lance qu’au clic ; un aperçu muet de 8 s en boucle (`synapses-apercu.mp4`, extrait 1:03–1:11 recadré sur l’outil) tourne quand le lecteur est visible, jamais avec « moins d’animations » ou l’économie de données.
+  Vidéo, dans le héros à côté du titre (codes YC ; le graphe interactif de démo est dans la section sombre en dessous) : le film (`assets/demo/synapses-demo.mp4`, voix off, sous-titres) ne se lance qu’au clic ; un aperçu muet de 8 s en boucle (`synapses-apercu.mp4`, extrait 1:03–1:11 recadré sur l’outil) tourne quand le lecteur est visible, jamais avec « moins d’animations » ou l’économie de données.
 - Import : `handleFiles` lit le .zip (JSZip) et y cherche `Connections.csv`, `Profile.csv`, `Positions.csv`.
   Format réel de Connections.csv : 3 lignes de notes, puis `First Name,Last Name,URL,Email Address,Company,Position,Connected On`, dates du type `17 Jan 2026`.
   `Email Address` n’est rempli que pour les contacts qui ont autorisé son partage : l’email s’affiche alors dans la fiche (lien `mailto:`), sans jamais être enregistré ni envoyé.
