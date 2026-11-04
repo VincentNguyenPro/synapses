@@ -124,7 +124,7 @@ p{margin:0}
 /* ---------- Vitrine : un champ sombre, une rangée de panneaux qui défile ---------- */
 .vitrine{background:var(--field);color:var(--field-ink);margin-top:var(--pad);padding:var(--pad) 0}
 /* Carrousel : largeur de l’écran éclairé calculée sur la hauteur disponible (titre et légende compacts) */
-.vitrine.shots{--fw:min(1200px,90vw,calc((100svh - 270px) * 1.6));margin-top:0;padding:clamp(20px,3.5svh,40px) 0}
+.vitrine.shots{--gx:clamp(24px,4vw,64px);--fw:min(1200px,90vw,calc((100svh - 270px) * 1.6));margin-top:0;padding:clamp(20px,3.5svh,40px) 0}
 .vitrine.shots .wrap.top h3{font-size:clamp(1.4rem,1rem + 1vw,2rem)}
 .vitrine h2{font-size:var(--step-head);max-width:14ch}
 .film{display:grid;gap:16px 56px;scroll-margin-top:88px}
@@ -155,7 +155,7 @@ p{margin:0}
 .vitrine .nav button{width:52px;height:52px;border-radius:var(--radius);border:0;background:#243042;color:#fff;font:inherit;font-size:22px;cursor:pointer;transition:background .15s,transform .15s}
 .vitrine .nav button:hover{background:#2F3D52}
 .vitrine .nav button:active{transform:scale(.95)}
-.row{display:flex;gap:clamp(24px,4vw,64px);overflow-x:auto;scroll-snap-type:x mandatory;padding:clamp(22px,3.4svh,36px) calc(50vw - var(--fw) / 2) clamp(10px,1.4svh,16px);scrollbar-width:none;align-items:center}
+.row{display:flex;gap:var(--gx);overflow-x:auto;scroll-snap-type:x mandatory;padding:clamp(22px,3.4svh,36px) calc(50vw - var(--fw) / 2) clamp(10px,1.4svh,16px);scrollbar-width:none;align-items:center}
 .row::-webkit-scrollbar{display:none}
 .row figure{flex:none;width:var(--fw);margin:0;scroll-snap-align:center;opacity:.32;transition:opacity .5s var(--ease),transform .5s var(--ease);transform:scale(.94)}
 .row figure.on{opacity:1;transform:none}
@@ -167,9 +167,19 @@ p{margin:0}
 .caption p{color:var(--field-muted);margin-top:2px;font-size:var(--step-small)}
 /* Sous l’écran éclairé, sur sa largeur : la légende à gauche, les flèches à droite */
 .vitrine .foot{display:flex;align-items:center;gap:24px;width:min(var(--fw),calc(100% - 2 * var(--gutter)));padding:0;margin:0 auto}
-.vitrine .foot .caption{flex:1;order:1}
-.vitrine .foot .nav{order:2;flex:none}
+.vitrine .foot .caption{flex:1}
 .vitrine .nav button{width:44px;height:44px;font-size:19px}
+/* Flèches de part et d’autre de l’écran éclairé, dans l’espace entre les écrans, centrées sur sa hauteur : elles ne le masquent pas */
+.carousel{position:relative}
+.carousel .nav{justify-content:center;margin:4px 0 12px}
+@media (min-width:960px){
+  .carousel .nav{margin:0}
+  .carousel .nav button{position:absolute;z-index:2;top:calc(clamp(22px,3.4svh,36px) + var(--fw) / 3.2);transform:translate(-50%,-50%);border-radius:50%;background:#2A3648;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+  .carousel .nav button[data-go="-1"]{left:calc(50vw - var(--fw) / 2 - var(--gx) / 2)}
+  .carousel .nav button[data-go="1"]{left:calc(50vw + var(--fw) / 2 + var(--gx) / 2)}
+  .carousel .nav button:hover{background:#34425A}
+  .carousel .nav button:active{transform:translate(-50%,-50%) scale(.95)}
+}
 
 /* ---------- Situations : onglets à gauche, bandes à droite ---------- */
 .sit{padding:var(--pad) 0}
@@ -458,6 +468,7 @@ footer{padding:0 10px 10px}
     <div class="wrap top">
       <h3 class="rise" id="ecrans-titre">L’outil, écran par écran</h3>
     </div>
+    <div class="carousel">
     <div class="row" id="row" tabindex="0" aria-label="Écrans de Synapses, défilement horizontal">
       <figure data-t="Un secteur en gros plan" data-d="Un clic sur un groupe zoome dessus&nbsp;: ses contacts se rangent par séniorité, la fiche liste les personnes.">
         <div class="pic"><img src="assets/demo/3-groupe-900.webp" srcset="assets/demo/3-groupe-900.webp 900w, assets/demo/3-groupe.webp 1600w" sizes="(min-width:1024px) 880px, 86vw" width="900" height="563" loading="lazy" alt="Le secteur Tech et logiciel sélectionné, avec sa fiche et ses grappes par séniorité"></div>
@@ -475,8 +486,9 @@ footer{padding:0 10px 10px}
         <div class="pic"><img src="assets/demo/1-import-900.webp" srcset="assets/demo/1-import-900.webp 900w, assets/demo/1-import.webp 1600w" sizes="(min-width:1024px) 880px, 86vw" width="900" height="563" loading="lazy" alt="Le panneau « Récupérer tes contacts LinkedIn » qui explique comment obtenir son export"></div>
       </figure>
     </div>
+    <div class="nav"><button type="button" data-go="-1" aria-label="Écran précédent">←</button><button type="button" data-go="1" aria-label="Écran suivant">→</button></div>
+    </div>
     <div class="wrap foot">
-      <div class="nav"><button type="button" data-go="-1" aria-label="Écran précédent">←</button><button type="button" data-go="1" aria-label="Écran suivant">→</button></div>
       <div class="caption" id="cap" aria-live="polite"><h3></h3><p></p></div>
     </div>
   </section>
