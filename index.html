@@ -108,10 +108,17 @@ p{margin:0}
 .live .side li i{flex:none;width:10px;height:10px;border-radius:50%}
 .live .side li b{display:block;font-weight:700;font-size:13.5px}
 .live .side li span{color:#5B6B7C;font-size:12.5px}
-.hub{cursor:pointer}
-.hub circle.h{fill:#DCE4FB;stroke:#17212E;stroke-width:1.4;transition:fill .2s}
-.hub:hover circle.h,.hub.on circle.h{fill:#AFC1F6}
-.hub text{font-size:12.5px;font-weight:700;fill:#17212E}
+/* Secteur choisi : pastille bleue, numéro blanc, halo doux et nom en bleu (plus de cadre de focus du navigateur au clic) */
+.hub{cursor:pointer;outline:none}
+.hub circle.h{fill:#DCE4FB;stroke:#17212E;stroke-width:1.4;transition:fill .2s,stroke .2s}
+.hub circle.halo{fill:#2F5BEA;fill-opacity:0;transition:fill-opacity .25s}
+.hub:hover circle.h{fill:#AFC1F6}
+.hub:hover circle.halo{fill-opacity:.08}
+.hub.on circle.h{fill:#2F5BEA;stroke:#2F5BEA}
+.hub.on circle.halo{fill-opacity:.16}
+.hub.on .n{fill:#fff}
+.hub.on text:not(.n){fill:#2448C4}
+.hub text{font-size:12.5px;font-weight:700;fill:#17212E;transition:fill .2s}
 .hub text tspan.p{fill:#2F5BEA}
 .hub .n{font-size:11px;font-weight:800;text-anchor:middle;dominant-baseline:central}
 .dot{transition:fill .35s ease}
@@ -369,14 +376,12 @@ details p{padding:0 24px 24px;max-width:52ch}
   .priv .grid{gap:28px}
 }
 
-/* Grand écran : chaque section occupe exactement un écran sous la barre, contenu centré verticalement ; la suivante ne déborde plus.
-   « Ouvre la démo » garde sa hauteur : elle partage le dernier écran avec le pied de page. */
-@media (min-width:960px){
-  main > section:not(.end){min-height:calc(100svh - 68px);display:flex;flex-direction:column;justify-content:center}
-  main > section:not(.end) > .wrap{width:100%}
-  .vitrine,.priv{margin-top:0}
-  .faq{justify-content:flex-start} /* les réponses s’ouvrent sans faire bouger la liste */
-}
+/* Chaque section occupe exactement un écran sous la barre (ordinateur et mobile), contenu centré verticalement ; la suivante ne déborde plus.
+   « Ouvre la démo » garde sa hauteur : sur grand écran elle partage le dernier écran avec le pied de page. */
+main > section:not(.end){min-height:calc(100svh - 68px);display:flex;flex-direction:column;justify-content:center}
+main > section:not(.end) > .wrap:not(.foot){width:100%}
+.vitrine,.priv{margin-top:0}
+.faq{justify-content:flex-start} /* les réponses s’ouvrent sans faire bouger la liste */
 
 /* ---------- Pied de page : deux rangées de tuiles ---------- */
 footer{padding:0 10px 10px}
@@ -428,6 +433,71 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   .js .rise{opacity:1;transform:none;transition:none}
   .dot,.blob,.row figure,.app.on{transition:none;animation:none}
   .btn,.more span,.tile.go svg,.end h2 a{transition:none}
+}
+/* ---------- Mobile : chaque section tient sur un écran de téléphone ---------- */
+@media (max-width:959px){
+  :root{--pad:clamp(24px,4svh,40px)}
+  .hero{padding:20px 0}
+  .hero-grid{gap:20px}
+  .hero .lead{font-size:var(--step-body)}
+  .hero .acts{margin-top:20px}
+  .hero .note{margin-top:14px}
+  /* Graphe : la liste du secteur choisi garde une hauteur fixe et défile */
+  .film > p{font-size:var(--step-small)}
+  .live .tools{padding:12px 14px}
+  .live .side{max-height:132px;min-height:0;overflow-y:auto;padding:12px 14px}
+  /* Situations : les quatre en une rangée de boutons, un contact sur deux lignes courtes, cinq contacts */
+  .sit h2{font-size:clamp(1.6rem,7vw,2.2rem)}
+  .sit .tabs{display:flex;overflow-x:auto;gap:6px;scrollbar-width:none}
+  .sit .tabs::-webkit-scrollbar{display:none}
+  .sit .tabs button{flex:none;min-height:0;padding:9px 14px}
+  .sit .tabs button span{display:none}
+  .panel p.say{font-size:var(--step-body);margin-bottom:10px}
+  .bands li{grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:0;min-height:0;padding:7px 14px}
+  .bands .who{grid-column:1/-1;order:-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bands .who b,.bands .who span{display:inline}
+  .bands .who span::before{content:" · "}
+  .bands .lvl,.bands .co{font-size:var(--step-small)}
+  .bands .lvl{font-weight:600}
+  .bands .co{text-align:left}
+  .bands li:nth-child(n+6){display:none}
+  /* Démarrer : seul le geste choisi montre son texte */
+  .how h2{font-size:clamp(1.6rem,7vw,2.2rem)}
+  .steps{margin-top:16px}
+  .steps li{padding:10px 14px;gap:4px}
+  .steps li strong{font-size:var(--step-body)}
+  .steps li p{display:none;font-size:var(--step-small)}
+  .steps li.on p{display:block}
+  .pin{min-height:0;padding:12px;margin-top:12px}
+  .app{padding:16px;font-size:13px}
+  /* Réglages : un carrousel horizontal, une tuile à la fois, la suivante dépasse */
+  .feat h2{font-size:clamp(1.6rem,7vw,2.2rem);margin-bottom:20px}
+  .cells{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 calc(-1 * var(--gutter));padding:0 var(--gutter);scroll-padding:0 var(--gutter)}
+  .cells::-webkit-scrollbar{display:none}
+  .cell{flex:0 0 86%;min-height:0;scroll-snap-align:start;justify-content:flex-start}
+  .cell .t{padding:18px 18px 4px}
+  .cell .t p{font-size:var(--step-small)}
+  .frag{margin:14px 18px 18px}
+  .frag .menu div:nth-child(n+6){display:none}
+  /* Confidentialité : tableau resserré */
+  .priv h2{font-size:clamp(1.6rem,7vw,2.2rem)}
+  .priv .grid{gap:16px}
+  .priv .lead{font-size:var(--step-body);margin-top:10px}
+  table{font-size:var(--step-small)}
+  tr{padding:9px 0}
+  td{padding:1px 0}
+  /* Questions */
+  summary{min-height:52px;padding:12px 16px;font-size:var(--step-body)}
+  details p{padding:0 16px 14px;font-size:var(--step-small)}
+  /* Fin et pied de page */
+  .end h2{font-size:clamp(2rem,9vw,2.8rem)}
+  .end p{font-size:var(--step-body)}
+  .tile{min-height:0;padding:18px}
+  .tile.say p{font-size:var(--step-body)}
+  .tile.nav,.tile.by{grid-column:1/-1}
+  .tile.nav ul{grid-template-columns:1fr 1fr}
+  .tile.word{display:none}
+  .tile.go{min-height:64px}
 }
 </style>
 <script>document.documentElement.classList.add('js')</script>
@@ -725,6 +795,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       });
     });
     const h = el('g', {class:'hub', tabindex:'0', role:'button', 'aria-label':`${sec}, ${n} contacts`}, gH);
+    el('circle', {cx:hx.toFixed(1), cy:hy.toFixed(1), r:(hr + 7).toFixed(1), class:'halo'}, h);
     el('circle', {cx:hx.toFixed(1), cy:hy.toFixed(1), r:hr.toFixed(1), class:'h'}, h);
     el('text', {x:hx.toFixed(1), y:hy.toFixed(1), class:'n'}, h).textContent = n;
     const lx = CX + (R + 62) * Math.cos(a), ly = CY + (R + 62) * Math.sin(a) + (Math.abs(Math.cos(a)) < .25 ? Math.sign(Math.sin(a)) * 8 : 0);
