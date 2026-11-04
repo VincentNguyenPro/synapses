@@ -259,7 +259,7 @@ button.lg:hover{background:var(--surface-2)}
 .lg[aria-pressed="true"] .fbar{opacity:1}
 .lg .n{font-weight:700;color:var(--ink)}
 .lg .pct{background:none;padding:0;min-width:34px;text-align:right}
-@media (min-width:761px){.legendbox{min-width:240px}}
+@media (min-width:761px){.legendbox{min-width:240px}.legendbox:has(.lgg){width:340px;max-width:calc(100% - 32px)}}
 /* Fiche ouverte : la légende se décale à gauche de la fiche pour rester visible */
 .legendbox{transition:right .22s ease}
 .canvas.has-drawer .legendbox{right:min(406px, calc(100% - 260px))}
@@ -269,8 +269,12 @@ button.lg:hover{background:var(--surface-2)}
 .lg:focus-visible{outline:2px solid var(--accent)}
 .lgl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgwrap{display:flex;flex-wrap:wrap;align-items:flex-start}
-.lgg .lgchev{flex:none;width:14px;height:14px;position:relative}
-.lgg .lgchev::after{content:"";position:absolute;left:3px;top:3px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+.lgg .lgchev{flex:none;width:22px;height:14px;position:relative;margin-left:-8px}
+/* Légende en arbre : mêmes colonnes à tous les niveaux (nombre, pourcentage, chevron) pour aligner les chiffres */
+.legendbox :is(.lgg,.lgv,.lgsubbtn) .n{flex:none;min-width:40px;margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}
+.legendbox :is(.lgg,.lgv,.lgsubbtn) .pct{flex:none;width:44px;min-width:0;text-align:right;background:none;padding:0;font-variant-numeric:tabular-nums}
+.lgxsp{flex:none;width:22px}
+.lgg .lgchev::after{content:"";position:absolute;left:13px;top:3px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
 .lgg[aria-expanded="true"] .lgchev::after{transform:rotate(45deg);top:1px}
 .lgg[aria-expanded="true"]{font-weight:700}
 .lgcrumbs{margin:0 6px 8px;font-size:12px;line-height:1.6;color:var(--muted)}
@@ -293,7 +297,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 /* Filiales en retrait sous leur société mère : leur nom commence après celui du groupe (pastille + espace), avec un trait de rattachement */
 .legendbox .lgsubs{flex-basis:100%;min-width:0;max-width:100%;box-sizing:border-box;list-style:none;margin:2px 0 6px 10px;padding:0 0 0 22px;border-left:1px solid var(--line)}
 .lgsubs li{display:block;font-size:12px;color:var(--muted)}
-.lgsubbtn{all:unset;display:flex;gap:8px;align-items:baseline;width:100%;box-sizing:border-box;padding:2px 26px 2px 6px;border-radius:6px;cursor:pointer}
+.lgsubbtn{all:unset;display:flex;gap:8px;align-items:baseline;width:100%;box-sizing:border-box;padding:2px 28px 2px 6px;border-radius:6px;cursor:pointer}
 .lgsubbtn:hover{background:var(--surface-2);color:var(--ink)}
 .lgsubbtn:focus-visible{outline:2px solid var(--accent)}
 .lgsubbtn[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink);font-weight:700}
@@ -2385,7 +2389,7 @@ function sortDesc(vals, counts){
 const legendOpen = new Set();
 /* Filiale de la légende : un clic met ses contacts en surbrillance dans le graphe, un second clic l’annule */
 let legendHL = null; /* {kind:'v', v} : valeur de « Colorer par » (société mère…) ; {kind:'e', v} : filiale */
-const subLi = (e, n) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="Voir les contacts de ${esc(e)} dans le graphe"><span>${esc(e)}</span><span class="n">${n}</span></button></li>`;
+const subLi = (e, n, total) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="Voir les contacts de ${esc(e)} dans le graphe"><span>${esc(e)}</span><span class="n">${n}</span><span class="pct">${total ? pct(n, total) : ''}</span></button></li>`;
 /* Remonter dans la légende en arbre : 0 = tout le réseau, 1 = le groupe, 2 = la société mère d’une filiale */
 function legendUp(lvl, v){
   if(lvl === 0){ [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; updateLegend(contacts.filter(pass)); if(state.selected) reapplySelection(); else { clearFocus(); fit(); } return; }
@@ -2431,15 +2435,15 @@ function legendTree(vis){
     const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, 15), rest = d3.sum(vals.slice(15), v => cnt.get(v));
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li>${head}<ul class="lgvals">${top.map(v => {
-      const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span>`;
+      const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
       const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v;
       const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="Voir les contacts de ${esc(v)} dans le graphe">${inner}</button>`;
       /* Groupe d’entreprises : un chevron déplie ses filiales */
       const subs = state.colorBy === 'company' ? entitiesOf(ms.filter(c => coOf(c) === v)) : [];
-      if(subs.length < 2) return `<li>${btn}</li>`;
+      if(subs.length < 2) return `<li class="lgwrap">${btn}<span class="lgxsp" aria-hidden="true"></span></li>`;
       const sk = 'e:' + h.key + '|' + v, so = legendOpen.has(sk) || on || (sel.size === 1 && sel.has(v));
-      return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n)).join('')}</ul>` : ''}</li>`;
-    }).join('')}${rest ? `<li><span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${vals.length - 15} autre${vals.length - 15 > 1 ? 's' : ''}</span><span class="n">${rest}</span></span></li>` : ''}</ul></li>`;
+      return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n, ms.length)).join('')}</ul>` : ''}</li>`;
+    }).join('')}${rest ? `<li class="lgwrap"><span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${vals.length - 15} autre${vals.length - 15 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, ms.length)}</span></span><span class="lgxsp" aria-hidden="true"></span></li>` : ''}</ul></li>`;
   }).join('');
   /* Fil d’Ariane : où l’on se trouve (réseau › groupe › valeur › filiale), chaque niveau supérieur est cliquable pour remonter */
   const gOpen = [...legendOpen].find(x => x.startsWith('g:')), crumbs = [];
