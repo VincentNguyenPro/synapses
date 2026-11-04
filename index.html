@@ -211,7 +211,7 @@ p{margin:0}
 .tabs button[aria-selected="true"] span{color:#C3CEDC}
 @media (max-width:859px){ .tabs button{padding:10px 14px;min-height:64px} }
 .panel p.say{font-size:var(--step-lead);line-height:1.35;max-width:40em;margin-bottom:12px}
-.bands{list-style:none;padding:0;margin:0;display:grid;gap:4px}
+.bands{list-style:none;padding:0;margin:0;display:grid;gap:4px;align-content:start}
 /* Séniorité et entreprise sur la ligne du nom (et non au milieu du bloc nom + poste) */
 .bands li{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:16px;align-items:first baseline;align-content:center;min-height:52px;padding:7px 20px;border-radius:var(--radius);background:var(--surface)}
 .bands li:nth-child(even){background:var(--tone)}
@@ -369,6 +369,15 @@ details p{padding:0 24px 24px;max-width:52ch}
   .priv .grid{gap:28px}
 }
 
+/* Grand écran : chaque section occupe exactement un écran sous la barre, contenu centré verticalement ; la suivante ne déborde plus.
+   « Ouvre la démo » garde sa hauteur : elle partage le dernier écran avec le pied de page. */
+@media (min-width:960px){
+  main > section:not(.end){min-height:calc(100svh - 68px);display:flex;flex-direction:column;justify-content:center}
+  main > section:not(.end) > .wrap{width:100%}
+  .vitrine,.priv{margin-top:0}
+  .faq{justify-content:flex-start} /* les réponses s’ouvrent sans faire bouger la liste */
+}
+
 /* ---------- Pied de page : deux rangées de tuiles ---------- */
 footer{padding:0 10px 10px}
 .tiles{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -389,12 +398,27 @@ footer{padding:0 10px 10px}
 .tile.word .wname{font-weight:800;letter-spacing:-.04em;line-height:1}
 .tile.go{grid-column:1/-1;background:var(--accent);color:#fff;text-decoration:none;min-height:200px;transition:background .2s}
 .tile.go:hover{background:var(--accent-ink)}
+/* Le pied de page garde les marges gauche et droite de la page */
+footer{padding:0 0 var(--gutter)}
+footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
+/* Grand écran : « Ouvre la démo » et le pied de page tiennent ensemble sur le dernier écran (hauteur de la section calculée par fitEnd) */
+@media (min-width:960px){
+  .tile{min-height:0}
+  .tile.word,.tile.go{min-height:clamp(110px,15svh,160px)}
+  .tile.word{font-size:clamp(3rem,5.6vw,6rem)}
+  .end{display:flex;flex-direction:column;justify-content:center}
+}
+/* « Essayer la démo » : texte et flèche centrés dans la tuile */
+.tile.go{flex-direction:row;align-items:center;justify-content:center;gap:14px}
 .tile.go b{font-size:var(--step-lead);font-weight:800}
-.tile.go svg{align-self:flex-end;width:56px;height:56px;transition:transform .25s var(--ease)}
+.tile.go svg{width:40px;height:40px;flex:none;transition:transform .25s var(--ease)}
 .tile.go:hover svg{transform:translate(6px,-6px)}
 @media (min-width:960px){
   .tile.say{grid-column:1/5} .tile.nav{grid-column:5/8} .tile.by{grid-column:8/13}
-  .tile.word{grid-column:1/9;min-height:320px} .tile.go{grid-column:9/13;min-height:320px}
+  .tile.word{grid-column:1/9;min-height:clamp(120px,17svh,180px)} .tile.go{grid-column:9/13;min-height:clamp(120px,17svh,180px)}
+  .tile:not(.word):not(.go){padding:20px 24px}
+  .tile ul{gap:4px}
+  .tile.say p{font-size:var(--step-body)}
 }
 
 /* ---------- Mouvement : entrées échelonnées, seulement si le script tourne et sans réduction demandée ---------- */
@@ -754,11 +778,31 @@ footer{padding:0 10px 10px}
     biz: DEMO.filter(c => c.sec === 'Banque & assurance' && (c.sen === 'Direction' || c.sen === 'Dirigeant')).sort(bySen),
     rdv: DEMO.filter(c => c.co === 'BNP Paribas').sort(bySen)
   };
-  for(const k in rows) $(`[data-rows="${k}"]`).innerHTML = rows[k].map(c => band(c.sen, colour('sen', c.sen), c.n, c.pos, c.co)).join('');
+  for(const k in rows) $(`[data-rows="${k}"]`).innerHTML = rows[k].slice(0, 6).map(c => band(c.sen, colour('sen', c.sen), c.n, c.pos, c.co)).join('');
   const secs = [...count(DEMO, 'sec')].sort((a, b) => a[1] - b[1]).slice(0, 5);
   $('[data-rows="net"]').innerHTML = secs.map(([s, n]) => band(pct(n, DEMO.length), n <= 8 ? '#C2417A' : '#8A97A6', s, `${n} contacts`, n <= 8 ? 'à développer' : '')).join('');
   const tabs = $$('[role=tab]');
   const show = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; $('#' + x.getAttribute('aria-controls')).hidden = !on; }); };
+  /* Hauteur fixe d’un onglet à l’autre : la phrase et la liste réservent la place de la plus longue des quatre situations */
+  const panels = $$('.sit .panel');
+  const equalize = () => {
+    const parts = ['.say', '.bands'].map(sel => panels.map(p => p.querySelector(sel)));
+    parts.flat().forEach(e => { e.style.minHeight = ''; });
+    const was = panels.map(p => p.hidden), max = [0, 0];
+    panels.forEach(p => { panels.forEach(q => { q.hidden = q !== p; }); parts.forEach((list, i) => { max[i] = Math.max(max[i], p.querySelector(i ? '.bands' : '.say').offsetHeight); }); });
+    panels.forEach((p, i) => { p.hidden = was[i]; });
+    parts.forEach((list, i) => list.forEach(e => { e.style.minHeight = max[i] + 'px'; }));
+  };
+  equalize();
+  let eqTick; addEventListener('resize', () => { cancelAnimationFrame(eqTick); eqTick = requestAnimationFrame(equalize); });
+  if(document.fonts) document.fonts.ready.then(equalize);
+
+  /* Dernier écran : la section de fin prend la hauteur que le pied de page lui laisse */
+  const endSec = $('.end'), foot = $('footer');
+  const fitEnd = () => { endSec.style.minHeight = innerWidth >= 960 ? Math.max(0, innerHeight - 68 - foot.offsetHeight) + 'px' : ''; };
+  fitEnd();
+  let endTick; addEventListener('resize', () => { cancelAnimationFrame(endTick); endTick = requestAnimationFrame(fitEnd); });
+  if(document.fonts) document.fonts.ready.then(fitEnd);
   tabs.forEach((t, i) => {
     t.addEventListener('click', () => show(t));
     t.addEventListener('keydown', e => { const d = {ArrowDown:1, ArrowRight:1, ArrowUp:-1, ArrowLeft:-1}[e.key]; if(d){ e.preventDefault(); const n = tabs[(i + d + tabs.length) % tabs.length]; show(n); n.focus(); } });
