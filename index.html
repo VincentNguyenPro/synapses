@@ -293,6 +293,15 @@ p{margin:0}
 .app .stats div{background:#F4F7FA;border-radius:10px;padding:12px}
 .app .stats b{display:block;font-size:24px;letter-spacing:-.02em}
 .app .stats span{color:#5B6B7C;font-size:12.5px}
+/* Grand écran : les quatre tuiles de « Mon réseau » empilées (chiffre et libellé sur une ligne), la roulette prend la largeur libérée */
+@media (min-width:960px){
+  .app.net-app{max-width:720px}
+  .netcard{flex:none;width:240px;padding:20px}
+  .netcard .stats{grid-template-columns:1fr;gap:6px}
+  .netcard .stats div{display:flex;align-items:baseline;gap:10px;padding:10px 14px}
+  .netcard .stats b{display:inline;font-size:22px}
+  .wheel{flex:1;width:auto;min-width:0}
+}
 @keyframes in{from{opacity:0;transform:translateY(12px)}}
 
 /* ---------- Fonctions : six cellules, fragments en damier ---------- */
