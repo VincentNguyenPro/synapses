@@ -2752,59 +2752,39 @@
  "groupes": [
   {
    "nom": "BNP Paribas",
-   "motif": "\\bbnp\\b|\\bcetelem\\b|\\bcardif\\b|\\barval\\b|\\bhello ?bank\\b"
+   "motif": "\\bbnp\\b|\\bcetelem\\b|\\bcardif\\b|\\barval\\b|\\bhello ?bank\\b|\\bcortal\\b|^bnl\\b|\\bexane\\b"
   },
   {
    "nom": "Société Générale",
-   "motif": "\\bsociete generale\\b|\\bsgcib\\b|\\bsg cib\\b|\\bboursorama\\b|\\blyxor\\b"
+   "motif": "\\bsociete generale\\b|\\bsgcib\\b|\\bsg cib\\b|\\bboursorama\\b|\\bboursobank\\b|\\bayvens\\b|\\bald automotive\\b|\\bfranfinance\\b|\\bsogecap\\b|\\bsogessur\\b|\\bcredit du nord\\b|\\bkleinwort hambros\\b|^sg (29|securities|services)\\b"
   },
   {
    "nom": "Crédit Agricole",
-   "motif": "\\bcredit agricole\\b|\\bca[- ]cib\\b|\\bcacib\\b"
+   "motif": "\\bcredit agricole\\b|\\bca[- ]cib\\b|\\bcacib\\b|^lcl\\b|\\bamundi\\b|\\blyxor\\b|\\bcaceis\\b|\\bindosuez\\b|\\bpredica\\b|\\bpacifica\\b|\\bsofinco\\b|\\bca consumer finance\\b|\\bca-gip\\b|\\bca technologies\\b"
   },
   {
    "nom": "Crédit Mutuel",
-   "motif": "\\bcredit mutuel\\b|\\bcm[- ]cic\\b|\\beuro[- ]information\\b"
+   "motif": "\\bcredit mutuel\\b|\\bcm[- ]cic\\b|^cic\\b|\\bcredit industriel et commercial\\b|\\beuro[- ]information\\b|\\btargo ?bank\\b|\\bcofidis\\b|\\bmonabanq\\b|\\bfortuneo\\b"
   },
   {
    "nom": "Groupe BPCE",
-   "motif": "\\bbpce\\b"
+   "motif": "\\bbpce\\b|\\bnatixis\\b|\\bbanque populaire\\b(?!.*\\b(mauritanie|maroc|marocaine|cameroun|senegal|tunisie|algerie|rwanda|cote d ?.?ivoire)\\b)|\\bcaisse d ?.?epargne\\b|^bred\\b|\\boney\\b|\\bbanque palatine\\b|\\bcredit cooperatif\\b|\\bcasden\\b|\\bmirova\\b|\\bostrum\\b|\\bdnca\\b|\\bit-ce\\b|\\balbiant[- ]it\\b"
   },
   {
-   "nom": "Banque Populaire",
-   "motif": "\\bbanque populaire\\b(?!.*\\b(mauritanie|maroc|marocaine|cameroun|senegal|tunisie|algerie|rwanda|cote d ?.?ivoire)\\b)"
-  },
-  {
-   "nom": "Caisse d’Épargne",
-   "motif": "\\bcaisse d ?.?epargne\\b"
-  },
-  {
-   "nom": "BRED",
-   "motif": "^bred\\b"
-  },
-  {
-   "nom": "Natixis",
-   "motif": "\\bnatixis\\b"
-  },
-  {
-   "nom": "La Banque Postale",
-   "motif": "\\bla banque postale\\b"
+   "nom": "La Poste",
+   "motif": "\\bla poste\\b|\\bla banque postale\\b|\\bcnp assurances\\b|\\bchronopost\\b|\\bcolissimo\\b|\\bdocapost\\b|\\bmediapost\\b|\\bgeopost\\b|^dpd\\b"
   },
   {
    "nom": "Bpifrance",
    "motif": "\\bbpi ?france\\b"
   },
   {
-   "nom": "Amundi",
-   "motif": "\\bamundi\\b"
-  },
-  {
    "nom": "AXA",
-   "motif": "^axa\\b"
+   "motif": "^axa\\b|\\baxa (france|xl|im|investment managers|partners|banque|assistance|climate|group|global)\\b|\\bdirect assurance\\b"
   },
   {
    "nom": "Allianz",
-   "motif": "\\ballianz\\b"
+   "motif": "\\ballianz\\b|\\beuler hermes\\b|\\bpimco\\b"
   },
   {
    "nom": "Generali",
@@ -2816,7 +2796,7 @@
   },
   {
    "nom": "AG2R La Mondiale",
-   "motif": "\\bag2r\\b"
+   "motif": "\\bag2r\\b|\\bla mondiale\\b"
   },
   {
    "nom": "Malakoff Humanis",
@@ -2824,15 +2804,27 @@
   },
   {
    "nom": "Groupama",
-   "motif": "\\bgroupama\\b"
+   "motif": "\\bgroupama\\b|\\bgan assurances\\b|\\bamaline\\b"
   },
   {
    "nom": "Covéa",
-   "motif": "\\bcovea\\b"
+   "motif": "\\bcovea\\b|^maaf\\b|^mma( iard| vie)?$|^mma\\b|^gmf\\b"
+  },
+  {
+   "nom": "Aéma Groupe",
+   "motif": "\\baema\\b|\\baesio\\b|\\bmacif\\b|\\babeille assurances\\b|\\bofi invest\\b"
+  },
+  {
+   "nom": "Groupe VYV",
+   "motif": "\\bvyv\\b|\\bharmonie mutuelle\\b|^mgen\\b"
   },
   {
    "nom": "Klesia",
    "motif": "\\bklesia\\b"
+  },
+  {
+   "nom": "Coface",
+   "motif": "^coface\\b"
   },
   {
    "nom": "Renault Group",
@@ -2844,7 +2836,27 @@
   },
   {
    "nom": "Stellantis",
-   "motif": "\\bstellantis\\b|\\bpsa peugeot\\b|\\bgroupe psa\\b"
+   "motif": "\\bstellantis\\b|\\bpsa peugeot\\b|\\bgroupe psa\\b|^peugeot\\b|^citroen\\b|^opel\\b|^fiat\\b|^jeep\\b|^chrysler\\b|^alfa romeo\\b|^maserati\\b|^ds automobiles\\b|^free2move\\b"
+  },
+  {
+   "nom": "Volkswagen",
+   "motif": "\\bvolkswagen\\b|^audi\\b|^porsche\\b|^skoda\\b|^seat\\b|^cupra\\b|^lamborghini\\b|^bentley\\b"
+  },
+  {
+   "nom": "Nissan",
+   "motif": "^nissan\\b"
+  },
+  {
+   "nom": "Forvia",
+   "motif": "\\bforvia\\b|\\bfaurecia\\b|^hella\\b"
+  },
+  {
+   "nom": "Valeo",
+   "motif": "^valeo\\b"
+  },
+  {
+   "nom": "Michelin",
+   "motif": "\\bmichelin\\b"
   },
   {
    "nom": "Safran",
@@ -2860,75 +2872,211 @@
   },
   {
    "nom": "Dassault Systèmes",
-   "motif": "\\bdassault systemes\\b"
+   "motif": "\\bdassault systemes\\b|^3ds\\b"
   },
   {
    "nom": "Dassault Aviation",
    "motif": "\\bdassault aviation\\b"
   },
   {
+   "nom": "Naval Group",
+   "motif": "^naval group\\b|^dcns\\b"
+  },
+  {
    "nom": "Alstom",
    "motif": "\\balstom\\b"
   },
   {
-   "nom": "Michelin",
-   "motif": "\\bmichelin\\b"
-  },
-  {
    "nom": "Saint-Gobain",
-   "motif": "\\bsaint[- ]gobain\\b"
+   "motif": "\\bsaint[- ]gobain\\b|^isover\\b|^placo\\b|^point p\\b|^cedeo\\b"
   },
   {
    "nom": "Schneider Electric",
-   "motif": "\\bschneider electric\\b"
+   "motif": "\\bschneider electric\\b|^aveva\\b|^apc by schneider\\b"
   },
   {
-   "nom": "Vinci",
-   "motif": "^vinci\\b"
+   "nom": "Legrand",
+   "motif": "^legrand\\b"
+  },
+  {
+   "nom": "Nexans",
+   "motif": "^nexans\\b"
+  },
+  {
+   "nom": "Air Liquide",
+   "motif": "\\bair liquide\\b|^airgas\\b"
+  },
+  {
+   "nom": "ArcelorMittal",
+   "motif": "\\barcelor"
+  },
+  {
+   "nom": "Siemens",
+   "motif": "^siemens\\b"
+  },
+  {
+   "nom": "Bosch",
+   "motif": "^bosch\\b|^robert bosch\\b"
+  },
+  {
+   "nom": "Liebherr",
+   "motif": "^liebherr\\b"
   },
   {
    "nom": "Engie",
-   "motif": "\\bengie\\b"
+   "motif": "\\bengie\\b|\\bgrtgaz\\b|\\bgrt gaz\\b|\\bstorengy\\b|\\belengy\\b|\\btractebel\\b"
   },
   {
    "nom": "EDF",
-   "motif": "^edf\\b|\\belectricite de france\\b"
+   "motif": "^edf\\b|\\belectricite de france\\b|^enedis\\b|^framatome\\b|^dalkia\\b|^rte\\b"
   },
   {
    "nom": "TotalEnergies",
-   "motif": "\\btotal ?energies\\b|^total\\b"
+   "motif": "\\btotal ?energies\\b|^total\\b|^hutchinson\\b|^saft\\b|^greenflex\\b"
   },
   {
    "nom": "Veolia",
    "motif": "\\bveolia\\b"
   },
   {
-   "nom": "Orange",
-   "motif": "^orange\\b"
+   "nom": "Vinci",
+   "motif": "^vinci\\b|^eurovia\\b|^soletanche\\b|^cobra ims\\b"
+  },
+  {
+   "nom": "Bouygues",
+   "motif": "^bouygues\\b|^colas\\b|^tf1\\b|^equans\\b"
+  },
+  {
+   "nom": "Eiffage",
+   "motif": "^eiffage\\b|^aprr\\b"
   },
   {
    "nom": "SNCF",
-   "motif": "\\bsncf\\b"
+   "motif": "\\bsncf\\b|^keolis\\b|^geodis\\b|^ouigo\\b"
   },
   {
    "nom": "RATP",
-   "motif": "\\bratp(group)?\\b"
-  },
-  {
-   "nom": "La Poste",
-   "motif": "\\bla poste\\b"
+   "motif": "\\bratp(group| dev)?\\b"
   },
   {
    "nom": "Air France-KLM",
-   "motif": "\\bair france\\b"
+   "motif": "\\bair france\\b|^klm\\b|^transavia\\b"
+  },
+  {
+   "nom": "CMA CGM",
+   "motif": "\\bcma cgm\\b|^ceva logistics\\b"
   },
   {
    "nom": "Bolloré",
    "motif": "\\bbollore\\b"
   },
   {
+   "nom": "Carrefour",
+   "motif": "^carrefour\\b"
+  },
+  {
+   "nom": "Groupe Casino",
+   "motif": "^casino (group|groupe|guichard)\\b|^groupe casino\\b|^monoprix\\b|^franprix\\b|^cdiscount\\b"
+  },
+  {
+   "nom": "Les Mousquetaires",
+   "motif": "\\bmousquetaires\\b|^intermarche\\b|^bricomarche\\b"
+  },
+  {
+   "nom": "Fnac Darty",
+   "motif": "^fnac\\b|^darty\\b"
+  },
+  {
+   "nom": "Adeo",
+   "motif": "^adeo\\b|^leroy merlin\\b"
+  },
+  {
+   "nom": "L’Oréal",
+   "motif": "\\bl ?.?oreal\\b"
+  },
+  {
+   "nom": "LVMH",
+   "motif": "\\blvmh\\b|^louis vuitton\\b|^christian dior\\b|^dior\\b|^sephora\\b|\\bmoet hennessy\\b|^bulgari\\b|^givenchy\\b|^guerlain\\b|^le bon marche\\b"
+  },
+  {
+   "nom": "Kering",
+   "motif": "^kering\\b|^gucci\\b|^saint laurent\\b|^balenciaga\\b|^bottega veneta\\b|^boucheron\\b"
+  },
+  {
+   "nom": "Danone",
+   "motif": "^danone\\b"
+  },
+  {
+   "nom": "Nestlé",
+   "motif": "^nestle\\b|^nespresso\\b|^purina\\b"
+  },
+  {
+   "nom": "Sodexo",
+   "motif": "^sodexo\\b|^pluxee\\b"
+  },
+  {
+   "nom": "Accor",
+   "motif": "^accor\\b|^novotel\\b|^sofitel\\b|^pullman\\b|^ibis\\b|^mercure\\b"
+  },
+  {
+   "nom": "Decathlon",
+   "motif": "^decathlon\\b"
+  },
+  {
+   "nom": "Orange",
+   "motif": "^orange\\b|^sofrecom\\b"
+  },
+  {
+   "nom": "Altice / SFR",
+   "motif": "^sfr\\b|^altice\\b"
+  },
+  {
+   "nom": "Iliad / Free",
+   "motif": "^iliad\\b|^free( mobile| pro)?$"
+  },
+  {
+   "nom": "Publicis Groupe",
+   "motif": "^publicis\\b|^saatchi\\b|^leo burnett\\b|^digitas\\b|^razorfish\\b|^epsilon france\\b"
+  },
+  {
+   "nom": "Havas",
+   "motif": "^havas\\b"
+  },
+  {
+   "nom": "Vivendi",
+   "motif": "^vivendi\\b|^canal\\+|^groupe canal\\b|^gameloft\\b"
+  },
+  {
+   "nom": "Lagardère",
+   "motif": "^lagardere\\b|^hachette\\b|^relay\\b"
+  },
+  {
+   "nom": "Alphabet / Google",
+   "motif": "^google\\b|^alphabet\\b|^youtube\\b|^deepmind\\b|^waymo\\b"
+  },
+  {
+   "nom": "Microsoft",
+   "motif": "^microsoft\\b|^linkedin\\b|^github\\b"
+  },
+  {
+   "nom": "Amazon",
+   "motif": "^amazon\\b|^aws\\b"
+  },
+  {
+   "nom": "Meta",
+   "motif": "^meta( platforms)?$|^facebook\\b|^instagram\\b|^whatsapp\\b"
+  },
+  {
+   "nom": "IBM",
+   "motif": "^ibm\\b|^red hat\\b"
+  },
+  {
+   "nom": "Salesforce",
+   "motif": "^salesforce\\b|^slack\\b|^mulesoft\\b"
+  },
+  {
    "nom": "Capgemini",
-   "motif": "\\bcapgemini\\b"
+   "motif": "\\bcapgemini\\b|^sogeti\\b|^altran\\b"
   },
   {
    "nom": "Sopra Steria",
@@ -2936,11 +3084,11 @@
   },
   {
    "nom": "Atos",
-   "motif": "^atos\\b"
+   "motif": "^atos\\b|^eviden\\b"
   },
   {
    "nom": "Accenture",
-   "motif": "\\baccenture\\b"
+   "motif": "\\baccenture\\b|^octo technology\\b"
   },
   {
    "nom": "Deloitte",
@@ -2963,40 +3111,32 @@
    "motif": "\\bmazars\\b"
   },
   {
+   "nom": "Grant Thornton",
+   "motif": "^grant thornton\\b"
+  },
+  {
    "nom": "Aubay",
    "motif": "^aubay\\b"
-  },
-  {
-   "nom": "L’Oréal",
-   "motif": "\\bl ?.?oreal\\b"
-  },
-  {
-   "nom": "LVMH",
-   "motif": "\\blvmh\\b"
-  },
-  {
-   "nom": "Carrefour",
-   "motif": "^carrefour\\b"
   },
   {
    "nom": "Devoteam",
    "motif": "^devoteam\\b"
   },
   {
-   "nom": "Equans",
-   "motif": "^equans\\b"
+   "nom": "Adecco Group",
+   "motif": "^adecco\\b|^akkodis\\b|^modis\\b"
   },
   {
-   "nom": "Nissan",
-   "motif": "^nissan\\b"
+   "nom": "Alten",
+   "motif": "^alten\\b"
   },
   {
-   "nom": "Liebherr",
-   "motif": "^liebherr\\b"
+   "nom": "Sanofi",
+   "motif": "^sanofi\\b|^opella\\b"
   },
   {
-   "nom": "Grant Thornton",
-   "motif": "^grant thornton\\b"
+   "nom": "Clariane",
+   "motif": "^clariane\\b|^korian\\b"
   },
   {
    "nom": "Indépendant",
