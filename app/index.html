@@ -982,7 +982,8 @@ function builtinSector(k){
   const noTld = k.replace(/\.(fr|com|io|co|net|org|ai|eu|ch|be|ca)$/, '');
   const noLead = noTld.replace(/^(groupe|group|the) /, '');
   const parts = noLead.split(/ [-|–—:] | ?[()]/).map(s => s.trim()).filter(Boolean);
-  for(const t of new Set([k, noTld, noLead, ...parts])){ const r = builtinMatch(t); if(r) return r; }
+  /* « Wilo Group », « GEZE GmbH », « Exameca SA » : sans la forme juridique ni « Group », le nom court est reconnu */
+  for(const t of new Set([k, noTld, noLead, spellKey(k), ...parts])){ const r = builtinMatch(t); if(r) return r; }
   return null;
 }
 /* Domaines officiels des entreprises (data/domaines.json, chargé par loadDictionary) */

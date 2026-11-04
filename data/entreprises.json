@@ -194,7 +194,8 @@
    "improvalue",
    "x-pm",
    "intescia",
-   "intescia group"
+   "intescia group",
+   "partena professional"
   ],
   "Banque & assurance": [
    "bnp paribas",
@@ -577,7 +578,9 @@
    "logion finance",
    "greenwich dealing",
    "real commodities",
-   "stratnfi"
+   "stratnfi",
+   "dfcg",
+   "cdc benin"
   ],
   "Immobilier & construction": [
    "vinci",
@@ -839,7 +842,9 @@
    "la martiniquaise-bardinet",
    "lecofruit",
    "pomona",
-   "sysco"
+   "sysco",
+   "pour une agriculture du vivant",
+   "domaine alain chabanon"
   ],
   "Tourisme, hôtellerie & restauration": [
    "accor",
@@ -1107,7 +1112,8 @@
    "fdj united",
    "betclic",
    "betclic group",
-   "paris saint-germain"
+   "paris saint-germain",
+   "acpm"
   ],
   "Transport & mobilité": [
    "sncf",
@@ -1238,7 +1244,9 @@
    "transit international",
    "compagnie du chemin de fer montreux oberland bernois",
    "oreve",
-   "isc applied systems"
+   "isc applied systems",
+   "post office ltd",
+   "post office"
   ],
   "Retail & conso": [
    "carrefour",
@@ -2093,7 +2101,13 @@
    "sdis 78",
    "cavendish laboratory",
    "cfai mecavenir",
-   "maria schools"
+   "maria schools",
+   "groupe medisup",
+   "medisup",
+   "mavoie.org",
+   "mavoie",
+   "association internationale des maires francophones",
+   "cooperation cote d ivoire-union europeenne"
   ],
   "Tech & logiciel": [
    "google",
@@ -2387,7 +2401,15 @@
    "netmo",
    "selency",
    "wecasa",
-   "linkbycar"
+   "linkbycar",
+   "xerox",
+   "biomemory",
+   "apheris",
+   "teamout",
+   "outmatch",
+   "gens de confiance",
+   "clusif",
+   "france ia"
   ],
   "Énergie & industrie": [
    "renault",
@@ -2542,7 +2564,19 @@
    "spie",
    "equans",
    "ineo",
-   "chantier naval couach"
+   "chantier naval couach",
+   "fev europe",
+   "greenflex",
+   "e-totem",
+   "alcen",
+   "adr - alcen",
+   "exameca",
+   "le belier",
+   "comeca",
+   "agrivolt",
+   "la societe africaine de raffinage",
+   "societe africaine de raffinage",
+   "societe camerounaise de raffinage"
   ]
  },
  "mots_cles": [
