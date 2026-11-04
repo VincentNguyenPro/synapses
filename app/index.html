@@ -2163,8 +2163,8 @@ function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.class
 function select(id){
   const wasHub = /^h:/.test(state.selected || '');
   releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); styleLabels();
-  /* La légende suit le groupe sélectionné (et revient au réseau entier quand il est désélectionné) */
-  if(nodes.length && (wasHub || /^h:/.test(id || ''))){ updateLegend(contacts.filter(pass)); renderViews(); }
+  /* Groupe ouvert ou refermé : la vue correspondante est cochée ou décochée dans « Mes vues » */
+  if(nodes.length && (wasHub || /^h:/.test(id || ''))) renderViews();
 }
 /* Après un nouveau rendu (filtre, redimensionnement…), on réapplique la surbrillance et le cercle de collègues de la sélection */
 function reapplySelection(){
@@ -2274,21 +2274,20 @@ function updateLegend(vis){
   const cdim = DIMS[state.colorBy];
   const canFilter = isFilterDim(state.colorBy);
   const sel = canFilter ? state.include[state.colorBy] : new Set();
-  /* Groupe sélectionné : la légende ne compte que ses contacts, avec exactement les grappes dessinées autour de lui */
-  const selHub = state.view === 'graph' && state.selected ? nodes.find(n => n.id === state.selected && n.type === 'hub') : null;
-  const base = selHub ? nodes.filter(n => n.type === 'c' && n.hub === selHub.id).map(n => n.c) : canFilter ? contacts.filter(c => pass(c, state.colorBy)) : vis;
-  /* Valeurs à grappes par groupe (entreprise…) : chaque valeur réelle, pastille grise si elle n’a de grappe nulle part */
-  const perHub = levelMap.size > 0 && !selHub;
-  const counts = d3.rollup(base, v => v.length, selHub ? levelOf : perHub ? cdim.get : colorLevel);
+  const base = canFilter ? contacts.filter(c => pass(c, state.colorBy)) : vis;
+  /* Valeurs à grappes par groupe (entreprise…) : chaque valeur réelle, pastille grise si elle n’a de grappe nulle part.
+     La légende est masquée quand la fiche d’un groupe est ouverte : sa répartition la remplace (syncLegendRoom). */
+  const perHub = levelMap.size > 0;
+  const counts = d3.rollup(base, v => v.length, perHub ? cdim.get : colorLevel);
   const drawn = perHub ? new Set(levelMap.values()) : null;
   const dotOf = v => perHub && !drawn.has(v) ? GREY : colorFn(v);
-  const shown = sortDesc(selHub || perHub ? [...counts.keys()] : colorDomain.filter(v => counts.get(v)), counts);
+  const shown = sortDesc(perHub ? [...counts.keys()] : colorDomain.filter(v => counts.get(v)), counts);
   const max = legendAll ? 999 : 8;
   const maxL = d3.max(shown, v => counts.get(v)) || 1;
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}${selHub ? ` · ${esc(selHub.key)}` : ''}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
     const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${dotOf(v)}"></span><span class="dot" style="background:${dotOf(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
     return `<li>${canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`}</li>`;
-  }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : `Voir les ${shown.length - 8} autres`}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}<p class="more" style="margin:8px 6px 0">Jauge et teinte d’un groupe : sa part des contacts affichés</p></div>`;
+  }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (shown.length === 9 ? 'Voir l’autre' : `Voir les ${shown.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}<p class="more" style="margin:8px 6px 0">Jauge et teinte d’un groupe : sa part des contacts affichés</p></div>`;
   $('#legend').hidden = !base.length;
 }
 
@@ -2357,7 +2356,7 @@ function openDrawer(html){
 function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); canvas.classList.remove('has-drawer'); document.body.classList.remove('drawer-open'); syncLegendRoom(); }
 /* Fiche ouverte et moins de 760 px de graphe à côté : la légende (déjà détaillée dans la fiche) est masquée,
    sinon elle occupe le milieu de la zone libre et le zoom ne peut plus cadrer la sélection */
-function syncLegendRoom(){ canvas.classList.toggle('lg-room', drawer.classList.contains('open') && canvas.clientWidth - drawer.offsetWidth < 760); }
+function syncLegendRoom(){ canvas.classList.toggle('lg-room', drawer.classList.contains('open') && (/^h:/.test(state.selected || '') || canvas.clientWidth - drawer.offsetWidth < 760)); }
 const fmtDate = d => d ? d.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'Inconnue';
 
 function showContact(c){
