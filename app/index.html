@@ -2467,7 +2467,8 @@ function reapplySelection(){
 function clearSelection(){
   const was = openHubInfo && ![...legendOpen].some(x => x.startsWith('g:'));
   select(null); clearFocus(); closeDrawer();
-  if(was && levelMap.size) render(); else if(state.view === 'graph') fit();
+  /* Retour au cadrage d’avant la fiche : l’entreprise choisie dans la légende, sinon le groupe ouvert, sinon tout le réseau */
+  if(was && levelMap.size) render(); else if(state.view === 'graph' && !applyLegendHL(true) && !focusLegendGroup(true)) fit();
 }
 
 /* Zoom animé sur le nœud sélectionné, centré dans la zone laissée libre par la fiche */
