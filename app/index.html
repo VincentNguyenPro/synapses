@@ -1044,7 +1044,7 @@ let colorLevel = c => DIMS[state.colorBy].get(c);
 /* Grappes par groupe : quand « Colorer par » a trop de valeurs (entreprise…) et diffère du regroupement, chaque groupe garde
    une grappe pour chacune de ses HUB_MAX valeurs principales (au moins 2 contacts), les autres vont dans « Autres ».
    levelMap (id du contact → grappe) est recalculé à chaque dessin du graphe. */
-const HUB_MAX = 8, LEGEND_TOP = 15, RING_MIN = 16;
+const HUB_MAX = 8, LEGEND_TOP = 15, OPEN_MAX = 40; /* OPEN_MAX : au-delà, un seul cercle devient immense et les petites grappes illisibles */
 let openTop = LEGEND_TOP; /* nombre de valeurs (et de grappes) du groupe ouvert dans la légende ; « Afficher 10 grappes de plus » l’augmente */
 let levelMap = new Map(), colorAssign = new Map();
 const levelOf = c => levelMap.get(c.id) ?? colorLevel(c);
@@ -1739,11 +1739,11 @@ function syncTopN(total){
   if(total != null) lastHubTotal = total; else total = lastHubTotal;
   const lbl = document.getElementById('topNLbl'), hint = document.getElementById('topNHint');
   if(openHubInfo){
-    const tot = openHubInfo.eligible, n = Math.min(openTop, tot);
-    f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, tot); r.value = n;
+    const tot = openHubInfo.eligible, n = Math.min(openTop, tot, OPEN_MAX);
+    f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, Math.min(tot, OPEN_MAX)); r.value = n;
     lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
     document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
-    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, serrées en bouquet au-delà de ${RING_MIN}, les plus grosses au centre ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, sur un seul cercle, de la plus petite à midi à la plus grosse, jusqu’à ${OPEN_MAX} ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
@@ -2033,39 +2033,14 @@ function applyLayout(){
           blobs.push(s);
         });
       };
-      if(subs.length <= RING_MIN){
-        /* Un seul anneau. La grappe la plus proche reste à distance de la jauge du groupe (rayon + 5,5 px) */
-        const tot = d3.sum(subs, s => s.br + g / 2);
-        let D = hn.r + 12 + d3.max(subs, s => s.br);
-        subs.forEach(s => { const th = 2 * Math.PI * (s.br + g / 2) / tot; if(th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(th / 2)); });
-        place(subs, D);
-        hn.outer = D + d3.max(subs, s => s.br) + 1;
-      } else {
-        /* Beaucoup de grappes (groupe ouvert dans la légende) : un bouquet de bulles serrées autour du groupe, sans anneaux
-           (des anneaux se lisaient comme une distance qui ne veut rien dire). Les plus grosses d’abord, chacune posée au plus près
-           du groupe sans toucher le groupe ni une autre grappe ; « autres » en dernier, à l’extérieur. */
-        const bySize = [...subs].sort((a, b) => (a.lv === colorOther) - (b.lv === colorOther) || b.br - a.br || levels.indexOf(a.lv) - levels.indexOf(b.lv));
-        const gap = 6, placed = [{cx:0, cy:0, br:hn.r + 8}];
-        const fits = (x, y, r) => placed.every(q => Math.hypot(x - q.cx, y - q.cy) >= q.br + r + gap - 1e-6);
-        bySize.forEach(sb => {
-          const r = sb.br; let best = null, bd = Infinity;
-          const tryAt = (x, y) => { const d = Math.hypot(x, y); if(d < bd - 1e-6 && fits(x, y, r)){ bd = d; best = [x, y]; } };
-          if(placed.length === 1) tryAt(0, -(placed[0].br + r + gap));
-          for(let a = 0; a < placed.length; a++) for(let b = a + 1; b < placed.length; b++){
-            const A = placed[a], B = placed[b], ra = A.br + r + gap, rb = B.br + r + gap;
-            const dx = B.cx - A.cx, dy = B.cy - A.cy, d = Math.hypot(dx, dy);
-            if(d > ra + rb || d < Math.abs(ra - rb) || d === 0) continue;
-            const l = (ra * ra - rb * rb + d * d) / (2 * d), h = Math.sqrt(Math.max(0, ra * ra - l * l));
-            const mx = A.cx + dx * l / d, my = A.cy + dy * l / d;
-            tryAt(mx - dy * h / d, my + dx * h / d); tryAt(mx + dy * h / d, my - dx * h / d);
-          }
-          if(!best) best = [0, -(d3.max(placed, q => Math.hypot(q.cx, q.cy) + q.br) + r + gap)];
-          sb.cx = best[0]; sb.cy = best[1]; placed.push(sb);
-          sb.arr.forEach((m, k) => { const rr = c * Math.sqrt(k + 0.5), th = k * GOLDEN; local.push({x:sb.cx + rr * Math.cos(th), y:sb.cy + rr * Math.sin(th)}); ordered.push(m); });
-          blobs.push(sb);
-        });
-        hn.outer = d3.max(bySize, sb => Math.hypot(sb.cx, sb.cy) + sb.br) + 1;
-      }
+      /* Un seul cercle, quel que soit le nombre de grappes (choix de Vincent : ni anneaux ni bouquet). La grappe la plus proche
+         reste à distance de la jauge du groupe ; « autres » est placée en dernier */
+      const ring = [...subs].sort((a, b) => (a.lv === colorOther) - (b.lv === colorOther) || a.arr.length - b.arr.length || levels.indexOf(a.lv) - levels.indexOf(b.lv));
+      const tot = d3.sum(ring, s => s.br + g / 2);
+      let D = hn.r + 12 + d3.max(ring, s => s.br);
+      ring.forEach(s => { const th = 2 * Math.PI * (s.br + g / 2) / tot; if(th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(th / 2)); });
+      place(ring, D);
+      hn.outer = D + d3.max(ring, s => s.br) + 1;
     }
     hn.members = ordered; hn.local = local; hn.blobs = blobs;
   });
@@ -2154,7 +2129,7 @@ function renderGraph(vis){
       const isOpen = openHub && hid === 'h:' + openHub.slice(2);
       const minK = isOpen ? 1 : 2; /* groupe ouvert : même une entreprise d’un seul contact peut avoir sa grappe (nom au survol) */
       if(isOpen) openHubInfo = {key:openHub.slice(2), eligible:[...cnt].filter(([v, k]) => k >= minK && !TAIL.includes(v)).length};
-      const cap = isOpen ? openTop : HUB_MAX;
+      const cap = isOpen ? Math.min(openTop, OPEN_MAX) : HUB_MAX;
       const top = new Set([...cnt].filter(([v, k]) => k >= minK && !TAIL.includes(v)).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr')).slice(0, cap).map(([v]) => v));
       ms.forEach(n => { const v = get(n.c); levelMap.set(n.c.id, top.has(v) ? v : colorOther); });
       hubTops.push(top);
@@ -2580,7 +2555,8 @@ function legendTree(vis){
     const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, openTop), rest = d3.sum(vals.slice(openTop), v => cnt.get(v));
     /* Grappes possibles : valeurs d’au moins 2 contacts (une grappe d’un seul point n’a pas de sens) */
     const eligible = vals.filter(v => cnt.get(v) >= 1 && !TAIL.includes(v)).length;
-    const moreHtml = levelMap.size && (eligible > openTop || openTop > LEGEND_TOP) ? `<li class="lgmore">${eligible > openTop ? `<button type="button" class="linkbtn" data-act="lgmore">Afficher ${Math.min(10, eligible - openTop)} grappe${Math.min(10, eligible - openTop) > 1 ? 's' : ''} de plus</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">Revenir à ${LEGEND_TOP}</button>` : ''}</li>` : '';
+    const canMore = Math.min(eligible, OPEN_MAX) - openTop, more = Math.min(10, canMore);
+    const moreHtml = levelMap.size && (canMore > 0 || openTop > LEGEND_TOP) ? `<li class="lgmore">${canMore > 0 ? `<button type="button" class="linkbtn" data-act="lgmore">Afficher ${more} grappe${more > 1 ? 's' : ''} de plus</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">Revenir à ${LEGEND_TOP}</button>` : ''}</li>` : '';
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li>${head}<ul class="lgvals">${top.map(v => {
       const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
@@ -3095,7 +3071,7 @@ $('#logosOn').addEventListener('change', e => {
 });
 $('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
 $('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
-$('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = +e.target.value; render(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
+$('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = Math.min(+e.target.value, OPEN_MAX); render(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
 $('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } applyFilters(); });
 $('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
@@ -3117,7 +3093,7 @@ document.addEventListener('click', e => {
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
     else if(a === 'shareview') shareView();
-    else if(a === 'lgmore' || a === 'lgless'){ openTop = a === 'lgmore' ? openTop + 10 : LEGEND_TOP; render(); }
+    else if(a === 'lgmore' || a === 'lgless'){ openTop = a === 'lgmore' ? Math.min(openTop + 10, OPEN_MAX) : LEGEND_TOP; render(); }
     else if(a === 'lgsub'){
       const v = act.dataset.v, open = !legendOpen.has(v);
       if(v.startsWith('g:')) openTop = LEGEND_TOP;
