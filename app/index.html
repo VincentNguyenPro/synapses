@@ -863,7 +863,8 @@ const DIMS = {
   exp:      {label:'Expérience', get:c => c.exp || 'Non renseignée', order:EXP_ORDER, optional:'exp'},
   tag:      {label:'Tag', get:c => tagOf(c) || 'Sans tag', order:[...TAGS, 'Sans tag']}
 };
-const TAIL = ['Non classé','Autre','Non renseignée','Non renseigné','Inconnue','Sans entreprise','Sans tag'];
+const NO_SECTOR = 'Indépendant / sans entreprise', NO_COMPANY_GROUPS = new Set(['Indépendant', 'Non communiqué']);
+const TAIL = [NO_SECTOR, 'Non classé','Autre','Non renseignée','Non renseigné','Inconnue','Sans entreprise','Sans tag'];
 const PALETTE = ['#2F5BEA','#12A39A','#D9A21B','#C2417A','#6C4FD8','#3E9B4F','#E2702F','#4A86B5','#A0703F','#8C5FA8','#7A8B1F','#B23A3A','#0E7490','#9D5C0D','#5B21B6'];
 const GREY = '#8A97A6';
 const FILTERS = [['sector','f-sector'],['fn','f-fn'],['seniority','f-seniority'],['school','f-school'],['country','f-country'],['location','f-location'],['exp','f-exp'],['tag','f-tag']];
@@ -931,7 +932,7 @@ async function loadDictionary(){
   FN_DEFAULT = po.fonction_par_defaut || 'Autre';
   SEN_RULES = po.seniorite.map(m => [m.niveau, new RegExp(m.motif)]);
   SEN_DEFAULT = po.seniorite_par_defaut || 'Confirmé';
-  SECTOR_LABELS = [...SECTORS.map(x => x[0]), 'Non classé'];
+  SECTOR_LABELS = [...SECTORS.map(x => x[0]), NO_SECTOR, 'Non classé'];
   FN_LABELS = [...FUNCTIONS.map(x => x[0]), FN_DEFAULT];
 }
 /* Groupe d’entreprises (data/entreprises.json, « groupes ») : « BNP Paribas Cardif » → BNP Paribas, « Freelance » → Indépendant.
@@ -962,6 +963,8 @@ function assignGroups(list){
     const k = spellKey(c.company);
     c.group = groupOf(c.company) || parentOf(k) || best.get(k) || c.company;
   });
+  /* Indépendants, entreprise non communiquée ou absente : un secteur à part, pour que « Non classé » ne garde que les vraies entreprises inconnues */
+  list.forEach(c => { if(!c.sectorGiven && c.sector === 'Non classé' && (!c.company || NO_COMPANY_GROUPS.has(c.group))) c.sector = NO_SECTOR; });
 }
 const coOf = c => c.group || c.company;
 /* Correspondance exacte, puis par début de nom, en ignorant les premiers mots trop génériques */

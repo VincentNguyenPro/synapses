@@ -3000,7 +3000,11 @@
   },
   {
    "nom": "Indépendant",
-   "motif": "\\b(independant\\w*|freelance\\w*|free[- ]lance\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*)\\b"
+   "motif": "\\b(independant\\w*|freelance\\w*|free[- ]lance\\w*|frelance\\w*|freelancer\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*|business entrepreneur|entrepreneur individuel|a (mon|son) compte|kendi isim|projet personnel)\\b|عمل خاص"
+  },
+  {
+   "nom": "Non communiqué",
+   "motif": "^(confidenti\\w*|anonyme?|anonymous|stealth( startup| mode| company)?|stealth\\w*|prive|private|entreprise privee|nc|n ?/ ?a|none|aucune?|top secret|en recherche( active)?( d emploi)?|recherche d emploi|open to work|plusieurs entreprises|divers|xx+)$|^[^a-z0-9؀-ۿ一-鿿]*$"
   }
  ]
 }
