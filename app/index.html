@@ -3004,19 +3004,34 @@ const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div cl
   + (subs.length > 30 ? `<div class="${top ? '' : 'sub'}"><span>et ${subs.length - 30} autres</span></div>` : '');
 /* Fiche d’un groupe : une ligne de la répartition (entreprise, filiale ou « autres ») met ses contacts en surbrillance
    dans le graphe ; un second clic revient au groupe entier */
+/* Contacts d’une ligne de la répartition (valeur, entité ou « autres ») parmi ceux du groupe sélectionné */
+function rowMatch(row){
+  const get = DIMS[state.colorBy].get;
+  if(row.dataset.hlv != null) return n => get(n.c) === row.dataset.hlv;
+  if(row.dataset.hle != null) return n => entityOf(n.c) === row.dataset.hle;
+  const listed = new Set([...dbody.querySelectorAll('[data-hlv]')].map(r => r.dataset.hlv)); return n => !listed.has(get(n.c));
+}
+/* Survol (souris) d’une ligne de la fiche : ses contacts s’allument dans le graphe ; en la quittant, retour à la ligne cliquée ou au groupe */
+let drawerHover = null;
+document.addEventListener('pointerover', e => {
+  if(e.pointerType === 'touch' || state.view !== 'graph') return;
+  const row = e.target.closest && e.target.closest('.drawer .hl[data-hlv], .drawer .hl[data-hle], .drawer .hl[data-hlrest]');
+  if(row === drawerHover) return;
+  const prev = drawerHover; drawerHover = row;
+  if(!row && !prev) return; /* rien à restaurer : on ne touche pas aux autres surbrillances */
+  const hub = nodes.find(n => n.id === state.selected && n.type === 'hub'); if(!hub) return;
+  const members = nodes.filter(n => n.type === 'c' && n.hub === hub.id);
+  const ref = row || dbody.querySelector('.hl.on');
+  const match = ref ? rowMatch(ref) : () => true;
+  focus(new Set([hub.id, ...members.filter(match).map(n => n.id)]));
+});
 function highlightRow(row){
   const hub = nodes.find(n => n.id === state.selected && n.type === 'hub'); if(!hub) return;
   const members = nodes.filter(n => n.type === 'c' && n.hub === hub.id);
   const on = !row.classList.contains('on');
   dbody.querySelectorAll('.hl.on').forEach(r => r.classList.remove('on'));
   let match = () => true;
-  if(on){
-    row.classList.add('on');
-    const get = DIMS[state.colorBy].get;
-    if(row.dataset.hlv != null) match = n => get(n.c) === row.dataset.hlv;
-    else if(row.dataset.hle != null) match = n => entityOf(n.c) === row.dataset.hle;
-    else { const listed = new Set([...dbody.querySelectorAll('[data-hlv]')].map(r => r.dataset.hlv)); match = n => !listed.has(get(n.c)); }
-  }
+  if(on){ row.classList.add('on'); match = rowMatch(row); }
   focus(new Set([hub.id, ...members.filter(match).map(n => n.id)]));
 }
 /* Bulle avec le nom complet au survol d’un nom coupé par « … » (répartition, légende, filtres) */
