@@ -2802,11 +2802,7 @@
   },
   {
    "nom": "Renault Group",
-   "motif": "\\brenault\\b"
-  },
-  {
-   "nom": "Ampere",
-   "motif": "^ampere\\b"
+   "motif": "\\brenault\\b|^ampere\\b|^dacia\\b|^alpine( cars| racing| f1 team)?$|^mobilize\\b|^rci (banque|bank)\\b"
   },
   {
    "nom": "Horse",

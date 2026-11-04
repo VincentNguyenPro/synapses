@@ -125,10 +125,6 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .hlkey{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
 .hlkt{flex-basis:100%;font-weight:700;color:var(--ink)}
 .hlki{display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
-.cval{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap}
-/* Valeur longue (entreprise…) : coupée par « … » pour laisser la place au nom et au lien du contact */
-.cval{flex:0 1 auto;min-width:0;max-width:40%}
-.cvt{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .colllbl{font-weight:700;fill:var(--ink);text-anchor:middle;dominant-baseline:hanging;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;pointer-events:none}
 @media (prefers-reduced-motion: reduce){.chip.frow .fbar{transition:none}}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
@@ -265,6 +261,16 @@ button.lg:hover{background:var(--surface-2)}
 .lg.off:hover{opacity:.8}
 .lg:focus-visible{outline:2px solid var(--accent)}
 .lgl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lgwrap{display:flex;flex-wrap:wrap;align-items:flex-start}
+.lgwrap > .lg{flex:1;min-width:0;width:auto}
+.lgx{all:unset;flex:none;width:22px;height:26px;cursor:pointer;border-radius:6px;position:relative}
+.lgx::after{content:"";position:absolute;left:7px;top:8px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+.lgx[aria-expanded="true"]::after{transform:rotate(45deg);top:7px}
+.lgx:hover{background:var(--surface-2)}
+.lgx:focus-visible{outline:2px solid var(--accent)}
+.lgsubs{flex-basis:100%;list-style:none;margin:0 0 6px;padding:0 0 0 22px}
+.lgsubs li{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted);padding:2px 26px 2px 6px}
+.lgsubs li span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
 .lg .n{color:var(--muted)}
 .legendbox .more{font-size:12px;color:var(--muted);margin:2px 6px 0}
 .zoombar{position:absolute;right:16px;top:16px;display:flex;flex-direction:column;gap:6px;z-index:2}
@@ -322,6 +328,10 @@ button.lg:hover{background:var(--surface-2)}
 .drawer .legendlist details summary:hover{background:var(--surface-2)}
 .drawer .legendlist details summary:focus-visible{outline:2px solid var(--accent)}
 .drawer .legendlist .sub{padding-left:18px;font-size:12.5px;color:var(--muted)}
+.drawer .legendlist .hl{cursor:pointer;border-radius:6px}
+.drawer .legendlist .hl:hover{background:var(--surface-2)}
+.drawer .legendlist .hl:focus-visible{outline:2px solid var(--accent)}
+.drawer .legendlist .hl.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent);font-weight:700;color:var(--ink)}
 /* Noms longs coupés par « … » : la liste ne déborde jamais du panneau */
 .drawer .legendlist{grid-template-columns:minmax(0,1fr)}
 .drawer .legendlist details{min-width:0}
@@ -333,11 +343,14 @@ button.lg:hover{background:var(--surface-2)}
 .lrow:focus-visible{outline:2px solid var(--accent)}
 .who{flex:1;min-width:0;font-size:14px}
 .who strong{display:block}
-.who span{display:block;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who span{display:block;color:var(--muted);font-size:13px;white-space:normal;overflow-wrap:anywhere}
+.who strong{overflow-wrap:anywhere}
+.who .tagpill{display:inline-block;vertical-align:1px;margin-left:4px;color:var(--ink)}
+.who .cline{display:flex;align-items:baseline;gap:6px;font-size:12.5px;margin-top:1px}
+.who .cline .dot{flex:none;transform:translateY(-1px)}
 /* Raisons de proximité : une ligne à part sous le contact, alignée sur son nom */
-.lrow{flex-wrap:wrap;row-gap:4px}
-.proxrow{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px;padding-left:46px}
-.pchip{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px}
+.who .proxrow{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.who .pchip{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px}
 .h3sub{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
 .lk{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;padding:8px;border-radius:8px;white-space:nowrap}
 .lk:hover{background:var(--accent-soft)}
@@ -2017,6 +2030,20 @@ function renderGraph(vis){
   const me = {id:'me', type:'me', r:mp.name ? 38 : 26, x:w / 2, y:h / 2, fx:w / 2, fy:h / 2};
   nodes = [me, ...hubNodes, ...cNodes];
   applyLayout();
+  /* Regroupement par entreprise : chaque rond d’entreprise est agrandi pour que son logo (ou monogramme) mesure
+     au moins LOGO_PX à l’écran une fois le graphe cadré ; la disposition est recalculée avec ces tailles (aucun chevauchement).
+     Le poids d’une entreprise reste lisible par la jauge, la teinte, l’épaisseur de branche et le pourcentage. */
+  if(state.groupBy === 'company' && hubNodes.length > 1){
+    hubNodes.forEach(h => { h.baseR = h.r; });
+    for(let it = 0; it < 4; it++){
+      const k = estimateFitK();
+      const want = Math.min(260, LOGO_PX / 2 / k);
+      let changed = false;
+      hubNodes.forEach(h => { if(h.key === other) return; const nr = Math.max(h.baseR, want); if(Math.abs(nr - h.r) > 0.5){ h.r = nr; changed = true; } });
+      if(!changed) break;
+      applyLayout();
+    }
+  }
   drawRings();
   links = [...hubNodes.map(hn => ({key:'me>' + hn.id, source:'me', target:hn.id, me:true})), ...cNodes.map(n => ({key:n.id, source:n.id, target:n.hub}))];
   const sameDim = state.groupBy === state.colorBy;
@@ -2103,6 +2130,14 @@ function renderGraph(vis){
 }
 
 /* Zone réellement visible du graphe : on retire la place occupée par la légende (à droite ou en bas, selon ce qui laisse le plus d’espace) */
+/* Zoom de cadrage estimé d’après l’étendue des nœuds (les noms des groupes demandent un peu plus de place : marge de 15 %) */
+const LOGO_PX = 34;
+function estimateFitK(){
+  let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
+  nodes.forEach(n => { const x = n.ax ?? n.fx ?? n.x, y = n.ay ?? n.fy ?? n.y; L = Math.min(L, x - n.r); R = Math.max(R, x + n.r); T = Math.min(T, y - n.r); B = Math.max(B, y + n.r); });
+  const vb = viewport();
+  return Math.max(0.05, Math.min((vb.w - 28) / Math.max(1, R - L), (vb.h - 28) / Math.max(1, B - T)) * 0.85);
+}
 function viewport(){
   const w = W(), h = H();
   const lg = document.getElementById('legend');
@@ -2270,6 +2305,7 @@ function sortDesc(vals, counts){
   const last = v => v === colorOther || TAIL.includes(v) ? 1 : 0;
   return [...vals].sort((a, b) => last(a) - last(b) || counts.get(b) - counts.get(a) || String(a).localeCompare(String(b), 'fr'));
 }
+const legendOpen = new Set();
 function updateLegend(vis){
   const cdim = DIMS[state.colorBy];
   const canFilter = isFilterDim(state.colorBy);
@@ -2286,7 +2322,12 @@ function updateLegend(vis){
   const maxL = d3.max(shown, v => counts.get(v)) || 1;
   $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
     const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${dotOf(v)}"></span><span class="dot" style="background:${dotOf(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
-    return `<li>${canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`}</li>`;
+    const row = canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`;
+    /* Groupe qui réunit plusieurs entités : un chevron déplie ses filiales */
+    const subs = state.colorBy === 'company' ? entitiesOf(base.filter(c => coOf(c) === v)) : [];
+    if(subs.length < 2) return `<li>${row}</li>`;
+    const open = legendOpen.has(v);
+    return `<li class="lgwrap">${row}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(v)}" aria-expanded="${open}" aria-label="${open ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${open ? `<ul class="lgsubs">${subs.map(([k, n]) => `<li><span>${esc(k)}</span><span class="n">${n}</span></li>`).join('')}</ul>` : ''}</li>`;
   }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (shown.length === 9 ? 'Voir l’autre' : `Voir les ${shown.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}<p class="more" style="margin:8px 6px 0">Jauge et teinte d’un groupe : sa part des contacts affichés</p></div>`;
   $('#legend').hidden = !base.length;
 }
@@ -2312,7 +2353,10 @@ function updatePanel(vis){
 function personRow(o){
   const url = /^https:\/\//.test(o.url) ? o.url : '';
   const t = tagOf(o);
-  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}</strong><span>${esc(o.position || 'Poste non renseigné')}${o.company ? ', ' + esc(o.company) : ''}</span></span><span class="cval" title="${esc(DIMS[state.colorBy].get(o))}"><span class="dot" style="background:${colorOf(o)}"></span><span class="cvt">${esc(DIMS[state.colorBy].get(o))}</span></span>${t ? `<span class="tagpill">${esc(t)}</span>` : ''}${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : ''}</li>`;
+  /* Tout s’affiche en entier (retours à la ligne, jamais de « … ») : nom, poste, valeur de « Colorer par », raisons de proximité */
+  const byCo = state.colorBy === 'company', val = DIMS[state.colorBy].get(o);
+  const valTxt = byCo && o.company && o.company !== val ? `${val} · ${o.company}` : val;
+  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(t)}</span>` : ''}</strong><span>${esc(o.position || 'Poste non renseigné')}${!byCo && o.company ? ', ' + esc(o.company) : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : ''}</li>`;
 }
 function peopleList(items, title, limit, keepOrder){
   if(!items.length) return '';
@@ -2411,8 +2455,26 @@ function entitiesOf(list){
   const m = d3.rollup(list.filter(c => c.company), v => v.length, c => c.company);
   return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
 }
-const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div class="${top ? '' : 'sub'}"><span>${esc(k)}</span><span class="n">${n}</span><span class="pct">${pct(n, total)}</span></div>`).join('')
+const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div class="hl${top ? '' : ' sub'}" role="button" tabindex="0" data-hle="${esc(k)}"><span>${esc(k)}</span><span class="n">${n}</span><span class="pct">${pct(n, total)}</span></div>`).join('')
   + (subs.length > 30 ? `<div class="${top ? '' : 'sub'}"><span>et ${subs.length - 30} autres</span></div>` : '');
+/* Fiche d’un groupe : une ligne de la répartition (entreprise, filiale ou « autres ») met ses contacts en surbrillance
+   dans le graphe ; un second clic revient au groupe entier */
+function highlightRow(row){
+  const hub = nodes.find(n => n.id === state.selected && n.type === 'hub'); if(!hub) return;
+  const members = nodes.filter(n => n.type === 'c' && n.hub === hub.id);
+  const on = !row.classList.contains('on');
+  dbody.querySelectorAll('.hl.on').forEach(r => r.classList.remove('on'));
+  let match = () => true;
+  if(on){
+    row.classList.add('on');
+    const get = DIMS[state.colorBy].get;
+    if(row.dataset.hlv != null) match = n => get(n.c) === row.dataset.hlv;
+    else if(row.dataset.hle != null) match = n => n.c.company === row.dataset.hle;
+    else { const listed = new Set([...dbody.querySelectorAll('[data-hlv]')].map(r => r.dataset.hlv)); match = n => !listed.has(get(n.c)); }
+  }
+  focus(new Set([hub.id, ...members.filter(match).map(n => n.id)]));
+}
+document.addEventListener('keydown', e => { const r = e.target.closest && e.target.closest('#drawerBody div.hl'); if(r && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); highlightRow(r); } });
 function showHub(h){
   select(h.id);
   const members = nodes.filter(n => n.type === 'c' && n.hub === h.id).map(n => n.c);
@@ -2437,12 +2499,13 @@ function showHub(h){
       <h3>Groupes réunis ici</h3>
       <ul class="people">${h.others.map(([k, n]) => `<li><button class="lrow" type="button" ${isFilterDim(state.groupBy) ? `data-only="${state.groupBy}" data-v="${esc(k)}"` : ''} title="N’afficher que ce groupe"><span class="who"><strong>${esc(k)}</strong><span>${n} contact${n > 1 ? 's' : ''}</span></span></button></li>`).join('')}</ul>` : ''}
     <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
+    <p class="hint" style="margin:0 0 10px">Touche une ligne pour voir ces contacts dans le graphe.</p>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${counts.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
     <div class="legendlist${state.colorBy === 'company' ? ' withsubs' : ''}">${top20.map(v => {
       const row = `<span class="dot" style="background:${dotR(v)}"></span><span>${esc(v)}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span>`;
       const subs = state.colorBy === 'company' ? entitiesOf(members.filter(c => coOf(c) === v)) : [];
-      return subs.length > 1 ? `<details class="subs"><summary>${row}</summary>${subRows(subs, members.length)}</details>` : `<div>${row}</div>`;
-    }).join('')}${rest > 0 ? `<div><span class="dot" style="background:${GREY}"></span><span>${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
+      return subs.length > 1 ? `<details class="subs"><summary class="hl" data-hlv="${esc(v)}">${row}</summary>${subRows(subs, members.length)}</details>` : `<div class="hl" role="button" tabindex="0" data-hlv="${esc(v)}">${row}</div>`;
+    }).join('')}${rest > 0 ? `<div class="hl" role="button" tabindex="0" data-hlrest="1"><span class="dot" style="background:${GREY}"></span><span>${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
     ${state.groupBy === 'company' && entitiesOf(members).length > 1 ? `<h3>Entités de ${esc(h.key)}</h3><div class="legendlist">${subRows(entitiesOf(members), members.length, true)}</div>` : ''}
     ${peopleList(members, 'Contacts', 40)}`);
   const li = dbody.querySelector('.logo-img');
@@ -2693,6 +2756,7 @@ document.addEventListener('click', e => {
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
     else if(a === 'shareview') shareView();
+    else if(a === 'lgsub'){ const v = act.dataset.v; legendOpen.has(v) ? legendOpen.delete(v) : legendOpen.add(v); updateLegend(contacts.filter(pass)); }
     else if(a === 'keepyes') setKeep(true);
     else if(a === 'keepno'){ keepAsked = true; renderBar(contacts.filter(pass)); }
     else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
@@ -2709,6 +2773,8 @@ document.addEventListener('click', e => {
     else if(a === 'aihide'){ aiHidden = true; renderBar(contacts.filter(pass)); }
     return;
   }
+  const hl = e.target.closest('#drawerBody .hl');
+  if(hl){ highlightRow(hl); if(hl.tagName !== 'SUMMARY') return; }
   const view = e.target.closest('[data-view]');
   if(view){ if(state.view !== view.dataset.view){ state.view = view.dataset.view; if(state.view === 'graph') needFit = true; render(); } return; }
   const clr = e.target.closest('[data-clear]');
