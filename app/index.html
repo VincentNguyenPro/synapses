@@ -1747,7 +1747,7 @@ const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append(
 let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
 /* Noms des groupes : taille fixe à l’écran (13 px) tant que le zoom reste au-dessus de LK, puis ils rétrécissent avec le graphe.
    lblScale(k) donne ce facteur de taille pour un zoom k : le cadrage s’en sert pour ne jamais couper un nom. */
-const LK = 0.085, lblScale = k => Math.min(1, k / LK);
+const LK = 0.06, lblScale = k => Math.min(1, k / LK);
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
 /* Curseur « Branches affichées » : nombre de groupes autour de « Moi » ; quand un groupe est ouvert dans la légende,
    il règle le nombre de grappes de ce groupe (openTop), comme « Afficher 10 grappes de plus » */
@@ -1883,6 +1883,11 @@ function positionLabels(){
     const x = d.x + c * R, y = d.y + s * R, el = d3.select(this).attr('x', x).attr('y', y);
     if(labelRadial){ const flip = c < 0; el.attr('transform', `rotate(${a * 180 / Math.PI + (flip ? 180 : 0)} ${x} ${y})`).style('text-anchor', flip ? 'end' : 'start').style('dominant-baseline', 'central'); }
     else el.attr('transform', null).style('text-anchor', c > 0.3 ? 'start' : c < -0.3 ? 'end' : 'middle').style('dominant-baseline', s > 0.3 ? 'hanging' : s < -0.3 ? 'auto' : 'central');
+    /* Noms horizontaux sur deux lignes (nom, puis part et nombre) : deux fois moins larges, donc plus grands à l’écran.
+       En mode radial, une seule ligne dans l’axe de la branche */
+    const two = !labelRadial;
+    el.select('tspan.lblName').attr('dy', two ? (s > 0.3 ? 0 : s < -0.3 ? '-1.15em' : '-0.575em') : 0);
+    el.select('tspan.lblPct').attr('x', two ? x : null).attr('dy', two ? '1.15em' : 0).attr('dx', two ? 0 : '0.3em');
   });
   if(countSel) countSel.attr('x', d => d.x).attr('y', d => d.y).selectAll('tspan').attr('x', function(){ return this.parentNode.__data__.x; });
   if(badgeSel) badgeSel.attr('transform', d => `translate(${d.x},${d.y})`);
@@ -1891,16 +1896,20 @@ function positionLabels(){
 function lblGeo(el){
   const d = el.__data__, a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0);
   /* Largeur à l’écran en taille pleine : constante quel que soit le zoom, donc mesurée une seule fois par affichage */
-  let w = el.__w13;
-  if(!w){ try { w = el.getComputedTextLength() * Math.max(zk, LK); } catch(e) { w = 0; } if(w && isFinite(w)) el.__w13 = w; }
-  if(!w || !isFinite(w)) w = (el.textContent || '').length * 7.4;
-  return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w};
+  let m = el.__w13;
+  if(!m){
+    const K = Math.max(zk, LK), len = sel => { const t = el.querySelector(sel); try { return t && t.getComputedTextLength() * K || 0; } catch(e) { return 0; } };
+    const a1 = len('tspan.lblName'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
+    m = {w1:a1 + a2 + a3 + 4, w2:Math.max(a1, a2 + a3)};
+    if(m.w1 > 4 && isFinite(m.w1)) el.__w13 = m; else { const n = (el.textContent || '').length * 7.4; m = {w1:n, w2:n * 0.6}; }
+  }
+  return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w:m.w1, w2:m.w2};
 }
 /* Boîte d’un nom en pixels d’écran, relative à son ancrage, en mode horizontal ou radial ; f : facteur de taille du nom (lblScale) */
 function lblOffsets(g, radial, f = 1){
-  const ox = g.c * 8 * f, oy = g.s * 8 * f, w = g.w * f;
+  const ox = g.c * 8 * f, oy = g.s * 8 * f, w = (radial ? g.w : g.w2 ?? g.w) * f;
   if(radial){ const ex = ox + g.c * w, ey = oy + g.s * w; return {l:Math.min(ox, ex) - 7 * f, r:Math.max(ox, ex) + 7 * f, t:Math.min(oy, ey) - 7 * f, b:Math.max(oy, ey) + 7 * f}; }
-  const hh = 17 * f, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -w : -w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
+  const hh = 32 * f, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -w : -w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
   return {l:ox + l, r:ox + l + w, t:oy + t, b:oy + t + hh};
 }
 /* Vrai si deux noms horizontaux se chevaucheraient avec ce zoom */
@@ -2334,8 +2343,8 @@ function renderGraph(vis){
       const t = d3.select(this); t.text(null);
       /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
       const nm = d.others ? `${d.key} (${d.others.length})` : d.key, max = narrowScreen() ? 15 : 30;
-      t.append('tspan').text(nm.length > max ? nm.slice(0, max - 1).trimEnd() + '…' : nm);
-      t.append('tspan').attr('class', 'lblPct').text(' ' + pct(d.count, vis.length));
+      t.append('tspan').attr('class', 'lblName').text(nm.length > max ? nm.slice(0, max - 1).trimEnd() + '…' : nm);
+      t.append('tspan').attr('class', 'lblPct').text(pct(d.count, vis.length));
       /* Nombre de contacts à côté du nom, affiché quand le rond est trop petit à l’écran pour qu’on lise le chiffre dedans */
       if(d.type === 'hub') t.append('tspan').attr('class', 'lblN').text(' · ' + d.count.toLocaleString('fr-FR'));
       this.__w13 = null; /* nouveau texte : largeur à remesurer */
@@ -3215,6 +3224,8 @@ function zoomAnchor(){
   let p = sel ? at(px(sel), py(sel)) : null;
   if(!p && legendHL){ const ms = legendNodes(legendHL.kind, legendHL.v); if(ms.length) p = at(d3.mean(ms, px), d3.mean(ms, py)); }
   if(!p){ const k = [...legendOpen].find(x => x.startsWith('g:')), hub = k && nodes.find(n => n.type === 'hub' && n.key === k.slice(2)); if(hub) p = at(px(hub), py(hub)); }
+  /* Rien de choisi : autour du rond « Moi », le centre du graphe */
+  if(!p){ const me = nodes.find(n => n.type === 'me'); if(me) p = at(px(me), py(me)); }
   return p || [vb.x + vb.w / 2, vb.y + vb.h / 2];
 }
 $('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4, zoomAnchor()));
