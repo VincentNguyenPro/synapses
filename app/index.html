@@ -320,6 +320,11 @@ button.lg:hover{background:var(--surface-2)}
 .who{flex:1;min-width:0;font-size:14px}
 .who strong{display:block}
 .who span{display:block;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Raisons de proximité : une ligne à part sous le contact, alignée sur son nom */
+.lrow{flex-wrap:wrap;row-gap:4px}
+.proxrow{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px;padding-left:46px}
+.pchip{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px}
+.h3sub{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
 .lk{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;padding:8px;border-radius:8px;white-space:nowrap}
 .lk:hover{background:var(--accent-soft)}
 .more{font-size:12.5px;color:var(--muted);margin-top:8px}
@@ -582,6 +587,60 @@ function buildContact(r, i){
   };
 }
 
+/* ---------- Proximité avec chaque contact ----------
+   Calculée dans le navigateur à partir de l’export : nombre de messages échangés (messages.csv, seules les adresses de profil
+   sont lues, jamais le contenu), recommandations et compétences recommandées dans les deux sens, entreprises et écoles
+   en commun avec ton parcours, tags. Rien n’est envoyé ; seuls ces nombres sont gardés avec le réseau si tu le demandes. */
+const PROX_FILES = ['messages.csv','recommendations_received.csv','recommendations_given.csv','endorsement_received_info.csv','endorsement_given_info.csv','education.csv'];
+let proxData = null, proxCache = new Map();
+const slugOf = u => { const m = (u || '').toString().toLowerCase().match(/linkedin\.com\/in\/([^/?#\s]+)/); if(!m) return ''; try { return decodeURIComponent(m[1]); } catch(e) { return m[1]; } };
+const personKey = (f, l) => nkey(`${f || ''} ${l || ''}`);
+function setProx(d){ proxData = d && typeof d === 'object' ? d : null; proxCache = new Map(); }
+function proximityFrom(sig, list){
+  const known = new Set(list.map(c => slugOf(c.url)).filter(Boolean));
+  const u = {}, n = {};
+  const bump = (slug, k, by = 1) => { if(!slug || !known.has(slug)) return; (u[slug] = u[slug] || {})[k] = (u[slug][k] || 0) + by; };
+  if(sig['messages.csv']){
+    /* Seules les colonnes d’adresses de profil sont utilisées ; le texte des messages n’est ni lu ni gardé */
+    const rows = Papa.parse(sig['messages.csv'].replace(/^\uFEFF/, ''), {header:true, skipEmptyLines:true}).data;
+    rows.forEach(r => {
+      const people = new Set([slugOf(r['SENDER PROFILE URL']), ...(r['RECIPIENT PROFILE URLS'] || '').split(/[,;\s]+/).map(slugOf)].filter(Boolean));
+      people.forEach(sl => bump(sl, 'm'));
+    });
+  }
+  [['endorsement_received_info.csv', 'Endorser Public Url'], ['endorsement_given_info.csv', 'Endorsee Public Url']].forEach(([f, col]) => {
+    if(!sig[f]) return;
+    const seen = new Set();
+    parseRows(sig[f]).forEach(r => { const sl = slugOf(r[col]); if(sl && !seen.has(sl)){ seen.add(sl); bump(sl, 'e'); } });
+  });
+  ['recommendations_received.csv', 'recommendations_given.csv'].forEach(f => {
+    if(!sig[f]) return;
+    parseRows(sig[f]).forEach(r => { const k = personKey(r['First Name'], r['Last Name']); if(k) n[k] = 1; });
+  });
+  return Object.keys(u).length || Object.keys(n).length ? {u, n} : null;
+}
+/* Raisons et score de proximité d’un contact (mis en cache) */
+function proxOf(c){
+  if(proxCache.has(c.id)) return proxCache.get(c.id);
+  const why = [], short = []; let score = 0;
+  const sl = slugOf(c.url), d = proxData && sl ? proxData.u[sl] || {} : {};
+  const m = d.m || (isDemo ? c.demoMsgs || 0 : 0);
+  if(m){ why.push(`${m} message${m > 1 ? 's' : ''} échangé${m > 1 ? 's' : ''}`); short.push(`${m} msg`); score += 3 + Math.min(6, Math.floor(Math.log2(m))); }
+  if((proxData && proxData.n[personKey(c.first, c.name.slice(c.first.length))]) || (isDemo && c.demoReco)){ why.push('Recommandation'); short.push('Reco'); score += 5; }
+  if(d.e){ why.push('Compétences recommandées'); short.push('Compétences'); score += 2; }
+  const me = myProfile();
+  const myCos = new Set((me.companies || (me.company ? [me.company] : [])).map(x => groupOf(x) || x).map(nkey));
+  const co = coOf(c);
+  if(co && myCos.has(nkey(co))){ const cur = me.company && nkey(groupOf(me.company) || me.company) === nkey(co); why.push(cur ? `Collègue chez ${co}` : `Passé par ${co} comme toi`); short.push(cur ? 'Collègue' : `Ex-${co}`); score += cur ? 3 : 2; }
+  const mySchools = new Set((me.schools || []).map(nkey));
+  if(c.school && mySchools.has(nkey(c.school))){ why.push('Même école'); short.push('Même école'); score += 2; }
+  const t = tagOf(c); if(t) score += 3;
+  const r = {score, why, short};
+  proxCache.set(c.id, r);
+  return r;
+}
+const byProx = (a, b) => proxOf(b).score - proxOf(a).score || a.name.localeCompare(b.name, 'fr');
+
 /* ---------- Réseau gardé sur cet appareil ----------
    Seulement si l’utilisateur le demande (décoché par défaut) : les champs bruts de Connections.csv, sans les emails,
    dans IndexedDB de ce navigateur. Rien n’est envoyé. Au retour, le réseau est reconstruit avec le dictionnaire du moment. */
@@ -602,7 +661,7 @@ async function netDo(mode, fn){
     tx.oncomplete = () => { db.close(); res(req.result); }; tx.onerror = tx.onabort = () => { db.close(); rej(tx.error); };
   });
 }
-const saveNet = raw => netDo('readwrite', st => st.put({raw, saved:Date.now()}, 'courant'));
+const saveNet = raw => netDo('readwrite', st => st.put({raw, prox:proxData, saved:Date.now()}, 'courant'));
 const readNet = () => netDo('readonly', st => st.get('courant'));
 const dropNet = () => new Promise(res => { try { const r = indexedDB.deleteDatabase(NET_DB); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch(e) { res(); } });
 async function setKeep(on){
@@ -690,6 +749,7 @@ const tagOf = c => tagStore[tagKey(c)] || '';
 function setTag(c, t){
   const k = tagKey(c);
   if(tagStore[k] === t) delete tagStore[k]; else tagStore[k] = t;
+  proxCache = new Map();
   try { localStorage.setItem(TAG_KEY, JSON.stringify(tagStore)); } catch(e) {}
   return tagStore[k] || '';
 }
@@ -697,7 +757,7 @@ function setTag(c, t){
 /* ---------- Dimensions ---------- */
 const DIMS = {
   sector:   {label:'Secteur', get:c => c.sector},
-  company:  {label:'Entreprise', get:c => c.company || 'Sans entreprise', minHub:2, other:'Autres entreprises'},
+  company:  {label:'Entreprise', get:c => c.group || c.company || 'Sans entreprise', minHub:2, other:'Autres entreprises'},
   fn:       {label:'Fonction', get:c => c.fn},
   seniority:{label:'Séniorité', get:c => c.seniority, order:SEN_ORDER},
   year:     {label:'Année de connexion', get:c => c.year ? String(c.year) : 'Inconnue'},
@@ -770,6 +830,7 @@ async function loadDictionary(){
   BUILTIN.clear();
   for(const [sec, names] of Object.entries(co.secteurs)) names.forEach(n => { const k = nkey(n); if(k && !BUILTIN.has(k)) BUILTIN.set(k, sec); });
   PREFIX_STOP = new Set(co.premiers_mots_ignores);
+  GROUPS = (co.groupes || []).map(g => [g.nom, new RegExp(g.motif)]);
   FUNCTIONS = po.fonctions.map(m => [m.fonction, new RegExp(m.motif)]);
   FN_DEFAULT = po.fonction_par_defaut || 'Autre';
   SEN_RULES = po.seniorite.map(m => [m.niveau, new RegExp(m.motif)]);
@@ -777,6 +838,18 @@ async function loadDictionary(){
   SECTOR_LABELS = [...SECTORS.map(x => x[0]), 'Non classé'];
   FN_LABELS = [...FUNCTIONS.map(x => x[0]), FN_DEFAULT];
 }
+/* Groupe d’entreprises (data/entreprises.json, « groupes ») : « BNP Paribas Cardif » → BNP Paribas, « Freelance » → Indépendant.
+   Sans groupe connu, les écritures d’un même nom (casse, accents, « SA », « SE »…) sont réunies sous la plus fréquente. */
+let GROUPS = [];
+function groupOf(name){ const k = nkey(name); if(!k) return ''; for(const [g, re] of GROUPS) if(re.test(k)) return g; return ''; }
+const LEGAL_END = / (sa|sas|sasu|se|sarl|inc|ltd|llc|gmbh|ag|spa|bv|nv|plc)\.?$/;
+function assignGroups(list){
+  const spell = new Map();
+  list.forEach(c => { if(!c.company) return; const k = nkey(c.company).replace(LEGAL_END, ''); const m = spell.get(k) || new Map(); m.set(c.company, (m.get(c.company) || 0) + 1); spell.set(k, m); });
+  const best = new Map([...spell].map(([k, m]) => [k, [...m].sort((a, b) => b[1] - a[1])[0][0]]));
+  list.forEach(c => { c.group = c.company ? (groupOf(c.company) || best.get(nkey(c.company).replace(LEGAL_END, '')) || c.company) : ''; });
+}
+const coOf = c => c.group || c.company;
 /* Correspondance exacte, puis par début de nom, en ignorant les premiers mots trop génériques */
 function builtinMatch(k){
   if(BUILTIN.has(k)) return BUILTIN.get(k);
@@ -913,7 +986,7 @@ function pass(c, skip){
   for(const k of FILTER_KEYS){ if(k === skip) continue; const s = state.include[k]; if(s.size && !s.has(DIMS[k].get(c))) return false; }
   if(c.year && (c.year < state.yMin || c.year > state.yMax)) return false;
   if(state.q){
-    const hay = norm([c.name, c.company, c.position, c.location, c.country, c.school, c.sector, c.fn, tagOf(c)].join(' '));
+    const hay = norm([c.name, c.company, c.group, c.position, c.location, c.country, c.school, c.sector, c.fn, tagOf(c)].join(' '));
     if(!hay.includes(norm(state.q))) return false;
   }
   return true;
@@ -1619,7 +1692,7 @@ function gatherColleagues(sn, cn){
   if(cn.length){
     collR = R0 + r;
     collSide = null;
-    collLbl = gColl.append('text').attr('class', 'colllbl').text(`${cn.length} collègue${cn.length > 1 ? 's' : ''} chez ${sn.c.company}`);
+    collLbl = gColl.append('text').attr('class', 'colllbl').text(`${cn.length} collègue${cn.length > 1 ? 's' : ''} chez ${coOf(sn.c)}`);
     styleLabels();
   }
   setXY(); sim.alpha(0.7).restart(); positionLabels(); drawRings();
@@ -2051,7 +2124,12 @@ function focus(ids){
   nodeSel.classed('ghost', n => !!selNode && n.type === 'c' && !ids.has(n.id) && n.hub === selNode.hub && levelOf(n.c) === lvSel);
 }
 function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.classed('dim', false); labelSel.classed('dim', false); countSel.classed('dim', false); if(badgeSel) badgeSel.classed('dim', false); nodeSel.classed('ghost', false); gRings.selectAll('circle.blob, line.spoke').classed('dim', false); } }
-function select(id){ releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); styleLabels(); }
+function select(id){
+  const wasHub = /^h:/.test(state.selected || '');
+  releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); styleLabels();
+  /* La légende suit le groupe sélectionné (et revient au réseau entier quand il est désélectionné) */
+  if(nodes.length && (wasHub || /^h:/.test(id || ''))) updateLegend(contacts.filter(pass));
+}
 /* Après un nouveau rendu (filtre, redimensionnement…), on réapplique la surbrillance et le cercle de collègues de la sélection */
 function reapplySelection(){
   const sel = state.selected;
@@ -2059,8 +2137,8 @@ function reapplySelection(){
   const node = nodes.find(n => n.id === sel);
   if(!node) return;
   if(node.type === 'c'){
-    const co = node.c.company;
-    const cn = co ? nodes.filter(n => n.type === 'c' && n !== node && n.c.company === co) : [];
+    const co = coOf(node.c);
+    const cn = co ? nodes.filter(n => n.type === 'c' && n !== node && coOf(n.c) === co) : [];
     focus(new Set([node.id, node.hub, ...cn.map(n => n.id)]));
     gatherColleagues(node, cn);
   } else if(node.type === 'hub'){
@@ -2160,16 +2238,18 @@ function updateLegend(vis){
   const cdim = DIMS[state.colorBy];
   const canFilter = isFilterDim(state.colorBy);
   const sel = canFilter ? state.include[state.colorBy] : new Set();
-  const base = canFilter ? contacts.filter(c => pass(c, state.colorBy)) : vis;
+  /* Groupe sélectionné : la légende ne compte que ses contacts, avec exactement les grappes dessinées autour de lui */
+  const selHub = state.view === 'graph' && state.selected ? nodes.find(n => n.id === state.selected && n.type === 'hub') : null;
+  const base = selHub ? nodes.filter(n => n.type === 'c' && n.hub === selHub.id).map(n => n.c) : canFilter ? contacts.filter(c => pass(c, state.colorBy)) : vis;
   /* Valeurs à grappes par groupe (entreprise…) : chaque valeur réelle, pastille grise si elle n’a de grappe nulle part */
-  const perHub = levelMap.size > 0;
-  const counts = d3.rollup(base, v => v.length, perHub ? cdim.get : colorLevel);
+  const perHub = levelMap.size > 0 && !selHub;
+  const counts = d3.rollup(base, v => v.length, selHub ? levelOf : perHub ? cdim.get : colorLevel);
   const drawn = perHub ? new Set(levelMap.values()) : null;
   const dotOf = v => perHub && !drawn.has(v) ? GREY : colorFn(v);
-  const shown = sortDesc(perHub ? [...counts.keys()] : colorDomain.filter(v => counts.get(v)), counts);
+  const shown = sortDesc(selHub || perHub ? [...counts.keys()] : colorDomain.filter(v => counts.get(v)), counts);
   const max = legendAll ? 999 : 8;
   const maxL = d3.max(shown, v => counts.get(v)) || 1;
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}${selHub ? ` · ${esc(selHub.key)}` : ''}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
     const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${dotOf(v)}"></span><span class="dot" style="background:${dotOf(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
     return `<li>${canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`}</li>`;
   }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : `Voir les ${shown.length - 8} autres`}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}<p class="more" style="margin:8px 6px 0">Jauge et teinte d’un groupe : sa part des contacts affichés</p></div>`;
@@ -2178,7 +2258,7 @@ function updateLegend(vis){
 
 function updatePanel(vis){
   const dated = vis.filter(c => c.date).sort((a, b) => a.date - b.date);
-  const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company), v => v.length, c => c.company), d => d[1]);
+  const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company && !TAIL.includes(coOf(c))), v => v.length, coOf), d => d[1]);
   const last = dated[dated.length - 1];
   $('#summary').innerHTML = `<dl class="stats">
     <dt>Top entreprise</dt><dd>${topCo ? `${esc(topCo[0])} (${topCo[1]})` : 'Aucune'}</dd>
@@ -2197,12 +2277,13 @@ function updatePanel(vis){
 function personRow(o){
   const url = /^https:\/\//.test(o.url) ? o.url : '';
   const t = tagOf(o);
-  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}</strong><span>${esc(o.position || 'Poste non renseigné')}${o.company ? ', ' + esc(o.company) : ''}</span></span><span class="cval" title="${esc(DIMS[state.colorBy].get(o))}"><span class="dot" style="background:${colorOf(o)}"></span><span class="cvt">${esc(DIMS[state.colorBy].get(o))}</span></span>${t ? `<span class="tagpill">${esc(t)}</span>` : ''}</button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : ''}</li>`;
+  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}</strong><span>${esc(o.position || 'Poste non renseigné')}${o.company ? ', ' + esc(o.company) : ''}</span></span><span class="cval" title="${esc(DIMS[state.colorBy].get(o))}"><span class="dot" style="background:${colorOf(o)}"></span><span class="cvt">${esc(DIMS[state.colorBy].get(o))}</span></span>${t ? `<span class="tagpill">${esc(t)}</span>` : ''}${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : ''}</li>`;
 }
 function peopleList(items, title, limit, keepOrder){
   if(!items.length) return '';
-  const sorted = keepOrder ? items : [...items].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
-  return `${title ? `<h3>${title}</h3>` : ''}<ul class="people">${sorted.slice(0, limit).map(personRow).join('')}</ul>`
+  const sorted = keepOrder ? items : [...items].sort(byProx);
+  const close = !keepOrder && sorted.length > 1 && proxOf(sorted[0]).score > 0;
+  return `${title ? `<h3>${title}${close ? ' <small class="h3sub">les plus proches de toi d’abord</small>' : ''}</h3>` : ''}<ul class="people">${sorted.slice(0, limit).map(personRow).join('')}</ul>`
     + (items.length > limit ? `<p class="more">et ${items.length - limit} autres</p>` : '');
 }
 
@@ -2248,11 +2329,11 @@ function showContact(c){
   select('c:' + c.id);
   const ids = new Set(['c:' + c.id]);
   if(node) ids.add(node.hub);
-  const sameCo = c.company ? contacts.filter(o => o !== c && o.company === c.company) : [];
+  const sameCo = c.company ? contacts.filter(o => o !== c && coOf(o) === coOf(c)) : [];
   const sameSchool = c.school ? contacts.filter(o => o !== c && o.school === c.school) : [];
   sameCo.forEach(o => ids.add('c:' + o.id));
   focus(ids);
-  gatherColleagues(node, c.company ? nodes.filter(n => n.type === 'c' && n !== node && n.c.company === c.company) : []);
+  gatherColleagues(node, c.company ? nodes.filter(n => n.type === 'c' && n !== node && coOf(n.c) === coOf(c)) : []);
   const url = /^https:\/\//.test(c.url) ? c.url : '';
   const t = tagOf(c);
   const visCo = sameCo.filter(o => nodes.some(n => n.id === 'c:' + o.id)).length;
@@ -2262,7 +2343,7 @@ function showContact(c){
   const shownIds = new Set(nodes.map(n => n.id));
   const coVals = colorDomain.filter(v => [c, ...sameCo].some(o => shownIds.has('c:' + o.id) && cdimK.get(o) === v));
   const keyHtml = visCo ? `<span class="hlkey"><span class="hlkt">Couleur des points : ${esc(cdimK.label.toLowerCase())}</span>${coVals.map(v => `<span class="hlki"><span class="dot" style="background:${colorFn(v)}"></span>${esc(v)}</span>`).join('')}</span>` : '';
-  const hlNote = state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(c.company)}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Son point est placé au centre de sa grappe le temps de la sélection. Les autres contacts sont atténués, ce n’est pas un filtre.${keyHtml}</span></p>` : '';
+  const hlNote = state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(coOf(c))}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Son point est placé au centre de sa grappe le temps de la sélection. Les autres contacts sont atténués, ce n’est pas un filtre.${keyHtml}</span></p>` : '';
   openDrawer(`
     <div class="dhead">${avatar(c, true)}
       <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || 'Poste non renseigné')}${c.company ? ' chez ' + esc(c.company) : ''}</p></div></div>
@@ -2275,6 +2356,7 @@ function showContact(c){
       <dt>Secteur</dt><dd>${c.sectorGiven ? esc(c.sector) : fixSelect('co', c.company, SECTOR_LABELS, c.sector, 'Secteur de ' + c.company)}</dd>
       <dt>Fonction</dt><dd>${fixSelect('fn', c.position, FN_LABELS, c.fn, 'Fonction pour ' + c.position)}</dd>
       <dt>Séniorité</dt><dd>${fixSelect('sen', c.position, SEN_LABELS, c.seniority, 'Séniorité pour ' + c.position)}</dd>
+      ${proxOf(c).why.length ? `<dt>Ton lien</dt><dd class="proxdd">${proxOf(c).why.map(esc).join('<br>')}</dd>` : ''}
       <dt>Connecté le</dt><dd>${fmtDate(c.date)}</dd>
       ${c.location ? `<dt>Ville</dt><dd>${esc(c.location)}</dd>` : ''}
       ${c.country ? `<dt>Pays</dt><dd>${esc(c.country)}</dd>` : ''}
@@ -2282,7 +2364,7 @@ function showContact(c){
       ${c.school ? `<dt>Formation</dt><dd>${esc(c.school)}</dd>` : ''}
       ${c.exp ? `<dt>Expérience</dt><dd>${esc(c.exp)}</dd>` : ''}
     </dl>
-    ${peopleList(sameCo, `Aussi chez ${esc(c.company)} (${sameCo.length})`, 8)}
+    ${peopleList(sameCo, `Aussi chez ${esc(coOf(c))} (${sameCo.length})`, 8)}
     ${peopleList(sameSchool, `Même formation (${sameSchool.length})`, 6)}
     <p class="note">Secteur, fonction et séniorité sont estimés. Une estimation te semble fausse ? Corrige-la ci-dessus : la correction s’applique à tous les contacts de la même entreprise ou du même intitulé de poste. L’icône est déduite du prénom et reste neutre quand il est mixte ou inconnu.</p>
     ${shareBox()}`);
@@ -2296,6 +2378,12 @@ function showHub(h){
   const cdim = DIMS[state.colorBy];
   const counts = d3.rollup(members, v => v.length, levelOf);
   const rows = sortDesc([...counts.keys()], counts);
+  /* Répartition : jusqu’à 20 valeurs réelles (pastille grise pour celles qui n’ont pas leur propre grappe), puis le reste */
+  const real = d3.rollup(members, v => v.length, cdim.get);
+  const realRows = sortDesc([...real.keys()], real);
+  const top20 = realRows.slice(0, 20), rest = members.length - d3.sum(top20, v => real.get(v));
+  const drawnHere = new Set(members.map(levelOf));
+  const dotR = v => drawnHere.has(v) ? colorFn(v) : GREY;
   const canFilter = isFilterDim(state.groupBy) && h.key !== (DIMS[state.groupBy].other || 'Autres');
   openDrawer(`
     ${state.groupBy === 'company' && h.key !== DIMS.company.other ? `<span class="logo-badge" style="background:${brandColor(h.key)}" aria-hidden="true"><span class="mtext">${esc(mono(h.key))}</span>${logoUrl(h.key) ? `<img class="logo-img" src="${esc(logoUrl(h.key))}" alt="" hidden>` : ''}</span>` : ''}
@@ -2308,7 +2396,7 @@ function showHub(h){
       <ul class="people">${h.others.map(([k, n]) => `<li><button class="lrow" type="button" ${isFilterDim(state.groupBy) ? `data-only="${state.groupBy}" data-v="${esc(k)}"` : ''} title="N’afficher que ce groupe"><span class="who"><strong>${esc(k)}</strong><span>${n} contact${n > 1 ? 's' : ''}</span></span></button></li>`).join('')}</ul>` : ''}
     <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${counts.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
-    <div class="legendlist">${(rows.length > 9 ? [...rows.slice(0, 8), ...rows.filter(v => v === colorOther)] : rows).map(v => `<div><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), members.length)}</span></div>`).join('')}</div>
+    <div class="legendlist">${top20.map(v => `<div><span class="dot" style="background:${dotR(v)}"></span><span>${esc(v)}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span></div>`).join('')}${rest > 0 ? `<div><span class="dot" style="background:${GREY}"></span><span>${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
     ${peopleList(members, 'Contacts', 40)}`);
   const li = dbody.querySelector('.logo-img');
   if(li){
@@ -2333,7 +2421,7 @@ function wipeData(){
   dropNet().then(() => location.reload());
 }
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as coché « Garder mon réseau sur cet appareil ». Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as coché « Garder mon réseau sur cet appareil ». Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
     <p class="pos">En regroupant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -2420,7 +2508,7 @@ function findEntry(){
   if(!t){ $('#target').focus(); return; }
   closePanel();
   const rank = ['Dirigeant','Direction','Manager','Senior','Confirmé','Junior','Non renseignée'];
-  const m = contacts.filter(c => [c.company, c.sector, c.school].some(x => norm(x).includes(t)))
+  const m = contacts.filter(c => [c.company, c.group, c.sector, c.school].some(x => norm(x).includes(t)))
     .sort((a, b) => rank.indexOf(a.seniority) - rank.indexOf(b.seniority));
   const ids = new Set(m.map(c => 'c:' + c.id));
   nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
@@ -2441,6 +2529,9 @@ function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add
 /* ---------- Load ---------- */
 function load(list, demo){
   contacts = list; isDemo = demo;
+  assignGroups(list); proxCache = new Map();
+  /* Démo : quelques échanges fictifs, pour montrer le classement par proximité */
+  if(demo){ setProx(null); list.forEach(c => { const h = (c.id * 2654435761) % 1000; c.demoMsgs = h < 160 ? 1 + h % 37 : 0; c.demoReco = h % 61 === 0; }); }
   if(!demo){ applyAI(list); refreshShared(); }
   nodes = []; pos.clear(); needFit = true; state.selected = null;
   gLinks.selectAll('*').remove(); gNodes.selectAll('*').remove(); gLabels.selectAll('*').remove(); gCounts.selectAll('*').remove();
@@ -2471,6 +2562,7 @@ function profileFrom(texts){
     const rows = parseRows(texts.positions);
     /* Seul un poste sans date de fin est un poste actuel ; sinon on garde le titre du profil (Headline) */
     const cur = rows.find(r => !(r['Finished On'] || '').trim());
+    out.companies = [...new Set(rows.map(r => (r['Company Name'] || '').trim()).filter(Boolean))];
     if(cur){
       if((cur['Title'] || '').trim()) out.position = cur['Title'].trim();
       if((cur['Company Name'] || '').trim()) out.company = cur['Company Name'].trim();
@@ -2482,13 +2574,14 @@ function profileFrom(texts){
 async function handleFiles(fileList){
   const files = [...(fileList || [])];
   if(!files.length) return;
-  const texts = {};
+  const texts = {}, sig = {};
   try {
     for(const f of files){
       if(/\.zip$/i.test(f.name) || /zip/.test(f.type)){
         const zip = await JSZip.loadAsync(await f.arrayBuffer());
         for(const [path, entry] of Object.entries(zip.files)){
           const base = path.split('/').pop().toLowerCase();
+          if(!entry.dir && PROX_FILES.includes(base)){ sig[base] = await entry.async('string'); continue; }
           if(entry.dir || !['connections.csv','profile.csv','positions.csv'].includes(base)) continue;
           const t = await entry.async('string'); const k = kindOf(t);
           if(k && !texts[k]) texts[k] = t;
@@ -2501,12 +2594,13 @@ async function handleFiles(fileList){
   } catch(err){ showHelp('Le fichier n’a pas pu être lu. Réessaie avec l’archive .zip de LinkedIn ou le fichier Connections.csv.'); return; }
   const prof = profileFrom(texts);
   const hasProf = Object.keys(prof).length > 0;
+  if(sig['education.csv']) prof.schools = [...new Set(parseRows(sig['education.csv']).map(r => (r['School Name'] || '').trim()).filter(Boolean))];
   if(hasProf){ meProfile = {...meProfile, ...prof}; try { localStorage.setItem(ME_KEY, JSON.stringify(meProfile)); } catch(e) {} }
   let list = [];
   if(texts.connections){ try { list = parseLinkedIn(texts.connections); } catch(e) { list = []; } }
   if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
   closePanel();
-  if(list.length){ state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).catch(() => {}); } else render();
+  if(list.length){ setProx(proximityFrom(sig, list)); state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).catch(() => {}); } else render();
   if(list.length) toast(`${list.length} contact${list.length > 1 ? 's' : ''} importé${list.length > 1 ? 's' : ''}${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
   else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
   if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
@@ -2658,7 +2752,7 @@ loadDictionary()
     let kept = null;
     if(keepOn()){ try { kept = await readNet(); } catch(e) {} }
     const list = kept && Array.isArray(kept.raw) ? kept.raw.map((r, i) => buildContact(r, i)).filter(c => c.name) : [];
-    if(list.length){ lastRaw = kept.raw; load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
+    if(list.length){ lastRaw = kept.raw; setProx(kept.prox); load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
     else load(demoContacts(), true);
     if(location.hash === '#importer') showHelp();
   });

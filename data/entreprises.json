@@ -2713,5 +2713,244 @@
   "european",
   "american",
   "british"
+ ],
+ "groupes_description": "Groupes : les entités d’un même groupe (« BNP Paribas Cardif », « BNP Paribas Personal Finance »…) sont réunies sous le nom du groupe dans le graphe, les filtres, la légende et les collègues. Le motif (expression régulière) est comparé au nom d’entreprise en minuscules et sans accents ; le premier qui correspond l’emporte. Le nom exact de l’entité reste affiché dans la fiche du contact et sert toujours à classer le secteur.",
+ "groupes": [
+  {
+   "nom": "BNP Paribas",
+   "motif": "\\bbnp\\b|\\bcetelem\\b|\\bcardif\\b|\\barval\\b|\\bhello ?bank\\b"
+  },
+  {
+   "nom": "Société Générale",
+   "motif": "\\bsociete generale\\b|\\bsgcib\\b|\\bsg cib\\b|\\bboursorama\\b|\\blyxor\\b"
+  },
+  {
+   "nom": "Crédit Agricole",
+   "motif": "\\bcredit agricole\\b|\\bca[- ]cib\\b|\\bcacib\\b"
+  },
+  {
+   "nom": "Crédit Mutuel",
+   "motif": "\\bcredit mutuel\\b|\\bcm[- ]cic\\b|\\beuro[- ]information\\b"
+  },
+  {
+   "nom": "Groupe BPCE",
+   "motif": "\\bbpce\\b"
+  },
+  {
+   "nom": "Banque Populaire",
+   "motif": "\\bbanque populaire\\b"
+  },
+  {
+   "nom": "Caisse d’Épargne",
+   "motif": "\\bcaisse d ?.?epargne\\b"
+  },
+  {
+   "nom": "BRED",
+   "motif": "^bred\\b"
+  },
+  {
+   "nom": "Natixis",
+   "motif": "\\bnatixis\\b"
+  },
+  {
+   "nom": "La Banque Postale",
+   "motif": "\\bla banque postale\\b"
+  },
+  {
+   "nom": "Bpifrance",
+   "motif": "\\bbpi ?france\\b"
+  },
+  {
+   "nom": "Amundi",
+   "motif": "\\bamundi\\b"
+  },
+  {
+   "nom": "AXA",
+   "motif": "^axa\\b"
+  },
+  {
+   "nom": "Allianz",
+   "motif": "\\ballianz\\b"
+  },
+  {
+   "nom": "Generali",
+   "motif": "\\bgenerali\\b"
+  },
+  {
+   "nom": "Swiss Life",
+   "motif": "\\bswiss ?life\\b"
+  },
+  {
+   "nom": "AG2R La Mondiale",
+   "motif": "\\bag2r\\b"
+  },
+  {
+   "nom": "Malakoff Humanis",
+   "motif": "\\bmalakoff\\b"
+  },
+  {
+   "nom": "Groupama",
+   "motif": "\\bgroupama\\b"
+  },
+  {
+   "nom": "Covéa",
+   "motif": "\\bcovea\\b"
+  },
+  {
+   "nom": "Klesia",
+   "motif": "\\bklesia\\b"
+  },
+  {
+   "nom": "Renault Group",
+   "motif": "\\brenault\\b"
+  },
+  {
+   "nom": "Ampere",
+   "motif": "^ampere\\b"
+  },
+  {
+   "nom": "Horse",
+   "motif": "^horse\\b"
+  },
+  {
+   "nom": "Stellantis",
+   "motif": "\\bstellantis\\b|\\bpsa peugeot\\b|\\bgroupe psa\\b"
+  },
+  {
+   "nom": "Safran",
+   "motif": "\\bsafran\\b"
+  },
+  {
+   "nom": "Thales",
+   "motif": "\\bthales\\b"
+  },
+  {
+   "nom": "Airbus",
+   "motif": "\\bairbus\\b"
+  },
+  {
+   "nom": "Dassault Systèmes",
+   "motif": "\\bdassault systemes\\b"
+  },
+  {
+   "nom": "Dassault Aviation",
+   "motif": "\\bdassault aviation\\b"
+  },
+  {
+   "nom": "Alstom",
+   "motif": "\\balstom\\b"
+  },
+  {
+   "nom": "Michelin",
+   "motif": "\\bmichelin\\b"
+  },
+  {
+   "nom": "Saint-Gobain",
+   "motif": "\\bsaint[- ]gobain\\b"
+  },
+  {
+   "nom": "Schneider Electric",
+   "motif": "\\bschneider electric\\b"
+  },
+  {
+   "nom": "Vinci",
+   "motif": "^vinci\\b"
+  },
+  {
+   "nom": "Engie",
+   "motif": "\\bengie\\b"
+  },
+  {
+   "nom": "EDF",
+   "motif": "^edf\\b|\\belectricite de france\\b"
+  },
+  {
+   "nom": "TotalEnergies",
+   "motif": "\\btotal ?energies\\b|^total\\b"
+  },
+  {
+   "nom": "Veolia",
+   "motif": "\\bveolia\\b"
+  },
+  {
+   "nom": "Orange",
+   "motif": "^orange\\b"
+  },
+  {
+   "nom": "SNCF",
+   "motif": "\\bsncf\\b"
+  },
+  {
+   "nom": "RATP",
+   "motif": "\\bratp\\b"
+  },
+  {
+   "nom": "La Poste",
+   "motif": "\\bla poste\\b"
+  },
+  {
+   "nom": "Air France-KLM",
+   "motif": "\\bair france\\b"
+  },
+  {
+   "nom": "Bolloré",
+   "motif": "\\bbollore\\b"
+  },
+  {
+   "nom": "Capgemini",
+   "motif": "\\bcapgemini\\b"
+  },
+  {
+   "nom": "Sopra Steria",
+   "motif": "\\bsopra\\b"
+  },
+  {
+   "nom": "Atos",
+   "motif": "^atos\\b"
+  },
+  {
+   "nom": "Accenture",
+   "motif": "\\baccenture\\b"
+  },
+  {
+   "nom": "Deloitte",
+   "motif": "\\bdeloitte\\b"
+  },
+  {
+   "nom": "KPMG",
+   "motif": "\\bkpmg\\b"
+  },
+  {
+   "nom": "PwC",
+   "motif": "\\bpwc\\b|\\bpricewaterhouse"
+  },
+  {
+   "nom": "EY",
+   "motif": "^ey\\b|\\bernst (&|and) young\\b"
+  },
+  {
+   "nom": "Mazars",
+   "motif": "\\bmazars\\b"
+  },
+  {
+   "nom": "Aubay",
+   "motif": "^aubay\\b"
+  },
+  {
+   "nom": "L’Oréal",
+   "motif": "\\bl ?.?oreal\\b"
+  },
+  {
+   "nom": "LVMH",
+   "motif": "\\blvmh\\b"
+  },
+  {
+   "nom": "Carrefour",
+   "motif": "^carrefour\\b"
+  },
+  {
+   "nom": "Indépendant",
+   "motif": "\\b(independant\\w*|freelance\\w*|free[- ]lance\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*)\\b"
+  }
  ]
 }
