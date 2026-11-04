@@ -120,7 +120,7 @@ p{margin:0}
 @media (min-width:960px){ .film{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:end} .film .live{grid-column:1/-1;margin-top:clamp(16px,2.4vw,32px)} }
 .film > p{color:var(--field-muted);max-width:30em;font-size:var(--step-lead);line-height:1.4}
 /* La vidéo occupe la colonne droite du héros, à côté du titre (codes YC : on voit le produit tout de suite) */
-.player{position:relative;width:100%;align-self:start;border-radius:var(--radius);overflow:hidden;background:var(--surface);scroll-margin-top:88px}
+.player{position:relative;width:100%;align-self:start;border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--tone-2);scroll-margin-top:88px}
 .player video{width:100%;height:auto;aspect-ratio:16/9}
 .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;white-space:nowrap;padding:0 30px 0 22px;min-height:76px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:var(--step-lead);font-weight:800;cursor:pointer;transition:transform .2s var(--ease),background .2s}
 .play svg{width:34px;height:34px}
