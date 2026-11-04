@@ -197,6 +197,13 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 /* Trait groupe → grappe : masqué (la position des grappes autour du groupe suffit), montré seulement au survol d’une grappe ou d’une ligne de la légende */
 .spoke{stroke:var(--accent);stroke-opacity:.6;stroke-width:1.6px;pointer-events:none;display:none}
 .spoke.hot{display:inline}
+.pin{pointer-events:none}
+.pin .pring{fill:none}
+.pin .pmono{fill:#fff;font-weight:700;text-anchor:middle;dominant-baseline:central}
+/* Logo d’entreprise dans la légende, à la place de la pastille de couleur, cerclé de la couleur de sa grappe */
+.dot.hasl{width:16px;height:16px;margin:-3px;background:#fff !important;box-shadow:0 0 0 1.5px var(--c);overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
+.dot .lgimg{display:none}
+.dot.hasl .lgimg{display:block;width:12px;height:12px;object-fit:contain}
 .link.sub{display:none}
 .track{fill:none;stroke:var(--line);stroke-width:3px;pointer-events:none}
 .gauge{fill:none;stroke:var(--accent);stroke-width:3px;stroke-linecap:round;pointer-events:none}
@@ -514,7 +521,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
         <input type="range" id="topN" min="3" max="40" step="1" value="12">
         <p class="hint" id="topNHint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
       </div>
-      <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong>, visibles en regroupant par entreprise. Les logos viennent de Brandfetch, qui reçoit le site web des entreprises affichées (jamais le nom de tes contacts).</span></label>
+      <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong>, visibles en regroupant ou en colorant par entreprise. Les logos viennent de Brandfetch, qui reçoit le site web des entreprises affichées (jamais le nom de tes contacts).</span></label>
       <div class="field" id="fld-ai" hidden style="margin-top:16px">
         <span class="lbl">Classification par IA</span>
         <p class="hint" id="aiHint"></p>
@@ -1724,7 +1731,7 @@ const svg = d3.select('#graph');
 /* Découpe ronde des logos d’entreprise : ils remplissent le cercle du nœud */
 svg.append('defs').html('<clipPath id="logoClip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath>');
 const root = svg.append('g');
-const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append('g'), gGauge = root.append('g'), gNodes = root.append('g'), gCounts = root.append('g'), gBadges = root.append('g'), gLabels = root.append('g');
+const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append('g'), gGauge = root.append('g'), gNodes = root.append('g'), gCounts = root.append('g'), gBadges = root.append('g'), gLabels = root.append('g'), gPins = root.append('g');
 let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
 /* Noms des groupes : taille fixe à l’écran (13 px) tant que le zoom reste au-dessus de LK, puis ils rétrécissent avec le graphe.
    lblScale(k) donne ce facteur de taille pour un zoom k : le cadrage s’en sert pour ne jamais couper un nom. */
@@ -1755,7 +1762,7 @@ function syncTopN(total){
   document.getElementById('topNVal').textContent = n >= total ? `toutes (${total})` : `${n} sur ${total}`;
 }
 function updateOverview(){ const b = document.getElementById('overview'); if(b) b.hidden = state.view !== 'graph' || zk <= fitK * 1.2; }
-const zoom = d3.zoom().scaleExtent([0.15, 5]).on('zoom', e => { root.attr('transform', e.transform); zk = e.transform.k; styleLabels(); hideTip(); updateOverview(); });
+const zoom = d3.zoom().scaleExtent([0.15, 5]).on('zoom', e => { root.attr('transform', e.transform); zk = e.transform.k; styleLabels(); sizePins(); hideTip(); updateOverview(); });
 svg.call(zoom).on('dblclick.zoom', null).on('click', e => { if(e.target === svg.node()) clearSelection(); });
 
 let nodes = [], links = [], linkSel = null, nodeSel = null, labelSel = null, countSel = null, badgeSel = null, needFit = true;
@@ -2074,6 +2081,7 @@ function drawRings(){
     .attr('r', d => d.rad).attr('cx', d => d.x).attr('cy', d => d.y)
     .style('fill', d => colorFn(d.lv)).style('stroke', d => colorFn(d.lv));
   if(selBlob) gRings.selectAll('circle.blob').filter(d => d.key === selBlob.key).raise();
+  drawPins(data);
   /* Jauge circulaire autour de chaque groupe : sa part des contacts affichés */
   const hubs = nodes.filter(n => n.type === 'hub');
   const G = hn => hn.r + 4;
@@ -2084,6 +2092,49 @@ function drawRings(){
     .attr('stroke-dasharray', d => { const C = 2 * Math.PI * G(d); return `${Math.max(0.5, d.share * C)} ${C}`; })
     .attr('transform', d => `rotate(-90 ${d.ax} ${d.ay})`);
 }
+/* Pastille logo de chaque grappe du groupe ouvert, quand on colore par entreprise : posée juste à l’extérieur de la grappe,
+   côté extérieur du cercle (toujours libre), de taille fixe à l’écran. Logo Brandfetch si l’option est cochée et le domaine connu,
+   sinon l’initiale sur la couleur de la grappe ; pas de pastille pour « autres », ni quand deux pastilles se toucheraient. */
+function drawPins(data){
+  const pd = state.colorBy === 'company' && openHubInfo ? data.filter(d => d.hub.key === openHubInfo.key && d.lv !== colorOther) : [];
+  const sel = gPins.selectAll('g.pin').data(pd, d => d.key).join(enter => {
+    const g = enter.append('g').attr('class', 'pin');
+    g.append('circle').attr('class', 'pdisc'); g.append('text').attr('class', 'pmono');
+    g.append('image').attr('class', 'plogo').attr('clip-path', 'url(#logoClip)').attr('preserveAspectRatio', 'xMidYMid meet').style('display', 'none');
+    g.append('circle').attr('class', 'pring');
+    return g;
+  });
+  sel.select('text.pmono').text(d => mono(d.lv));
+  sel.each(function(d){
+    const g = d3.select(this), img = g.select('image.plogo'), url = logoUrl(d.lv);
+    const show = on => { img.style('display', on ? null : 'none'); g.select('text.pmono').style('display', on ? 'none' : null); g.select('circle.pdisc').style('fill', on ? '#fff' : colorFn(d.lv)); };
+    g.select('circle.pring').style('stroke', colorFn(d.lv));
+    if(!url){ img.attr('href', null); show(false); return; }
+    if(img.attr('href') === url) return;
+    show(false);
+    img.on('load', () => show(true)).on('error', () => { logoFails.add(domainOf(d.lv)); img.attr('href', null); show(false); }).attr('href', url);
+  });
+  sizePins();
+}
+function sizePins(){
+  const pins = gPins.selectAll('g.pin');
+  if(pins.empty()) return;
+  const pr = 10 / zk, gap = 3 / zk, shown = [];
+  pins.data().slice().sort((a, b) => b.rad - a.rad).forEach(d => {
+    const dx = d.x - d.hub.ax, dy = d.y - d.hub.ay, L = Math.hypot(dx, dy) || 1, off = d.rad + pr + gap;
+    d.px = d.x + dx / L * off; d.py = d.y + dy / L * off;
+    d.pinOn = shown.every(q => Math.hypot(q.px - d.px, q.py - d.py) >= 2 * pr + gap);
+    if(d.pinOn) shown.push(d);
+  });
+  pins.style('display', d => d.pinOn ? null : 'none').attr('transform', d => `translate(${d.px},${d.py})`);
+  pins.select('circle.pdisc').attr('r', pr);
+  pins.select('circle.pring').attr('r', pr).style('stroke-width', 1.5 / zk);
+  pins.select('image.plogo').attr('x', -pr * 0.8).attr('y', -pr * 0.8).attr('width', pr * 1.6).attr('height', pr * 1.6);
+  pins.select('text.pmono').style('font-size', d => `${pr * (mono(d.lv).length > 2 ? 0.75 : mono(d.lv).length > 1 ? 0.9 : 1.1)}px`);
+}
+/* Logos de la légende : la pastille de couleur devient le logo une fois chargé ; en cas d’échec, la couleur reste */
+document.addEventListener('load', e => { if(e.target.classList && e.target.classList.contains('lgimg')) e.target.parentNode.classList.add('hasl'); }, true);
+document.addEventListener('error', e => { if(e.target.classList && e.target.classList.contains('lgimg')){ logoFails.add(e.target.dataset.dom); e.target.remove(); } }, true);
 function setXY(){
   sim.force('x', d3.forceX(d => d.type === 'c' ? d.ax : W() / 2).strength(d => d.type === 'c' ? 0.3 : 0))
      .force('y', d3.forceY(d => d.type === 'c' ? d.ay : H() / 2).strength(d => d.type === 'c' ? 0.3 : 0));
@@ -2559,7 +2610,8 @@ function legendTree(vis){
     const moreHtml = levelMap.size && (canMore > 0 || openTop > LEGEND_TOP) ? `<li class="lgmore">${canMore > 0 ? `<button type="button" class="linkbtn" data-act="lgmore">Afficher ${more} grappe${more > 1 ? 's' : ''} de plus</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">Revenir à ${LEGEND_TOP}</button>` : ''}</li>` : '';
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li>${head}<ul class="lgvals">${top.map(v => {
-      const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
+      const lu = state.colorBy === 'company' && levelMap.size ? logoUrl(v) : '';
+      const inner = `<span class="dot" style="background:${dot(v)};--c:${dot(v)}">${lu ? `<img class="lgimg" src="${esc(lu)}" alt="" data-dom="${esc(domainOf(v))}">` : ''}</span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
       const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v;
       const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="Voir les contacts de ${esc(v)} dans le graphe">${inner}</button>`;
       /* Groupe d’entreprises : un chevron déplie ses filiales */
@@ -2869,7 +2921,7 @@ async function sendFeedback(){
 
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
     <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as choisi de le garder (section « Mon réseau » du panneau). Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
-    <p class="pos">En regroupant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
+    <p class="pos">En regroupant ou en colorant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
 
@@ -3067,7 +3119,7 @@ $('#logosOn').addEventListener('change', e => {
   render();
   const sel = state.selected && nodes.find(n => n.id === state.selected);
   if(sel && sel.type === 'hub') showHub(sel);
-  toast(logosOn ? (state.groupBy === 'company' ? 'Logos activés' : 'Logos activés : regroupe par entreprise pour les voir') : 'Logos désactivés : monogrammes affichés');
+  toast(logosOn ? (state.groupBy === 'company' || state.colorBy === 'company' ? 'Logos activés' : 'Logos activés : regroupe ou colore par entreprise pour les voir') : 'Logos désactivés : monogrammes affichés');
 });
 $('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
 $('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
