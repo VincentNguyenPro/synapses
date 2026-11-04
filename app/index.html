@@ -275,6 +275,8 @@ button.lg:hover{background:var(--surface-2)}
 .legendbox :is(.lgg,.lgv,.lgsubbtn) .pct{flex:none;width:44px;min-width:0;text-align:right;background:none;padding:0;font-variant-numeric:tabular-nums}
 .lgxsp{flex:none;width:22px}
 .lgrest{flex-basis:100%;min-width:0}
+.lgmore{display:flex;gap:14px;flex-wrap:wrap;padding:4px 6px 6px 30px}
+.lgmore .linkbtn{font-size:12.5px}
 .legendbox input.lgfind{display:block;width:calc(100% - 32px);box-sizing:border-box;margin:4px 0 4px 32px;padding:5px 9px;font-size:12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2)}
 .lgrest li[hidden]{display:none}
 .lgg .lgchev::after{content:"";position:absolute;left:13px;top:3px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
@@ -1041,6 +1043,7 @@ let colorLevel = c => DIMS[state.colorBy].get(c);
    une grappe pour chacune de ses HUB_MAX valeurs principales (au moins 2 contacts), les autres vont dans « Autres ».
    levelMap (id du contact → grappe) est recalculé à chaque dessin du graphe. */
 const HUB_MAX = 8, LEGEND_TOP = 15;
+let openTop = LEGEND_TOP; /* nombre de valeurs (et de grappes) du groupe ouvert dans la légende ; « Afficher 10 grappes de plus » l’augmente */
 let levelMap = new Map(), colorAssign = new Map();
 const levelOf = c => levelMap.get(c.id) ?? colorLevel(c);
 function setupColor(){
@@ -2057,6 +2060,8 @@ function setXY(){
      .force('y', d3.forceY(d => d.type === 'c' ? d.ay : H() / 2).strength(d => d.type === 'c' ? 0.3 : 0));
 }
 
+/* Au-delà de la palette (groupe ouvert avec plus de 15 grappes) : teintes réparties selon l’angle d’or, jamais déjà utilisées dans le groupe */
+function extraColor(used){ for(let i = 0; i < 360; i++){ const c = `hsl(${Math.round((i * 137.508 + 20) % 360)} 55% 46%)`; if(!used.has(c)) return c; } return GREY; }
 /* Tous les groupes autour de « Moi » ont la même taille : leur poids se lit par la jauge, la teinte, l’épaisseur de branche et le pourcentage */
 const HUB_R = 30;
 function renderGraph(vis){
@@ -2090,7 +2095,7 @@ function renderGraph(vis){
     const openHub = [...legendOpen].find(x => x.startsWith('g:'));
     d3.group(cNodes, n => n.hub).forEach((ms, hid) => {
       const cnt = d3.rollup(ms, v => v.length, n => get(n.c));
-      const cap = openHub && hid === 'h:' + openHub.slice(2) ? LEGEND_TOP : HUB_MAX;
+      const cap = openHub && hid === 'h:' + openHub.slice(2) ? openTop : HUB_MAX;
       const top = new Set([...cnt].filter(([v, k]) => k >= 2 && !TAIL.includes(v)).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr')).slice(0, cap).map(([v]) => v));
       ms.forEach(n => { const v = get(n.c); levelMap.set(n.c.id, top.has(v) ? v : colorOther); });
       hubTops.push(top);
@@ -2103,7 +2108,7 @@ function renderGraph(vis){
       const used = new Set();
       hubTops.forEach(t => { if(t.has(v)) t.forEach(o => { if(colorAssign.has(o)) used.add(colorAssign.get(o)); }); });
       const own = colorDomain.indexOf(v);
-      const pick = own >= 0 && own < PALETTE.length && !used.has(PALETTE[own]) ? PALETTE[own] : PALETTE.find(c => !used.has(c)) || brandColor(String(v));
+      const pick = own >= 0 && own < PALETTE.length && !used.has(PALETTE[own]) ? PALETTE[own] : PALETTE.find(c => !used.has(c)) || extraColor(used);
       colorAssign.set(v, pick);
     });
   }
@@ -2462,7 +2467,10 @@ function legendTree(vis){
     const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(h.key)}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
     if(!open) return `<li>${head}</li>`;
     const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
-    const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, LEGEND_TOP), rest = d3.sum(vals.slice(LEGEND_TOP), v => cnt.get(v));
+    const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, openTop), rest = d3.sum(vals.slice(openTop), v => cnt.get(v));
+    /* Grappes possibles : valeurs d’au moins 2 contacts (une grappe d’un seul point n’a pas de sens) */
+    const eligible = vals.filter(v => cnt.get(v) >= 2 && !TAIL.includes(v)).length;
+    const moreHtml = levelMap.size && (eligible > openTop || openTop > LEGEND_TOP) ? `<li class="lgmore">${eligible > openTop ? `<button type="button" class="linkbtn" data-act="lgmore">Afficher ${Math.min(10, eligible - openTop)} grappe${Math.min(10, eligible - openTop) > 1 ? 's' : ''} de plus</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">Revenir à ${LEGEND_TOP}</button>` : ''}</li>` : '';
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li>${head}<ul class="lgvals">${top.map(v => {
       const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
@@ -2473,7 +2481,7 @@ function legendTree(vis){
       if(subs.length < 2) return `<li class="lgwrap">${btn}<span class="lgxsp" aria-hidden="true"></span></li>`;
       const sk = 'e:' + h.key + '|' + v, so = legendOpen.has(sk) || on || (sel.size === 1 && sel.has(v));
       return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n, ms.length)).join('')}</ul>` : ''}</li>`;
-    }).join('')}${rest ? restRow(h, vals.slice(LEGEND_TOP), cnt, ms.length) : ''}</ul></li>`;
+    }).join('')}${moreHtml}${rest ? restRow(h, vals.slice(openTop), cnt, ms.length) : ''}</ul></li>`;
   }).join('');
   /* Fil d’Ariane : où l’on se trouve (réseau › groupe › valeur › filiale), chaque niveau supérieur est cliquable pour remonter */
   const gOpen = [...legendOpen].find(x => x.startsWith('g:')), crumbs = [];
@@ -2997,8 +3005,10 @@ document.addEventListener('click', e => {
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
     else if(a === 'shareview') shareView();
+    else if(a === 'lgmore' || a === 'lgless'){ openTop = a === 'lgmore' ? openTop + 10 : LEGEND_TOP; render(); }
     else if(a === 'lgsub'){
       const v = act.dataset.v, open = !legendOpen.has(v);
+      if(v.startsWith('g:')) openTop = LEGEND_TOP;
       /* Groupe de la légende en arbre : un seul ouvert à la fois, le graphe zoome dessus ; replié, retour à la vue d’ensemble */
       if(v.startsWith('g:')){ [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; }
       open ? legendOpen.add(v) : legendOpen.delete(v);
