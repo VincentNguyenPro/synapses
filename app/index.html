@@ -1754,7 +1754,7 @@ function syncTopN(total){
     f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, Math.min(tot, OPEN_MAX)); r.value = n;
     lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
     document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
-    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, sur un seul cercle, de la plus petite à midi à la plus grosse, jusqu’à ${OPEN_MAX} ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, sur un seul cercle, dans l’ordre de la légende (la plus grosse à midi, puis dans le sens horaire), jusqu’à ${OPEN_MAX} ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
@@ -2056,7 +2056,8 @@ function applyLayout(){
       };
       /* Un seul cercle, quel que soit le nombre de grappes (choix de Vincent : ni anneaux ni bouquet). La grappe la plus proche
          reste à distance de la jauge du groupe ; « autres » est placée en dernier */
-      const ring = [...subs].sort((a, b) => (a.lv === colorOther) - (b.lv === colorOther) || a.arr.length - b.arr.length || levels.indexOf(a.lv) - levels.indexOf(b.lv));
+      /* Même ordre que la légende : la plus grosse à midi, puis de plus en plus petites dans le sens horaire (à nombre égal, ordre alphabétique) */
+      const ring = [...subs].sort((a, b) => (a.lv === colorOther) - (b.lv === colorOther) || b.arr.length - a.arr.length || String(a.lv).localeCompare(String(b.lv), 'fr'));
       const tot = d3.sum(ring, s => s.br + g / 2);
       let D = hn.r + 12 + d3.max(ring, s => s.br);
       ring.forEach(s => { const th = 2 * Math.PI * (s.br + g / 2) / tot; if(th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(th / 2)); });
@@ -2067,7 +2068,7 @@ function applyLayout(){
   });
   layoutHubs(hubs, cx, cy, me ? me.r : 26);
   hubs.forEach(hn => {
-    /* Grappes ordonnées comme une horloge : la plus petite à midi, puis de plus en plus grosses dans le sens horaire */
+    /* Grappes ordonnées comme une horloge et comme la légende : la plus grosse à midi, puis dans le sens horaire */
     const rot = 0;
     const cs = Math.cos(rot), sn = Math.sin(rot);
     hn.rot = rot;
