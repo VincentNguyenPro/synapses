@@ -1805,7 +1805,9 @@ const gRings = root.append('g'), gLinks = root.append('g'), gColl = root.append(
 let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
 /* Noms des groupes : taille fixe à l’écran (13 px) tant que le zoom reste au-dessus de LK, puis ils rétrécissent avec le graphe.
    lblScale(k) donne ce facteur de taille pour un zoom k : le cadrage s’en sert pour ne jamais couper un nom. */
-const LK = 0.06, lblScale = k => Math.min(1, k / LK);
+/* labelF : taille des noms choisie par le cadrage (1, 0,9 ou 0,8) pour qu’ils tiennent à l’horizontale avant de passer en rayons */
+let labelF = 1;
+const LK = 0.06, lblScale = k => Math.min(1, k / LK) * labelF;
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
 /* Curseur « Branches affichées » : nombre de groupes autour de « Moi » ; quand un groupe est ouvert dans la légende,
    il règle le nombre de grappes de ce groupe (openTop), comme « Afficher 10 grappes de plus » */
@@ -1958,7 +1960,7 @@ function lblGeo(el){
   /* Largeur à l’écran en taille pleine : constante quel que soit le zoom, donc mesurée une seule fois par affichage */
   let m = el.__w13;
   if(!m){
-    const K = Math.max(zk, LK), len = sel => { const t = el.querySelector(sel); try { return t && t.getComputedTextLength() * K || 0; } catch(e) { return 0; } };
+    const K = Math.max(zk, LK), len = sel => { const t = el.querySelector(sel); try { return t && t.getComputedTextLength() * K / labelF || 0; } catch(e) { return 0; } };
     const a1 = len('tspan.lblName'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
     m = {w1:a1 + a2 + a3 + 4, w2:Math.max(a1, a2 + a3)};
     if(m.w1 > 4 && isFinite(m.w1)) el.__w13 = m; else { const n = (el.textContent || '').length * 7.4; m = {w1:n, w2:n * 0.6}; }
@@ -1976,7 +1978,7 @@ function lblOffsets(g, radial, f = 1){
 function hClash(geos, tr){
   const f = lblScale(tr.k);
   const bx = geos.map(g => { const o = lblOffsets(g, false, f), sx = tr.x + tr.k * g.bx, sy = tr.y + tr.k * g.by; return {L:sx + o.l, R:sx + o.r, T:sy + o.t, B:sy + o.b}; });
-  for(let i = 0; i < bx.length; i++) for(let j = i + 1; j < bx.length; j++){ const a = bx[i], b = bx[j]; if(a.L < b.R + 3 && b.L < a.R + 3 && a.T < b.B + 2 && b.T < a.B + 2) return true; }
+  for(let i = 0; i < bx.length; i++) for(let j = i + 1; j < bx.length; j++){ const a = bx[i], b = bx[j]; if(a.L < b.R + 12 && b.L < a.R + 12 && a.T < b.B + 4 && b.T < a.B + 4) return true; /* marge pour que deux noms ne se collent pas */ }
   return false;
 }
 function layoutLabels(){
@@ -1997,7 +1999,7 @@ function layoutLabels(){
 function styleLabels(){
   if(!labelSel) return;
   const k = Math.max(zk, LK);
-  labelSel.style('font-size', `${13 / k}px`).style('stroke-width', `${4 / k}px`);
+  labelSel.style('font-size', `${13 * labelF / k}px`).style('stroke-width', `${4 / k}px`);
   gColl.selectAll('text.colllbl').style('font-size', `${12 / Math.max(zk, 0.35)}px`).style('stroke-width', `${4 / k}px`);
   /* Chiffres des groupes : taille compensée au dézoom, sans déborder du cercle */
   /* Nombre au centre d’un groupe : environ la moitié du rayon, au moins 13 px à l’écran, et toujours dans le cercle selon son nombre de chiffres */
@@ -2507,8 +2509,11 @@ function fit(){
     return d3.zoomIdentity.translate(vb.x + (vb.w - (e.R - e.L)) / 2 - e.L, vb.y + (vb.h - (e.B - e.T)) / 2 - e.T).scale(lo);
   };
   /* Cadrage avec noms horizontaux ; s’ils se chevauchent à ce zoom, cadrage pour des noms radiaux */
-  let t = solve(false);
-  if(labelSel && hClash(labelSel.nodes().map(lblGeo), t)) t = solve(true);
+  /* Noms horizontaux, au besoin un peu plus petits (90 %, puis 80 %) ; s’ils se chevauchent encore, noms radiaux en taille normale */
+  let t = null;
+  const geos = labelSel ? labelSel.nodes().map(lblGeo) : [];
+  for(const F of [1, 0.9, 0.8]){ labelF = F; const tt = solve(false); if(!labelSel || !hClash(geos, tt)){ t = tt; break; } }
+  if(!t){ labelF = 1; t = solve(true); }
   fitK = t.k;
   (reduceMotion ? svg : svg.transition().duration(600)).call(zoom.transform, t);
 }
