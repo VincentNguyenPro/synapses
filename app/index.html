@@ -269,6 +269,18 @@ button.lg:hover{background:var(--surface-2)}
 .lg:focus-visible{outline:2px solid var(--accent)}
 .lgl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgwrap{display:flex;flex-wrap:wrap;align-items:flex-start}
+.lgg .lgchev{flex:none;width:14px;height:14px;position:relative}
+.lgg .lgchev::after{content:"";position:absolute;left:3px;top:3px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+.lgg[aria-expanded="true"] .lgchev::after{transform:rotate(45deg);top:1px}
+.lgg[aria-expanded="true"]{font-weight:700}
+.lgvals{list-style:none;margin:0 0 6px;padding:0 0 0 12px}
+.lgv{all:unset;display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:3px 6px;border-radius:6px;font-size:12.5px}
+button.lgv{cursor:pointer}
+button.lgv:hover{background:var(--surface-2)}
+button.lgv:focus-visible{outline:2px solid var(--accent)}
+.lgv[aria-pressed="true"]{background:var(--accent-soft);font-weight:700}
+.lgv.off{opacity:.45}
+.lgv .n{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
 .lgwrap > .lg{flex:1;min-width:0;width:auto}
 .lgx{all:unset;flex:none;width:22px;height:26px;cursor:pointer;border-radius:6px;position:relative}
 .lgx::after{content:"";position:absolute;left:7px;top:8px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
@@ -2352,7 +2364,33 @@ function sortDesc(vals, counts){
   return [...vals].sort((a, b) => last(a) - last(b) || counts.get(b) - counts.get(a) || String(a).localeCompare(String(b), 'fr'));
 }
 const legendOpen = new Set();
+/* Légende en arbre (regroupement ≠ couleur) : la liste des groupes (secteurs…), du plus grand au plus petit ;
+   un clic sur un groupe déplie ses valeurs de « Colorer par » (entreprises…), un clic sur une valeur la filtre */
+function legendTree(vis){
+  const gdim = DIMS[state.groupBy], cdim = DIMS[state.colorBy], other = gdim.other || 'Autres';
+  const canFilter = isFilterDim(state.colorBy), sel = state.include[state.colorBy] || new Set();
+  const hubs = nodes.filter(n => n.type === 'hub').sort((a, b) => (a.key === other) - (b.key === other) || b.count - a.count);
+  const members = new Map(hubs.map(h => [h.id, []]));
+  nodes.forEach(n => { if(n.type === 'c' && members.has(n.hub)) members.get(n.hub).push(n.c); });
+  const maxG = d3.max(hubs, h => h.count) || 1, max = legendAll ? 999 : 8;
+  const plural = gdim.label.toLowerCase();
+  const rows = hubs.slice(0, max).map(h => {
+    const k = 'g:' + h.key, open = legendOpen.has(k), ms = members.get(h.id);
+    const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(h.key)}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
+    if(!open) return `<li>${head}</li>`;
+    const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
+    const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, 15), rest = d3.sum(vals.slice(15), v => cnt.get(v));
+    const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
+    return `<li>${head}<ul class="lgvals">${top.map(v => {
+      const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span>`;
+      return `<li>${canFilter && !TAIL.includes(v) ? `<button type="button" class="lgv${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${sel.has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lgv">${inner}</span>`}</li>`;
+    }).join('')}${rest ? `<li><span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${vals.length - 15} autre${vals.length - 15 > 1 ? 's' : ''}</span><span class="n">${rest}</span></span></li>` : ''}</ul></li>`;
+  }).join('');
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}><p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour voir sa répartition par ${esc(cdim.label.toLowerCase())}, puis une valeur pour la filtrer.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
+  $('#legend').hidden = !vis.length;
+}
 function updateLegend(vis){
+  if(state.view === 'graph' && state.groupBy !== state.colorBy && nodes.some(n => n.type === 'hub')) return legendTree(vis);
   const cdim = DIMS[state.colorBy];
   const canFilter = isFilterDim(state.colorBy);
   const sel = canFilter ? state.include[state.colorBy] : new Set();
