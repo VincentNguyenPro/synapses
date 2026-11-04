@@ -940,6 +940,8 @@ const nkey = s => norm(s).replace(/['’]/g, ' ').replace(/\s+/g, ' ').trim();
    Correspondance exacte, puis par début de nom (« Capgemini Engineering » → Capgemini). */
 const BUILTIN = new Map();
 let PREFIX_STOP = new Set();
+/* Marques renommées (data/entreprises.json, « alias ») : « Boursorama » → « BoursoBank » */
+let ALIASES = new Map();
 /* Charge les dictionnaires (fichiers statiques du site : aucune donnée de l’utilisateur n’est envoyée) */
 async function loadDictionary(){
   const get = async f => { const r = await fetch(f); if(!r.ok) throw new Error(f + ' : ' + r.status); return r.json(); };
@@ -950,6 +952,7 @@ async function loadDictionary(){
   BUILTIN.clear();
   for(const [sec, names] of Object.entries(co.secteurs)) names.forEach(n => { const k = nkey(n); if(k && !BUILTIN.has(k)) BUILTIN.set(k, sec); });
   PREFIX_STOP = new Set(co.premiers_mots_ignores);
+  ALIASES = new Map(Object.entries(co.alias || {}).map(([k, v]) => [spellKey(k), v]));
   GROUPS = (co.groupes || []).map(g => [g.nom, new RegExp(g.motif)]);
   FUNCTIONS = po.fonctions.map(m => [m.fonction, new RegExp(m.motif)]);
   FN_DEFAULT = po.fonction_par_defaut || 'Autre';
@@ -988,7 +991,52 @@ function assignGroups(list){
   });
   /* Indépendants, entreprise non communiquée ou absente : un secteur à part, pour que « Non classé » ne garde que les vraies entreprises inconnues */
   list.forEach(c => { if(!c.sectorGiven && c.sector === 'Non classé' && (!c.company || NO_COMPANY_GROUPS.has(c.group))) c.sector = NO_SECTOR; });
+  assignEntities(list);
 }
+/* Entités d’un groupe (filiales listées sous le chevron) : les écritures d’un même nom sont réunies sous la plus fréquente.
+   1. accents, casse, espaces, ponctuation et forme juridique ignorés (« Societe Generale » = « Société Générale », « SwissLife » = « Swiss Life ») ;
+   2. faute de frappe d’une lettre (deux pour un nom long), seulement entre entités d’une même société mère ;
+   3. marques renommées, d’après la liste « alias » du dictionnaire (« Boursorama » → « BoursoBank »).
+   Le nom saisi reste affiché dans la fiche du contact ; c.entity sert à la légende, aux fiches de groupe et à la surbrillance. */
+const compactKey = s => spellKey(s).replace(/[^a-z0-9]/g, '');
+function editDist(a, b, max){
+  if(Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({length:b.length + 1}, (_, j) => j);
+  for(let i = 1; i <= a.length; i++){
+    const cur = [i]; let best = i;
+    for(let j = 1; j <= b.length; j++){ cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); best = Math.min(best, cur[j]); }
+    if(best > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function assignEntities(list){
+  const byGroup = d3.group(list.filter(c => c.company), c => c.group || c.company);
+  byGroup.forEach(cs => {
+    /* Écritures réunies par clé compacte (et alias) ; nom affiché = l’écriture la plus fréquente, ou le nom de l’alias */
+    const keys = new Map();
+    cs.forEach(c => {
+      const al = ALIASES.get(spellKey(c.company)), k = al ? compactKey(al) : compactKey(c.company) || nkey(c.company);
+      const e = keys.get(k) || {k, n:0, spell:new Map(), alias:al || null};
+      e.n++; e.spell.set(c.company, (e.spell.get(c.company) || 0) + 1); if(al) e.alias = al;
+      keys.set(k, e); c.__ek = k;
+    });
+    /* Fautes de frappe : une petite entité proche d’une plus grande lui est rattachée */
+    const ents = [...keys.values()].sort((a, b) => b.n - a.n), target = new Map();
+    ents.forEach((e, i) => {
+      const max = e.k.length >= 12 ? 2 : e.k.length >= 6 ? 1 : 0;
+      if(!max) return;
+      /* Jamais quand le dernier mot diffère et est un sigle court (« BNP Paribas CIB » ≠ « BNP Paribas CIS »), ni vers une entité plus petite */
+      const last = x => spellKey([...x.spell.keys()][0]).split(' ').pop();
+      const into = ents.slice(0, i).find(b => !target.has(b.k) && b.k.length >= 6 && b.n >= e.n && editDist(e.k, b.k, max) <= max
+        && !(last(e) !== last(b) && Math.min(last(e).length, last(b).length) <= 4));
+      if(into){ target.set(e.k, into.k); e.spell.forEach((n, sp) => into.spell.set(sp, (into.spell.get(sp) || 0) + n)); into.n += e.n; }
+    });
+    const name = new Map(ents.map(e => [e.k, e.alias || [...e.spell].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0][0]]));
+    cs.forEach(c => { c.entity = name.get(target.get(c.__ek) || c.__ek); delete c.__ek; });
+  });
+}
+const entityOf = c => c.entity || c.company;
 const coOf = c => c.group || c.company;
 /* Correspondance exacte, puis par début de nom, en ignorant les premiers mots trop génériques */
 function builtinMatch(k){
@@ -2622,7 +2670,7 @@ function legendUp(lvl, v){
    (BNP Paribas a aussi des contacts en Immobilier, en Finance…) */
 function legendNodes(kind, v){
   const get = DIMS[state.colorBy].get;
-  let ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? n.c.company === v : get(n.c) === v));
+  let ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? entityOf(n.c) === v : get(n.c) === v));
   const g = [...legendOpen].find(x => x.startsWith('g:')), hub = g && nodes.find(n => n.type === 'hub' && n.key === g.slice(2));
   if(hub && ms.some(n => n.hub === hub.id)) ms = ms.filter(n => n.hub === hub.id);
   return ms;
@@ -2722,7 +2770,7 @@ function legendTree(vis){
   if(gOpen){
     crumbs.push({lvl:0, label:'Tout le réseau'}, {lvl:1, label:gOpen.slice(2)});
     if(legendHL){
-      const parent = legendHL.kind === 'e' ? (contacts.find(c => c.company === legendHL.v) || {}) : null;
+      const parent = legendHL.kind === 'e' ? (contacts.find(c => entityOf(c) === legendHL.v) || {}) : null;
       if(parent){ const pv = cdim.get(parent); if(pv && pv !== legendHL.v) crumbs.push({lvl:2, label:pv}); }
       crumbs.push({lvl:3, label:legendHL.v});
     }
@@ -2879,7 +2927,7 @@ function showContact(c){
 
 /* Entités réunies sous un groupe (« BNP Paribas Cardif », « BNP Paribas CIB »…), triées par nombre décroissant */
 function entitiesOf(list){
-  const m = d3.rollup(list.filter(c => c.company), v => v.length, c => c.company);
+  const m = d3.rollup(list.filter(c => c.company), v => v.length, entityOf);
   return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
 }
 const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div class="hl${top ? '' : ' sub'}" role="button" tabindex="0" data-hle="${esc(k)}"><span>${esc(k)}</span><span class="n">${n}</span><span class="pct">${pct(n, total)}</span></div>`).join('')
@@ -2896,7 +2944,7 @@ function highlightRow(row){
     row.classList.add('on');
     const get = DIMS[state.colorBy].get;
     if(row.dataset.hlv != null) match = n => get(n.c) === row.dataset.hlv;
-    else if(row.dataset.hle != null) match = n => n.c.company === row.dataset.hle;
+    else if(row.dataset.hle != null) match = n => entityOf(n.c) === row.dataset.hle;
     else { const listed = new Set([...dbody.querySelectorAll('[data-hlv]')].map(r => r.dataset.hlv)); match = n => !listed.has(get(n.c)); }
   }
   focus(new Set([hub.id, ...members.filter(match).map(n => n.id)]));

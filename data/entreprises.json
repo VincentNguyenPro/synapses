@@ -3146,5 +3146,16 @@
    "nom": "Non communiqué",
    "motif": "^(confidenti\\w*|anonyme?|anonymous|stealth( startup| mode| company)?|stealth\\w*|prive|private|entreprise privee|nc|n ?/ ?a|none|aucune?|top secret|en recherche( active)?( d emploi)?|recherche d emploi|open to work|plusieurs entreprises|divers|xx+)$|^[^a-z0-9؀-ۿ一-鿿]*$"
   }
- ]
+ ],
+ "alias": {
+  "Boursorama": "BoursoBank",
+  "Boursorama Banque": "BoursoBank",
+  "Pôle emploi": "France Travail",
+  "Pole Emploi": "France Travail",
+  "Faurecia": "FORVIA",
+  "Korian": "Clariane",
+  "GRTgaz": "NaTran",
+  "Euler Hermes": "Allianz Trade",
+  "Lydia": "Sumeria"
+ }
 }
