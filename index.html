@@ -124,7 +124,7 @@ p{margin:0}
 /* ---------- Vitrine : un champ sombre, une rangée de panneaux qui défile ---------- */
 .vitrine{background:var(--field);color:var(--field-ink);margin-top:var(--pad);padding:var(--pad) 0}
 /* Carrousel : largeur de l’écran éclairé calculée sur la hauteur disponible (titre et légende compacts) */
-.vitrine.shots{--fw:min(1200px,90vw,calc((100svh - 285px) * 1.6));margin-top:0;padding:clamp(20px,3.5svh,40px) 0}
+.vitrine.shots{--fw:min(1200px,90vw,calc((100svh - 270px) * 1.6));margin-top:0;padding:clamp(20px,3.5svh,40px) 0}
 .vitrine.shots .wrap.top h3{font-size:clamp(1.4rem,1rem + 1vw,2rem)}
 .vitrine h2{font-size:var(--step-head);max-width:14ch}
 .film{display:grid;gap:16px 56px;scroll-margin-top:88px}
@@ -155,7 +155,7 @@ p{margin:0}
 .vitrine .nav button{width:52px;height:52px;border-radius:var(--radius);border:0;background:#243042;color:#fff;font:inherit;font-size:22px;cursor:pointer;transition:background .15s,transform .15s}
 .vitrine .nav button:hover{background:#2F3D52}
 .vitrine .nav button:active{transform:scale(.95)}
-.row{display:flex;gap:clamp(24px,4vw,64px);overflow-x:auto;scroll-snap-type:x mandatory;padding:clamp(14px,2svh,24px) calc(50vw - var(--fw) / 2);scrollbar-width:none;align-items:center}
+.row{display:flex;gap:clamp(24px,4vw,64px);overflow-x:auto;scroll-snap-type:x mandatory;padding:clamp(22px,3.4svh,36px) calc(50vw - var(--fw) / 2) clamp(10px,1.4svh,16px);scrollbar-width:none;align-items:center}
 .row::-webkit-scrollbar{display:none}
 .row figure{flex:none;width:var(--fw);margin:0;scroll-snap-align:center;opacity:.32;transition:opacity .5s var(--ease),transform .5s var(--ease);transform:scale(.94)}
 .row figure.on{opacity:1;transform:none}
