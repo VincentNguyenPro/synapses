@@ -584,7 +584,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
       <div class="zoombar">
         <button class="btn icon-btn zin" id="zin" type="button" aria-label="Zoomer">+</button>
         <button class="btn icon-btn zout" id="zout" type="button" aria-label="Dézoomer">−</button>
-        <button class="btn icon-btn" id="recenter" type="button" aria-label="Recentrer le graphe" title="Recentrer">
+        <button class="btn icon-btn" id="recenter" type="button" aria-label="Recadrer sur ce que tu regardes" title="Recadrer">
           <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
         </button>
       </div>
@@ -3184,7 +3184,15 @@ async function handleFiles(fileList){
 /* ---------- Events ---------- */
 $('#file').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 $('#closeDrawer').addEventListener('click', clearSelection);
-$('#recenter').addEventListener('click', fit);
+/* Recadrer : sur ce qu’on regarde (contact sélectionné, entreprise choisie, secteur ouvert), sinon sur tout le réseau.
+   « Vue d’ensemble » reste le bouton qui ramène à tout le réseau */
+$('#recenter').addEventListener('click', () => {
+  if(state.view !== 'graph') return;
+  const sel = state.selected && nodes.find(n => n.id === state.selected);
+  if(sel){ zoomToNode(sel); return; }
+  if(applyLegendHL(true) || focusLegendGroup(true)) return;
+  fit();
+});
 $('#overview').addEventListener('click', () => { const had = [...legendOpen].some(x => x.startsWith('g:')); [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; if(had && levelMap.size) render(); else updateLegend(contacts.filter(pass)); clearSelection(); });
 /* Boutons + et − : zoom autour de ce qu’on regarde (contact sélectionné, entreprise choisie, groupe ouvert), s’il est à l’écran ;
    sinon autour du centre de la zone libre (sans la légende), et non du centre du canevas entier */
