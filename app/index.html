@@ -116,6 +116,9 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .chip .n{color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:700}
 .chip::before{content:"";width:15px;height:15px;border:1.5px solid var(--muted);border-radius:4px;box-sizing:border-box;flex:none;display:grid;place-items:center;font-size:11px;line-height:1}
+.vchip::before{border-radius:50%}
+.vchip[aria-checked="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:700}
+.vchip[aria-checked="true"]::before{border:4.5px solid var(--accent);background:var(--surface)}
 .chip[aria-pressed="true"]::before{content:"✓";background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:800}
 .chipfoot{flex-basis:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:4px}
 /* Filtres en barres : la longueur de chaque barre montre le poids de la valeur (relatif à la plus grande) */
@@ -515,7 +518,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
     </section>
     <section class="section" id="views">
       <h2>Vues</h2>
-      <div class="field"><span class="lbl">Vues prêtes à l’emploi</span><div class="chips" id="presets"></div></div>
+      <div class="field"><span class="lbl">Vues prêtes à l’emploi</span><div class="chips" id="presets" role="radiogroup" aria-label="Vues prêtes à l’emploi"></div></div>
       <div class="field"><span class="lbl">Mes vues</span><div id="myViews"></div>
         <form class="row" id="saveView" style="margin-top:8px"><input type="text" id="viewName" maxlength="40" placeholder="Nom de la vue" aria-label="Nom de la vue à enregistrer"><button class="btn" type="submit">Enregistrer</button></form>
       </div>
@@ -1285,11 +1288,11 @@ function renderViews(){
   const cur = getView();
   box.innerHTML = presets().map(p => {
     const on = sameView(normView(p.v), cur);
-    return `<button class="chip" type="button" data-preset="${p.id}" aria-pressed="${on}">${esc(p.name)}${p.id !== 'co' ? ` <span class="n">${countView(p.v)}</span>` : ''}</button>`;
+    return `<button class="chip vchip" type="button" role="radio" data-preset="${p.id}" aria-checked="${on}">${esc(p.name)}${p.id !== 'co' ? ` <span class="n">${countView(p.v)}</span>` : ''}</button>`;
   }).join('');
   document.getElementById('myViews').innerHTML = myViews.length ? myViews.map((x, i) => i === editView
     ? `<form class="vrow" data-rename="${i}"><input type="text" maxlength="40" value="${esc(x.name)}" aria-label="Nouveau nom de la vue"><button class="btn sm" type="submit">OK</button></form>`
-    : `<div class="vrow"><button class="chip" type="button" data-myview="${i}" aria-pressed="${sameView(normView(x.v), cur)}"><span>${esc(x.name)}</span></button>
+    : `<div class="vrow"><button class="chip vchip" type="button" role="radio" data-myview="${i}" aria-checked="${sameView(normView(x.v), cur)}"><span>${esc(x.name)}</span></button>
         <button class="btn icon-btn sm" type="button" data-vedit="${i}" aria-label="Renommer la vue ${esc(x.name)}" title="Renommer">✎</button>
         <button class="btn icon-btn sm" type="button" data-vdel="${i}" aria-label="Supprimer la vue ${esc(x.name)}" title="Supprimer">✕</button></div>`).join('')
     : '<p class="hint" style="margin:0">Règle l’affichage et les filtres, puis enregistre la vue pour la retrouver en un clic.</p>';
@@ -1348,8 +1351,14 @@ document.getElementById('views').addEventListener('submit', e => {
 });
 document.getElementById('views').addEventListener('click', e => {
   const p = e.target.closest('[data-preset]'), m = e.target.closest('[data-myview]'), ed = e.target.closest('[data-vedit]'), dl = e.target.closest('[data-vdel]');
-  if(p){ const x = presets().find(o => o.id === p.dataset.preset); if(x){ applyView(x.v); toast(`Vue « ${x.name} »`); } }
-  else if(m){ const x = myViews[+m.dataset.myview]; if(x){ applyView(x.v); toast(`Vue « ${x.name} »`); } }
+  /* Une seule vue à la fois (boutons radio) ; un clic sur la vue active la retire et revient à l’affichage de départ */
+  const pick = (x, btn) => {
+    if(!x) return;
+    if(btn.getAttribute('aria-checked') === 'true'){ applyView({g:'sector', c:'seniority', t:12, m:state.view, f:{}}); toast('Vue retirée : tout le réseau'); }
+    else { applyView(x.v); toast(`Vue « ${x.name} »`); }
+  };
+  if(p) pick(presets().find(o => o.id === p.dataset.preset), p);
+  else if(m) pick(myViews[+m.dataset.myview], m);
   else if(ed){ editView = +ed.dataset.vedit; renderViews(); const i = document.querySelector('[data-rename] input'); if(i){ i.focus(); i.select(); } }
   else if(dl){ const x = myViews[+dl.dataset.vdel]; if(x && confirm(`Supprimer la vue « ${x.name} » ?`)){ myViews.splice(+dl.dataset.vdel, 1); editView = -1; saveViews(); renderViews(); } }
 });
