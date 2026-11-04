@@ -3377,8 +3377,16 @@ document.addEventListener('click', e => {
     const kind = hlb.dataset.lghlv != null ? 'v' : 'e', v = kind === 'v' ? hlb.dataset.lghlv : hlb.dataset.lghl;
     const same = legendHL && legendHL.kind === kind && legendHL.v === v;
     legendHL = same ? null : {kind, v};
-    /* Société mère choisie : ses filiales restent dépliées, même si l’on clique ensuite sur l’une d’elles */
-    if(kind === 'v' && legendHL){ const g = [...legendOpen].find(x => x.startsWith('g:')); if(g) legendOpen.add('e:' + g.slice(2) + '|' + v); }
+    /* Société mère : un clic la choisit et déplie ses filiales (les autres sociétés mères se replient) ; un second clic la replie.
+       Ses filiales restent dépliées si l’on clique ensuite sur l’une d’elles */
+    if(kind === 'v'){
+      const g = [...legendOpen].find(x => x.startsWith('g:'));
+      if(g){
+        const sk = 'e:' + g.slice(2) + '|' + v;
+        [...legendOpen].filter(x => x.startsWith('e:' + g.slice(2) + '|') && x !== sk).forEach(x => legendOpen.delete(x));
+        if(legendHL) legendOpen.add(sk); else legendOpen.delete(sk);
+      }
+    }
     updateLegend(contacts.filter(pass));
     if(legendHL) applyLegendHL(!state.selected);
     else if(!focusLegendGroup(true)){ if(state.selected) reapplySelection(); else { clearFocus(); fit(); } }
