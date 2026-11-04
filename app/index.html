@@ -1774,7 +1774,8 @@ function syncTopN(total){
   document.getElementById('topNVal').textContent = n >= total ? `toutes (${total})` : `${n} sur ${total}`;
 }
 function updateOverview(){ const b = document.getElementById('overview'); if(b) b.hidden = state.view !== 'graph' || zk <= fitK * 1.2; }
-const zoom = d3.zoom().scaleExtent([0.15, 5]).on('zoom', e => { root.attr('transform', e.transform); zk = e.transform.k; styleLabels(); sizePins(); hideTip(); updateOverview(); });
+/* Borne basse sous le zoom de cadrage d’un grand réseau (~0,07) : sinon « − » ramenait à 0,15, c’est-à-dire zoomait */
+const zoom = d3.zoom().scaleExtent([0.02, 5]).on('zoom', e => { root.attr('transform', e.transform); zk = e.transform.k; styleLabels(); sizePins(); hideTip(); updateOverview(); });
 svg.call(zoom).on('dblclick.zoom', null).on('click', e => { if(e.target === svg.node()) clearSelection(); });
 
 let nodes = [], links = [], linkSel = null, nodeSel = null, labelSel = null, countSel = null, badgeSel = null, needFit = true;
@@ -3228,8 +3229,16 @@ function zoomAnchor(){
   if(!p){ const me = nodes.find(n => n.type === 'me'); if(me) p = at(px(me), py(me)); }
   return p || [vb.x + vb.w / 2, vb.y + vb.h / 2];
 }
-$('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4, zoomAnchor()));
-$('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4, zoomAnchor()));
+/* Zoom pas à pas, en ligne droite autour du point d’ancrage (l’interpolation par défaut de d3 fait un détour latéral : le graphe semblait se décaler) */
+function stepZoom(f){
+  const t0 = d3.zoomTransform(svg.node()), p = zoomAnchor(), [lo, hi] = zoom.scaleExtent(), k1 = Math.max(lo, Math.min(hi, t0.k * f));
+  const at = k => d3.zoomIdentity.translate(p[0] - (p[0] - t0.x) * k / t0.k, p[1] - (p[1] - t0.y) * k / t0.k).scale(k);
+  if(reduceMotion){ svg.call(zoom.transform, at(k1)); return; }
+  /* Transition nommée : zoom.transform interrompt la transition sans nom, il ne doit pas couper celle-ci */
+  svg.interrupt('stepzoom').transition('stepzoom').duration(250).tween('stepzoom', () => u => svg.call(zoom.transform, at(t0.k * Math.pow(k1 / t0.k, u))));
+}
+$('#zin').addEventListener('click', () => stepZoom(1.4));
+$('#zout').addEventListener('click', () => stepZoom(1 / 1.4));
 $('#logosOn').checked = logosOn;
 $('#logosOn').addEventListener('change', e => {
   logosOn = e.target.checked;
