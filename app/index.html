@@ -1265,6 +1265,7 @@ function setView(v){
 }
 function applyView(v){
   setView(v);
+  legendHL = null; /* une valeur choisie dans la légende n’a plus de sens dans la nouvelle vue (elle empêchait le recadrage) */
   needFit = true; select(null); closeDrawer(); syncChips(); render();
   const hn = v.h && state.view === 'graph' ? nodes.find(n => n.id === 'h:' + v.h) : null;
   if(hn){ needFit = false; showHub(hn); }
@@ -1899,9 +1900,10 @@ function gatherColleagues(sn, cn){
     const s = hn.blobs.find(b => b.lv === lv);
     if(s){
       /* Grande grappe agrandie par le cercle des collègues : elle s’écarte du rond du groupe (dans l’axe de sa branche) pour ne pas le recouvrir */
-      const R = Math.max(s.br, R0 + r + 5), L = Math.hypot(s.cx, s.cy) || 1, need = hn.r + 14 + R, f = L < need ? need / L : 1;
-      sn.homeX = sn.ax; sn.homeY = sn.ay; sn.ax = hn.ax + s.cx * f; sn.ay = hn.ay + s.cy * f; gathered.push(sn);
-      selBlob = {key:hn.id + '|' + s.lv, r:R, dx:s.cx * (f - 1), dy:s.cy * (f - 1)};
+      const rc = Math.cos(hn.rot || 0), rs = Math.sin(hn.rot || 0), rx = s.cx * rc - s.cy * rs, ry = s.cx * rs + s.cy * rc;
+      const R = Math.max(s.br, R0 + r + 5), L = Math.hypot(rx, ry) || 1, need = hn.r + 14 + R, f = L < need ? need / L : 1;
+      sn.homeX = sn.ax; sn.homeY = sn.ay; sn.ax = hn.ax + rx * f; sn.ay = hn.ay + ry * f; gathered.push(sn);
+      selBlob = {key:hn.id + '|' + s.lv, r:R, dx:rx * (f - 1), dy:ry * (f - 1)};
     }
   }
   const a0 = -Math.PI / 2;
@@ -2152,8 +2154,22 @@ function applyLayout(){
       const ring = [...subs].sort((a, b) => (a.lv === colorOther) - (b.lv === colorOther) || b.arr.length - a.arr.length || String(a.lv).localeCompare(String(b.lv), 'fr'));
       const tot = d3.sum(ring, s => s.br + g / 2);
       let D = hn.r + 12 + d3.max(ring, s => s.br);
-      ring.forEach(s => { const th = 2 * Math.PI * (s.br + g / 2) / tot; if(th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(th / 2)); });
-      place(ring, D);
+      /* Peu de grappes : serrées en arc du côté extérieur (à l’opposé de « Moi »), au lieu d’être réparties tout autour du groupe,
+         où l’une d’elles se retrouvait entre le groupe et « Moi », traversée par la branche. Rotation appliquée plus bas (hn.arc) */
+      const arcTh = ring.map(s => 2 * Math.asin(Math.min(1, (s.br + g / 2) / D))), arcSum = d3.sum(arcTh);
+      hn.arc = ring.length > 1 && arcSum <= 2 * Math.PI * 0.6;
+      if(hn.arc){
+        let a0 = -Math.PI / 2 - arcSum / 2;
+        ring.forEach((s, j) => {
+          const mid = a0 + arcTh[j] / 2; a0 += arcTh[j];
+          s.cx = D * Math.cos(mid); s.cy = D * Math.sin(mid);
+          s.arr.forEach((m, i) => { const rr = c * Math.sqrt(i + 0.5), th = i * GOLDEN; local.push({x:s.cx + rr * Math.cos(th), y:s.cy + rr * Math.sin(th)}); ordered.push(m); });
+          blobs.push(s);
+        });
+      } else {
+        ring.forEach(s => { const th = 2 * Math.PI * (s.br + g / 2) / tot; if(th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(th / 2)); });
+        place(ring, D);
+      }
       hn.outer = D + d3.max(ring, s => s.br) + 1;
       hn.inner = D - d3.max(ring, s => s.br) - g; /* espace libre au centre du cercle de grappes */
     }
@@ -2161,8 +2177,9 @@ function applyLayout(){
   });
   layoutHubs(hubs, cx, cy, me ? me.r : 26);
   hubs.forEach(hn => {
-    /* Grappes ordonnées comme une horloge et comme la légende : la plus grosse à midi, puis dans le sens horaire */
-    const rot = 0;
+    /* Grappes ordonnées comme une horloge et comme la légende : la plus grosse à midi, puis dans le sens horaire.
+       En arc (peu de grappes), l’arc est tourné vers l’extérieur, dans l’axe de la branche du groupe */
+    const rot = hn.arc && hn.angle != null ? hn.angle + Math.PI / 2 : 0;
     const cs = Math.cos(rot), sn = Math.sin(rot);
     hn.rot = rot;
     hn.members.forEach((n, i) => {
