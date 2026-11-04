@@ -198,6 +198,12 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .spoke{stroke:var(--accent);stroke-opacity:.6;stroke-width:1.6px;pointer-events:none;display:none}
 .spoke.hot{display:inline}
 .pin{pointer-events:none}
+.hubcenter .hcdisc{fill:var(--surface);stroke:var(--accent);stroke-opacity:.45;stroke-width:1.5px;vector-effect:non-scaling-stroke;cursor:pointer}
+.hubcenter text{text-anchor:middle;dominant-baseline:central;pointer-events:none;fill:var(--ink)}
+.hubcenter .hcnum{font-weight:800;font-variant-numeric:tabular-nums}
+.hubcenter .hcunit{fill:var(--muted)}
+.hubcenter .hcname{font-weight:700}
+.hubcenter .hcpct{fill:var(--accent);font-weight:700}
 .envelope{fill:none;stroke:var(--accent);stroke-opacity:.35;stroke-width:1.2px;stroke-dasharray:3 5;pointer-events:none;vector-effect:non-scaling-stroke}
 .pin .pring{fill:none}
 .pin .pmono{fill:#fff;font-weight:700;text-anchor:middle;dominant-baseline:central}
@@ -1900,7 +1906,7 @@ function hClash(geos, tr){
 function layoutLabels(){
   if(!labelSel) return;
   const els = labelSel.nodes();
-  els.forEach(el => { el.style.display = ''; });
+  els.forEach(el => { el.style.display = el.__data__ && hubCentered(el.__data__) ? 'none' : ''; });
   const tr = d3.zoomTransform(svg.node());
   const geos = els.map(lblGeo);
   labelRadial = hClash(geos, tr);
@@ -1924,6 +1930,8 @@ function styleLabels(){
 }
 /* Extrémités d’un trait. La branche « Moi » → groupe ouvert (ses grappes en cercle autour de lui) s’arrête sur le fin cercle
    qui entoure ces grappes, au lieu de les traverser jusqu’au centre */
+/* Groupe dont le nom et les chiffres sont affichés dans le disque central (drawHubCenter) */
+const hubCentered = d => !!(envR(d) && d.inner > d.r + 6);
 const envR = hn => openHubInfo && hn.type === 'hub' && hn.key === openHubInfo.key && hn.blobs && hn.blobs.length > 1 ? hn.outer + 8 : 0;
 function linkEnds(l){
   const s = l.source, t = l.target, sx = s._rx ?? s.x, sy = s._ry ?? s.y, tx = t._rx ?? t.x, ty = t._ry ?? t.y;
@@ -2063,6 +2071,7 @@ function applyLayout(){
       ring.forEach(s => { const th = 2 * Math.PI * (s.br + g / 2) / tot; if(th < Math.PI) D = Math.max(D, (s.br + g / 2) / Math.sin(th / 2)); });
       place(ring, D);
       hn.outer = D + d3.max(ring, s => s.br) + 1;
+      hn.inner = D - d3.max(ring, s => s.br) - g; /* espace libre au centre du cercle de grappes */
     }
     hn.members = ordered; hn.local = local; hn.blobs = blobs;
   });
@@ -2099,6 +2108,7 @@ function drawRings(){
   drawPins(data);
   spokeHot(null);
   /* Fin cercle autour des grappes du groupe ouvert : la branche « Moi » s’y raccroche */
+  drawHubCenter();
   gRings.selectAll('circle.envelope').data(nodes.filter(n => n.type === 'hub' && envR(n)), d => d.id).join('circle').attr('class', 'envelope')
     .attr('r', envR).attr('cx', d => d.ax).attr('cy', d => d.ay);
   /* Jauge circulaire autour de chaque groupe : sa part des contacts affichés */
@@ -2134,6 +2144,30 @@ function drawPins(data){
     img.on('load', () => show(true)).on('error', () => { logoFails.add(domainOf(d.lv)); img.attr('href', null); show(false); }).attr('href', url);
   });
   sizePins();
+}
+/* Groupe ouvert : son nom, sa part et son nombre de contacts dans un disque au centre de son cercle de grappes (place libre),
+   au lieu du petit rond et du nom posé à l’extérieur, illisibles quand il y a beaucoup de grappes */
+function drawHubCenter(){
+  const hubs = nodes.filter(n => n.type === 'hub' && hubCentered(n));
+  const on = new Set(hubs.map(n => n.id));
+  if(labelSel) labelSel.style('display', d => on.has(d.id) ? 'none' : null);
+  if(countSel) countSel.style('display', d => on.has(d.id) ? 'none' : null);
+  const g = gPins.selectAll('g.hubcenter').data(hubs, d => d.id).join(enter => {
+    const e = enter.append('g').attr('class', 'hubcenter');
+    e.append('circle').attr('class', 'hcdisc').on('click', (ev, d) => onNodeClick(ev, d));
+    e.append('text').attr('class', 'hcnum'); e.append('text').attr('class', 'hcunit'); e.append('text').attr('class', 'hcname'); e.append('text').attr('class', 'hcpct');
+    return e;
+  });
+  g.lower();
+  g.each(function(d){
+    const rc = Math.min(d.inner * 0.9, d.inner - 4), el = d3.select(this).attr('transform', `translate(${d.ax},${d.ay})`);
+    const name = d.key, nameFs = Math.min(rc * 0.2, rc * 1.75 / Math.max(6, name.length * 0.56));
+    el.select('circle.hcdisc').attr('r', rc);
+    el.select('text.hcnum').text(d.count.toLocaleString('fr-FR')).attr('y', -rc * 0.12).style('font-size', `${rc * 0.42}px`);
+    el.select('text.hcunit').text(d.count > 1 ? 'contacts' : 'contact').attr('y', rc * 0.14).style('font-size', `${rc * 0.13}px`);
+    el.select('text.hcname').text(name).attr('y', rc * 0.4).style('font-size', `${nameFs}px`);
+    el.select('text.hcpct').text(pct(d.share, 1)).attr('y', rc * 0.4 + nameFs * 1.25).style('font-size', `${nameFs * 0.95}px`);
+  });
 }
 function sizePins(){
   const pins = gPins.selectAll('g.pin');
@@ -2457,9 +2491,11 @@ function zoomToNode(n){
   const M = 12, items = [];
   const hid = n.type === 'hub' ? n.id : n.hub;
   const lblEl = labelSel && hid ? labelSel.nodes().find(el => el.__data__ && el.__data__.id === hid) : null;
-  if(lblEl){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
+  if(lblEl && !(n.type === 'hub' && hubCentered(n))){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
   const orb = n.type === 'hub' ? (n.outer || n.r) + 6 : (collLbl ? collR + 6 : n.r + 30);
-  items.push({x, y, l:0, r:0, t:0, b:0, rad:orb});
+  /* Pastilles logo autour des grappes : 44 px à l’écran au-delà du cercle, à garder dans le cadre */
+  const P = n.type === 'hub' && envR(n) && state.colorBy === 'company' ? 50 : 0;
+  items.push({x, y, l:-P, r:P, t:-P, b:P, rad:orb});
   /* Étiquette des collègues : son côté dépend du zoom essayé */
   const collItem = kk => {
     if(n.type !== 'c' || !collLbl) return [];
