@@ -2391,7 +2391,9 @@ function renderGraph(vis){
   if(state.groupBy === 'company' && hubNodes.length > 1){
     /* Agrandissement borné : le zoom de cadrage ne doit pas baisser de plus de 35 % (les noms, à taille fixe jusqu’au zoom LK, restent lisibles) */
     hubNodes.forEach(h => { h.baseR = h.r; });
-    const k0 = estimateFitK(), setR = want => hubNodes.forEach(h => { h.r = Math.max(h.baseR, want); });
+    /* Sauf l’entreprise ouverte ou sélectionnée : on zoome dessus pour voir ses contacts, un rond géant les écraserait */
+    const big = h => !(openHubInfo && openHubInfo.key === h.key) && state.selected !== h.id && !legendOpen.has('g:' + h.key);
+    const k0 = estimateFitK(), setR = want => hubNodes.forEach(h => { h.r = big(h) ? Math.max(h.baseR, want) : h.baseR; });
     let want = Math.min(600, LOGO_PX / 2 / k0), best = 0;
     for(let it = 0; it < 6; it++){
       setR(want); applyLayout();
@@ -2590,7 +2592,10 @@ function reapplySelection(){
 }
 function clearSelection(){
   const was = openHubInfo && ![...legendOpen].some(x => x.startsWith('g:'));
+  /* Entreprise ramenée à sa taille normale pendant la sélection : elle retrouve son logo agrandi */
+  const shrunk = state.groupBy === 'company' && nodes.some(n => n.type === 'hub' && n.id === state.selected && n.baseR && n.r <= n.baseR && !legendOpen.has('g:' + n.key));
   select(null); clearFocus(); closeDrawer();
+  if(shrunk && !(was && levelMap.size)){ needFit = true; render(); return; }
   /* Retour au cadrage d’avant la fiche : l’entreprise choisie dans la légende, sinon le groupe ouvert, sinon tout le réseau */
   if(was && levelMap.size) render(); else if(state.view === 'graph' && !applyLegendHL(true) && !focusLegendGroup(true)) fit();
 }
@@ -3026,6 +3031,8 @@ function showHub(h){
   select(h.id);
   /* Groupe sélectionné dans le graphe : ses grappes (et le curseur) passent au détail, comme un groupe ouvert dans la légende */
   if(levelMap.size && (!openHubInfo || openHubInfo.key !== h.key)){ openTop = LEGEND_TOP; render(); h = nodes.find(n => n.id === h.id) || h; }
+  /* Entreprise agrandie pour son logo en vue d’ensemble : elle reprend sa taille normale une fois sélectionnée */
+  else if(h.baseR && h.r > h.baseR){ render(); h = nodes.find(n => n.id === h.id) || h; }
   const members = nodes.filter(n => n.type === 'c' && n.hub === h.id).map(n => n.c);
   focus(new Set([h.id, ...members.map(c => 'c:' + c.id)]));
   const cdim = DIMS[state.colorBy];
