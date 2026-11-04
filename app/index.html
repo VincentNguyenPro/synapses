@@ -2108,7 +2108,8 @@ function renderGraph(vis){
   if(colorTop && state.groupBy !== state.colorBy){
     const get = DIMS[state.colorBy].get, hubTops = [];
     /* Groupe ouvert dans la légende : une grappe pour chacune des LEGEND_TOP valeurs qu’elle liste (au lieu de HUB_MAX) */
-    const openHub = [...legendOpen].find(x => x.startsWith('g:'));
+    /* Groupe « ouvert » : celui déplié dans la légende, sinon celui sélectionné dans le graphe (sa fiche est ouverte) */
+    const openHub = [...legendOpen].find(x => x.startsWith('g:')) || (/^h:/.test(state.selected || '') ? 'g:' + state.selected.slice(2) : null);
     d3.group(cNodes, n => n.hub).forEach((ms, hid) => {
       const cnt = d3.rollup(ms, v => v.length, n => get(n.c));
       const isOpen = openHub && hid === 'h:' + openHub.slice(2);
@@ -2331,7 +2332,11 @@ function reapplySelection(){
     focus(new Set([node.id, ...nodes.filter(n => n.type === 'c' && n.hub === node.id).map(n => n.id)]));
   }
 }
-function clearSelection(){ select(null); clearFocus(); closeDrawer(); if(state.view === 'graph') fit(); }
+function clearSelection(){
+  const was = openHubInfo && ![...legendOpen].some(x => x.startsWith('g:'));
+  select(null); clearFocus(); closeDrawer();
+  if(was && levelMap.size) render(); else if(state.view === 'graph') fit();
+}
 
 /* Zoom animé sur le nœud sélectionné, centré dans la zone laissée libre par la fiche */
 function zoomToNode(n){
@@ -2702,6 +2707,8 @@ document.addEventListener('scroll', () => bubble.classList.remove('on'), true);
 document.addEventListener('keydown', e => { const r = e.target.closest && e.target.closest('#drawerBody div.hl'); if(r && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); highlightRow(r); } });
 function showHub(h){
   select(h.id);
+  /* Groupe sélectionné dans le graphe : ses grappes (et le curseur) passent au détail, comme un groupe ouvert dans la légende */
+  if(levelMap.size && (!openHubInfo || openHubInfo.key !== h.key)){ openTop = LEGEND_TOP; render(); h = nodes.find(n => n.id === h.id) || h; }
   const members = nodes.filter(n => n.type === 'c' && n.hub === h.id).map(n => n.c);
   focus(new Set([h.id, ...members.map(c => 'c:' + c.id)]));
   const cdim = DIMS[state.colorBy];
