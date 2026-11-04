@@ -88,16 +88,19 @@ p{margin:0}
 
 /* Le fragment vivant : le graphe du réseau de démo, cliquable (data-ui : conventions de l’outil à l’intérieur) */
 .live{background:var(--surface);color:#17212E;border-radius:var(--radius);display:grid;overflow:hidden;font-size:14px;line-height:1.35}
-.live .key{display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px 14px;width:100%;margin-top:4px;min-height:calc(2 * 1.35em + 4px)} /* deux lignes réservées : la légende ne bouge pas d’un critère à l’autre */
+.live .key{display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px 12px;width:100%;margin-top:4px;min-height:calc(4 * 1.35em + 12px)} /* quatre lignes réservées : la légende ne bouge pas d’un critère à l’autre */
 .live .key span{display:inline-flex;align-items:center;gap:6px;color:#46577A}
 .live .key i{width:9px;height:9px;border-radius:50%}
-@media (min-width:760px){ .live{grid-template-columns:minmax(0,1fr) 250px} .live .side{contain:size;overflow-y:auto} } /* la carte garde la hauteur du graphe : la liste ne la fait plus varier, elle défile si besoin */
-.live .stage{position:relative;padding:14px 8px 0}
-.live svg{display:block;width:100%;height:auto;max-height:calc(100svh - 372px)}
-.live .tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px 16px;color:#5B6B7C;font-size:13px}
+@media (min-width:760px){ .live{grid-template-columns:minmax(0,1fr) 280px} .live .rail{contain:size;overflow:hidden} .live .side{min-height:0;overflow-y:auto} } /* la carte garde la hauteur du graphe : la liste ne la fait plus varier, elle défile si besoin */
+.live .stage{position:relative;padding:16px 12px;display:grid;place-items:center}
+/* Colonne de droite : réglage de couleur et légende en haut, puis la liste du secteur choisi (le graphe garde toute la hauteur) */
+.live .rail{background:#F4F7FA;display:flex;flex-direction:column;min-width:0}
+.live .rail .tools{border-bottom:1px solid #E1E7EE}
+.live svg{display:block;width:100%;height:auto;max-height:calc(100svh - 268px)}
+.live .tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:16px;color:#5B6B7C;font-size:13px}
 .live .tools button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid #D5DDE5;background:#fff;color:#17212E;cursor:pointer;transition:background .15s,border-color .15s} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
 .live .tools button[aria-pressed="true"]{background:#E4EAFD;border-color:#2F5BEA;color:#2448C4}
-.live .side{background:#F4F7FA;padding:18px 16px;display:flex;flex-direction:column;gap:10px;min-height:260px}
+.live .side{flex:1;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:200px}
 .live .side h3{font-size:16px;letter-spacing:-.01em;line-height:1.2}
 .live .side .sub{color:#5B6B7C;font-size:13px}
 .live .side ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:8px}
@@ -437,16 +440,16 @@ footer{padding:0 10px 10px}
       <h2 id="vitrine-titre" class="rise">Essaie ici, sur un réseau fictif</h2>
       <p class="rise" style="--i:1">150 contacts inventés. Clique sur un secteur pour voir qui tu y connais, change la couleur des points.</p>
       <div class="live rise" style="--i:2" data-ui aria-label="Aperçu interactif du réseau de démonstration : 150 contacts fictifs">
-        <div>
-          <div class="stage"><svg id="graph" viewBox="0 0 820 560" role="img" aria-label="Graphe : Moi au centre, dix secteurs autour, chaque contact en point"></svg></div>
+        <div class="stage"><svg id="graph" viewBox="0 0 820 560" role="img" aria-label="Graphe : Moi au centre, dix secteurs autour, chaque contact en point"></svg></div>
+        <div class="rail">
           <div class="tools" role="group" aria-label="Colorer les contacts par">
             <span>Colorer par</span>
             <button type="button" data-by="sen" aria-pressed="true">Séniorité</button>
             <button type="button" data-by="fn" aria-pressed="false">Fonction</button>
             <div class="key" id="key" aria-label="Légende des couleurs"></div>
           </div>
+          <aside class="side" aria-live="polite" id="side"></aside>
         </div>
-        <aside class="side" aria-live="polite" id="side"></aside>
       </div>
     </div>
   </section>
