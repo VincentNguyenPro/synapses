@@ -277,13 +277,15 @@ button.lg:hover{background:var(--surface-2)}
 .lgx:focus-visible{outline:2px solid var(--accent)}
 .lgsubs{flex-basis:100%;list-style:none;margin:0 0 6px;padding:0 0 0 22px}
 .lgsubs li{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted);padding:2px 26px 2px 6px}
-.lgsubs li span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
+.lgsubs li span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lg .n{color:var(--muted)}
 .legendbox .more{font-size:12px;color:var(--muted);margin:2px 6px 0}
 .zoombar{position:absolute;right:16px;top:16px;display:flex;flex-direction:column;gap:6px;z-index:2}
 .zoombar .btn{box-shadow:var(--shadow);font-size:18px}
 .overview{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:3;box-shadow:var(--shadow);background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .overview:hover{border-color:var(--ink);filter:brightness(1.2)}
+.namebubble{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;max-width:320px;z-index:1000;box-shadow:var(--shadow);opacity:0;transition:opacity .1s}
+.namebubble.on{opacity:1}
 .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);padding:8px 11px;border-radius:9px;font-size:13px;max-width:250px;z-index:3;opacity:0;transition:opacity .12s}
 .tip.on{opacity:1}
 .tip strong{display:block}
@@ -335,7 +337,10 @@ button.lg:hover{background:var(--surface-2)}
 .stack{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 10px;gap:2px}
 .drawer .legendlist{display:grid;gap:4px;font-size:13.5px}
 .drawer .legendlist div{display:flex;align-items:center;gap:8px}
-.drawer .legendlist .n{margin-left:auto;color:var(--muted)}
+.drawer .legendlist .n{margin-left:auto;color:var(--muted);flex:none;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+/* Colonnes fixes : nombres et pourcentages alignés sur toutes les lignes (groupe, filiale, avec ou sans chevron) */
+.drawer .legendlist .pct{flex:none;width:46px;box-sizing:border-box;text-align:center;font-variant-numeric:tabular-nums}
+.drawer .legendlist .hl.on .n{color:var(--ink)}
 /* Groupe qui réunit plusieurs entités : un chevron déplie ses filiales */
 .drawer .legendlist details summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;border-radius:6px}
 .drawer .legendlist details summary::-webkit-details-marker{display:none}
@@ -350,10 +355,10 @@ button.lg:hover{background:var(--surface-2)}
 .drawer .legendlist .hl:hover{background:var(--surface-2)}
 .drawer .legendlist .hl:focus-visible{outline:2px solid var(--accent)}
 .drawer .legendlist .hl.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent);font-weight:700;color:var(--ink)}
-/* Noms longs coupés par « … » : la liste ne déborde jamais du panneau */
+/* Noms longs : une seule ligne, coupés par « … » ; le nom complet s’affiche dans une bulle au survol (namebubble) */
 .drawer .legendlist{grid-template-columns:minmax(0,1fr)}
 .drawer .legendlist details{min-width:0}
-.drawer .legendlist :is(div,summary) > span:not(.dot):not(.n):not(.pct){flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drawer .legendlist :is(div,summary) > span:not(.dot):not(.n):not(.pct){flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .people{list-style:none;padding:0;margin:0}
 .people li{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line)}
 .lrow{all:unset;flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 4px;cursor:pointer;border-radius:8px}
@@ -1850,7 +1855,8 @@ function styleLabels(){
   labelSel.style('font-size', `${13 / k}px`).style('stroke-width', `${4 / k}px`);
   gColl.selectAll('text.colllbl').style('font-size', `${12 / Math.max(zk, 0.35)}px`).style('stroke-width', `${4 / k}px`);
   /* Chiffres des groupes : taille compensée au dézoom, sans déborder du cercle */
-  if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => `${Math.min(d.r * 1.15, Math.max(Math.min(13, Math.max(9.5, d.r * 0.8)), 11 / k))}px`);
+  /* Nombre au centre d’un groupe : environ la moitié du rayon, au moins 13 px à l’écran, et toujours dans le cercle selon son nombre de chiffres */
+  if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => { const fit = d.r * 1.55 / Math.max(2, String(d.count).length * 0.62); return `${Math.min(fit, Math.max(d.r * 0.5, 13 / k))}px`; });
   layoutLabels();
   positionLabels();
 }
@@ -2514,6 +2520,20 @@ function highlightRow(row){
   }
   focus(new Set([hub.id, ...members.filter(match).map(n => n.id)]));
 }
+/* Bulle avec le nom complet au survol d’un nom coupé par « … » (répartition, légende, filtres) */
+const NAME_SEL = '.drawer .legendlist :is(div,summary) > span:not(.dot):not(.n):not(.pct), .lgl, .lgsubs li span:first-child, .chip.frow .flbl';
+const bubble = Object.assign(document.createElement('div'), {className:'namebubble', role:'tooltip'});
+document.body.appendChild(bubble);
+document.addEventListener('pointerover', e => {
+  const el = e.target.closest && e.target.closest(NAME_SEL);
+  if(!el || e.pointerType === 'touch' || el.scrollWidth <= el.clientWidth + 1){ bubble.classList.remove('on'); return; }
+  bubble.textContent = el.textContent.trim();
+  const r = el.getBoundingClientRect(), bw = Math.min(320, bubble.offsetWidth);
+  bubble.style.left = Math.max(8, Math.min(innerWidth - bw - 8, r.left)) + 'px';
+  bubble.style.top = (r.top - bubble.offsetHeight - 6 < 8 ? r.bottom + 6 : r.top - bubble.offsetHeight - 6) + 'px';
+  bubble.classList.add('on');
+});
+document.addEventListener('scroll', () => bubble.classList.remove('on'), true);
 document.addEventListener('keydown', e => { const r = e.target.closest && e.target.closest('#drawerBody div.hl'); if(r && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); highlightRow(r); } });
 function showHub(h){
   select(h.id);
