@@ -75,10 +75,15 @@ p{margin:0}
 
 /* ---------- Héros : titre court en haut à gauche, l’outil qui travaille occupe le reste ---------- */
 .hero{padding:clamp(20px,3svh,36px) 0}
-main > section.hero:not(.end){justify-content:flex-start} /* le titre et la vidéo démarrent juste sous la barre ; l’espace restant va en bas */
+/* Le contenu est centré : la vidéo grandit avec la hauteur de l’écran pour remplir la page, marges égales en haut et en bas */
 .hero-grid{display:grid;gap:36px 48px;align-items:start}
 /* Deux blocs côte à côte, centrés verticalement : à gauche titre, texte et action ; à droite la vidéo */
-@media (min-width:1080px){ .hero-grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center} .hero h1{font-size:clamp(48px,4.6vw,76px)} }
+@media (min-width:1080px){
+  .hero-grid{grid-template-columns:minmax(380px,1fr) auto;align-items:center}
+  .hero .hero-text h1{font-size:clamp(44px,4vw,64px)}
+  /* Largeur de la vidéo : celle que permet la hauteur disponible (barre, marges et compteur déduits), sans dépasser la page */
+  .hero-media{width:min(calc(min(100vw, 1360px) - 2 * var(--gutter) - 380px - 48px), calc((100svh - 68px - 2 * clamp(20px,3svh,36px) - 140px) * 16 / 9))}
+}
 .hero .lead{margin-top:24px}
 .hero h1{font-size:var(--step-display);line-height:.95;max-width:16ch}
 .hero .lead{font-size:var(--step-lead);line-height:1.4;max-width:24em}
@@ -583,7 +588,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
         <div class="acts rise" style="--i:2" id="hero-ctas">
           <a class="btn" href="app/">Essayer la démo</a>
         </div>
-        <p class="note rise" style="--i:3">Gratuit, sans compte. Ton fichier est lu dans ton navigateur et n’est envoyé nulle part. <a href="app/#importer">Importer mon export</a></p>
+        <p class="note rise" style="--i:3">Gratuit, sans compte. Ton fichier est lu dans ton navigateur et n’est envoyé nulle part.</p>
       </div>
 
       <div class="hero-media">
