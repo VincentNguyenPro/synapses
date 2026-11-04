@@ -1743,7 +1743,7 @@ function syncTopN(total){
     f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, tot); r.value = n;
     lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
     document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
-    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, sur plusieurs anneaux au-delà de ${RING_MIN} ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, serrées en bouquet au-delà de ${RING_MIN}, les plus grosses au centre ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
@@ -2041,20 +2041,30 @@ function applyLayout(){
         place(subs, D);
         hn.outer = D + d3.max(subs, s => s.br) + 1;
       } else {
-        /* Beaucoup de grappes (groupe ouvert dans la légende) : plusieurs anneaux, les plus grosses à l’intérieur.
-           Un anneau se remplit tant que ses grappes tiennent sur 90 % de sa circonférence ; le suivant s’écarte de la taille
-           des grappes des deux anneaux, si bien qu’aucune grappe n’en touche une autre. Dans chaque anneau, la plus petite est à midi. */
-        const bySize = [...subs].sort((a, b) => b.br - a.br || a.arr.length - b.arr.length);
-        let i = 0, prevD = null, prevBr = 0, last = null;
-        while(i < bySize.length){
-          const big = bySize[i].br, D = prevD == null ? hn.r + 12 + big : prevD + prevBr + g + big, cap = 2 * Math.PI * D * 0.9;
-          const ring = []; let used = 0;
-          while(i < bySize.length && (!ring.length || used + 2 * bySize[i].br + g <= cap)){ used += 2 * bySize[i].br + g; ring.push(bySize[i]); i++; }
-          ring.sort((a, b) => a.arr.length - b.arr.length || levels.indexOf(a.lv) - levels.indexOf(b.lv));
-          place(ring, D);
-          prevD = D; prevBr = big; last = {D, br:big};
-        }
-        hn.outer = last.D + last.br + 1;
+        /* Beaucoup de grappes (groupe ouvert dans la légende) : un bouquet de bulles serrées autour du groupe, sans anneaux
+           (des anneaux se lisaient comme une distance qui ne veut rien dire). Les plus grosses d’abord, chacune posée au plus près
+           du groupe sans toucher le groupe ni une autre grappe ; « autres » en dernier, à l’extérieur. */
+        const bySize = [...subs].sort((a, b) => (a.lv === colorOther) - (b.lv === colorOther) || b.br - a.br || levels.indexOf(a.lv) - levels.indexOf(b.lv));
+        const gap = 6, placed = [{cx:0, cy:0, br:hn.r + 8}];
+        const fits = (x, y, r) => placed.every(q => Math.hypot(x - q.cx, y - q.cy) >= q.br + r + gap - 1e-6);
+        bySize.forEach(sb => {
+          const r = sb.br; let best = null, bd = Infinity;
+          const tryAt = (x, y) => { const d = Math.hypot(x, y); if(d < bd - 1e-6 && fits(x, y, r)){ bd = d; best = [x, y]; } };
+          if(placed.length === 1) tryAt(0, -(placed[0].br + r + gap));
+          for(let a = 0; a < placed.length; a++) for(let b = a + 1; b < placed.length; b++){
+            const A = placed[a], B = placed[b], ra = A.br + r + gap, rb = B.br + r + gap;
+            const dx = B.cx - A.cx, dy = B.cy - A.cy, d = Math.hypot(dx, dy);
+            if(d > ra + rb || d < Math.abs(ra - rb) || d === 0) continue;
+            const l = (ra * ra - rb * rb + d * d) / (2 * d), h = Math.sqrt(Math.max(0, ra * ra - l * l));
+            const mx = A.cx + dx * l / d, my = A.cy + dy * l / d;
+            tryAt(mx - dy * h / d, my + dx * h / d); tryAt(mx + dy * h / d, my - dx * h / d);
+          }
+          if(!best) best = [0, -(d3.max(placed, q => Math.hypot(q.cx, q.cy) + q.br) + r + gap)];
+          sb.cx = best[0]; sb.cy = best[1]; placed.push(sb);
+          sb.arr.forEach((m, k) => { const rr = c * Math.sqrt(k + 0.5), th = k * GOLDEN; local.push({x:sb.cx + rr * Math.cos(th), y:sb.cy + rr * Math.sin(th)}); ordered.push(m); });
+          blobs.push(sb);
+        });
+        hn.outer = d3.max(bySize, sb => Math.hypot(sb.cx, sb.cy) + sb.br) + 1;
       }
     }
     hn.members = ordered; hn.local = local; hn.blobs = blobs;
