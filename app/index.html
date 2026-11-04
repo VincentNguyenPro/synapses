@@ -1040,7 +1040,7 @@ let colorLevel = c => DIMS[state.colorBy].get(c);
 /* Grappes par groupe : quand « Colorer par » a trop de valeurs (entreprise…) et diffère du regroupement, chaque groupe garde
    une grappe pour chacune de ses HUB_MAX valeurs principales (au moins 2 contacts), les autres vont dans « Autres ».
    levelMap (id du contact → grappe) est recalculé à chaque dessin du graphe. */
-const HUB_MAX = 8;
+const HUB_MAX = 8, LEGEND_TOP = 15;
 let levelMap = new Map(), colorAssign = new Map();
 const levelOf = c => levelMap.get(c.id) ?? colorLevel(c);
 function setupColor(){
@@ -2086,9 +2086,12 @@ function renderGraph(vis){
   levelMap = new Map(); colorAssign = new Map();
   if(colorTop && state.groupBy !== state.colorBy){
     const get = DIMS[state.colorBy].get, hubTops = [];
-    d3.group(cNodes, n => n.hub).forEach(ms => {
+    /* Groupe ouvert dans la légende : une grappe pour chacune des LEGEND_TOP valeurs qu’elle liste (au lieu de HUB_MAX) */
+    const openHub = [...legendOpen].find(x => x.startsWith('g:'));
+    d3.group(cNodes, n => n.hub).forEach((ms, hid) => {
       const cnt = d3.rollup(ms, v => v.length, n => get(n.c));
-      const top = new Set([...cnt].filter(([v, k]) => k >= 2 && !TAIL.includes(v)).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr')).slice(0, HUB_MAX).map(([v]) => v));
+      const cap = openHub && hid === 'h:' + openHub.slice(2) ? LEGEND_TOP : HUB_MAX;
+      const top = new Set([...cnt].filter(([v, k]) => k >= 2 && !TAIL.includes(v)).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr')).slice(0, cap).map(([v]) => v));
       ms.forEach(n => { const v = get(n.c); levelMap.set(n.c.id, top.has(v) ? v : colorOther); });
       hubTops.push(top);
     });
@@ -2399,7 +2402,7 @@ let legendHL = null; /* {kind:'v', v} : valeur de « Colorer par » (société m
 const subLi = (e, n, total) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="Voir les contacts de ${esc(e)} dans le graphe"><span>${esc(e)}</span><span class="n">${n}</span><span class="pct">${total ? pct(n, total) : ''}</span></button></li>`;
 /* Remonter dans la légende en arbre : 0 = tout le réseau, 1 = le groupe, 2 = la société mère d’une filiale */
 function legendUp(lvl, v){
-  if(lvl === 0){ [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; updateLegend(contacts.filter(pass)); if(state.selected) reapplySelection(); else { clearFocus(); fit(); } return; }
+  if(lvl === 0){ [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; render(); if(state.selected) reapplySelection(); else { clearFocus(); fit(); } return; }
   legendHL = lvl === 2 ? {kind:'v', v} : null;
   updateLegend(contacts.filter(pass));
   if(legendHL) applyLegendHL(true); else focusLegendGroup(true);
@@ -2459,7 +2462,7 @@ function legendTree(vis){
     const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(h.key)}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
     if(!open) return `<li>${head}</li>`;
     const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
-    const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, 15), rest = d3.sum(vals.slice(15), v => cnt.get(v));
+    const vals = sortDesc([...cnt.keys()], cnt), top = vals.slice(0, LEGEND_TOP), rest = d3.sum(vals.slice(LEGEND_TOP), v => cnt.get(v));
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li>${head}<ul class="lgvals">${top.map(v => {
       const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
@@ -2470,7 +2473,7 @@ function legendTree(vis){
       if(subs.length < 2) return `<li class="lgwrap">${btn}<span class="lgxsp" aria-hidden="true"></span></li>`;
       const sk = 'e:' + h.key + '|' + v, so = legendOpen.has(sk) || on || (sel.size === 1 && sel.has(v));
       return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n, ms.length)).join('')}</ul>` : ''}</li>`;
-    }).join('')}${rest ? restRow(h, vals.slice(15), cnt, ms.length) : ''}</ul></li>`;
+    }).join('')}${rest ? restRow(h, vals.slice(LEGEND_TOP), cnt, ms.length) : ''}</ul></li>`;
   }).join('');
   /* Fil d’Ariane : où l’on se trouve (réseau › groupe › valeur › filiale), chaque niveau supérieur est cliquable pour remonter */
   const gOpen = [...legendOpen].find(x => x.startsWith('g:')), crumbs = [];
@@ -2958,7 +2961,7 @@ async function handleFiles(fileList){
 $('#file').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 $('#closeDrawer').addEventListener('click', clearSelection);
 $('#recenter').addEventListener('click', fit);
-$('#overview').addEventListener('click', () => { [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; updateLegend(contacts.filter(pass)); clearSelection(); });
+$('#overview').addEventListener('click', () => { const had = [...legendOpen].some(x => x.startsWith('g:')); [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; if(had && levelMap.size) render(); else updateLegend(contacts.filter(pass)); clearSelection(); });
 $('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4));
 $('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4));
 $('#logosOn').checked = logosOn;
@@ -2999,8 +3002,8 @@ document.addEventListener('click', e => {
       /* Groupe de la légende en arbre : un seul ouvert à la fois, le graphe zoome dessus ; replié, retour à la vue d’ensemble */
       if(v.startsWith('g:')){ [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; }
       open ? legendOpen.add(v) : legendOpen.delete(v);
-      updateLegend(contacts.filter(pass));
-      if(v.startsWith('g:')){ if(open) focusLegendGroup(true); else if(!state.selected){ clearFocus(); fit(); } }
+      if(v.startsWith('g:') && levelMap.size){ render(); if(!open && !state.selected){ clearFocus(); fit(); } }
+      else { updateLegend(contacts.filter(pass)); if(v.startsWith('g:')){ if(open) focusLegendGroup(true); else if(!state.selected){ clearFocus(); fit(); } } }
     }
     else if(a === 'keepyes') setKeep(true);
     else if(a === 'keepforget'){ if(confirm('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.')) setKeep(false); }
