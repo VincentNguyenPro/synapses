@@ -17,6 +17,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   la page appelle directement le fournisseur choisi depuis le navigateur ; seuls partent les noms d’entreprises et intitulés de poste non reconnus.
   La clé n’est envoyée qu’à ce fournisseur et n’est gardée (localStorage) que si l’utilisateur coche « Se souvenir de ma clé ». Un vrai « connecter mon compte » n’existe pas chez ces fournisseurs.
   Modèles proposés (`PROVIDERS` dans `app/index.html`) : à revoir quand les fournisseurs en retirent.
+  Erreurs (`callLLM`) : clé refusée, crédit épuisé (`insufficient_quota`, « credit balance ») et limite de débit sont distingués ; une limite de débit (429, 5xx) est retentée jusqu’à 5 fois (`callLLMRetry`, délai annoncé par le fournisseur) avant d’afficher l’explication. Le 429 de Gemini parle de « billing » sans être un manque de crédit.
 - **Logos des entreprises (Brandfetch Logo API)** : option « Logos des entreprises » du panneau Affichage, **cochée par défaut** (choix de Vincent du 3 novembre 2026), décochable ; l’utilisateur est informé à côté de la case et dans « Tes données ».
   Cochée, chaque logo affiché envoie à `cdn.brandfetch.io` le domaine de l’entreprise (et l’IP du visiteur), jamais le nom d’un contact.
   Client ID public dans `LOGO_CONFIG` ; `fallback/404` pour qu’une marque inconnue garde son monogramme.
@@ -38,6 +39,9 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   `data/entreprises.json` (entreprise → secteur, mots-clés de secteur) et `data/postes.json` (mots-clés de fonction, règles de séniorité).
   Pour enrichir la classification, modifier ces fichiers, pas `app/index.html`. Ne jamais y ajouter un nom de personne.
 - Classification, par ordre de priorité : correction de l’utilisateur (localStorage) > ajout validé du dictionnaire partagé (Supabase) > dictionnaire `data/entreprises.json` (variantes « Groupe X », « x.fr », « A - B » comprises) > mots-clés.
+- Vues (section « Vues » du panneau) : une vue = regroupement, couleurs, branches, mode, filtres, années, recherche ; jamais de contact ni de sélection.
+  Vues prêtes à l’emploi (`presets`), « Mes vues » (localStorage `synapses-views-v1`), dernière vue (`synapses-lastview-v1`, restaurée par `load` au démarrage et après un import) et lien `#vue=…` (JSON en base64url, **sans la recherche**, qui peut contenir un nom de contact).
+  `setView` ignore les valeurs absentes du réseau chargé et ramène les années à celles disponibles.
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
 - Performance (mesurée jusqu’à 5 000 contacts, ~10 000 éléments SVG) : ne jamais mettre `opacity` sur les éléments du graphe
   (chaque élément est alors dessiné à part) — estomper avec `fill-opacity` / `stroke-opacity` ; pas de fondu au-delà de 2 500 contacts

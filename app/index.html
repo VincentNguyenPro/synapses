@@ -87,6 +87,14 @@ aside{grid-row:2;grid-column:1;overflow-y:auto;background:var(--surface);border-
 .section{padding:18px 18px 6px;border-bottom:1px solid var(--line)}
 .section h2{font-size:15px;font-weight:800;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:-.01em}
 .field{margin-bottom:16px}
+.vrow{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.vrow .chip{flex:1;min-width:0;justify-content:flex-start}
+.vrow .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vrow .icon-btn{flex:none;border-color:transparent;background:transparent;color:var(--muted)}
+.vrow .icon-btn:hover{color:var(--ink);background:var(--surface-2)}
+.vrow input{flex:1;min-width:0;padding:6px 10px;border:1px solid var(--accent);border-radius:10px;font-size:14px}
+input[type=text]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:14px}
+#presets .n{color:var(--muted);font-weight:400}
 .lbl,label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}
 .lbl small{font-weight:400;color:var(--muted);margin-left:4px}
 .hint{font-size:12.5px;color:var(--muted);margin:-4px 0 12px;line-height:1.45}
@@ -149,6 +157,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .demo strong{display:block;font-size:14px}
 .demo span{color:var(--muted)}
 .demo-actions{display:flex;gap:8px;align-items:center}
+.aierr{background:#FDF0F3;border:1px solid #F3C6D2;color:#5A1A2B;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.5;margin:0 0 14px}
+.aierr a{color:#9B1C3A;font-weight:700}
 .sharebox{display:flex;gap:10px;font-weight:400;align-items:flex-start;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:13px;color:var(--muted);line-height:1.45;cursor:pointer}
 .sharebox input{margin-top:2px;width:16px;height:16px;flex:none;accent-color:var(--accent)}
 .aiprov{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
@@ -383,6 +393,17 @@ button.lg:hover{background:var(--surface-2)}
       <strong>Affichage et filtres</strong>
       <button class="btn sm primary" id="closePanel" type="button">Voir les résultats</button>
     </div>
+    <section class="section" id="views">
+      <h2>Vues</h2>
+      <div class="field"><span class="lbl">Vues prêtes à l’emploi</span><div class="chips" id="presets"></div></div>
+      <div class="field"><span class="lbl">Mes vues</span><div id="myViews"></div>
+        <form class="row" id="saveView" style="margin-top:8px"><input type="text" id="viewName" maxlength="40" placeholder="Nom de la vue" aria-label="Nom de la vue à enregistrer"><button class="btn" type="submit">Enregistrer</button></form>
+      </div>
+      <div class="field">
+        <button class="linkbtn" type="button" data-act="shareview">Copier le lien de cette vue</button>
+        <p class="hint" style="margin:6px 0 0">Le lien contient seulement les réglages (regroupement, couleurs, filtres), jamais tes contacts. Les entreprises ou écoles sur lesquelles tu filtres y apparaissent. La recherche n’y est pas incluse.</p>
+      </div>
+    </section>
     <section class="section">
       <h2>Affichage</h2>
       <div class="field"><label for="groupBy">Regrouper par</label><select id="groupBy"></select></div>
@@ -422,7 +443,7 @@ button.lg:hover{background:var(--surface-2)}
       </div>
       <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
     </section>
-    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part&nbsp;: aucun serveur, aucun compte, aucune donnée stockée en ligne. Tes tags et tes corrections restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.</p>
+    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part&nbsp;: aucun serveur, aucun compte, aucune donnée stockée en ligne. Tes tags, tes vues et tes corrections restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.</p>
   </aside>
 
   <main class="stage">
@@ -869,6 +890,137 @@ function applyFilters(){
   if(n.type === 'hub') showHub(n); else if(n.type === 'me') showMe(); else showContact(n.c);
 }
 
+/* ---------- Vues ----------
+   Une vue = regroupement, couleurs, branches, mode, filtres, années et recherche. Jamais de contact ni de sélection.
+   « Mes vues » et la dernière vue restent dans ce navigateur ; le lien de partage encode la vue dans l’adresse (#vue=…), sans la recherche. */
+const VIEWS_KEY = 'synapses-views-v1', LAST_KEY = 'synapses-lastview-v1';
+let myViews = [];
+try { const v = JSON.parse(localStorage.getItem(VIEWS_KEY) || '[]'); if(Array.isArray(v)) myViews = v.filter(x => x && x.name && x.v); } catch(e) {}
+const saveViews = () => { try { localStorage.setItem(VIEWS_KEY, JSON.stringify(myViews)); } catch(e) {} };
+let editView = -1, lastT;
+function getView(withQ = true){
+  const f = {};
+  FILTER_KEYS.forEach(k => { if(state.include[k].size) f[k] = [...state.include[k]].sort(); });
+  const v = {g:state.groupBy, c:state.colorBy, t:state.topN, m:state.view, f};
+  if(allYears.length && (state.yMin > allYears[0] || state.yMax < allYears[allYears.length - 1])) v.y = [state.yMin, state.yMax];
+  if(withQ && state.q) v.q = state.q;
+  return v;
+}
+const sameView = (a, b) => JSON.stringify({...a, t:0}) === JSON.stringify({...b, t:0});
+/* Applique une vue au réseau chargé : les valeurs absentes de ce réseau sont ignorées, les années ramenées à celles disponibles */
+function setView(v){
+  const dims = availableDims();
+  state.groupBy = dims.includes(v.g) ? v.g : 'sector';
+  state.colorBy = dims.includes(v.c) ? v.c : 'seniority';
+  state.topN = Math.max(3, Math.min(999, +v.t || 12));
+  state.view = v.m === 'list' ? 'list' : 'graph';
+  FILTER_KEYS.forEach(k => {
+    state.include[k].clear();
+    const want = (v.f || {})[k];
+    if(Array.isArray(want) && want.length){ const have = new Set(contacts.map(DIMS[k].get)); want.forEach(x => { if(have.has(x)) state.include[k].add(x); }); }
+  });
+  if(allYears.length){
+    const lo = allYears[0], hi = allYears[allYears.length - 1];
+    let [a, b] = Array.isArray(v.y) ? v.y.map(Number) : [lo, hi];
+    a = allYears.includes(a) ? a : (allYears.find(y => y >= a) ?? lo);
+    b = allYears.includes(b) ? b : ([...allYears].reverse().find(y => y <= b) ?? hi);
+    if(!(a <= b)){ a = lo; b = hi; }
+    state.yMin = a; state.yMax = b;
+  }
+  state.q = typeof v.q === 'string' ? v.q.slice(0, 80) : '';
+  $('#groupBy').value = state.groupBy; $('#colorBy').value = state.colorBy; $('#q').value = state.q;
+  syncYears(); setupColor();
+}
+function applyView(v){
+  setView(v);
+  needFit = true; select(null); closeDrawer(); syncChips(); render();
+}
+/* Vues prêtes à l’emploi, recalculées sur le réseau chargé */
+function presets(){
+  const last = allYears[allYears.length - 1];
+  return [
+    {id:'deci', name:'Décideurs', v:{g:'sector', c:'seniority', t:12, m:'graph', f:{seniority:['Direction','Dirigeant']}}},
+    {id:'jun', name:'Juniors à recommander', v:{g:'fn', c:'sector', t:12, m:'graph', f:{seniority:['Junior']}}},
+    last && {id:'rec', name:`Contacts récents (${last})`, v:{g:'sector', c:'seniority', t:12, m:'graph', f:{}, y:[last, last]}},
+    {id:'co', name:'Par entreprise', v:{g:'company', c:'seniority', t:12, m:'graph', f:{}}}
+  ].filter(Boolean);
+}
+function countView(v){
+  const sen = (v.f || {}).seniority, y = v.y;
+  return contacts.filter(c => (!sen || sen.includes(DIMS.seniority.get(c))) && (!y || (c.year >= y[0] && c.year <= y[1]))).length;
+}
+function renderViews(){
+  const box = document.getElementById('presets'); if(!box) return;
+  const cur = getView();
+  box.innerHTML = presets().map(p => {
+    const on = sameView(normView(p.v), cur);
+    return `<button class="chip" type="button" data-preset="${p.id}" aria-pressed="${on}">${esc(p.name)}${p.id !== 'co' ? ` <span class="n">${countView(p.v)}</span>` : ''}</button>`;
+  }).join('');
+  document.getElementById('myViews').innerHTML = myViews.length ? myViews.map((x, i) => i === editView
+    ? `<form class="vrow" data-rename="${i}"><input type="text" maxlength="40" value="${esc(x.name)}" aria-label="Nouveau nom de la vue"><button class="btn sm" type="submit">OK</button></form>`
+    : `<div class="vrow"><button class="chip" type="button" data-myview="${i}" aria-pressed="${sameView(normView(x.v), cur)}"><span>${esc(x.name)}</span></button>
+        <button class="btn icon-btn sm" type="button" data-vedit="${i}" aria-label="Renommer la vue ${esc(x.name)}" title="Renommer">✎</button>
+        <button class="btn icon-btn sm" type="button" data-vdel="${i}" aria-label="Supprimer la vue ${esc(x.name)}" title="Supprimer">✕</button></div>`).join('')
+    : '<p class="hint" style="margin:0">Règle l’affichage et les filtres, puis enregistre la vue pour la retrouver en un clic.</p>';
+}
+/* Une vue telle que le réseau chargé la rendrait (pour savoir si elle est active) */
+function normView(v){
+  const f = {};
+  Object.entries(v.f || {}).forEach(([k, a]) => { const have = new Set(contacts.map(DIMS[k].get)); const b = a.filter(x => have.has(x)).sort(); if(b.length) f[k] = b; });
+  const o = {g:v.g, c:v.c, t:v.t, m:v.m || 'graph', f};
+  if(v.y && allYears.length && (v.y[0] > allYears[0] || v.y[1] < allYears[allYears.length - 1])) o.y = v.y;
+  if(v.q) o.q = v.q;
+  return o;
+}
+function suggestName(){
+  const parts = [DIMS[state.groupBy].label];
+  FILTER_KEYS.forEach(k => { const a = [...state.include[k]]; if(a.length) parts.push(a.length > 2 ? `${a.slice(0, 2).join(', ')}…` : a.join(', ')); });
+  if(state.q) parts.push(`« ${state.q} »`);
+  return parts.join(' · ').slice(0, 40);
+}
+const b64 = {
+  enc: o => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+  dec: s => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), ch => ch.charCodeAt(0))))
+};
+async function shareView(){
+  const url = location.origin + location.pathname + '#vue=' + b64.enc(getView(false));
+  try { await navigator.clipboard.writeText(url); toast('Lien de la vue copié : il ne contient aucun contact'); }
+  catch(e) { prompt('Copie ce lien :', url); }
+}
+/* Dernière vue : enregistrée après chaque affichage, restaurée à la visite suivante et après un import */
+function rememberView(){ clearTimeout(lastT); lastT = setTimeout(() => { try { localStorage.setItem(LAST_KEY, JSON.stringify(getView())); } catch(e) {} }, 400); }
+function startView(){
+  const m = location.hash.match(/^#vue=([\w-]+)/);
+  if(m){
+    history.replaceState(null, '', location.pathname + location.search);
+    try { const v = b64.dec(m[1]); if(v && typeof v === 'object'){ delete v.q; setTimeout(() => toast('Vue partagée appliquée. Importe ton export pour la voir sur ton réseau.'), 600); return v; } } catch(e) {}
+  }
+  try { const v = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); if(v && typeof v === 'object') return v; } catch(e) {}
+  return null;
+}
+document.getElementById('saveView').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp = document.getElementById('viewName'), name = (inp.value.trim() || suggestName()).slice(0, 40);
+  const i = myViews.findIndex(x => x.name === name), v = getView();
+  if(i >= 0) myViews[i].v = v; else myViews.push({name, v});
+  saveViews(); inp.value = ''; renderViews();
+  toast(i >= 0 ? `Vue « ${name} » mise à jour` : `Vue « ${name} » enregistrée`);
+});
+document.getElementById('views').addEventListener('submit', e => {
+  const f = e.target.closest('[data-rename]'); if(!f) return;
+  e.preventDefault();
+  const name = f.querySelector('input').value.trim().slice(0, 40);
+  if(name) myViews[+f.dataset.rename].name = name;
+  editView = -1; saveViews(); renderViews();
+});
+document.getElementById('views').addEventListener('click', e => {
+  const p = e.target.closest('[data-preset]'), m = e.target.closest('[data-myview]'), ed = e.target.closest('[data-vedit]'), dl = e.target.closest('[data-vdel]');
+  if(p){ const x = presets().find(o => o.id === p.dataset.preset); if(x){ applyView(x.v); toast(`Vue « ${x.name} »`); } }
+  else if(m){ const x = myViews[+m.dataset.myview]; if(x){ applyView(x.v); toast(`Vue « ${x.name} »`); } }
+  else if(ed){ editView = +ed.dataset.vedit; renderViews(); const i = document.querySelector('[data-rename] input'); if(i){ i.focus(); i.select(); } }
+  else if(dl){ const x = myViews[+dl.dataset.vdel]; if(x && confirm(`Supprimer la vue « ${x.name} » ?`)){ myViews.splice(+dl.dataset.vdel, 1); editView = -1; saveViews(); renderViews(); } }
+});
+
 /* ---------- Classification par Claude (capacité sample) ----------
    Remplace les estimations par mots-clés : secteur à partir du nom d’entreprise, fonction et séniorité à partir de l’intitulé de poste.
    Seuls ces libellés sont envoyés (jamais les noms des contacts). Résultats gardés sur l’appareil. */
@@ -892,11 +1044,11 @@ let sampleFn = null, aiRun = null, aiHidden = false;
    l’appareil que si l’utilisateur le demande. */
 const LLM_KEY = 'synapses-llm-v1';
 const PROVIDERS = {
-  anthropic:{name:'Claude', vendor:'Anthropic', keyUrl:'https://console.anthropic.com/settings/keys', keyHint:'sk-ant-…',
+  anthropic:{name:'Claude', vendor:'Anthropic', keyUrl:'https://console.anthropic.com/settings/keys', keyHint:'sk-ant-…', billUrl:'https://console.anthropic.com/settings/billing', sub:'Claude Pro',
     models:[['claude-opus-5-5', 'Claude Opus 5.5 (recommandé)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (plus économique)']]},
-  openai:{name:'ChatGPT', vendor:'OpenAI', keyUrl:'https://platform.openai.com/api-keys', keyHint:'sk-…',
+  openai:{name:'ChatGPT', vendor:'OpenAI', keyUrl:'https://platform.openai.com/api-keys', keyHint:'sk-…', billUrl:'https://platform.openai.com/settings/organization/billing/overview', sub:'ChatGPT Plus',
     models:[['gpt-6.1-terra', 'GPT-6.1 Terra (recommandé)'], ['gpt-6-luna', 'GPT-6 Luna (plus économique)']]},
-  gemini:{name:'Gemini', vendor:'Google', keyUrl:'https://aistudio.google.com/apikey', keyHint:'AIza…',
+  gemini:{name:'Gemini', vendor:'Google', keyUrl:'https://aistudio.google.com/apikey', keyHint:'AIza…', billUrl:'https://aistudio.google.com/', sub:'Gemini Advanced',
     models:[['gemini-3.6-flash', 'Gemini 3.6 Flash (recommandé)'], ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (plus économique)']]}
 };
 let llm = {provider:'anthropic', model:'claude-opus-5-5', key:'', remember:false};
@@ -916,6 +1068,29 @@ function parseLLMJson(text){
     if(i >= 0 && j > i){ try { return JSON.parse(t.slice(i, j + 1)); } catch(e) {} }
   }
   throw llmError('invalid_json');
+}
+/* Délai d’attente conseillé par le fournisseur, en secondes : en-tête retry-after, « retryDelay » de Gemini, ou « try again in 1.2s » d’OpenAI */
+function retryDelay(r, d, msg){
+  const h = Number(r.headers.get('retry-after')); if(h > 0) return h;
+  const g = (((d.error || {}).details) || []).map(x => x && x.retryDelay).find(Boolean); if(g) return parseFloat(g) || null;
+  const m = msg.match(/try again in ([\d.]+)\s*(ms|s)/); if(m) return m[2] === 'ms' ? +m[1] / 1000 : +m[1];
+  return null;
+}
+const sleep = (ms, signal) => new Promise((res, rej) => {
+  const t = setTimeout(res, ms);
+  if(signal) signal.addEventListener('abort', () => { clearTimeout(t); rej(llmError('cancelled')); }, {once:true});
+});
+/* Appel avec nouvelles tentatives sur limite de débit : délai du fournisseur, sinon 5, 10, 20, 40, 60 s ; compte à rebours affiché */
+async function callLLMRetry(prompt, signal){
+  for(let attempt = 0; ; attempt++){
+    try { return await callLLM(prompt, signal); }
+    catch(e){
+      if(e.code !== 'rate_limited' || attempt >= 5 || !aiRun) throw e;
+      const wait = Math.min(90, Math.max(3, e.wait || 5 * 2 ** attempt));
+      for(let left = Math.ceil(wait); left > 0; left--){ aiRun.waiting = left; renderBar(contacts.filter(pass)); await sleep(1000, signal); }
+      aiRun.waiting = 0; renderBar(contacts.filter(pass));
+    }
+  }
 }
 async function callLLM(prompt, signal){
   const {provider, model, key} = llm;
@@ -942,8 +1117,11 @@ async function callLLM(prompt, signal){
   if(!r.ok){
     const msg = JSON.stringify(d).toLowerCase();
     if(r.status === 401 || r.status === 403 || (r.status === 400 && /api[_ ]?key|authentication/.test(msg))) throw llmError('bad_key');
-    if(/insufficient_quota|credit balance|billing/.test(msg)) throw llmError('no_credit');
-    if(r.status === 429 || r.status === 529) throw llmError('rate_limited');
+    /* Vrai manque de crédit, dit explicitement : OpenAI « insufficient_quota », Anthropic « credit balance is too low » */
+    if(/insufficient_quota|credit balance/.test(msg)) throw llmError('no_credit');
+    /* Limite de débit ou serveur surchargé : on attendra puis on réessaiera. Gemini répond 429 en parlant de « quota »
+       et de « billing » : ce n’est pas un manque de crédit (l’ancien diagnostic affichait à tort « crédit épuisé »). */
+    if(r.status === 429 || r.status === 529 || r.status === 503 || r.status === 500) throw Object.assign(llmError('rate_limited'), {wait:retryDelay(r, d, msg)});
     if(r.status === 404) throw llmError('bad_model');
     throw llmError('upstream_error');
   }
@@ -962,10 +1140,16 @@ async function callLLM(prompt, signal){
   return parseLLMJson(text);
 }
 /* Panneau de choix de l’IA et de la clé */
-function showAI(){
+function showAI(problem){
   select(null); clearFocus();
   const {cos, poss} = aiPending(), P = PROVIDERS[llm.provider];
+  const why = problem === 'no_credit'
+    ? `<strong>${P.vendor} indique que ton compte API n’a pas de crédit.</strong> L’API est facturée à part : un abonnement ${P.sub} ne donne pas de crédit API. ${llm.provider === 'gemini' ? `Vérifie ton offre sur <a href="${P.billUrl}" target="_blank" rel="noopener">Google AI Studio</a>.` : `<a href="${P.billUrl}" target="_blank" rel="noopener">Ajouter du crédit chez ${P.vendor}</a>, quelques euros suffisent.`} Gemini propose aussi une offre gratuite.`
+    : problem === 'rate_limited'
+    ? `<strong>${P.vendor} limite le nombre de requêtes de ton compte</strong> (par minute ou par jour), même après plusieurs essais automatiques. Les comptes gratuits ou récents ont des limites basses. Le travail déjà fait est gardé : relance dans quelques minutes, la classification reprendra où elle s’est arrêtée.`
+    : '';
   openDrawer(`
+    ${why ? `<p class="aierr" role="alert">${why}</p>` : ''}
     <h2 id="dtitle" tabindex="-1">Classer avec une IA</h2>
     <p class="pos">${cos.length} entreprise${cos.length > 1 ? 's' : ''} et ${poss.length} intitulé${poss.length > 1 ? 's' : ''} de poste ne sont pas reconnus par le dictionnaire. Une IA peut les classer par secteur, fonction et séniorité.</p>
     <h3>Ton IA</h3>
@@ -1182,7 +1366,7 @@ async function runAI(){
     if(aiRun.ctl.signal.aborted) break;
     try {
       const prompt = job.kind === 'co' ? coPrompt(job.items) : posPrompt(job.items);
-      const res = sampleFn ? await sampleFn.json(prompt, {modelTier:'quick', signal:aiRun.ctl.signal}) : await callLLM(prompt, aiRun.ctl.signal);
+      const res = sampleFn ? await sampleFn.json(prompt, {modelTier:'quick', signal:aiRun.ctl.signal}) : await callLLMRetry(prompt, aiRun.ctl.signal);
       asList(res).forEach(r => {
         const it = job.items[Number(r && r.i) - 1];
         if(!it) return;
@@ -1209,10 +1393,10 @@ async function runAI(){
   setupColor(); syncChips(); render();
   if(err === 'not_granted' || err === 'sampling_disabled' || err === 'not_declared' || err === 'capability_disabled'){ aiHidden = true; renderBar(contacts.filter(pass)); toast('Claude n’est pas disponible ici : la classification par mots-clés est conservée'); }
   else if(err === 'bad_key'){ toast(`Clé API refusée par ${P.vendor} : vérifie-la`); showAI(); }
-  else if(err === 'no_credit') toast(`Crédit épuisé sur ton compte ${P.vendor} : recharge-le, puis relance`);
+  else if(err === 'no_credit'){ toast(`${P.vendor} indique que ton compte API n’a pas de crédit`); showAI('no_credit'); }
   else if(err === 'bad_model') toast(`Ce modèle n’est pas disponible sur ton compte ${P.vendor} : choisis-en un autre`);
   else if(err === 'network') toast(`${P.vendor} ne répond pas : vérifie ta connexion, puis relance`);
-  else if(err === 'rate_limited') toast('Limite d’utilisation atteinte : relance plus tard, le travail déjà fait est gardé');
+  else if(err === 'rate_limited'){ toast('Limite de débit toujours atteinte : le travail déjà fait est gardé'); showAI('rate_limited'); }
   else if(err) toast('Classification interrompue : relance pour terminer, le travail déjà fait est gardé');
   else if(!Object.keys(fresh.co).length && !Object.keys(fresh.pos).length && !stopped) toast(`${who} n’a renvoyé aucun classement exploitable : réessaie dans un moment`);
   else toast(stopped ? 'Classification arrêtée : les résultats déjà obtenus sont appliqués' : `Classification terminée : ${Object.keys(fresh.co).length} entreprises et ${Object.keys(fresh.pos).length} intitulés classés par ${who}`);
@@ -1221,7 +1405,7 @@ function aiCard(){
   if(isDemo || aiHidden || !contacts.length) return '';
   if(aiRun){
     const p = Math.round(aiRun.done / Math.max(1, aiRun.total) * 100);
-    return `<div class="demo" role="status"><div><strong>${aiName()} classe ton réseau…</strong><span>Lot ${Math.min(aiRun.done + 1, aiRun.total)} sur ${aiRun.total}. Seuls les noms d’entreprises et les intitulés de poste sont envoyés, jamais les noms de tes contacts.</span><span class="aiprog"><span style="width:${p}%"></span></span></div>
+    return `<div class="demo" role="status"><div><strong>${aiName()} classe ton réseau…</strong><span>${aiRun.waiting ? `Limite de débit de ${PROVIDERS[llm.provider].vendor} atteinte : reprise automatique dans ${aiRun.waiting}\u00a0s. ` : ''}Lot ${Math.min(aiRun.done + 1, aiRun.total)} sur ${aiRun.total}. Seuls les noms d’entreprises et les intitulés de poste sont envoyés, jamais les noms de tes contacts.</span><span class="aiprog"><span style="width:${p}%"></span></span></div>
       <div class="demo-actions"><button class="btn sm" type="button" data-act="aistop">Arrêter</button></div></div>`;
   }
   const {cos, poss} = aiPending();
@@ -1931,6 +2115,7 @@ function render(){
   else { renderGraph(vis); needFit = false; if(!state.selected && !drawer.classList.contains('open')) fit(); }
   if(state.selected && !nodes.some(n => n.id === state.selected)) select(null);
   if(state.view === 'graph'){ clearFocus(); reapplySelection(); }
+  renderViews(); rememberView();
 }
 
 /* ---------- Drawer ---------- */
@@ -2031,14 +2216,14 @@ let meProfile = {};
 try { meProfile = JSON.parse(localStorage.getItem(ME_KEY) || '{}') || {}; } catch(e) { meProfile = {}; }
 /* Profil affiché : jamais pendant la démo, pour qu’un visiteur ne voie pas le nom de la personne précédente sur un ordinateur partagé */
 const myProfile = () => isDemo ? {} : meProfile;
-/* Efface tout ce que Synapses garde dans ce navigateur (profil, tags, corrections), puis repart de la démo */
+/* Efface tout ce que Synapses garde dans ce navigateur (profil, tags, vues, corrections), puis repart de la démo */
 function wipeData(){
-  if(!confirm('Effacer ton profil, tes tags et tes corrections enregistrés dans ce navigateur ? Le réseau affiché sera aussi retiré.')) return;
+  if(!confirm('Effacer ton profil, tes tags, tes vues et tes corrections enregistrés dans ce navigateur ? Le réseau affiché sera aussi retiré.')) return;
   try { Object.keys(localStorage).filter(k => k.startsWith('synapses-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
   location.reload();
 }
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Ton profil, tes tags et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite. Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite. Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
     <p class="pos">En regroupant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -2149,7 +2334,9 @@ function load(list, demo){
   if(!demo){ applyAI(list); refreshShared(); }
   nodes = []; pos.clear(); needFit = true; state.selected = null;
   gLinks.selectAll('*').remove(); gNodes.selectAll('*').remove(); gLabels.selectAll('*').remove(); gCounts.selectAll('*').remove();
-  setupControls(); closeDrawer(); render();
+  setupControls();
+  const v = startView(); if(v){ setView(v); syncChips(); }
+  closeDrawer(); render();
 }
 const readText = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(f); });
 function kindOf(text){
@@ -2210,7 +2397,7 @@ async function handleFiles(fileList){
   if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
   closePanel();
   if(list.length){ state.view = 'graph'; load(list, false); countSubmission(); } else render();
-  if(list.length) toast(`${list.length} contacts importés${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}`);
+  if(list.length) toast(`${list.length} contacts importés${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
   else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
   if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
 }
@@ -2253,6 +2440,7 @@ document.addEventListener('click', e => {
     else if(a === 'clearall') clearAll();
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
+    else if(a === 'shareview') shareView();
     else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'legendall'){ legendAll = !legendAll; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'showall'){ state.topN = 999; select(null); closeDrawer(); render(); }
