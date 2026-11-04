@@ -3186,8 +3186,20 @@ $('#file').addEventListener('change', e => { handleFiles(e.target.files); e.targ
 $('#closeDrawer').addEventListener('click', clearSelection);
 $('#recenter').addEventListener('click', fit);
 $('#overview').addEventListener('click', () => { const had = [...legendOpen].some(x => x.startsWith('g:')); [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; if(had && levelMap.size) render(); else updateLegend(contacts.filter(pass)); clearSelection(); });
-$('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4));
-$('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4));
+/* Boutons + et − : zoom autour de ce qu’on regarde (contact sélectionné, entreprise choisie, groupe ouvert), s’il est à l’écran ;
+   sinon autour du centre de la zone libre (sans la légende), et non du centre du canevas entier */
+function zoomAnchor(){
+  const t = d3.zoomTransform(svg.node()), vb = viewport();
+  const at = (x, y) => { const sx = t.applyX(x), sy = t.applyY(y); return sx >= vb.x && sx <= vb.x + vb.w && sy >= vb.y && sy <= vb.y + vb.h ? [sx, sy] : null; };
+  const px = n => n.ax ?? n.x, py = n => n.ay ?? n.y;
+  const sel = state.selected && nodes.find(n => n.id === state.selected);
+  let p = sel ? at(px(sel), py(sel)) : null;
+  if(!p && legendHL){ const ms = legendNodes(legendHL.kind, legendHL.v); if(ms.length) p = at(d3.mean(ms, px), d3.mean(ms, py)); }
+  if(!p){ const k = [...legendOpen].find(x => x.startsWith('g:')), hub = k && nodes.find(n => n.type === 'hub' && n.key === k.slice(2)); if(hub) p = at(px(hub), py(hub)); }
+  return p || [vb.x + vb.w / 2, vb.y + vb.h / 2];
+}
+$('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4, zoomAnchor()));
+$('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4, zoomAnchor()));
 $('#logosOn').checked = logosOn;
 $('#logosOn').addEventListener('change', e => {
   logosOn = e.target.checked;
