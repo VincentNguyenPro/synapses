@@ -1933,6 +1933,10 @@ function styleLabels(){
   /* Chiffres des groupes : taille compensée au dézoom, sans déborder du cercle */
   /* Nombre au centre d’un groupe : environ la moitié du rayon, au moins 13 px à l’écran, et toujours dans le cercle selon son nombre de chiffres */
   if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => { const fit = d.r * 1.55 / Math.max(2, String(d.count).length * 0.62); return `${Math.min(fit, Math.max(d.r * 0.5, 13 / k))}px`; });
+  /* Rond « Moi » : au dézoom, il garde au moins ~80 % de sa taille d’écran normale, pour rester lisible au centre du graphe */
+  const meF = Math.max(1, 0.8 / zk);
+  if(nodeSel) nodeSel.filter(d => d.type === 'me').attr('r', d => d.r * meF);
+  if(countSel) countSel.filter(d => d.type === 'me').style('font-size', d => `${(d.r > 30 ? 11.5 : 14) * meF}px`);
   /* Vue d’ensemble (fort dézoom) : le chiffre dans un rond de quelques pixels serait illisible ; il passe à côté du nom */
   const small = d => d.type === 'hub' && d.r * zk < 13;
   if(countSel) countSel.filter(d => d.type === 'hub').style('display', d => small(d) || hubCentered(d) ? 'none' : null);
