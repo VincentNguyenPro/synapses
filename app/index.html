@@ -2403,7 +2403,10 @@ function legendUp(lvl, v){
 function applyLegendHL(zoomTo){
   if(!legendHL || state.view !== 'graph') return false;
   const get = DIMS[state.colorBy].get, {kind, v} = legendHL;
-  const ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? n.c.company === v : get(n.c) === v));
+  let ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? n.c.company === v : get(n.c) === v));
+  /* Secteur ouvert dans la légende : seuls les contacts de ce secteur comptent (BNP Paribas a aussi des contacts en Immobilier, en Finance…) */
+  const g = [...legendOpen].find(x => x.startsWith('g:')), hub = g && nodes.find(n => n.type === 'hub' && n.key === g.slice(2));
+  if(hub && ms.some(n => n.hub === hub.id)) ms = ms.filter(n => n.hub === hub.id);
   if(!ms.length){ legendHL = null; return false; }
   focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
   if(zoomTo) zoomToNodes(ms);
