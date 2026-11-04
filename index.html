@@ -87,7 +87,10 @@ p{margin:0}
 .count strong{color:var(--ink)}
 
 /* Le fragment vivant : le graphe du réseau de démo, cliquable (data-ui : conventions de l’outil à l’intérieur) */
-.live{background:var(--surface);border-radius:var(--radius);display:grid;overflow:hidden;font-size:14px;line-height:1.35}
+.live{background:var(--surface);color:#17212E;border-radius:var(--radius);display:grid;overflow:hidden;font-size:14px;line-height:1.35}
+.live .key{display:flex;flex-wrap:wrap;gap:4px 14px;width:100%;margin-top:4px}
+.live .key span{display:inline-flex;align-items:center;gap:6px;color:#46577A}
+.live .key i{width:9px;height:9px;border-radius:50%}
 @media (min-width:760px){ .live{grid-template-columns:minmax(0,1fr) 250px} }
 .live .stage{position:relative;padding:14px 8px 0}
 .live svg{display:block;width:100%;height:auto;max-height:620px}
@@ -108,8 +111,8 @@ p{margin:0}
 .hub text{font-size:12.5px;font-weight:700;fill:#17212E}
 .hub text tspan.p{fill:#2F5BEA}
 .hub .n{font-size:11px;font-weight:800;text-anchor:middle;dominant-baseline:central}
-.dot{transition:fill 1.6s ease}
-.blob{transition:fill 1.6s ease}
+.dot{transition:fill .35s ease}
+.blob{transition:fill .35s ease}
 .spoke{stroke:#2F5BEA;stroke-opacity:.45;transition:stroke-opacity .2s}
 .spoke.on{stroke-opacity:1}
 .hub:focus-visible{outline:none}
@@ -404,6 +407,7 @@ footer{padding:0 10px 10px}
             <span>Colorer par</span>
             <button type="button" data-by="sen" aria-pressed="true">Séniorité</button>
             <button type="button" data-by="fn" aria-pressed="false">Fonction</button>
+            <div class="key" id="key" aria-label="Légende des couleurs"></div>
           </div>
         </div>
         <aside class="side" aria-live="polite" id="side"></aside>
@@ -656,6 +660,7 @@ footer{padding:0 10px 10px}
     dots.forEach(d => d.setAttribute('fill', colour(by, d.__c[by])));
     blobs.forEach(b => { const v = b.__g[0][by]; const same = b.__g.every(c => c[by] === v); b.setAttribute('fill', same ? colour(by, v) : '#8A97A6'); });
     $$('.tools button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.by === by)));
+    $('#key').innerHTML = domain[by].map(v => `<span><i style="background:${colour(by, v)}"></i>${esc(v)}</span>`).join('');
     side();
   }
   function side(){
@@ -670,15 +675,8 @@ footer{padding:0 10px 10px}
     spokes.forEach((l, s) => l.classList.toggle('on', s === sec));
     side();
   }
-  $$('.tools button').forEach(b => b.addEventListener('click', () => { by = b.dataset.by; userChose = true; paint(); }));
+  $$('.tools button').forEach(b => b.addEventListener('click', () => { by = b.dataset.by; paint(); }));
   pick(selected); paint();
-  /* Mouvement signature : les couleurs passent lentement d’un critère à l’autre, tant que le visiteur n’a pas choisi */
-  let userChose = false;
-  if(!reduce){
-    const live = $('.live');
-    let hold = false; live.addEventListener('pointerenter', () => hold = true); live.addEventListener('pointerleave', () => hold = false);
-    setInterval(() => { if(userChose || hold || document.hidden) return; by = by === 'sen' ? 'fn' : 'sen'; paint(); }, 6000);
-  }
 
   /* ---------- Légende de la cellule « Colorer par » : les vrais comptes de la démo ---------- */
   const sc = count(DEMO, 'sen');
