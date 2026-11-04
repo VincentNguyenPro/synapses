@@ -2436,18 +2436,41 @@ function legendUp(lvl, v){
   updateLegend(contacts.filter(pass));
   if(legendHL) applyLegendHL(true); else focusLegendGroup(true);
 }
-function applyLegendHL(zoomTo){
-  if(!legendHL || state.view !== 'graph') return false;
-  const get = DIMS[state.colorBy].get, {kind, v} = legendHL;
+/* Contacts d’une valeur (kind 'v') ou d’une filiale (kind 'e') ; secteur ouvert dans la légende : seuls ceux de ce secteur
+   (BNP Paribas a aussi des contacts en Immobilier, en Finance…) */
+function legendNodes(kind, v){
+  const get = DIMS[state.colorBy].get;
   let ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? n.c.company === v : get(n.c) === v));
-  /* Secteur ouvert dans la légende : seuls les contacts de ce secteur comptent (BNP Paribas a aussi des contacts en Immobilier, en Finance…) */
   const g = [...legendOpen].find(x => x.startsWith('g:')), hub = g && nodes.find(n => n.type === 'hub' && n.key === g.slice(2));
   if(hub && ms.some(n => n.hub === hub.id)) ms = ms.filter(n => n.hub === hub.id);
+  return ms;
+}
+function applyLegendHL(zoomTo){
+  if(!legendHL || state.view !== 'graph') return false;
+  const ms = legendNodes(legendHL.kind, legendHL.v);
   if(!ms.length){ legendHL = null; return false; }
   focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
   if(zoomTo) zoomToNodes(ms);
   return true;
 }
+/* Survol d’une ligne de la légende (souris) : ses contacts s’allument dans le graphe, sans changer le zoom ; en quittant la ligne,
+   le graphe revient à son état (valeur cliquée, groupe ouvert, sélection ou rien) */
+let legendHover = null;
+function restoreLegendFocus(){
+  if(state.view !== 'graph' || !nodeSel) return;
+  if(applyLegendHL(false)) return;
+  if(focusLegendGroup(false)) return;
+  if(state.selected) reapplySelection(); else clearFocus();
+}
+document.addEventListener('pointerover', e => {
+  if(e.pointerType === 'touch' || state.view !== 'graph') return;
+  const row = e.target.closest && e.target.closest('#legend [data-lghlv], #legend [data-lghl]');
+  if(row === legendHover) return;
+  legendHover = row;
+  if(!row){ restoreLegendFocus(); return; }
+  const kind = row.dataset.lghlv != null ? 'v' : 'e', ms = legendNodes(kind, kind === 'v' ? row.dataset.lghlv : row.dataset.lghl);
+  if(ms.length) focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
+});
 /* Zoom animé qui cadre un ensemble de contacts (la grappe d’une entreprise…) dans la zone libre, sans passer sous la légende */
 function zoomToNodes(ms){
   if(!ms.length || state.view !== 'graph') return;
