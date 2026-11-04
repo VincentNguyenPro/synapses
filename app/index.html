@@ -87,6 +87,13 @@ aside{grid-row:2;grid-column:1;overflow-y:auto;background:var(--surface);border-
 .section{padding:18px 18px 6px;border-bottom:1px solid var(--line)}
 .section h2{font-size:15px;font-weight:800;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:-.01em}
 .field{margin-bottom:16px}
+#mynet{background:var(--accent-soft)}
+.netstate{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;margin:0 0 10px}
+.netstate strong{color:var(--ink)}
+.netdot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:#D9A21B;box-shadow:0 0 0 3px rgba(217,162,27,.2)}
+.netstate.on .netdot{background:#3E9B4F;box-shadow:0 0 0 3px rgba(62,155,79,.2)}
+#mynet .linkbtn{margin-bottom:12px}
+#mynet .btn.block{margin-bottom:2px}
 .vrow{display:flex;align-items:center;gap:4px;margin-bottom:6px}
 .vrow .chip{flex:1;min-width:0;justify-content:flex-start}
 .vrow .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -447,6 +454,10 @@ button.lg:hover{background:var(--surface-2)}
       <strong>Affichage et filtres</strong>
       <button class="btn sm primary" id="closePanel" type="button">Voir les résultats</button>
     </div>
+    <section class="section" id="mynet" hidden>
+      <h2>Mon réseau</h2>
+      <div id="mynetBody"></div>
+    </section>
     <section class="section" id="views">
       <h2>Vues</h2>
       <div class="field"><span class="lbl">Vues prêtes à l’emploi</span><div class="chips" id="presets"></div></div>
@@ -473,7 +484,6 @@ button.lg:hover{background:var(--surface-2)}
         <p class="hint" id="aiHint"></p>
         <button class="btn sm" type="button" id="aiBtn" data-act="aisetup">Classer avec une IA</button>
       </div>
-      <label class="sharebox" id="fld-keep" hidden><input type="checkbox" id="keepNet"> <span><strong>Garder mon réseau sur cet appareil</strong>, pour le retrouver après un rafraîchissement sans réimporter ton fichier. Il reste dans ce navigateur, sans les emails. Décoche pour l’oublier.</span></label>
     </section>
     <section class="section">
       <h2>Filtres <button class="linkbtn" id="clearAllSide" type="button" data-act="clearall" hidden>Tout effacer</button></h2>
@@ -714,10 +724,10 @@ async function setKeep(on){
   if(on){
     const raw = isDemo ? null : lastRaw;
     if(raw && raw.length){
-      try { await saveNet(raw); toast('Ton réseau est gardé sur cet appareil (sans les emails) : plus besoin de réimporter ton fichier'); }
+      try { await saveNet(raw); keptAt = Date.now(); toast('Ton réseau est gardé sur cet appareil (sans les emails) : plus besoin de réimporter ton fichier'); }
       catch(e) { try { localStorage.removeItem(KEEP_KEY); } catch(_) {} toast('Ce navigateur refuse l’enregistrement local : ton réseau ne peut pas être gardé'); }
     }
-  } else { await dropNet(); toast('Ton réseau n’est plus gardé sur cet appareil'); }
+  } else { await dropNet(); keptAt = 0; toast('Ton réseau n’est plus gardé sur cet appareil : il disparaîtra au prochain rafraîchissement'); }
   renderBar(contacts.filter(pass));
 }
 function keepCard(){
@@ -725,10 +735,20 @@ function keepCard(){
   return `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Tu le retrouveras après un rafraîchissement, sans réimporter ton fichier. Il reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Garder sur cet appareil</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
 }
+/* Section « Mon réseau » en haut du panneau : état du réseau importé et bouton pour le garder ou l’oublier */
+let keptAt = 0;
 function syncKeepField(){
-  const f = document.getElementById('fld-keep'); if(!f) return;
-  f.hidden = isDemo || !contacts.length;
-  document.getElementById('keepNet').checked = keepOn();
+  const sec = document.getElementById('mynet'); if(!sec) return;
+  sec.hidden = isDemo || !contacts.length;
+  if(sec.hidden) return;
+  const n = contacts.length.toLocaleString('fr-FR'), on = keepOn();
+  const since = keptAt ? ` depuis le ${new Date(keptAt).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})}` : '';
+  document.getElementById('mynetBody').innerHTML = on
+    ? `<p class="netstate on"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts gardés sur cet appareil</strong>${since}. Tu le retrouves à chaque visite, sans réimporter ton fichier. Les emails ne sont pas gardés.</span></p>
+       <button class="linkbtn" type="button" data-act="keepforget">Oublier mon réseau sur cet appareil</button>`
+    : `<p class="netstate"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts, non gardés</strong> : ils disparaîtront si tu rafraîchis ou fermes la page.</span></p>
+       <button class="btn primary sm block" type="button" data-act="keepyes">Garder sur cet appareil</button>
+       <p class="hint" style="margin:8px 0 0">Il reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.</p>`;
 }
 
 function parseLinkedIn(text){
@@ -886,11 +906,13 @@ async function loadDictionary(){
    Sans groupe connu, les écritures d’un même nom (casse, accents, « SA », « SE »…) sont réunies sous la plus fréquente. */
 let GROUPS = [];
 function groupOf(name){ const k = nkey(name); if(!k) return ''; for(const [g, re] of GROUPS) if(re.test(k)) return g; return ''; }
-const LEGAL_END = / (sa|sas|sasu|se|sarl|inc|ltd|llc|gmbh|ag|spa|bv|nv|plc)\.?$/;
+/* Clé d’écriture d’un nom : sans forme juridique (« SA », « S.A.S. »…), « Group », extension (« .fr ») ni précision après « | » */
+const LEGAL_END = / (s\.?a\.?s\.?u?|s\.?a\.?|s\.?e\.?|sarl|inc|ltd|llc|gmbh|ag|spa|bv|nv|plc|group|groupe)\.?$/;
+const spellKey = name => { let k = nkey(name).replace(/\s*\|.*$/, '').replace(/\.(fr|com|io|co|net|org|eu)$/, '').trim(), prev; do { prev = k; k = k.replace(LEGAL_END, '').trim(); } while(k !== prev && k.includes(' ')); return k; };
 function assignGroups(list){
   const spell = new Map();
-  list.forEach(c => { if(!c.company) return; const k = nkey(c.company).replace(LEGAL_END, ''); const m = spell.get(k) || new Map(); m.set(c.company, (m.get(c.company) || 0) + 1); spell.set(k, m); });
-  const best = new Map([...spell].map(([k, m]) => [k, [...m].sort((a, b) => b[1] - a[1])[0][0]]));
+  list.forEach(c => { if(!c.company) return; const k = spellKey(c.company); const m = spell.get(k) || new Map(); m.set(c.company, (m.get(c.company) || 0) + 1); spell.set(k, m); });
+  const best = new Map([...spell].map(([k, m]) => [k, [...m].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0][0]]));
   /* Filiale d’une entreprise du réseau : un nom qui commence par celui d’une autre entreprise présente
      (« Decathlon France » → Decathlon, « Bartle Business Consulting » → Bartle) lui est rattaché.
      Préfixe le plus long, en mots entiers, d’au moins 4 lettres, jamais un mot générique (« groupe », « banque »…). */
@@ -905,7 +927,7 @@ function assignGroups(list){
   };
   list.forEach(c => {
     if(!c.company){ c.group = ''; return; }
-    const k = nkey(c.company).replace(LEGAL_END, '');
+    const k = spellKey(c.company);
     c.group = groupOf(c.company) || parentOf(k) || best.get(k) || c.company;
   });
 }
@@ -2591,7 +2613,7 @@ async function sendFeedback(){
 }
 
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as coché « Garder mon réseau sur cet appareil ». Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as choisi de le garder (section « Mon réseau » du panneau). Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
     <p class="pos">En regroupant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -2770,7 +2792,7 @@ async function handleFiles(fileList){
   if(texts.connections){ try { list = parseLinkedIn(texts.connections); } catch(e) { list = []; } }
   if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
   closePanel();
-  if(list.length){ setProx(proximityFrom(sig, list)); state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).catch(() => {}); } else render();
+  if(list.length){ setProx(proximityFrom(sig, list)); state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).then(() => { keptAt = Date.now(); syncKeepField(); }).catch(() => {}); } else render();
   if(list.length) toast(`${list.length} contact${list.length > 1 ? 's' : ''} importé${list.length > 1 ? 's' : ''}${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
   else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
   if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
@@ -2784,7 +2806,6 @@ $('#overview').addEventListener('click', clearSelection);
 $('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4));
 $('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4));
 $('#logosOn').checked = logosOn;
-$('#keepNet').addEventListener('change', e => setKeep(e.target.checked));
 $('#logosOn').addEventListener('change', e => {
   logosOn = e.target.checked;
   try { localStorage.setItem(LOGOS_KEY, logosOn ? '1' : '0'); } catch(err) {}
@@ -2819,6 +2840,7 @@ document.addEventListener('click', e => {
     else if(a === 'shareview') shareView();
     else if(a === 'lgsub'){ const v = act.dataset.v; legendOpen.has(v) ? legendOpen.delete(v) : legendOpen.add(v); updateLegend(contacts.filter(pass)); }
     else if(a === 'keepyes') setKeep(true);
+    else if(a === 'keepforget'){ if(confirm('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.')) setKeep(false); }
     else if(a === 'keepno'){ keepAsked = true; renderBar(contacts.filter(pass)); }
     else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'legendall'){ legendAll = !legendAll; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
@@ -2926,7 +2948,7 @@ loadDictionary()
     let kept = null;
     if(keepOn()){ try { kept = await readNet(); } catch(e) {} }
     const list = kept && Array.isArray(kept.raw) ? kept.raw.map((r, i) => buildContact(r, i)).filter(c => c.name) : [];
-    if(list.length){ lastRaw = kept.raw; setProx(kept.prox); load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
+    if(list.length){ lastRaw = kept.raw; keptAt = kept.saved || 0; setProx(kept.prox); load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
     else load(demoContacts(), true);
     if(location.hash === '#importer') showHelp();
   });

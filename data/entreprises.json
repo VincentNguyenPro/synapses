@@ -2945,6 +2945,26 @@
    "motif": "^carrefour\\b"
   },
   {
+   "nom": "Devoteam",
+   "motif": "^devoteam\\b"
+  },
+  {
+   "nom": "Equans",
+   "motif": "^equans\\b"
+  },
+  {
+   "nom": "Nissan",
+   "motif": "^nissan\\b"
+  },
+  {
+   "nom": "Liebherr",
+   "motif": "^liebherr\\b"
+  },
+  {
+   "nom": "Grant Thornton",
+   "motif": "^grant thornton\\b"
+  },
+  {
    "nom": "Indépendant",
    "motif": "\\b(independant\\w*|freelance\\w*|free[- ]lance\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*)\\b"
   }
