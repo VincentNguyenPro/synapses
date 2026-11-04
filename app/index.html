@@ -2093,6 +2093,29 @@ function layoutHubs(hubs, cx, cy, meR){
   }
 }
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+/* Points d’une grappe répartis de façon homogène : un au centre, puis des anneaux concentriques réguliers (6, 12, 18… points),
+   le dernier anneau, incomplet, réparti sur tout son tour. Grappe toujours centrée et symétrique, quel que soit le nombre de points */
+const discCache = new Map();
+function discPts(n, d){
+  const key = n + '|' + d; if(discCache.has(key)) return discCache.get(key);
+  /* 2 à 6 points : un seul anneau sans point central (deux points côte à côte, un triangle, un carré…) */
+  if(n >= 2 && n <= 6){ const R = smallR(n, d), a0 = -Math.PI / 2 + (n === 2 || n === 4 ? Math.PI / n : 0), out = []; for(let i = 0; i < n; i++){ const a = a0 + i * 2 * Math.PI / n; out.push({x:R * Math.cos(a), y:R * Math.sin(a)}); } discCache.set(key, out); return out; }
+  const out = n ? [{x:0, y:0}] : [];
+  /* Les points (hors centre) sont répartis entre les anneaux en proportion de leur circonférence : même densité partout,
+     au lieu d’un dernier anneau presque vide qui déformait la grappe */
+  const J = ringOf(n), rest = n - 1, caps = d3.range(1, J + 1).map(j => Math.floor(2 * Math.PI * j)), W = d3.sum(caps);
+  const ks = caps.map(c => Math.min(c, Math.floor(rest * c / W)));
+  for(let left = rest - d3.sum(ks), j = J - 1; left > 0; j = j > 0 ? j - 1 : J - 1){ if(ks[j] < caps[j]){ ks[j]++; left--; } }
+  ks.forEach((k, idx) => {
+    const j = idx + 1, a0 = -Math.PI / 2 + (j % 2 ? 0 : Math.PI / Math.max(1, k));
+    for(let i = 0; i < k; i++){ const a = a0 + i * 2 * Math.PI / k; out.push({x:j * d * Math.cos(a), y:j * d * Math.sin(a)}); }
+  });
+  discCache.set(key, out); return out;
+}
+/* Rayon (jusqu’au centre du point le plus éloigné) : la bulle est ajustée aux points réels */
+const smallR = (n, d) => d / (2 * Math.sin(Math.PI / n));
+const discR = (n, d) => n <= 1 ? 0 : n <= 6 ? smallR(n, d) : d * Math.ceil(ringOf(n));
+function ringOf(n){ let total = 1, j = 0; while(total < n){ j++; total += Math.floor(2 * Math.PI * j); } return j; }
 /* Contacts disposés en cercle(s) autour de leur groupe, triés par couleur puis par nom */
 function ringSlots(count, r0, cr){
   const step = 2 * cr + 4, out = [];
@@ -2138,7 +2161,8 @@ function applyLayout(){
     } else {
       /* Plusieurs niveaux : une grappe homogène par niveau, disposées autour du groupe */
       const g = 10, pad = 4; /* g : espace entre deux grappes ; pad : marge dessinée autour des contacts d’une grappe */
-      subs.forEach(s => { s.sr = c * Math.sqrt(Math.max(0.5, s.arr.length - 0.5)) + cr; s.br = s.sr + pad; });
+      const d = 2 * cr + 2.5; /* distance entre deux points voisins d’une grappe */
+      subs.forEach(s => { s.sr = discR(s.arr.length, d) + cr; s.br = s.sr + pad; });
       const place = (ring, D) => {
         const tot = d3.sum(ring, s => s.br + g / 2);
         ring.forEach(s => { s.th = 2 * Math.PI * (s.br + g / 2) / tot; });
@@ -2146,7 +2170,7 @@ function applyLayout(){
         ring.forEach(s => {
           const mid = a0 + s.th / 2; a0 += s.th;
           s.cx = D * Math.cos(mid); s.cy = D * Math.sin(mid);
-          s.arr.forEach((m, i) => { const rr = c * Math.sqrt(i + 0.5), th = i * GOLDEN; local.push({x:s.cx + rr * Math.cos(th), y:s.cy + rr * Math.sin(th)}); ordered.push(m); });
+          discPts(s.arr.length, d).forEach((p, i) => { local.push({x:s.cx + p.x, y:s.cy + p.y}); ordered.push(s.arr[i]); });
           blobs.push(s);
         });
       };
@@ -2165,7 +2189,7 @@ function applyLayout(){
         ring.forEach((s, j) => {
           const mid = a0 + arcTh[j] / 2; a0 += arcTh[j];
           s.cx = D * Math.cos(mid); s.cy = D * Math.sin(mid);
-          s.arr.forEach((m, i) => { const rr = c * Math.sqrt(i + 0.5), th = i * GOLDEN; local.push({x:s.cx + rr * Math.cos(th), y:s.cy + rr * Math.sin(th)}); ordered.push(m); });
+          discPts(s.arr.length, d).forEach((p, i) => { local.push({x:s.cx + p.x, y:s.cy + p.y}); ordered.push(s.arr[i]); });
           blobs.push(s);
         });
       } else {
