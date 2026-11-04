@@ -273,6 +273,9 @@ button.lg:hover{background:var(--surface-2)}
 .lgg .lgchev::after{content:"";position:absolute;left:3px;top:3px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
 .lgg[aria-expanded="true"] .lgchev::after{transform:rotate(45deg);top:1px}
 .lgg[aria-expanded="true"]{font-weight:700}
+.lgcrumbs{margin:0 6px 8px;font-size:12px;line-height:1.6;color:var(--muted)}
+.lgcrumbs .linkbtn{font-size:12px}
+.lgcrumbs strong{color:var(--ink)}
 .legendbox .lgvals{list-style:none;margin:0 0 6px;padding:0 0 0 12px}
 .lgv{all:unset;display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:3px 6px;border-radius:6px;font-size:12.5px}
 button.lgv{cursor:pointer}
@@ -2383,6 +2386,13 @@ const legendOpen = new Set();
 /* Filiale de la légende : un clic met ses contacts en surbrillance dans le graphe, un second clic l’annule */
 let legendHL = null; /* {kind:'v', v} : valeur de « Colorer par » (société mère…) ; {kind:'e', v} : filiale */
 const subLi = (e, n) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="Voir les contacts de ${esc(e)} dans le graphe"><span>${esc(e)}</span><span class="n">${n}</span></button></li>`;
+/* Remonter dans la légende en arbre : 0 = tout le réseau, 1 = le groupe, 2 = la société mère d’une filiale */
+function legendUp(lvl, v){
+  if(lvl === 0){ [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; updateLegend(contacts.filter(pass)); if(state.selected) reapplySelection(); else { clearFocus(); fit(); } return; }
+  legendHL = lvl === 2 ? {kind:'v', v} : null;
+  updateLegend(contacts.filter(pass));
+  if(legendHL) applyLegendHL(true); else focusLegendGroup(true);
+}
 function applyLegendHL(zoomTo){
   if(!legendHL || state.view !== 'graph') return false;
   const get = DIMS[state.colorBy].get, {kind, v} = legendHL;
@@ -2431,7 +2441,18 @@ function legendTree(vis){
       return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n)).join('')}</ul>` : ''}</li>`;
     }).join('')}${rest ? `<li><span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${vals.length - 15} autre${vals.length - 15 > 1 ? 's' : ''}</span><span class="n">${rest}</span></span></li>` : ''}</ul></li>`;
   }).join('');
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}><p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour zoomer dessus et voir sa répartition par ${esc(cdim.label.toLowerCase())}, puis une valeur pour zoomer sur ses contacts.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
+  /* Fil d’Ariane : où l’on se trouve (réseau › groupe › valeur › filiale), chaque niveau supérieur est cliquable pour remonter */
+  const gOpen = [...legendOpen].find(x => x.startsWith('g:')), crumbs = [];
+  if(gOpen){
+    crumbs.push({lvl:0, label:'Tout le réseau'}, {lvl:1, label:gOpen.slice(2)});
+    if(legendHL){
+      const parent = legendHL.kind === 'e' ? (contacts.find(c => c.company === legendHL.v) || {}) : null;
+      if(parent){ const pv = cdim.get(parent); if(pv && pv !== legendHL.v) crumbs.push({lvl:2, label:pv}); }
+      crumbs.push({lvl:3, label:legendHL.v});
+    }
+  }
+  const crumbHtml = crumbs.length ? `<nav class="lgcrumbs" aria-label="Niveau affiché">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<button type="button" class="linkbtn" data-lgup="${c.lvl}" data-v="${esc(c.label)}">${esc(c.label)}</button>` : `<strong aria-current="true">${esc(c.label)}</strong>`).join('<span aria-hidden="true"> › </span>')}</nav>` : '';
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour zoomer dessus et voir sa répartition par ${esc(cdim.label.toLowerCase())}, puis une valeur pour zoomer sur ses contacts.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
   $('#legend').hidden = !vis.length;
 }
 function updateLegend(vis){
@@ -2906,7 +2927,7 @@ async function handleFiles(fileList){
 $('#file').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 $('#closeDrawer').addEventListener('click', clearSelection);
 $('#recenter').addEventListener('click', fit);
-$('#overview').addEventListener('click', clearSelection);
+$('#overview').addEventListener('click', () => { [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; updateLegend(contacts.filter(pass)); clearSelection(); });
 $('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4));
 $('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4));
 $('#logosOn').checked = logosOn;
@@ -2989,6 +3010,8 @@ document.addEventListener('click', e => {
   if(only){ const k = only.dataset.only; state.include[k].clear(); state.include[k].add(only.dataset.v); syncChips(); select(null); closeDrawer(); needFit = true; render(); return; }
   const ck = e.target.closest('[data-cleark]');
   if(ck){ state.include[ck.dataset.cleark].clear(); syncChips(); render(); return; }
+  const up = e.target.closest('#legend [data-lgup]');
+  if(up){ legendUp(+up.dataset.lgup, up.dataset.v); return; }
   /* Légende en arbre : un clic sur une société mère (ou toute valeur) ou sur une filiale met ses contacts en surbrillance et zoome dessus ; un second clic revient au zoom sur le groupe */
   const hlb = e.target.closest('#legend [data-lghl], #legend [data-lghlv]');
   if(hlb){
