@@ -281,13 +281,13 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 .lgv[aria-pressed="true"]{background:var(--accent-soft);font-weight:700}
 .lgv.off{opacity:.45}
 .lgv .n{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
-.lgwrap > .lg{flex:1;min-width:0;width:auto}
+.lgwrap > .lg,.lgwrap > .lgv{flex:1;min-width:0;width:auto}
 .lgx{all:unset;flex:none;width:22px;height:26px;cursor:pointer;border-radius:6px;position:relative}
 .lgx::after{content:"";position:absolute;left:7px;top:8px;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
 .lgx[aria-expanded="true"]::after{transform:rotate(45deg);top:7px}
 .lgx:hover{background:var(--surface-2)}
 .lgx:focus-visible{outline:2px solid var(--accent)}
-.lgsubs{flex-basis:100%;list-style:none;margin:0 0 6px;padding:0 0 0 22px}
+.lgsubs{flex-basis:100%;min-width:0;max-width:100%;box-sizing:border-box;list-style:none;margin:0 0 6px;padding:0 0 0 22px}
 .lgsubs li{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted);padding:2px 26px 2px 6px}
 .lgsubs li span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lg .n{color:var(--muted)}
@@ -2038,6 +2038,8 @@ function setXY(){
      .force('y', d3.forceY(d => d.type === 'c' ? d.ay : H() / 2).strength(d => d.type === 'c' ? 0.3 : 0));
 }
 
+/* Tous les groupes autour de « Moi » ont la même taille : leur poids se lit par la jauge, la teinte, l’épaisseur de branche et le pourcentage */
+const HUB_R = 30;
 function renderGraph(vis){
   gathered = []; tipHub = null; tipSel = null; collLbl = null; collSide = null; selBlob = null; gColl.selectAll('*').remove(); collSel = null;
   nodes.forEach(n => pos.set(n.id, {x:n.x, y:n.y}));
@@ -2054,7 +2056,7 @@ function renderGraph(vis){
 
   const w = W(), h = H();
   const keep = o => { const p = pos.get(o.id); if(p){ o.x = p.x; o.y = p.y; } else { o.x = w / 2 + (Math.random() - .5) * 240; o.y = h / 2 + (Math.random() - .5) * 240; } return o; };
-  const hubNodes = [...hubCount].map(([k, n]) => keep({id:'h:' + k, type:'hub', key:k, count:n, share:n / Math.max(1, vis.length), r:11 + Math.sqrt(n) * 2.6}));
+  const hubNodes = [...hubCount].map(([k, n]) => keep({id:'h:' + k, type:'hub', key:k, count:n, share:n / Math.max(1, vis.length), r:HUB_R}));
   const otherHub = hubNodes.find(hn => hn.key === other && !keepKeys.has(other));
   if(otherHub) otherHub.others = otherKeys.map(k => [k, raw.get(k)]).sort((a, b) => b[1] - a[1]);
   [...hubNodes].sort((a, b) => b.count - a.count).forEach((hn, i) => { hn.rankDesc = i; });
@@ -2093,7 +2095,7 @@ function renderGraph(vis){
   if(state.groupBy === 'company' && hubNodes.length > 1){
     /* Agrandissement borné : le zoom de cadrage ne doit pas baisser de plus de 20 %, sinon les noms des branches rétréciraient */
     hubNodes.forEach(h => { h.baseR = h.r; });
-    const k0 = estimateFitK(), setR = want => hubNodes.forEach(h => { if(h.key !== other) h.r = Math.max(h.baseR, want); });
+    const k0 = estimateFitK(), setR = want => hubNodes.forEach(h => { h.r = Math.max(h.baseR, want); });
     let want = Math.min(260, LOGO_PX / 2 / k0), best = 0;
     for(let it = 0; it < 6; it++){
       setR(want); applyLayout();
@@ -2252,6 +2254,15 @@ function focus(ids){
   gRings.selectAll('circle.blob, line.spoke').classed('dim', d => !ids.has(d.hub.id) || (selNode && !(d.hub.id === selNode.hub && d.lv === lvSel)));
   nodeSel.classed('ghost', n => !!selNode && n.type === 'c' && !ids.has(n.id) && n.hub === selNode.hub && levelOf(n.c) === lvSel);
 }
+/* Groupe ouvert dans la légende en arbre : ses contacts restent nets, les autres sont estompés, et le zoom le cadre */
+function focusLegendGroup(zoomTo){
+  if(state.view !== 'graph' || state.selected) return false;
+  const k = [...legendOpen].find(x => x.startsWith('g:')); if(!k) return false;
+  const hub = nodes.find(n => n.type === 'hub' && n.key === k.slice(2)); if(!hub) return false;
+  focus(new Set([hub.id, ...nodes.filter(n => n.type === 'c' && n.hub === hub.id).map(n => n.id)]));
+  if(zoomTo) zoomToNode(hub);
+  return true;
+}
 function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.classed('dim', false); labelSel.classed('dim', false); countSel.classed('dim', false); if(badgeSel) badgeSel.classed('dim', false); nodeSel.classed('ghost', false); gRings.selectAll('circle.blob, line.spoke').classed('dim', false); } }
 function select(id){
   const wasHub = /^h:/.test(state.selected || '');
@@ -2383,7 +2394,12 @@ function legendTree(vis){
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li>${head}<ul class="lgvals">${top.map(v => {
       const inner = `<span class="dot" style="background:${dot(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span>`;
-      return `<li>${canFilter && !TAIL.includes(v) ? `<button type="button" class="lgv${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${sel.has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lgv">${inner}</span>`}</li>`;
+      const btn = canFilter && !TAIL.includes(v) ? `<button type="button" class="lgv${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${sel.has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lgv">${inner}</span>`;
+      /* Groupe d’entreprises : un chevron déplie ses filiales */
+      const subs = state.colorBy === 'company' ? entitiesOf(ms.filter(c => coOf(c) === v)) : [];
+      if(subs.length < 2) return `<li>${btn}</li>`;
+      const sk = 'e:' + h.key + '|' + v, so = legendOpen.has(sk);
+      return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => `<li><span>${esc(e)}</span><span class="n">${n}</span></li>`).join('')}</ul>` : ''}</li>`;
     }).join('')}${rest ? `<li><span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${vals.length - 15} autre${vals.length - 15 > 1 ? 's' : ''}</span><span class="n">${rest}</span></span></li>` : ''}</ul></li>`;
   }).join('');
   $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}><p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour voir sa répartition par ${esc(cdim.label.toLowerCase())}, puis une valeur pour la filtrer.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
@@ -2468,7 +2484,7 @@ function render(){
   if(state.view === 'list'){ levelMap = new Map(); colorAssign = new Map(); updateLegend(vis); renderList(vis); }
   else { renderGraph(vis); updateLegend(vis); needFit = false; if(!state.selected && !drawer.classList.contains('open')) fit(); }
   if(state.selected && !nodes.some(n => n.id === state.selected)) select(null);
-  if(state.view === 'graph'){ clearFocus(); reapplySelection(); }
+  if(state.view === 'graph'){ clearFocus(); reapplySelection(); focusLegendGroup(true); }
   renderViews(); rememberView();
 }
 
@@ -2897,7 +2913,14 @@ document.addEventListener('click', e => {
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
     else if(a === 'shareview') shareView();
-    else if(a === 'lgsub'){ const v = act.dataset.v; legendOpen.has(v) ? legendOpen.delete(v) : legendOpen.add(v); updateLegend(contacts.filter(pass)); }
+    else if(a === 'lgsub'){
+      const v = act.dataset.v, open = !legendOpen.has(v);
+      /* Groupe de la légende en arbre : un seul ouvert à la fois, le graphe zoome dessus ; replié, retour à la vue d’ensemble */
+      if(v.startsWith('g:')) [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x));
+      open ? legendOpen.add(v) : legendOpen.delete(v);
+      updateLegend(contacts.filter(pass));
+      if(v.startsWith('g:')){ if(open) focusLegendGroup(true); else if(!state.selected){ clearFocus(); fit(); } }
+    }
     else if(a === 'keepyes') setKeep(true);
     else if(a === 'keepforget'){ if(confirm('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.')) setKeep(false); }
     else if(a === 'keepno'){ keepAsked = true; renderBar(contacts.filter(pass)); }

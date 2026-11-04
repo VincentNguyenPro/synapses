@@ -55,7 +55,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - Vues (section « Vues » du panneau) : une vue = regroupement, couleurs, branches, mode, filtres, années, recherche et groupe ouvert (`h`, rouvert avec sa fiche) ; jamais un contact.
   Vues prêtes à l’emploi (`presets`), « Mes vues » (localStorage `synapses-views-v1`), dernière vue (`synapses-lastview-v1`, restaurée par `load` au démarrage et après un import) et lien `#vue=…` (JSON en base64url, **sans la recherche**, qui peut contenir un nom de contact).
   `setView` ignore les valeurs absentes du réseau chargé et ramène les années à celles disponibles.
-- Couleur à nombreuses valeurs (entreprise…) : chaque groupe a une grappe pour ses 8 valeurs principales (`HUB_MAX`, au moins 2 contacts), couleurs distinctes dans un groupe (`colorAssign`) ; quand « Regrouper par » et « Colorer par » diffèrent, la légende est un arbre (`legendTree`) : les groupes du plus grand au plus petit, un clic déplie leurs valeurs, un clic sur une valeur la filtre ; la légende est masquée quand la fiche d’un groupe est ouverte (sa répartition la remplace, `syncLegendRoom`) ; la fiche de groupe liste le top 20, avec un chevron qui déplie les entités d’un groupe (« BNP Paribas CIB »…) ; en regroupant par entreprise, la fiche d’un groupe liste ses entités.
+- Couleur à nombreuses valeurs (entreprise…) : chaque groupe a une grappe pour ses 8 valeurs principales (`HUB_MAX`, au moins 2 contacts), couleurs distinctes dans un groupe (`colorAssign`) ; quand « Regrouper par » et « Colorer par » diffèrent, la légende est un arbre (`legendTree`) : les groupes du plus grand au plus petit, un clic déplie leurs valeurs et zoome sur le groupe (`focusLegendGroup`), un chevron déplie les filiales d’un groupe d’entreprises, un clic sur une valeur la filtre ; la légende est masquée quand la fiche d’un groupe est ouverte (sa répartition la remplace, `syncLegendRoom`) ; la fiche de groupe liste le top 20, avec un chevron qui déplie les entités d’un groupe (« BNP Paribas CIB »…) ; en regroupant par entreprise, la fiche d’un groupe liste ses entités.
 - Classement par IA : bandeau refermable après import, et entrée permanente « Classification par IA » dans le panneau Affichage (`syncAIField`).
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par ».
 - Performance (mesurée jusqu’à 5 000 contacts, ~10 000 éléments SVG) : ne jamais mettre `opacity` sur les éléments du graphe
@@ -65,7 +65,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 
 ## Règles de design acquises (validées avec Vincent)
 - Aucun chevauchement entre nœuds, grappes, jauges et noms de groupes (vérifier après chaque changement de disposition).
-- Branches de même longueur autour de « Moi » ; le poids d’un groupe se lit par la teinte, la jauge, l’épaisseur de branche et le pourcentage.
+- Branches de même longueur et groupes de même taille (`HUB_R`) autour de « Moi » ; le poids d’un groupe se lit par la teinte, la jauge, l’épaisseur de branche et le pourcentage.
 - Sélection d’un contact : il va au centre de sa grappe, ses collègues de la même entreprise forment un cercle autour de lui, ordonnés par séniorité (Junior → Dirigeant) depuis midi.
 - Filtres et légende en lignes avec un fin trait de poids ; sélection = case cochée + fond bleuté + bordure.
 - Typographie française : apostrophe ’, guillemets « », espace insécable avant « : » et « % ».
