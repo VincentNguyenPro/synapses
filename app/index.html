@@ -1932,7 +1932,8 @@ function styleLabels(){
 /* Extrémités d’un trait. La branche « Moi » → groupe ouvert (ses grappes en cercle autour de lui) s’arrête sur le fin cercle
    qui entoure ces grappes, au lieu de les traverser jusqu’au centre */
 /* Groupe dont le nom et les chiffres sont affichés dans le disque central (drawHubCenter) */
-const hubCentered = d => !!(envR(d) && d.inner > d.r + 6);
+/* Pas pendant la sélection d’un contact : son cercle de collègues prend la place et le disque le cacherait */
+const hubCentered = d => !!(envR(d) && d.inner > d.r + 6 && !/^c:/.test(state.selected || ''));
 const envR = hn => openHubInfo && hn.type === 'hub' && hn.key === openHubInfo.key && hn.blobs && hn.blobs.length > 1 ? hn.outer + 8 : 0;
 function linkEnds(l){
   const s = l.source, t = l.target, sx = s._rx ?? s.x, sy = s._ry ?? s.y, tx = t._rx ?? t.x, ty = t._ry ?? t.y;
@@ -2179,7 +2180,8 @@ function sizePins(){
   pins.data().slice().sort((a, b) => b.rad - a.rad).forEach(d => {
     const dx = d.x - d.hub.ax, dy = d.y - d.hub.ay, L = Math.hypot(dx, dy) || 1, off = d.rad + pr + gap;
     d.px = d.x + dx / L * off; d.py = d.y + dy / L * off;
-    d.pinOn = shown.every(q => Math.hypot(q.px - d.px, q.py - d.py) >= 2 * pr + gap);
+    /* Vu de loin (vue d’ensemble), le cercle de grappes est trop petit pour des pastilles de 44 px : on les masque toutes */
+    d.pinOn = pr <= (d.hub.outer || 0) * 0.15 && shown.every(q => Math.hypot(q.px - d.px, q.py - d.py) >= 2 * pr + gap);
     if(d.pinOn) shown.push(d);
   });
   pins.style('display', d => d.pinOn ? null : 'none').attr('transform', d => `translate(${d.px},${d.py})`);
@@ -2437,7 +2439,7 @@ function focusLegendGroup(zoomTo){
 function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.classed('dim', false); labelSel.classed('dim', false); countSel.classed('dim', false); if(badgeSel) badgeSel.classed('dim', false); nodeSel.classed('ghost', false); gRings.selectAll('circle.blob, line.spoke').classed('dim', false); } }
 function select(id){
   const wasHub = /^h:/.test(state.selected || '');
-  releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); styleLabels();
+  releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); if(nodes.length) drawHubCenter(); styleLabels();
   /* Groupe ouvert ou refermé : la vue correspondante est cochée ou décochée dans « Mes vues » */
   if(nodes.length && (wasHub || /^h:/.test(id || ''))) renderViews();
 }
@@ -2796,7 +2798,8 @@ function openDrawer(html){
 function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); canvas.classList.remove('has-drawer'); document.body.classList.remove('drawer-open'); syncLegendRoom(); }
 /* Fiche ouverte et moins de 760 px de graphe à côté : la légende (déjà détaillée dans la fiche) est masquée,
    sinon elle occupe le milieu de la zone libre et le zoom ne peut plus cadrer la sélection */
-function syncLegendRoom(){ canvas.classList.toggle('lg-room', drawer.classList.contains('open') && (/^h:/.test(state.selected || '') || canvas.clientWidth - drawer.offsetWidth < 760)); }
+/* Fiche ouverte (groupe ou contact) : la légende s’efface pour laisser le graphe visible ; elle revient à la fermeture de la fiche */
+function syncLegendRoom(){ canvas.classList.toggle('lg-room', drawer.classList.contains('open')); }
 const fmtDate = d => d ? d.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'Inconnue';
 
 function showContact(c){
