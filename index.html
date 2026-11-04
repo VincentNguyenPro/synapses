@@ -131,6 +131,12 @@ p{margin:0}
 @media (min-width:960px){ .film{row-gap:6px} .film .live{margin-top:14px} } /* la phrase sous le titre */
 /* Section du graphe : un bandeau de titre compact, le graphe prend le reste de l’écran */
 .vitrine:not(.shots){padding:clamp(28px,4.5svh,48px) 0}
+/* Grand écran : la section du graphe occupe exactement l’écran (sous la barre) ; la carte s’étire pour remplir, la suivante ne déborde plus */
+@media (min-width:960px){
+  .vitrine:not(.shots){min-height:calc(100svh - 68px);display:flex;flex-direction:column}
+  .vitrine:not(.shots) .film{flex:1;grid-template-rows:auto auto 1fr;width:100%}
+  .vitrine:not(.shots) .live{min-height:0}
+}
 .film h2{font-size:clamp(1.75rem,1rem + 1.8vw,2.6rem);max-width:none;line-height:1.1}
 .film > p{color:var(--field-muted);max-width:none;font-size:var(--step-body);line-height:1.4}
 /* La vidéo occupe la colonne droite du héros, à côté du titre (codes YC : on voit le produit tout de suite) */
