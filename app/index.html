@@ -508,9 +508,9 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
       <div class="field"><label for="groupBy">Regrouper par</label><select id="groupBy"></select></div>
       <div class="field"><label for="colorBy">Colorer par</label><select id="colorBy"></select></div>
       <div class="field" id="fld-topn" hidden>
-        <label for="topN">Branches affichées : <strong id="topNVal">12</strong></label>
+        <label for="topN"><span id="topNLbl">Branches affichées</span> : <strong id="topNVal">12</strong></label>
         <input type="range" id="topN" min="3" max="40" step="1" value="12">
-        <p class="hint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
+        <p class="hint" id="topNHint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
       </div>
       <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong>, visibles en regroupant par entreprise. Les logos viennent de Brandfetch, qui reçoit le site web des entreprises affichées (jamais le nom de tes contacts).</span></label>
       <div class="field" id="fld-ai" hidden style="margin-top:16px">
@@ -1728,13 +1728,28 @@ let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
    lblScale(k) donne ce facteur de taille pour un zoom k : le cadrage s’en sert pour ne jamais couper un nom. */
 const LK = 0.2, lblScale = k => Math.min(1, k / LK);
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
+/* Curseur « Branches affichées » : nombre de groupes autour de « Moi » ; quand un groupe est ouvert dans la légende,
+   il règle le nombre de grappes de ce groupe (openTop), comme « Afficher 10 grappes de plus » */
+let openHubInfo = null, lastHubTotal = 0;
 function syncTopN(total){
   const f = document.getElementById('fld-topn'), r = document.getElementById('topN');
   if(!f || !r) return;
+  if(total != null) lastHubTotal = total; else total = lastHubTotal;
+  const lbl = document.getElementById('topNLbl'), hint = document.getElementById('topNHint');
+  if(openHubInfo){
+    const tot = openHubInfo.eligible, n = Math.min(openTop, tot);
+    f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, tot); r.value = n;
+    lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
+    document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
+    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()} d’au moins 2 contacts ; les autres sont réunies dans « autres ». Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    return;
+  }
   f.hidden = total <= 6;
-  r.max = Math.max(3, total);
+  r.min = 3; r.max = Math.max(3, total);
   const n = Math.min(state.topN, total);
   r.value = n;
+  lbl.textContent = 'Branches affichées';
+  hint.textContent = 'Les plus petits groupes sont réunis dans une branche «\u00a0Autres\u00a0».';
   document.getElementById('topNVal').textContent = n >= total ? `toutes (${total})` : `${n} sur ${total}`;
 }
 function updateOverview(){ const b = document.getElementById('overview'); if(b) b.hidden = state.view !== 'graph' || zk <= fitK * 1.2; }
@@ -2065,6 +2080,7 @@ function extraColor(used){ for(let i = 0; i < 360; i++){ const c = `hsl(${Math.r
 /* Tous les groupes autour de « Moi » ont la même taille : leur poids se lit par la jauge, la teinte, l’épaisseur de branche et le pourcentage */
 const HUB_R = 30;
 function renderGraph(vis){
+  openHubInfo = null;
   gathered = []; tipHub = null; tipSel = null; collLbl = null; collSide = null; selBlob = null; gColl.selectAll('*').remove(); collSel = null;
   nodes.forEach(n => pos.set(n.id, {x:n.x, y:n.y}));
   const dim = DIMS[state.groupBy];
@@ -2088,18 +2104,21 @@ function renderGraph(vis){
   syncTopN(eligible.length);
   const cr = coarse ? 7 : 5.5;
   const cNodes = vis.map(c => keep({id:'c:' + c.id, type:'c', c, hub:'h:' + hubOf(c), r:cr}));
-  levelMap = new Map(); colorAssign = new Map();
+  levelMap = new Map(); colorAssign = new Map(); openHubInfo = null;
   if(colorTop && state.groupBy !== state.colorBy){
     const get = DIMS[state.colorBy].get, hubTops = [];
     /* Groupe ouvert dans la légende : une grappe pour chacune des LEGEND_TOP valeurs qu’elle liste (au lieu de HUB_MAX) */
     const openHub = [...legendOpen].find(x => x.startsWith('g:'));
     d3.group(cNodes, n => n.hub).forEach((ms, hid) => {
       const cnt = d3.rollup(ms, v => v.length, n => get(n.c));
-      const cap = openHub && hid === 'h:' + openHub.slice(2) ? openTop : HUB_MAX;
+      const isOpen = openHub && hid === 'h:' + openHub.slice(2);
+      if(isOpen) openHubInfo = {key:openHub.slice(2), eligible:[...cnt].filter(([v, k]) => k >= 2 && !TAIL.includes(v)).length};
+      const cap = isOpen ? openTop : HUB_MAX;
       const top = new Set([...cnt].filter(([v, k]) => k >= 2 && !TAIL.includes(v)).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr')).slice(0, cap).map(([v]) => v));
       ms.forEach(n => { const v = get(n.c); levelMap.set(n.c.id, top.has(v) ? v : colorOther); });
       hubTops.push(top);
     });
+    if(openHubInfo) syncTopN();
     /* Couleurs : les valeurs les plus fréquentes du réseau gardent leur couleur ; chaque autre valeur dessinée prend
        la première couleur de la palette qu’aucune autre valeur de ses groupes n’utilise (couleurs distinctes dans un groupe) */
     const total = d3.rollup(vis, v => v.length, get);
@@ -2983,7 +3002,7 @@ $('#logosOn').addEventListener('change', e => {
 });
 $('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
 $('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
-$('#topN').addEventListener('input', e => { state.topN = +e.target.value; select(null); closeDrawer(); render(); });
+$('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = +e.target.value; render(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
 $('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } applyFilters(); });
 $('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
