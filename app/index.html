@@ -2389,13 +2389,13 @@ function renderGraph(vis){
      au moins LOGO_PX à l’écran une fois le graphe cadré ; la disposition est recalculée avec ces tailles (aucun chevauchement).
      Le poids d’une entreprise reste lisible par la jauge, la teinte, l’épaisseur de branche et le pourcentage. */
   if(state.groupBy === 'company' && hubNodes.length > 1){
-    /* Agrandissement borné : le zoom de cadrage ne doit pas baisser de plus de 20 %, sinon les noms des branches rétréciraient */
+    /* Agrandissement borné : le zoom de cadrage ne doit pas baisser de plus de 35 % (les noms, à taille fixe jusqu’au zoom LK, restent lisibles) */
     hubNodes.forEach(h => { h.baseR = h.r; });
     const k0 = estimateFitK(), setR = want => hubNodes.forEach(h => { h.r = Math.max(h.baseR, want); });
-    let want = Math.min(260, LOGO_PX / 2 / k0), best = 0;
+    let want = Math.min(600, LOGO_PX / 2 / k0), best = 0;
     for(let it = 0; it < 6; it++){
       setR(want); applyLayout();
-      if(estimateFitK() >= k0 * 0.8){ best = want; break; }
+      if(estimateFitK() >= k0 * 0.65){ best = want; break; }
       want = Math.max(0, (want + best) / 2);
     }
     if(best !== want){ setR(best); applyLayout(); }
@@ -2491,7 +2491,7 @@ function renderGraph(vis){
 
 /* Zone réellement visible du graphe : on retire la place occupée par la légende (à droite ou en bas, selon ce qui laisse le plus d’espace) */
 /* Zoom de cadrage estimé d’après l’étendue des nœuds (les noms des groupes demandent un peu plus de place : marge de 15 %) */
-const LOGO_PX = 34;
+const LOGO_PX = 52;
 function estimateFitK(){
   let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
   nodes.forEach(n => { const x = n.ax ?? n.fx ?? n.x, y = n.ay ?? n.fy ?? n.y; L = Math.min(L, x - n.r); R = Math.max(R, x + n.r); T = Math.min(T, y - n.r); B = Math.max(B, y + n.r); });
