@@ -2079,7 +2079,11 @@ function drawRings(){
     return {key:hn.id + '|' + s.lv, hub:hn, lv:s.lv, rad:(selBlob && selBlob.key === hn.id + '|' + s.lv ? selBlob.r : s.br), x:hn.ax + s.cx * cs - s.cy * sn, y:hn.ay + s.cx * sn + s.cy * cs};
   }));
   gRings.selectAll('line').data(data, d => d.key).join('line').classed('spoke', true)
-    .attr('x1', d => d.hub.ax).attr('y1', d => d.hub.ay).attr('x2', d => d.x).attr('y2', d => d.y);
+    .each(function(d){ /* d’un bord à l’autre : de la jauge du groupe à la périphérie de la grappe, sans entrer dans la bulle */
+      const dx = d.x - d.hub.ax, dy = d.y - d.hub.ay, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, a = d.hub.r + 4, b = Math.max(a, L - d.rad);
+      this.setAttribute('x1', d.hub.ax + ux * a); this.setAttribute('y1', d.hub.ay + uy * a);
+      this.setAttribute('x2', d.hub.ax + ux * b); this.setAttribute('y2', d.hub.ay + uy * b);
+    });
   gRings.selectAll('circle').data(data, d => d.key).join(enter => enter.append('circle')
       .on('pointerenter pointermove', showBlobTip).on('pointerleave', () => { hideTip(); spokeHot(null); }).on('click', blobClick)).classed('blob', true)
     .attr('r', d => d.rad).attr('cx', d => d.x).attr('cy', d => d.y)
