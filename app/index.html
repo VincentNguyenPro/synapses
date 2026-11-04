@@ -198,6 +198,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .spoke{stroke:var(--accent);stroke-opacity:.6;stroke-width:1.6px;pointer-events:none;display:none}
 .spoke.hot{display:inline}
 .pin{pointer-events:none}
+.envelope{fill:none;stroke:var(--accent);stroke-opacity:.35;stroke-width:1.2px;stroke-dasharray:3 5;pointer-events:none;vector-effect:non-scaling-stroke}
 .pin .pring{fill:none}
 .pin .pmono{fill:#fff;font-weight:700;text-anchor:middle;dominant-baseline:central}
 /* Logo d’entreprise dans la légende, à la place de la pastille de couleur, cerclé de la couleur de sa grappe */
@@ -1921,6 +1922,16 @@ function styleLabels(){
   layoutLabels();
   positionLabels();
 }
+/* Extrémités d’un trait. La branche « Moi » → groupe ouvert (ses grappes en cercle autour de lui) s’arrête sur le fin cercle
+   qui entoure ces grappes, au lieu de les traverser jusqu’au centre */
+const envR = hn => openHubInfo && hn.type === 'hub' && hn.key === openHubInfo.key && hn.blobs && hn.blobs.length > 1 ? hn.outer + 8 : 0;
+function linkEnds(l){
+  const s = l.source, t = l.target, sx = s._rx ?? s.x, sy = s._ry ?? s.y, tx = t._rx ?? t.x, ty = t._ry ?? t.y;
+  const R = l.me ? envR(t) : 0;
+  if(!R) return [sx, sy, tx, ty];
+  const dx = tx - sx, dy = ty - sy, L = Math.hypot(dx, dy) || 1, a = Math.min(s.r || 0, L), b = Math.max(a, L - R);
+  return [sx + dx / L * a, sy + dy / L * a, sx + dx / L * b, sy + dy / L * b];
+}
 function ticked(){
   /* Seuls les points qui ont bougé de plus de 0,05 px (et leurs traits) sont réécrits : pendant une sélection, seuls les collègues
      se déplacent, et réécrire des milliers de positions identiques à chaque image saccadait les grands réseaux */
@@ -1928,7 +1939,7 @@ function ticked(){
     d._mv = d._rx === undefined || Math.abs(d.x - d._rx) > 0.05 || Math.abs(d.y - d._ry) > 0.05;
     if(d._mv){ d._rx = d.x; d._ry = d.y; }
   }
-  if(linkSel) linkSel.each(function(l){ if(l.source._mv || l.target._mv){ this.setAttribute('x1', l.source._rx); this.setAttribute('y1', l.source._ry); this.setAttribute('x2', l.target._rx); this.setAttribute('y2', l.target._ry); } });
+  if(linkSel) linkSel.each(function(l){ if(l.source._mv || l.target._mv){ const [x1, y1, x2, y2] = linkEnds(l); this.setAttribute('x1', x1); this.setAttribute('y1', y1); this.setAttribute('x2', x2); this.setAttribute('y2', y2); } });
   if(nodeSel) nodeSel.each(function(d){ if(d._mv){ this.setAttribute('cx', d._rx); this.setAttribute('cy', d._ry); } });
   if(collSel){ const sn = nodes.find(n => n.id === state.selected); if(sn) collSel.attr('x1', sn.x).attr('y1', sn.y).attr('x2', d => d.x).attr('y2', d => d.y); }
   if(collLbl) placeCollLbl();
@@ -2085,6 +2096,9 @@ function drawRings(){
     .style('fill', d => colorFn(d.lv)).style('stroke', d => colorFn(d.lv));
   if(selBlob) gRings.selectAll('circle.blob').filter(d => d.key === selBlob.key).raise();
   drawPins(data);
+  /* Fin cercle autour des grappes du groupe ouvert : la branche « Moi » s’y raccroche */
+  gRings.selectAll('circle.envelope').data(nodes.filter(n => n.type === 'hub' && envR(n)), d => d.id).join('circle').attr('class', 'envelope')
+    .attr('r', envR).attr('cx', d => d.ax).attr('cy', d => d.ay);
   /* Jauge circulaire autour de chaque groupe : sa part des contacts affichés */
   const hubs = nodes.filter(n => n.type === 'hub');
   const G = hn => hn.r + 4;
@@ -2302,6 +2316,8 @@ function renderGraph(vis){
     .force('charge', null)
     .force('collide', null);
   setXY();
+  /* Les branches « Moi » sont recalculées au prochain tick (le groupe ouvert a pu changer sans que rien ne bouge) */
+  nodes.forEach(n => { if(n.type === 'me') n._rx = undefined; });
   sim.alpha(pos.size ? 0.6 : 1).restart();
 }
 
