@@ -312,17 +312,24 @@ p{margin:0}
 .frag .tags span{padding:6px 12px;border-radius:999px;border:1px solid #D5DDE5;font-size:13px} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
 .frag .tags span.on{background:#2F5BEA;border-color:#2F5BEA;color:#fff}
 .frag .who{display:flex;gap:10px;align-items:center}
-.frag .who i{width:38px;height:38px;border-radius:50%;background:#12A39A;flex:none}
+.frag .who i{width:38px;height:38px;border-radius:50%;background:#12A39A;flex:none;display:grid;place-items:center}
+.frag .who i svg{width:24px;height:24px}
+/* Fiche : collègues de la même entreprise et anciens de la même école, en pastilles colorées par séniorité */
+.frag .ptitle{margin-top:12px;font-weight:700;font-size:13px}
+.frag .peers{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.frag .peers span{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;border-radius:999px;background:#F4F7FA;font-size:12.5px;font-weight:600}
+.frag .peers i{width:16px;height:16px;border-radius:50%;flex:none}
+.frag .peers .more{padding:3px 10px;color:#5B6B7C}
 .frag .who b{display:block}
 .frag .who span{color:#5B6B7C;font-size:13px}
 
 /* ---------- Confidentialité : un champ de couleur, un vrai tableau ---------- */
 .priv{margin-top:var(--pad);background:var(--accent);color:#fff;padding:var(--pad) 0}
 .priv .grid{display:grid;gap:40px}
-@media (min-width:1000px){ .priv .top{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:56px;align-items:end} }
+/* Le titre, puis la phrase en dessous, puis le tableau */
 .priv h2{font-size:var(--step-head);max-width:15ch}
-.priv .lead{font-size:var(--step-lead);line-height:1.4;margin-top:24px;max-width:22em}
-@media (min-width:1000px){ .priv .lead{margin-top:0} }
+@media (min-width:960px){ .priv h2{max-width:none} .priv .grid{gap:28px} .priv .lead{margin-top:14px} } /* grand écran : titre sur une ligne, la section tient sur un écran */
+.priv .lead{font-size:var(--step-lead);line-height:1.4;margin-top:20px;max-width:40em}
 table{width:100%;border-collapse:collapse;font-size:var(--step-body)}
 th{text-align:left;font-size:var(--step-small);font-weight:700;color:#DDE6FF;padding:0 18px 12px 0;border-bottom:2px solid rgba(255,255,255,.55)}
 td{padding:18px 18px 18px 0;vertical-align:top;border-bottom:1px solid rgba(255,255,255,.3)}
@@ -479,6 +486,8 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   .cell .t p{font-size:var(--step-small)}
   .frag{margin:14px 18px 18px}
   .frag .menu div:nth-child(n+6){display:none}
+  .frag.fiche dl{gap:2px 12px;font-size:13px}
+  .frag.fiche .ptitle{margin-top:8px}
   /* Confidentialité : tableau resserré */
   .priv h2{font-size:clamp(1.6rem,7vw,2.2rem)}
   .priv .grid{gap:16px}
@@ -683,14 +692,17 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
         </article>
         <article class="cell rise">
           <div class="t"><h3>La fiche complète d’un contact</h3><p>Secteur, fonction, séniorité, ville, formation, date de connexion, et les autres contacts de son entreprise et de son école.</p></div>
-          <div class="frag" data-ui><div class="who"><i aria-hidden="true"></i><div><b>Juliette Guerin</b><span>Software Engineer chez Doctolib</span></div></div>
-            <dl><dt>Secteur</dt><dd>Tech &amp; logiciel</dd><dt>Séniorité</dt><dd>Confirmé</dd><dt>Ville</dt><dd>Lyon</dd><dt>Formation</dt><dd>CentraleSupélec</dd><dt>Connectée</dt><dd>en 2019</dd></dl>
-            <p style="margin-top:10px;font-weight:700">Aussi chez Doctolib (6)</p></div>
+          <div class="frag fiche" data-ui><div class="who"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3c-3.4 0-5.6 2.7-5.6 6.2 0 2.6.7 4.6 1.8 5.6h7.6c1.1-1 1.8-3 1.8-5.6C17.6 5.7 15.4 3 12 3z" fill="#fff" fill-opacity=".55"/><circle cx="12" cy="9" r="3.6" fill="#fff"/><path d="M4.5 21c0-4 3.3-7 7.5-7s7.5 3 7.5 7z" fill="#fff"/></svg></i><div><b>Juliette Guerin</b><span>Software Engineer chez Doctolib</span></div></div>
+            <dl><dt>Secteur</dt><dd>Tech &amp; logiciel</dd><dt>Fonction</dt><dd>Tech</dd><dt>Séniorité</dt><dd>Confirmé</dd><dt>Ville</dt><dd>Lyon</dd><dt>Formation</dt><dd>CentraleSupélec</dd><dt>Connectée</dt><dd>en 2019</dd></dl>
+            <p class="ptitle">Aussi chez Doctolib (6)</p>
+            <div class="peers"><span><i style="background:#6C4FD8"></i>Paul Diallo</span><span><i style="background:#12A39A"></i>Emma Lambert</span><span><i style="background:#12A39A"></i>Hugo Roux</span><span class="more">+3</span></div>
+            <p class="ptitle">Aussi de CentraleSupélec (3)</p>
+            <div class="peers"><span><i style="background:#6C4FD8"></i>Hugo Faure</span><span><i style="background:#C2417A"></i>Karim Moreau</span><span><i style="background:#D9A21B"></i>Léa Fournier</span></div></div>
         </article>
         <article class="cell alt rise" style="--i:1">
           <div class="t"><h3>Des filtres qui se cumulent</h3><p>Coche juniors et seniors, ajoute un secteur ou une fonction&nbsp;: seuls restent les contacts qui passent tous les filtres.</p></div>
           <div class="frag" data-ui><span class="lbl">Séniorité</span><div class="chips">
-            <div class="chip on"><span class="box"></span>Junior<em>12</em></div><div class="chip"><span class="box"></span>Confirmé<em>77</em></div><div class="chip on"><span class="box"></span>Senior<em>12</em></div><div class="chip"><span class="box"></span>Manager<em>18</em></div></div>
+            <div class="chip on"><span class="box"></span>Junior<em>12</em></div><div class="chip"><span class="box"></span>Confirmé<em>77</em></div><div class="chip on"><span class="box"></span>Senior<em>12</em></div><div class="chip"><span class="box"></span>Manager<em>18</em></div><div class="chip"><span class="box"></span>Direction<em>24</em></div><div class="chip"><span class="box"></span>Dirigeant<em>7</em></div></div>
             <p style="margin-top:10px;font-weight:700">24 contacts sur 150</p></div>
         </article>
         <article class="cell rise" style="--i:2">
