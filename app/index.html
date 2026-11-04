@@ -414,6 +414,12 @@ button.lg:hover{background:var(--surface-2)}
         <p class="hint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
       </div>
       <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong>, visibles en regroupant par entreprise. Les logos viennent de Brandfetch, qui reçoit le site web des entreprises affichées (jamais le nom de tes contacts).</span></label>
+      <div class="field" id="fld-ai" hidden style="margin-top:16px">
+        <span class="lbl">Classification par IA</span>
+        <p class="hint" id="aiHint"></p>
+        <button class="btn sm" type="button" id="aiBtn" data-act="aisetup">Classer avec une IA</button>
+      </div>
+      <label class="sharebox" id="fld-keep" hidden><input type="checkbox" id="keepNet"> <span><strong>Garder mon réseau sur cet appareil</strong>, pour le retrouver après un rafraîchissement sans réimporter ton fichier. Il reste dans ce navigateur, sans les emails. Décoche pour l’oublier.</span></label>
     </section>
     <section class="section">
       <h2>Filtres <button class="linkbtn" id="clearAllSide" type="button" data-act="clearall" hidden>Tout effacer</button></h2>
@@ -443,7 +449,7 @@ button.lg:hover{background:var(--surface-2)}
       </div>
       <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
     </section>
-    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part&nbsp;: aucun serveur, aucun compte, aucune donnée stockée en ligne. Tes tags, tes vues et tes corrections restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.</p>
+    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part&nbsp;: aucun serveur, aucun compte, aucune donnée stockée en ligne. Tes tags, tes vues et tes corrections restent sur cet appareil, ainsi que ton réseau si tu choisis de le garder. Outil indépendant, non affilié à LinkedIn.</p>
   </aside>
 
   <main class="stage">
@@ -571,6 +577,52 @@ function buildContact(r, i){
   };
 }
 
+/* ---------- Réseau gardé sur cet appareil ----------
+   Seulement si l’utilisateur le demande (décoché par défaut) : les champs bruts de Connections.csv, sans les emails,
+   dans IndexedDB de ce navigateur. Rien n’est envoyé. Au retour, le réseau est reconstruit avec le dictionnaire du moment. */
+const KEEP_KEY = 'synapses-keep-v1', NET_DB = 'synapses-reseau';
+let lastRaw = [], keepAsked = false;
+const keepOn = () => { try { return localStorage.getItem(KEEP_KEY) === '1'; } catch(e) { return false; } };
+function netDB(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(NET_DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('reseau');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function netDo(mode, fn){
+  const db = await netDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('reseau', mode), req = fn(tx.objectStore('reseau'));
+    tx.oncomplete = () => { db.close(); res(req.result); }; tx.onerror = tx.onabort = () => { db.close(); rej(tx.error); };
+  });
+}
+const saveNet = raw => netDo('readwrite', st => st.put({raw, saved:Date.now()}, 'courant'));
+const readNet = () => netDo('readonly', st => st.get('courant'));
+const dropNet = () => new Promise(res => { try { const r = indexedDB.deleteDatabase(NET_DB); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch(e) { res(); } });
+async function setKeep(on){
+  try { on ? localStorage.setItem(KEEP_KEY, '1') : localStorage.removeItem(KEEP_KEY); } catch(e) {}
+  keepAsked = true;
+  if(on){
+    const raw = isDemo ? null : lastRaw;
+    if(raw && raw.length){
+      try { await saveNet(raw); toast('Ton réseau est gardé sur cet appareil (sans les emails) : plus besoin de réimporter ton fichier'); }
+      catch(e) { try { localStorage.removeItem(KEEP_KEY); } catch(_) {} toast('Ce navigateur refuse l’enregistrement local : ton réseau ne peut pas être gardé'); }
+    }
+  } else { await dropNet(); toast('Ton réseau n’est plus gardé sur cet appareil'); }
+  renderBar(contacts.filter(pass));
+}
+function keepCard(){
+  if(isDemo || keepAsked || keepOn() || !contacts.length) return '';
+  return `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Tu le retrouveras après un rafraîchissement, sans réimporter ton fichier. Il reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Garder sur cet appareil</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
+}
+function syncKeepField(){
+  const f = document.getElementById('fld-keep'); if(!f) return;
+  f.hidden = isDemo || !contacts.length;
+  document.getElementById('keepNet').checked = keepOn();
+}
+
 function parseLinkedIn(text){
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   let start = lines.findIndex(l => /^\s*"?(first name|prenom|prénom)"?\s*[,;]/i.test(l));
@@ -587,11 +639,12 @@ function parseLinkedIn(text){
     sector: find('sector','secteur','industry','industrie'),
     exp: find('experience','annees d\'experience','annees d’experience','years of experience','annees experience')
   };
-  const out = [];
+  const out = []; lastRaw = [];
   res.data.forEach((r, i) => {
-    const c = buildContact({first:r[F.first], last:r[F.last], url:r[F.url], email:r[F.email], company:r[F.company], position:r[F.position],
-      connected:r[F.connected], location:r[F.location], country:r[F.country], school:r[F.school], sector:r[F.sector], exp:r[F.exp]}, i);
-    if(c.name) out.push(c);
+    const raw = {first:r[F.first], last:r[F.last], url:r[F.url], company:r[F.company], position:r[F.position],
+      connected:r[F.connected], location:r[F.location], country:r[F.country], school:r[F.school], sector:r[F.sector], exp:r[F.exp]};
+    const c = buildContact({...raw, email:r[F.email]}, i);
+    if(c.name){ out.push(c); lastRaw.push(raw); }
   });
   return out;
 }
@@ -1415,8 +1468,22 @@ function aiCard(){
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="${sampleFn ? 'ai' : 'aisetup'}">${sampleFn ? 'Affiner avec Claude' : 'Choisir une IA'}</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Masquer ce message">✕</button></div></div>`;
 }
 
+/* Entrée permanente du panneau : le bandeau peut être fermé, le classement par IA reste accessible */
+function syncAIField(){
+  const f = document.getElementById('fld-ai'); if(!f) return;
+  f.hidden = isDemo || !contacts.length;
+  if(f.hidden) return;
+  const nc = contacts.filter(c => c.sector === 'Non classé').length, b = document.getElementById('aiBtn');
+  document.getElementById('aiHint').textContent = aiRun ? 'Classification en cours…'
+    : `${nc ? `${nc} contact${nc > 1 ? 's' : ''} en « Non classé » (${pct(nc, contacts.length)}). ` : 'Tous tes contacts ont un secteur. '}Avec ta clé API Claude, ChatGPT ou Gemini, une IA classe les entreprises et intitulés de poste non reconnus.`;
+  b.dataset.act = sampleFn ? 'ai' : 'aisetup';
+  b.textContent = sampleFn ? 'Affiner avec Claude' : 'Classer avec une IA';
+  b.disabled = !!aiRun;
+}
+
 /* ---------- Top bar ---------- */
 function renderBar(vis){
+  syncAIField(); syncKeepField();
   const af = activeFilters();
   const demo = isDemo && !demoHidden ? `<div class="demo" role="note">
       <div><strong>Tu explores un réseau de démonstration</strong><span>150 contacts fictifs. Importe ton export LinkedIn avec le bouton en haut à droite pour voir ton propre réseau.</span></div>
@@ -1424,7 +1491,8 @@ function renderBar(vis){
         <button class="btn sm" type="button" data-act="help">Comment l’obtenir</button>
         <button class="btn icon-btn sm" type="button" data-act="dismiss" aria-label="Masquer ce message">✕</button>
       </div></div>` : '';
-  $('#bar').innerHTML = `${demo}${aiCard()}<div class="toprow">
+  const keep = keepCard();
+  $('#bar').innerHTML = `${demo}${keep || aiCard()}<div class="toprow">
     <span class="count"><strong>${vis.length}</strong> contact${vis.length > 1 ? 's' : ''}${vis.length !== contacts.length ? ` sur ${contacts.length}` : ''}</span>
     ${af.map(f => `<button class="afchip" type="button" data-clear="${f.k}" data-v="${esc(f.v)}" aria-label="Retirer le filtre ${esc(f.label)}">${esc(f.label)}<span class="x" aria-hidden="true">✕</span></button>`).join('')}
     ${af.length > 1 ? '<button class="linkbtn" type="button" data-act="clearall">Tout effacer</button>' : ''}
@@ -2218,12 +2286,12 @@ try { meProfile = JSON.parse(localStorage.getItem(ME_KEY) || '{}') || {}; } catc
 const myProfile = () => isDemo ? {} : meProfile;
 /* Efface tout ce que Synapses garde dans ce navigateur (profil, tags, vues, corrections), puis repart de la démo */
 function wipeData(){
-  if(!confirm('Effacer ton profil, tes tags, tes vues et tes corrections enregistrés dans ce navigateur ? Le réseau affiché sera aussi retiré.')) return;
+  if(!confirm('Effacer ton profil, ton réseau gardé, tes tags, tes vues et tes corrections enregistrés dans ce navigateur ? Le réseau affiché sera aussi retiré.')) return;
   try { Object.keys(localStorage).filter(k => k.startsWith('synapses-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
-  location.reload();
+  dropNet().then(() => location.reload());
 }
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite. Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as coché « Garder mon réseau sur cet appareil ». Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
     <p class="pos">En regroupant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -2396,7 +2464,7 @@ async function handleFiles(fileList){
   if(texts.connections){ try { list = parseLinkedIn(texts.connections); } catch(e) { list = []; } }
   if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
   closePanel();
-  if(list.length){ state.view = 'graph'; load(list, false); countSubmission(); } else render();
+  if(list.length){ state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).catch(() => {}); } else render();
   if(list.length) toast(`${list.length} contacts importés${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
   else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
   if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
@@ -2410,6 +2478,7 @@ $('#overview').addEventListener('click', clearSelection);
 $('#zin').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1.4));
 $('#zout').addEventListener('click', () => (reduceMotion ? svg : svg.transition().duration(250)).call(zoom.scaleBy, 1 / 1.4));
 $('#logosOn').checked = logosOn;
+$('#keepNet').addEventListener('change', e => setKeep(e.target.checked));
 $('#logosOn').addEventListener('change', e => {
   logosOn = e.target.checked;
   try { localStorage.setItem(LOGOS_KEY, logosOn ? '1' : '0'); } catch(err) {}
@@ -2441,15 +2510,17 @@ document.addEventListener('click', e => {
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
     else if(a === 'shareview') shareView();
+    else if(a === 'keepyes') setKeep(true);
+    else if(a === 'keepno'){ keepAsked = true; renderBar(contacts.filter(pass)); }
     else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'legendall'){ legendAll = !legendAll; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'showall'){ state.topN = 999; select(null); closeDrawer(); render(); }
-    else if(a === 'ai') runAI();
+    else if(a === 'ai'){ aiHidden = false; closePanel(); runAI(); }
     else if(a === 'aisetup'){ closePanel(); showAI(); }
     else if(a === 'airun'){
       readAIForm();
       if(!llm.key){ toast(`Colle ta clé API ${PROVIDERS[llm.provider].vendor} pour continuer`); document.getElementById('llm-key')?.focus(); return; }
-      saveLLM(); closeDrawer(); runAI();
+      saveLLM(); closeDrawer(); aiHidden = false; runAI();
     }
     else if(a === 'aistop'){ if(aiRun) aiRun.ctl.abort(); }
     else if(a === 'aihide'){ aiHidden = true; renderBar(contacts.filter(pass)); }
@@ -2538,7 +2609,14 @@ new ResizeObserver(() => {
 
 loadDictionary()
   .catch(() => toast('Dictionnaire de classification indisponible : secteurs et fonctions ne seront pas estimés'))
-  .then(() => { load(demoContacts(), true); if(location.hash === '#importer') showHelp(); });
+  .then(async () => {
+    let kept = null;
+    if(keepOn()){ try { kept = await readNet(); } catch(e) {} }
+    const list = kept && Array.isArray(kept.raw) ? kept.raw.map((r, i) => buildContact(r, i)).filter(c => c.name) : [];
+    if(list.length){ lastRaw = kept.raw; load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
+    else load(demoContacts(), true);
+    if(location.hash === '#importer') showHelp();
+  });
 })();
 </script>
 </body>
