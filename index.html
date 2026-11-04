@@ -1042,18 +1042,22 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     const tiles = $$('.fd', flap);
     let timers = [];
     /* Rejoue depuis 0 : les palettes repartent de 0 à chaque retour du compteur à l’écran */
+    /* Comme un compteur kilométrique : les unités d’abord, puis les dizaines, les centaines… chaque palette part quand la précédente a fini */
     const play = () => {
       timers.forEach(clearTimeout); timers = [];
-      digits.forEach((d, i) => {
-        if(d === ' ') return;
+      let start = 250;
+      for(let i = digits.length - 1; i >= 0; i--){
+        const d = digits[i];
+        if(d === ' ') continue;
         /* 1, 2… jusqu’au chiffre ; un 0 fait un tour complet (1… 9, 0) pour que toutes les palettes bougent */
         const seq = +d ? Array.from({length:+d}, (_, k) => k + 1) : [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
         let k = 0; const el = tiles[i].firstChild; el.textContent = '0';
         timers.push(setTimeout(function tick(){
           el.textContent = seq[k++]; tiles[i].classList.remove('flip'); void tiles[i].offsetWidth; tiles[i].classList.add('flip');
           if(k < seq.length) timers.push(setTimeout(tick, 90));
-        }, 250 + i * 160));
-      });
+        }, start));
+        start += seq.length * 90 + 120;
+      }
     };
     new IntersectionObserver(([e]) => { if(e.isIntersecting) play(); }, {threshold:.6}).observe(tally);
   };
