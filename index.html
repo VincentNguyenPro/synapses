@@ -274,11 +274,11 @@ p{margin:0}
 @media (min-width:960px){
   .feat h2{margin-bottom:32px}
   .cells{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-rows:repeat(6,auto);gap:4px 40px}
-  .cells::before{content:"";grid-column:2;grid-row:1/7;background:var(--tone);border-radius:var(--radius)}
+  .cells::before{content:"";grid-column:2;grid-row:1/7;background:var(--accent);border-radius:var(--radius)} /* panneau en bleu de la marque : le fragment blanc ressort */
   .cell{display:contents}
   .cell .t{grid-column:1;padding:14px 20px;border-radius:var(--radius);cursor:pointer;transition:background .2s}
   .cell .t:hover{background:var(--tone)}
-  .cell.on .t{background:var(--tone)}
+  .cell.on .t{background:var(--surface);box-shadow:inset 4px 0 0 var(--accent)} .cell.on h3{color:var(--accent-ink)} /* réglage choisi : fond blanc, trait bleu, titre bleu */
   .cell .t p{display:none}
   .cell.on .t p{display:block}
   .cell .frag{grid-column:2;grid-row:1/7;align-self:center;justify-self:center;width:min(420px,80%);margin:0;display:none}
@@ -600,18 +600,18 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       </div>
       <div class="body">
         <div class="tabs rise" role="tablist" aria-label="Situations">
-          <button type="button" role="tab" id="t-job" aria-controls="p-job" aria-selected="true"><b>Postuler</b><span>chez Doctolib</span></button>
+          <button type="button" role="tab" id="t-job" aria-controls="p-job" aria-selected="true"><b>Postuler</b><span>chez BlaBlaCar</span></button>
           <button type="button" role="tab" id="t-biz" aria-controls="p-biz" aria-selected="false" tabindex="-1"><b>Prospecter</b><span>dans la banque</span></button>
           <button type="button" role="tab" id="t-rdv" aria-controls="p-rdv" aria-selected="false" tabindex="-1"><b>Rendez-vous</b><span>chez BNP Paribas</span></button>
           <button type="button" role="tab" id="t-net" aria-controls="p-net" aria-selected="false" tabindex="-1"><b>Élargir</b><span>ton réseau</span></button>
         </div>
         <div class="rise" style="--i:1">
           <div class="panel" role="tabpanel" id="p-job" aria-labelledby="t-job">
-            <p class="say">Tu cliques sur un contact de Doctolib&nbsp;: ses collègues apparaissent, rangés par séniorité. Tu sais à qui demander une recommandation.</p>
+            <p class="say">Tu cliques sur un contact de BlaBlaCar&nbsp;: ses collègues apparaissent, rangés par séniorité. Tu sais à qui demander une recommandation.</p>
             <ul class="bands" data-rows="job"></ul>
           </div>
           <div class="panel" role="tabpanel" id="p-biz" aria-labelledby="t-biz" hidden>
-            <p class="say">Tu gardes le secteur Banque et assurance et le niveau Direction&nbsp;: voilà les premières personnes à appeler.</p>
+            <p class="say">Tu gardes le secteur Banque et assurance et les niveaux Senior à Dirigeant&nbsp;: voilà les décideurs à appeler.</p>
             <ul class="bands" data-rows="biz"></ul>
           </div>
           <div class="panel" role="tabpanel" id="p-rdv" aria-labelledby="t-rdv" hidden>
@@ -844,12 +844,18 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   /* ---------- Situations : les bandes viennent du réseau de démo ---------- */
   const band = (lvl, colourOf, who, sub, co) => `<li><span class="lvl"><i style="background:${colourOf}"></i>${esc(lvl)}</span><span class="who"><b>${esc(who)}</b><span>${esc(sub)}</span></span><span class="co">${esc(co)}</span></li>`;
   const bySen = (a, b) => SEN.indexOf(a.sen) - SEN.indexOf(b.sen);
-  const rows = {
-    job: DEMO.filter(c => c.co === 'Doctolib').sort(bySen),
-    biz: DEMO.filter(c => c.sec === 'Banque & assurance' && (c.sen === 'Direction' || c.sen === 'Dirigeant')).sort(bySen),
-    rdv: DEMO.filter(c => c.co === 'BNP Paribas').sort(bySen)
+  /* Six contacts aux séniorités variées : on prend tour à tour un contact de chaque niveau présent, puis on range de Junior à Dirigeant */
+  const varied = (list, k = 6) => {
+    const groups = SEN.map(s => list.filter(c => c.sen === s)).filter(g => g.length), out = [];
+    for(let i = 0; out.length < Math.min(k, list.length); i++) groups.forEach(g => { if(g[i] && out.length < k) out.push(g[i]); });
+    return out.sort(bySen);
   };
-  for(const k in rows) $(`[data-rows="${k}"]`).innerHTML = rows[k].slice(0, 6).map(c => band(c.sen, colour('sen', c.sen), c.n, c.pos, c.co)).join('');
+  const rows = {
+    job: varied(DEMO.filter(c => c.co === 'BlaBlaCar')),
+    biz: varied(DEMO.filter(c => c.sec === 'Banque & assurance' && SEN.indexOf(c.sen) >= SEN.indexOf('Senior'))),
+    rdv: varied(DEMO.filter(c => c.co === 'BNP Paribas'))
+  };
+  for(const k in rows) $(`[data-rows="${k}"]`).innerHTML = rows[k].map(c => band(c.sen, colour('sen', c.sen), c.n, c.pos, c.co)).join('');
   const secs = [...count(DEMO, 'sec')].sort((a, b) => a[1] - b[1]).slice(0, 5);
   $('[data-rows="net"]').innerHTML = secs.map(([s, n]) => band(pct(n, DEMO.length), n <= 8 ? '#C2417A' : '#8A97A6', s, `${n} contacts`, n <= 8 ? 'à développer' : '')).join('');
   const tabs = $$('[role=tab]');
