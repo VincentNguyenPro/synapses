@@ -1838,7 +1838,12 @@ function gatherColleagues(sn, cn){
   if(hn && hn.blobs && hn.blobs.length){
     const lv = levelOf(sn.c);
     const s = hn.blobs.find(b => b.lv === lv);
-    if(s){ sn.homeX = sn.ax; sn.homeY = sn.ay; sn.ax = hn.ax + s.cx; sn.ay = hn.ay + s.cy; gathered.push(sn); selBlob = {key:hn.id + '|' + s.lv, r:Math.max(s.br, R0 + r + 5)}; }
+    if(s){
+      /* Grande grappe agrandie par le cercle des collègues : elle s’écarte du rond du groupe (dans l’axe de sa branche) pour ne pas le recouvrir */
+      const R = Math.max(s.br, R0 + r + 5), L = Math.hypot(s.cx, s.cy) || 1, need = hn.r + 14 + R, f = L < need ? need / L : 1;
+      sn.homeX = sn.ax; sn.homeY = sn.ay; sn.ax = hn.ax + s.cx * f; sn.ay = hn.ay + s.cy * f; gathered.push(sn);
+      selBlob = {key:hn.id + '|' + s.lv, r:R, dx:s.cx * (f - 1), dy:s.cy * (f - 1)};
+    }
   }
   const a0 = -Math.PI / 2;
   /* Collègues classés par niveau (ordre de la légende : Junior → Dirigeant pour la séniorité), depuis midi dans le sens horaire */
@@ -1907,7 +1912,8 @@ function hClash(geos, tr){
 function layoutLabels(){
   if(!labelSel) return;
   const els = labelSel.nodes();
-  els.forEach(el => { el.style.display = el.__data__ && hubCentered(el.__data__) ? 'none' : ''; });
+  /* Nom du groupe ouvert : dans le disque central, ou masqué pendant la sélection d’un contact (la fiche le donne, et il toucherait le cercle des collègues) */
+  els.forEach(el => { const d = el.__data__; el.style.display = d && (hubCentered(d) || (envR(d) && /^c:/.test(state.selected || ''))) ? 'none' : ''; });
   const tr = d3.zoomTransform(svg.node());
   const geos = els.map(lblGeo);
   labelRadial = hClash(geos, tr);
@@ -2094,7 +2100,7 @@ function applyLayout(){
 function drawRings(){
   const data = nodes.filter(n => n.type === 'hub').flatMap(hn => (hn.blobs || []).map(s => {
     const cs = Math.cos(hn.rot || 0), sn = Math.sin(hn.rot || 0);
-    return {key:hn.id + '|' + s.lv, hub:hn, lv:s.lv, rad:(selBlob && selBlob.key === hn.id + '|' + s.lv ? selBlob.r : s.br), x:hn.ax + s.cx * cs - s.cy * sn, y:hn.ay + s.cx * sn + s.cy * cs};
+    return {key:hn.id + '|' + s.lv, hub:hn, lv:s.lv, rad:(selBlob && selBlob.key === hn.id + '|' + s.lv ? selBlob.r : s.br), x:hn.ax + s.cx * cs - s.cy * sn + (selBlob && selBlob.key === hn.id + '|' + s.lv ? selBlob.dx || 0 : 0), y:hn.ay + s.cx * sn + s.cy * cs + (selBlob && selBlob.key === hn.id + '|' + s.lv ? selBlob.dy || 0 : 0)};
   }));
   gRings.selectAll('line').data(data, d => d.key).join('line').classed('spoke', true)
     .each(function(d){ /* d’un bord à l’autre : de la jauge du groupe à la périphérie de la grappe, sans entrer dans la bulle */
@@ -2181,7 +2187,7 @@ function sizePins(){
     const dx = d.x - d.hub.ax, dy = d.y - d.hub.ay, L = Math.hypot(dx, dy) || 1, off = d.rad + pr + gap;
     d.px = d.x + dx / L * off; d.py = d.y + dy / L * off;
     /* Vu de loin (vue d’ensemble), le cercle de grappes est trop petit pour des pastilles de 44 px : on les masque toutes */
-    d.pinOn = pr <= (d.hub.outer || 0) * 0.15 && shown.every(q => Math.hypot(q.px - d.px, q.py - d.py) >= 2 * pr + gap);
+    d.pinOn = !/^c:/.test(state.selected || '') && pr <= (d.hub.outer || 0) * 0.15 && shown.every(q => Math.hypot(q.px - d.px, q.py - d.py) >= 2 * pr + gap);
     if(d.pinOn) shown.push(d);
   });
   pins.style('display', d => d.pinOn ? null : 'none').attr('transform', d => `translate(${d.px},${d.py})`);
@@ -2439,7 +2445,7 @@ function focusLegendGroup(zoomTo){
 function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.classed('dim', false); labelSel.classed('dim', false); countSel.classed('dim', false); if(badgeSel) badgeSel.classed('dim', false); nodeSel.classed('ghost', false); gRings.selectAll('circle.blob, line.spoke').classed('dim', false); } }
 function select(id){
   const wasHub = /^h:/.test(state.selected || '');
-  releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); if(nodes.length) drawHubCenter(); styleLabels();
+  releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); if(nodes.length){ drawHubCenter(); sizePins(); } styleLabels();
   /* Groupe ouvert ou refermé : la vue correspondante est cochée ou décochée dans « Mes vues » */
   if(nodes.length && (wasHub || /^h:/.test(id || ''))) renderViews();
 }
