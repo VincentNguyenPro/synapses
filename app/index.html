@@ -201,12 +201,12 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .pin .pring{fill:none}
 .pin .pmono{fill:#fff;font-weight:700;text-anchor:middle;dominant-baseline:central}
 /* Logo d’entreprise dans la légende, à la place de la pastille de couleur, cerclé de la couleur de sa grappe */
-.dot.ldot{width:22px;height:22px;margin:-6px 0;background:transparent !important;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+.dot.ldot{width:26px;height:26px;margin:-8px 0;background:transparent !important;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
 .dot.ldot::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c)}
-.dot.ldot.hasl{width:20px;height:20px;margin:-5px 1px;background:#fff !important;box-shadow:0 0 0 1.5px var(--c)}
+.dot.ldot.hasl{width:24px;height:24px;margin:-7px 1px;background:#fff !important;box-shadow:0 0 0 1.5px var(--c)}
 .dot.ldot.hasl::before{display:none}
 .dot .lgimg{display:none}
-.dot.hasl .lgimg{display:block;width:16px;height:16px;object-fit:contain}
+.dot.hasl .lgimg{display:block;width:20px;height:20px;object-fit:contain}
 .link.sub{display:none}
 .track{fill:none;stroke:var(--line);stroke-width:3px;pointer-events:none}
 .gauge{fill:none;stroke:var(--accent);stroke-width:3px;stroke-linecap:round;pointer-events:none}
@@ -2122,7 +2122,7 @@ function drawPins(data){
 function sizePins(){
   const pins = gPins.selectAll('g.pin');
   if(pins.empty()) return;
-  const pr = 15 / zk, gap = 3 / zk, shown = [];
+  const pr = 22 / zk, gap = 3 / zk, shown = [];
   pins.data().slice().sort((a, b) => b.rad - a.rad).forEach(d => {
     const dx = d.x - d.hub.ax, dy = d.y - d.hub.ay, L = Math.hypot(dx, dy) || 1, off = d.rad + pr + gap;
     d.px = d.x + dx / L * off; d.py = d.y + dy / L * off;
@@ -2132,7 +2132,7 @@ function sizePins(){
   pins.style('display', d => d.pinOn ? null : 'none').attr('transform', d => `translate(${d.px},${d.py})`);
   pins.select('circle.pdisc').attr('r', pr);
   pins.select('circle.pring').attr('r', pr).style('stroke-width', 1.5 / zk);
-  pins.select('image.plogo').attr('x', -pr * 0.78).attr('y', -pr * 0.78).attr('width', pr * 1.56).attr('height', pr * 1.56);
+  pins.select('image.plogo').attr('x', -pr * 0.8).attr('y', -pr * 0.8).attr('width', pr * 1.6).attr('height', pr * 1.6);
   pins.select('text.pmono').style('font-size', d => `${pr * (mono(d.lv).length > 2 ? 0.75 : mono(d.lv).length > 1 ? 0.9 : 1.1)}px`);
 }
 /* Logos de la légende : la pastille de couleur devient le logo une fois chargé ; en cas d’échec, la couleur reste */
