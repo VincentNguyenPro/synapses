@@ -74,7 +74,7 @@ p{margin:0}
 @media (min-width:960px){ .links{display:flex} .bar .btn{margin-left:0} }
 
 /* ---------- Héros : titre court en haut à gauche, l’outil qui travaille occupe le reste ---------- */
-.hero{padding:clamp(32px,5vw,72px) 0 0}
+.hero{padding:clamp(24px,4svh,48px) 0} /* marges égales en haut et en bas : le contenu est centré dans l’écran */
 .hero-grid{display:grid;gap:36px 48px;align-items:start}
 /* Deux blocs côte à côte, centrés verticalement : à gauche titre, texte et action ; à droite la vidéo */
 @media (min-width:1080px){ .hero-grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center} .hero h1{font-size:clamp(48px,4.6vw,76px)} }
@@ -259,6 +259,20 @@ p{margin:0}
 @media (max-width:959px){ .how .grid{display:flex;flex-direction:column} .pin{min-height:300px} }
 .app{width:100%;max-width:440px;background:#fff;border-radius:12px;padding:22px;font-size:14px;line-height:1.45;color:#17212E;display:none}
 .app.on{display:block;animation:in .5s var(--ease)}
+/* Étape 3 : la carte « Mon réseau » et, à sa droite, une roulette de noms fictifs */
+.app.net-app{max-width:640px;background:none;padding:0}
+.app.net-app.on{display:flex;gap:14px;align-items:stretch}
+.netcard{flex:1;min-width:0;background:#fff;border-radius:12px;padding:22px}
+.netcard .stats div{cursor:pointer;transition:background .2s,box-shadow .2s}
+.netcard .stats div:hover,.netcard .stats div.on{background:#E4EAFD;box-shadow:inset 0 0 0 1.5px #2F5BEA}
+.wheel{--row:34px;position:relative;width:200px;flex:none;contain:size;background:#fff;border-radius:12px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.wheel::before{content:"";position:absolute;left:8px;right:8px;top:50%;height:var(--row);margin-top:calc(var(--row) / -2);border-radius:8px;background:#E4EAFD;z-index:0}
+.wheel ul{position:relative;z-index:1;list-style:none;margin:0;padding:0;animation:roll var(--dur,60s) linear infinite}
+.wheel li{height:var(--row);display:flex;align-items:center;gap:8px;padding:0 18px;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wheel li i{width:8px;height:8px;border-radius:50%;flex:none}
+.wheel li small{color:#5B6B7C;font-weight:500;font-size:12px;overflow:hidden;text-overflow:ellipsis}
+@keyframes roll{to{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){ .wheel ul{animation:none} }
 /* Étape 1 : la capture (anonymisée) de la page LinkedIn, plus large que les autres fragments */
 .app.shot{max-width:640px;margin:0;padding:8px}
 .app.shot img{width:100%;height:auto;border-radius:6px;box-shadow:0 0 0 1px #E1E7EE}
@@ -504,6 +518,9 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   .steps li.on p{display:block}
   .pin{min-height:0;padding:12px;margin-top:12px}
   .app{padding:16px;font-size:13px}
+  .app.net-app.on{flex-direction:column;gap:8px}
+  .netcard{padding:16px}
+  .wheel{width:auto;height:104px}
   /* Réglages : un carrousel horizontal, une tuile à la fois, la suivante dépasse */
   .feat h2{font-size:clamp(1.6rem,7vw,2.2rem);margin-bottom:20px}
   .cells{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 calc(-1 * var(--gutter));padding:0 var(--gutter);scroll-padding:0 var(--gutter)}
@@ -686,14 +703,18 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
           <div class="file"><i>ZIP</i>Basic_LinkedInDataExport.zip</div>
           <p class="ok">150 contacts importés</p>
         </div>
-        <div class="app" data-ui data-s="2">
-          <h4>Mon réseau</h4>
-          <div class="stats">
-            <div><b>150</b><span>contacts</span></div>
-            <div><b>10</b><span>secteurs</span></div>
-            <div><b>34</b><span>entreprises</span></div>
-            <div><b>31</b><span>à un poste de direction</span></div>
+        <div class="app net-app" data-ui data-s="2">
+          <div class="netcard">
+            <h4>Mon réseau</h4>
+            <div class="stats">
+              <div data-k="contacts" class="on"><b>150</b><span>contacts</span></div>
+              <div data-k="secteurs"><b>10</b><span>secteurs</span></div>
+              <div data-k="entreprises"><b>30</b><span>entreprises</span></div>
+              <div data-k="direction"><b>31</b><span>à un poste de direction</span></div>
+            </div>
           </div>
+          <!-- Roulette : les noms fictifs du réseau de démo défilent ; le survol d’une tuile change ce qui défile -->
+          <div class="wheel" aria-hidden="true"><ul id="wheel"></ul></div>
         </div>
       </div>
     </div>
@@ -964,6 +985,25 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     li.addEventListener('focus', () => step(li));
   });
 
+  /* ---------- Roulette de « Mon réseau » : défilement en boucle des noms fictifs du réseau de démo ;
+     survoler (ou toucher) une tuile choisit ce qui défile ---------- */
+  const wheel = $('#wheel');
+  const uniq = (list, key) => [...new Map(list.map(c => [key(c), c])).values()];
+  const reel = {
+    contacts: () => uniq(DEMO, c => c.n).map(c => [c.n, c.co, colour('sen', c.sen)]),
+    secteurs: () => [...count(DEMO, 'sec')].sort((a, b) => b[1] - a[1]).map(([s, n]) => [s, `${n} contacts`, '#2F5BEA']),
+    entreprises: () => [...count(DEMO, 'co')].sort((a, b) => b[1] - a[1]).map(([s, n]) => [s, `${n}`, '#12A39A']),
+    direction: () => DEMO.filter(c => c.sen === 'Direction' || c.sen === 'Dirigeant').map(c => [c.n, c.pos, colour('sen', c.sen)])
+  };
+  const spin = k => {
+    const rows = reel[k](), li = rows.map(([a, b, col]) => `<li><i style="background:${col}"></i>${esc(a)}<small>${esc(b)}</small></li>`).join('');
+    wheel.innerHTML = li + li;   /* deux fois la liste : la boucle ne saute pas */
+    wheel.style.setProperty('--dur', `${Math.max(12, rows.length * 1.4)}s`);
+    $$('.netcard [data-k]').forEach(d => d.classList.toggle('on', d.dataset.k === k));
+  };
+  $$('.netcard [data-k]').forEach(d => ['mouseenter', 'click', 'focus'].forEach(ev => d.addEventListener(ev, () => spin(d.dataset.k))));
+  spin('contacts');
+
   /* ---------- Réglages : sur grand écran, une liste à gauche et l’illustration du réglage choisi à droite ---------- */
   const cells = $$('.cell');
   const cell = c => cells.forEach(x => x.classList.toggle('on', x === c));
@@ -995,11 +1035,13 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     if(reduce) return;
     const tiles = $$('.fd', flap);
     digits.forEach((d, i) => {
-      if(d === ' ' || d === '0') return;
-      let v = 0; const el = tiles[i].firstChild;
+      if(d === ' ') return;
+      /* 1, 2… jusqu’au chiffre ; un 0 fait un tour complet (1… 9, 0) pour que toutes les palettes bougent */
+      const seq = +d ? Array.from({length:+d}, (_, k) => k + 1) : [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+      let k = 0; const el = tiles[i].firstChild;
       setTimeout(function tick(){
-        v++; el.textContent = v; tiles[i].classList.remove('flip'); void tiles[i].offsetWidth; tiles[i].classList.add('flip');
-        if(v < +d) setTimeout(tick, 90);
+        el.textContent = seq[k++]; tiles[i].classList.remove('flip'); void tiles[i].offsetWidth; tiles[i].classList.add('flip');
+        if(k < seq.length) setTimeout(tick, 90);
       }, 250 + i * 160);
     });
   };
