@@ -2402,7 +2402,8 @@ function legendTree(vis){
   const maxG = d3.max(hubs, h => h.count) || 1, max = legendAll ? 999 : 8;
   const plural = gdim.label.toLowerCase();
   const rows = hubs.slice(0, max).map(h => {
-    const k = 'g:' + h.key, open = legendOpen.has(k), ms = members.get(h.id);
+    /* Ouvert au clic, ou d’office quand le filtre porte sur des valeurs de ce groupe (ex. une entreprise filtrée) */
+    const k = 'g:' + h.key, ms = members.get(h.id), open = legendOpen.has(k) || (sel.size > 0 && ms.some(c => sel.has(cdim.get(c))));
     const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(h.key)}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
     if(!open) return `<li>${head}</li>`;
     const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
