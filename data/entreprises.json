@@ -2738,7 +2738,7 @@
   },
   {
    "nom": "Banque Populaire",
-   "motif": "\\bbanque populaire\\b"
+   "motif": "\\bbanque populaire\\b(?!.*\\b(mauritanie|maroc|marocaine|cameroun|senegal|tunisie|algerie|rwanda|cote d ?.?ivoire)\\b)"
   },
   {
    "nom": "Caisse d’Épargne",

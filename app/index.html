@@ -312,6 +312,20 @@ button.lg:hover{background:var(--surface-2)}
 .drawer .legendlist{display:grid;gap:4px;font-size:13.5px}
 .drawer .legendlist div{display:flex;align-items:center;gap:8px}
 .drawer .legendlist .n{margin-left:auto;color:var(--muted)}
+/* Groupe qui réunit plusieurs entités : un chevron déplie ses filiales */
+.drawer .legendlist details summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;border-radius:6px}
+.drawer .legendlist details summary::-webkit-details-marker{display:none}
+.drawer .legendlist.withsubs > div,.drawer .legendlist.withsubs summary{padding-right:22px;position:relative}
+.drawer .legendlist details summary::after{content:"";position:absolute;right:6px;top:50%;width:7px;height:7px;margin-top:-5px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+.drawer .legendlist details[open] summary::after{transform:rotate(45deg);margin-top:-6px}
+.drawer .legendlist .sub{padding-right:22px}
+.drawer .legendlist details summary:hover{background:var(--surface-2)}
+.drawer .legendlist details summary:focus-visible{outline:2px solid var(--accent)}
+.drawer .legendlist .sub{padding-left:18px;font-size:12.5px;color:var(--muted)}
+/* Noms longs coupés par « … » : la liste ne déborde jamais du panneau */
+.drawer .legendlist{grid-template-columns:minmax(0,1fr)}
+.drawer .legendlist details{min-width:0}
+.drawer .legendlist :is(div,summary) > span:not(.dot):not(.n):not(.pct){flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .people{list-style:none;padding:0;margin:0}
 .people li{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line)}
 .lrow{all:unset;flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 4px;cursor:pointer;border-radius:8px}
@@ -847,7 +861,23 @@ function assignGroups(list){
   const spell = new Map();
   list.forEach(c => { if(!c.company) return; const k = nkey(c.company).replace(LEGAL_END, ''); const m = spell.get(k) || new Map(); m.set(c.company, (m.get(c.company) || 0) + 1); spell.set(k, m); });
   const best = new Map([...spell].map(([k, m]) => [k, [...m].sort((a, b) => b[1] - a[1])[0][0]]));
-  list.forEach(c => { c.group = c.company ? (groupOf(c.company) || best.get(nkey(c.company).replace(LEGAL_END, '')) || c.company) : ''; });
+  /* Filiale d’une entreprise du réseau : un nom qui commence par celui d’une autre entreprise présente
+     (« Decathlon France » → Decathlon, « Bartle Business Consulting » → Bartle) lui est rattaché.
+     Préfixe le plus long, en mots entiers, d’au moins 4 lettres, jamais un mot générique (« groupe », « banque »…). */
+  const parentOf = k => {
+    const w = k.split(' ');
+    for(let n = w.length - 1; n >= 1; n--){
+      const p = w.slice(0, n).join(' ').replace(/[\s\-–—:,(]+$/, '');
+      if(p.length < 4 || (n === 1 && PREFIX_STOP.has(p))) continue;
+      if(best.has(p) && !groupOf(best.get(p))) return best.get(p);
+    }
+    return '';
+  };
+  list.forEach(c => {
+    if(!c.company){ c.group = ''; return; }
+    const k = nkey(c.company).replace(LEGAL_END, '');
+    c.group = groupOf(c.company) || parentOf(k) || best.get(k) || c.company;
+  });
 }
 const coOf = c => c.group || c.company;
 /* Correspondance exacte, puis par début de nom, en ignorant les premiers mots trop génériques */
@@ -1041,6 +1071,8 @@ function getView(withQ = true){
   const v = {g:state.groupBy, c:state.colorBy, t:state.topN, m:state.view, f};
   if(allYears.length && (state.yMin > allYears[0] || state.yMax < allYears[allYears.length - 1])) v.y = [state.yMin, state.yMax];
   if(withQ && state.q) v.q = state.q;
+  /* Groupe ouvert (« Banque & assurance »…) : la vue le rouvre. Jamais un contact. */
+  if(/^h:/.test(state.selected || '') && state.view === 'graph') v.h = state.selected.slice(2);
   return v;
 }
 const sameView = (a, b) => JSON.stringify({...a, t:0}) === JSON.stringify({...b, t:0});
@@ -1071,6 +1103,8 @@ function setView(v){
 function applyView(v){
   setView(v);
   needFit = true; select(null); closeDrawer(); syncChips(); render();
+  const hn = v.h && state.view === 'graph' ? nodes.find(n => n.id === 'h:' + v.h) : null;
+  if(hn){ needFit = false; showHub(hn); }
 }
 /* Vues prêtes à l’emploi, recalculées sur le réseau chargé */
 function presets(){
@@ -1107,12 +1141,14 @@ function normView(v){
   const o = {g:v.g, c:v.c, t:v.t, m:v.m || 'graph', f};
   if(v.y && allYears.length && (v.y[0] > allYears[0] || v.y[1] < allYears[allYears.length - 1])) o.y = v.y;
   if(v.q) o.q = v.q;
+  if(v.h) o.h = v.h;
   return o;
 }
 function suggestName(){
   const parts = [DIMS[state.groupBy].label];
   FILTER_KEYS.forEach(k => { const a = [...state.include[k]]; if(a.length) parts.push(a.length > 2 ? `${a.slice(0, 2).join(', ')}…` : a.join(', ')); });
   if(state.q) parts.push(`« ${state.q} »`);
+  if(/^h:/.test(state.selected || '')) parts.push(state.selected.slice(2));
   return parts.join(' · ').slice(0, 40);
 }
 const b64 = {
@@ -2128,7 +2164,7 @@ function select(id){
   const wasHub = /^h:/.test(state.selected || '');
   releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); styleLabels();
   /* La légende suit le groupe sélectionné (et revient au réseau entier quand il est désélectionné) */
-  if(nodes.length && (wasHub || /^h:/.test(id || ''))) updateLegend(contacts.filter(pass));
+  if(nodes.length && (wasHub || /^h:/.test(id || ''))){ updateLegend(contacts.filter(pass)); renderViews(); }
 }
 /* Après un nouveau rendu (filtre, redimensionnement…), on réapplique la surbrillance et le cercle de collègues de la sélection */
 function reapplySelection(){
@@ -2371,6 +2407,13 @@ function showContact(c){
   zoomToNode(node);
 }
 
+/* Entités réunies sous un groupe (« BNP Paribas Cardif », « BNP Paribas CIB »…), triées par nombre décroissant */
+function entitiesOf(list){
+  const m = d3.rollup(list.filter(c => c.company), v => v.length, c => c.company);
+  return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
+}
+const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div class="${top ? '' : 'sub'}"><span>${esc(k)}</span><span class="n">${n}</span><span class="pct">${pct(n, total)}</span></div>`).join('')
+  + (subs.length > 30 ? `<div class="${top ? '' : 'sub'}"><span>et ${subs.length - 30} autres</span></div>` : '');
 function showHub(h){
   select(h.id);
   const members = nodes.filter(n => n.type === 'c' && n.hub === h.id).map(n => n.c);
@@ -2396,7 +2439,12 @@ function showHub(h){
       <ul class="people">${h.others.map(([k, n]) => `<li><button class="lrow" type="button" ${isFilterDim(state.groupBy) ? `data-only="${state.groupBy}" data-v="${esc(k)}"` : ''} title="N’afficher que ce groupe"><span class="who"><strong>${esc(k)}</strong><span>${n} contact${n > 1 ? 's' : ''}</span></span></button></li>`).join('')}</ul>` : ''}
     <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${counts.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
-    <div class="legendlist">${top20.map(v => `<div><span class="dot" style="background:${dotR(v)}"></span><span>${esc(v)}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span></div>`).join('')}${rest > 0 ? `<div><span class="dot" style="background:${GREY}"></span><span>${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
+    <div class="legendlist${state.colorBy === 'company' ? ' withsubs' : ''}">${top20.map(v => {
+      const row = `<span class="dot" style="background:${dotR(v)}"></span><span>${esc(v)}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span>`;
+      const subs = state.colorBy === 'company' ? entitiesOf(members.filter(c => coOf(c) === v)) : [];
+      return subs.length > 1 ? `<details class="subs"><summary>${row}</summary>${subRows(subs, members.length)}</details>` : `<div>${row}</div>`;
+    }).join('')}${rest > 0 ? `<div><span class="dot" style="background:${GREY}"></span><span>${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
+    ${state.groupBy === 'company' && entitiesOf(members).length > 1 ? `<h3>Entités de ${esc(h.key)}</h3><div class="legendlist">${subRows(entitiesOf(members), members.length, true)}</div>` : ''}
     ${peopleList(members, 'Contacts', 40)}`);
   const li = dbody.querySelector('.logo-img');
   if(li){
