@@ -227,7 +227,7 @@ circle.dim,text.dim{fill-opacity:.08;stroke-opacity:.08}
 line.dim{stroke-opacity:.08}
 .link.me.dim{stroke-opacity:.045}
 circle.blob.dim{fill-opacity:.012;stroke-opacity:.04}
-.ghost{visibility:hidden;pointer-events:none}
+svg .ghost{visibility:hidden;pointer-events:none} /* points du graphe seulement : les boutons « btn ghost » de l’en-tête restent visibles */
 .canvas.heavy .contact,.canvas.heavy .hub,.canvas.heavy .link,.canvas.heavy .hubLabel,.canvas.heavy .hubCount,.canvas.heavy .blob,.canvas.heavy .spoke{transition:none}
 
 /* Overlays on canvas */
@@ -312,6 +312,17 @@ button.lg:hover{background:var(--surface-2)}
 .meform input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:14px}
 .meform input:focus{background:var(--surface);border-color:var(--accent)}
 .meform .btn{margin-top:18px}
+/* Formulaire « Donner mon avis » */
+.fbnote{display:flex;gap:6px;margin:4px 0 2px}
+.fbnote label{flex:1;margin:0;display:grid;place-items:center;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-weight:700;font-size:15px;cursor:pointer}
+.fbnote input{position:absolute;opacity:0;pointer-events:none}
+.fbnote label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.fbnote label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.fbscale{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.fbform textarea{width:100%;min-height:130px;resize:vertical;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font:inherit;font-size:14px;line-height:1.45}
+.fbform textarea:focus,.fbform input[type=email]:focus{background:var(--surface);border-color:var(--accent);outline:none}
+.fbform input[type=email]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:14px;margin-top:8px}
+.fbcount{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
 .tag[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
 .tagpill{font-size:11.5px;font-weight:700;background:var(--accent-soft);padding:2px 8px;border-radius:999px;white-space:nowrap}
 .stack{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 10px;gap:2px}
@@ -373,7 +384,9 @@ button.lg:hover{background:var(--surface-2)}
   header{flex-wrap:wrap;gap:10px;padding:10px 12px}
   .brand p,.lbl-long{display:none}
   .search{order:3;flex-basis:100%;max-width:none}
-  .hdr-actions{margin-left:auto}
+  .hdr-actions{margin-left:auto;gap:2px}
+  #fbBtn span,#helpBtn span{display:none} /* icônes seules : l’en-tête tient sur une ligne */
+  #fbBtn,#helpBtn{padding-left:10px;padding-right:10px}
   .stage{grid-column:1}
   aside{position:fixed;left:0;right:0;bottom:0;max-height:82vh;border-right:0;border-radius:18px 18px 0 0;z-index:20;box-shadow:var(--shadow);transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s;padding-bottom:env(safe-area-inset-bottom,0px)}
   aside.open{transform:none;visibility:visible;transition:transform .25s ease,visibility 0s}
@@ -411,7 +424,11 @@ button.lg:hover{background:var(--surface-2)}
       <input type="search" id="q" placeholder="Rechercher un nom, une entreprise, un poste…" aria-label="Rechercher dans tes contacts">
     </div>
     <div class="hdr-actions">
-      <button class="btn ghost" id="helpBtn" type="button" data-act="help">
+      <button class="btn ghost" id="fbBtn" type="button" data-act="feedback" title="Donner mon avis sur Synapses" aria-label="Donner mon avis">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>
+        <span>Avis</span>
+      </button>
+      <button class="btn ghost" id="helpBtn" type="button" data-act="help" aria-label="Aide">
         <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></svg>
         <span>Aide</span>
       </button>
@@ -2530,8 +2547,51 @@ function wipeData(){
   try { Object.keys(localStorage).filter(k => k.startsWith('synapses-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
   dropNet().then(() => location.reload());
 }
+/* ---------- « Donner mon avis » (supabase/retours.sql, choix de Vincent du 4 novembre 2026) ----------
+   Rien ne part sans clic sur « Envoyer » : le message, la note facultative, l’email seulement si la personne veut une réponse,
+   la page (« outil ») et la langue. Jamais le réseau. Le public ne peut qu’envoyer : seul Vincent lit les retours. */
+function showFeedback(){
+  select(null); clearFocus();
+  openDrawer(`
+    <h2 id="dtitle" tabindex="-1">Donner mon avis</h2>
+    <p class="pos">Ce qui t’a servi, ce qui manque, ce qui bloque&nbsp;: Vincent lit chaque message et s’en sert pour faire évoluer Synapses.</p>
+    <form class="fbform" id="fbform" novalidate>
+      <h3 id="fbnote-l">Synapses t’est utile&nbsp;? <span style="font-weight:400;color:var(--muted)">(facultatif)</span></h3>
+      <div class="fbnote" role="radiogroup" aria-labelledby="fbnote-l">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="fbnote" value="${n}">${n}</label>`).join('')}</div>
+      <div class="fbscale" aria-hidden="true"><span>Pas du tout</span><span>Énormément</span></div>
+      <h3><label for="fbmsg" style="margin:0">Ton message</label></h3>
+      <textarea id="fbmsg" maxlength="2000" required placeholder="Une idée, un bug, une fonction qui te manque…"></textarea>
+      <p class="fbcount" id="fbcount" aria-live="polite">0 / 2000</p>
+      <label class="sharebox"><input type="checkbox" id="fbwant"> <span>Je veux une réponse de Vincent par email</span></label>
+      <input type="email" id="fbemail" maxlength="200" placeholder="ton@email.fr" aria-label="Ton email" autocomplete="email" hidden>
+      <p class="hint" style="margin-top:12px">Envoyé à Vincent (base Supabase, en Europe)&nbsp;: ton message, ta note et ton email si tu le donnes. Rien de ton réseau. N’écris pas les noms ou coordonnées de tes contacts.</p>
+      <button class="btn primary block" type="submit" id="fbsend">Envoyer</button>
+    </form>`);
+  const msg = $('#fbmsg'), want = $('#fbwant'), mail = $('#fbemail');
+  msg.addEventListener('input', () => { $('#fbcount').textContent = `${msg.value.length} / 2000`; });
+  want.addEventListener('change', () => { mail.hidden = !want.checked; if(want.checked) mail.focus(); });
+  $('#fbform').addEventListener('submit', e => { e.preventDefault(); sendFeedback(); });
+}
+async function sendFeedback(){
+  const msg = $('#fbmsg').value.trim(), want = $('#fbwant').checked, email = $('#fbemail').value.trim();
+  const note = +((document.querySelector('input[name=fbnote]:checked') || {}).value || 0) || null;
+  if(msg.length < 3){ toast('Écris quelques mots avant d’envoyer'); $('#fbmsg').focus(); return; }
+  if(want && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast('Vérifie ton email, ou décoche la case'); $('#fbemail').focus(); return; }
+  const btn = $('#fbsend'); btn.disabled = true; btn.textContent = 'Envoi…';
+  try {
+    const r = await sbFetch('/rpc/envoyer_retour', {method:'POST', body:JSON.stringify({p_message:msg, p_note:note, p_email:want ? email : null, p_page:'outil', p_langue:'fr'})});
+    if(!r.ok) throw new Error(r.status);
+    openDrawer(`<h2 id="dtitle" tabindex="-1">Merci&nbsp;!</h2>
+      <p class="pos">Ton avis est bien arrivé. ${want ? 'Vincent te répondra à l’adresse indiquée.' : 'Vincent le lira et s’en servira pour les prochaines versions.'}</p>
+      <p class="pos">Les améliorations nées de vos retours sont listées sur <a href="../#demandes">la page de présentation</a>.</p>`);
+  } catch(e){
+    btn.disabled = false; btn.textContent = 'Envoyer';
+    toast('L’envoi n’a pas abouti. Réessaie dans un instant.');
+  }
+}
+
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as coché « Garder mon réseau sur cet appareil ». Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as coché « Garder mon réseau sur cet appareil ». Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
     <p class="pos">En regroupant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -2751,6 +2811,7 @@ document.addEventListener('click', e => {
     const a = act.dataset.act;
     if(a === 'import') $('#file').click();
     else if(a === 'help'){ closePanel(); showHelp(); }
+    else if(a === 'feedback'){ closePanel(); showFeedback(); }
     else if(a === 'dismiss'){ demoHidden = true; render(); }
     else if(a === 'clearall') clearAll();
     else if(a === 'saveme') saveMe();

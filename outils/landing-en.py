@@ -172,8 +172,8 @@ rep('<span>Partenaire</span><span>Mentor</span><span>Recruteur</span><span>À re
 rep('Ce qui quitte ton navigateur</h2>', 'What leaves your browser</h2>')
 rep('Aucun serveur ne reçoit ton fichier. Voici tout ce que la page peut envoyer, ligne par ligne.', 'No server receives your file. Here is everything the page can send, line by line.')
 rep('<th scope="col">Quoi</th><th scope="col">Envoyé à</th><th scope="col">Quand</th>', '<th scope="col">What</th><th scope="col">Sent to</th><th scope="col">When</th>')
-rep('data-l="Envoyé à"', 'data-l="Sent to"', 5)
-rep('data-l="Quand"', 'data-l="When"', 5)
+rep('data-l="Envoyé à"', 'data-l="Sent to"', 6)
+rep('data-l="Quand"', 'data-l="When"', 6)
 rep('<td>Tes contacts&nbsp;: noms, profils, emails</td>', '<td>Your contacts: names, profiles, emails</td>')
 rep('class="never">Personne</td>', 'class="never">Nobody</td>')
 rep('class="never">Jamais</td>', 'class="never">Never</td>')
@@ -189,6 +189,36 @@ rep('>Seulement si tu coches «&nbsp;Partager mes corrections&nbsp;»</td>', '>O
 rep('<td>+1 au compteur de réseaux visualisés</td>', '<td>+1 on the counter of mapped networks</td>')
 rep('>Un compteur anonyme</td>', '>An anonymous counter</td>')
 rep('>Après un import, au plus une fois par jour</td>', '>After an import, at most once a day</td>')
+
+rep('<td>Ton avis&nbsp;: message, note, email si tu veux une réponse</td>', '<td>Your feedback: message, rating, email if you want a reply</td>')
+rep('>Vincent, par la base Supabase de Synapses</td>', '>Vincent, through Synapses’ Supabase database</td>')
+rep('>Seulement quand tu cliques sur «&nbsp;Envoyer&nbsp;»</td>', '>Only when you click “Send”</td>')
+
+# ---------- Ton avis ----------
+rep('<a href="#demandes">Ton avis</a>', '<a href="#demandes">Feedback</a>')
+rep('Ton avis fait évoluer Synapses</h2>', 'Your feedback shapes Synapses</h2>')
+rep('Une idée, un bug, une fonction qui te manque&nbsp;: Vincent lit chaque message.</p>', 'An idea, a bug, a missing feature: Vincent reads every message.</p>')
+rep('<li>Tu donnes ton avis, en deux minutes.</li>', '<li>You share your feedback, in two minutes.</li>')
+rep('<li>Vincent le lit et te répond si tu le souhaites.</li>', '<li>Vincent reads it and replies if you’d like.</li>')
+rep('<li>Ce qui en sort est listé ici, à droite.</li>', '<li>What comes out of it is listed here, on the right.</li>')
+rep('data-fb>Donner mon avis</a>', 'data-fb>Give feedback</a>', 2)
+rep('<h3>Vous l’avez demandé</h3>', '<h3>You asked for it</h3>')
+rep('Les premières améliorations nées de vos retours apparaîtront ici.', 'The first improvements that come from your feedback will appear here.')
+rep('<h2 id="fb-titre">Donner mon avis</h2>', '<h2 id="fb-titre">Give feedback</h2>')
+rep('aria-label="Fermer">✕</button>', 'aria-label="Close">✕</button>')
+rep('Ce qui t’a servi, ce qui manque, ce qui bloque&nbsp;: tout m’aide à améliorer Synapses.', 'What helped you, what’s missing, what gets in the way: it all helps me improve Synapses.')
+rep('<legend>Synapses t’est utile&nbsp;? <small>(facultatif)</small></legend>', '<legend>Is Synapses useful to you? <small>(optional)</small></legend>')
+rep('<span>Pas du tout</span><span>Énormément</span>', '<span>Not at all</span><span>Very much</span>')
+rep('for="fbmsg">Ton message</label>', 'for="fbmsg">Your message</label>')
+rep('placeholder="Une idée, un bug, une fonction qui te manque…"', 'placeholder="An idea, a bug, a feature you’re missing…"')
+rep('<input type="checkbox" id="fbwant"> Je veux une réponse par email</label>', '<input type="checkbox" id="fbwant"> I’d like a reply by email</label>')
+rep('placeholder="ton@email.fr" aria-label="Ton email"', 'placeholder="you@email.com" aria-label="Your email"')
+rep('Envoyé à Vincent (base Supabase, en Europe)&nbsp;: ton message, ta note et ton email si tu le donnes. N’écris pas les noms ou coordonnées de tes contacts.',
+    'Sent to Vincent (Supabase database, in Europe): your message, your rating and your email if you give it. Don’t include your contacts’ names or details.')
+rep('id="fbsend">Envoyer</button>', 'id="fbsend">Send</button>')
+rep("    short: 'Écris quelques mots avant d’envoyer.',\n    mail: 'Vérifie ton email, ou décoche la case.',\n    fail: 'L’envoi n’a pas abouti. Réessaie dans un instant.',\n    sending: 'Envoi…', send: 'Envoyer',\n    thanks: 'Merci&nbsp;!',\n    thanksReply: 'Ton avis est bien arrivé. Vincent te répondra à l’adresse indiquée.',\n    thanksPlain: 'Ton avis est bien arrivé. Vincent le lira et s’en servira pour les prochaines versions.',\n    close: 'Fermer'",
+    "    short: 'Write a few words before sending.',\n    mail: 'Check your email, or untick the box.',\n    fail: 'Sending didn’t work. Try again in a moment.',\n    sending: 'Sending…', send: 'Send',\n    thanks: 'Thank you!',\n    thanksReply: 'Your feedback arrived. Vincent will reply to the address you gave.',\n    thanksPlain: 'Your feedback arrived. Vincent will read it and use it for the next versions.',\n    close: 'Close'")
+rep("fetch('data/ameliorations.json')", "fetch('../data/ameliorations.json')")
 
 # ---------- Questions ----------
 rep('<h2 id="questions-titre" class="rise">Questions</h2>', '<h2 id="questions-titre" class="rise">Questions</h2>')

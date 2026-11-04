@@ -389,6 +389,7 @@ th{text-align:left;font-size:var(--step-small);font-weight:700;color:#DDE6FF;pad
 td{padding:18px 18px 18px 0;vertical-align:top;border-bottom:1px solid rgba(255,255,255,.3)}
 td:first-child{font-weight:800;width:32%}
 td.never{font-weight:800}
+@media (min-width:960px){ td{padding:13px 18px 13px 0} } /* six lignes : le tableau tient sur un écran */
 @media (max-width:720px){
   thead{display:none}
   tr{display:block;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.3)}
@@ -411,6 +412,48 @@ summary .pm::before,summary .pm::after{content:"";position:absolute;left:0;top:7
 summary .pm::after{transform:rotate(90deg)}
 details[open] summary .pm::after{transform:rotate(0)}
 details p{padding:0 24px 24px;max-width:52ch}
+
+/* ---------- Ton avis : la boucle d’amélioration (supabase/retours.sql, data/ameliorations.json) ---------- */
+.ask{padding:var(--pad) 0}
+.ask .grid{display:grid;gap:32px}
+@media (min-width:960px){ .ask .grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:start} }
+.ask h2{font-size:var(--step-head)}
+.ask .lead{font-size:var(--step-lead);line-height:1.4;margin:20px 0 28px;color:var(--muted);max-width:30em}
+.loop{list-style:none;padding:0;margin:0 0 28px;display:grid;gap:10px;counter-reset:l}
+.loop li{counter-increment:l;display:flex;gap:14px;align-items:baseline;font-size:var(--step-body)}
+.loop li::before{content:counter(l);flex:none;width:28px;height:28px;border-radius:50%;background:var(--tone);color:var(--accent);font-weight:800;font-size:14px;display:grid;place-items:center;transform:translateY(5px)}
+.asked{background:var(--surface);border-radius:var(--radius);padding:clamp(20px,3vw,32px)}
+.asked h3{font-size:var(--step-lead);letter-spacing:-.01em}
+.asked ul{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:4px}
+.asked li{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;padding:14px 16px;background:var(--bg);border-radius:var(--radius)}
+.asked li time{color:var(--muted);font-size:var(--step-small);font-weight:700;padding-top:2px;min-width:5.5em}
+.asked .empty{margin-top:12px;color:var(--muted)}
+/* Fenêtre du formulaire */
+dialog.fb{width:min(560px,calc(100vw - 32px));max-height:calc(100svh - 32px);border:0;border-radius:12px;padding:clamp(20px,4vw,32px);background:var(--surface);color:var(--ink);box-shadow:0 24px 80px rgba(10,20,60,.28)}
+dialog.fb::backdrop{background:rgba(23,33,46,.45)}
+.fb h2{font-size:clamp(24px,3vw,30px);letter-spacing:-.015em;padding-right:40px}
+.fb .x{position:absolute;top:14px;right:14px;width:40px;height:40px;border:0;border-radius:50%;background:var(--tone);color:var(--ink);font-size:18px;cursor:pointer}
+.fb .x:hover{background:var(--tone-2)}
+.fb .sub{color:var(--muted);margin:8px 0 18px}
+.fb fieldset{border:0;padding:0;margin:0 0 16px}
+.fb legend,.fb .lbl{font-weight:700;margin-bottom:8px;display:block;padding:0}
+.fb legend small{font-weight:400;color:var(--muted)}
+.fb .notes{display:flex;gap:6px}
+.fb .notes label{flex:1;display:grid;place-items:center;height:44px;border-radius:var(--radius);background:var(--tone);font-weight:800;cursor:pointer}
+.fb .notes input{position:absolute;opacity:0;pointer-events:none}
+.fb .notes label:has(input:checked){background:var(--accent);color:#fff}
+.fb .notes label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.fb .scale{display:flex;justify-content:space-between;font-size:var(--step-small);color:var(--muted);margin-top:6px}
+.fb textarea,.fb input[type=email]{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:2px solid var(--tone);border-radius:var(--radius);background:var(--bg);color:var(--ink)}
+.fb textarea{min-height:130px;resize:vertical;line-height:1.45}
+.fb textarea:focus,.fb input[type=email]:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.fb .cnt{text-align:right;font-size:var(--step-small);color:var(--muted);margin-top:4px}
+.fb .want{display:flex;gap:10px;align-items:center;margin:8px 0;font-weight:600;cursor:pointer}
+.fb .want input{width:18px;height:18px;accent-color:var(--accent)}
+.fb .privacy{font-size:var(--step-small);color:var(--muted);margin:14px 0 18px;line-height:1.5}
+.fb .err{color:#B3261E;font-weight:700;font-size:var(--step-small);margin:-8px 0 12px}
+.fb .btn{width:100%;justify-content:center}
+.fb .btn[disabled]{opacity:.6;cursor:wait}
 
 /* ---------- Fin : une phrase dont les trous sont les actions ---------- */
 .end{padding:var(--pad) 0}
@@ -591,6 +634,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <a href="#demarrer">Démarrer</a>
       <a href="#confidentialite">Confidentialité</a>
       <a href="#questions">Questions</a>
+      <a href="#demandes">Ton avis</a>
     </nav>
     <a class="lang" href="en/" hreflang="en" lang="en" aria-label="English version">EN</a>
     <a class="btn navcta" href="app/" tabindex="-1" aria-hidden="true">Essayer la démo</a>
@@ -798,6 +842,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
           <tr><td>Le domaine des entreprises, par exemple doctolib.fr</td><td data-l="Envoyé à">Brandfetch, pour les logos</td><td data-l="Quand">Tant que l’option Logos est cochée. Elle l’est par défaut et se décoche en un clic.</td></tr>
           <tr><td>Des noms d’entreprises et intitulés de poste non reconnus</td><td data-l="Envoyé à">L’IA que tu choisis, avec ta propre clé</td><td data-l="Quand">Seulement si tu lances le classement par IA</td></tr>
           <tr><td>Tes corrections de classement</td><td data-l="Envoyé à">Le dictionnaire partagé de Synapses</td><td data-l="Quand">Seulement si tu coches «&nbsp;Partager mes corrections&nbsp;»</td></tr>
+          <tr><td>Ton avis&nbsp;: message, note, email si tu veux une réponse</td><td data-l="Envoyé à">Vincent, par la base Supabase de Synapses</td><td data-l="Quand">Seulement quand tu cliques sur «&nbsp;Envoyer&nbsp;»</td></tr>
           <tr><td>+1 au compteur de réseaux visualisés</td><td data-l="Envoyé à">Un compteur anonyme</td><td data-l="Quand">Après un import, au plus une fois par jour</td></tr>
         </tbody>
       </table>
@@ -818,6 +863,26 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     </div>
   </section>
 
+  <section class="ask" id="demandes" aria-labelledby="demandes-titre">
+    <div class="wrap grid">
+      <div>
+        <h2 id="demandes-titre" class="rise">Ton avis fait évoluer Synapses</h2>
+        <p class="lead rise" style="--i:1">Une idée, un bug, une fonction qui te manque&nbsp;: Vincent lit chaque message.</p>
+        <ol class="loop rise" style="--i:2">
+          <li>Tu donnes ton avis, en deux minutes.</li>
+          <li>Vincent le lit et te répond si tu le souhaites.</li>
+          <li>Ce qui en sort est listé ici, à droite.</li>
+        </ol>
+        <a class="btn rise" style="--i:3" href="#demandes" data-fb>Donner mon avis</a>
+      </div>
+      <div class="asked rise" style="--i:2">
+        <h3>Vous l’avez demandé</h3>
+        <ul id="asked" hidden></ul>
+        <p class="empty" id="asked-empty">Les premières améliorations nées de vos retours apparaîtront ici.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="end" aria-labelledby="fin-titre">
     <div class="wrap">
       <h2 id="fin-titre" class="rise">Ouvre <a class="go" href="app/">la démo</a> ou <a class="alt" href="app/#importer">ton export</a></h2>
@@ -826,10 +891,31 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   </section>
 </main>
 
+<dialog class="fb" id="fb" aria-labelledby="fb-titre">
+  <button type="button" class="x" data-close aria-label="Fermer">✕</button>
+  <form id="fbform" novalidate>
+    <h2 id="fb-titre">Donner mon avis</h2>
+    <p class="sub">Ce qui t’a servi, ce qui manque, ce qui bloque&nbsp;: tout m’aide à améliorer Synapses.</p>
+    <fieldset>
+      <legend>Synapses t’est utile&nbsp;? <small>(facultatif)</small></legend>
+      <div class="notes"><label><input type="radio" name="note" value="1">1</label><label><input type="radio" name="note" value="2">2</label><label><input type="radio" name="note" value="3">3</label><label><input type="radio" name="note" value="4">4</label><label><input type="radio" name="note" value="5">5</label></div>
+      <div class="scale" aria-hidden="true"><span>Pas du tout</span><span>Énormément</span></div>
+    </fieldset>
+    <label class="lbl" for="fbmsg">Ton message</label>
+    <textarea id="fbmsg" maxlength="2000" required placeholder="Une idée, un bug, une fonction qui te manque…"></textarea>
+    <p class="cnt" id="fbcnt" aria-live="polite">0 / 2000</p>
+    <label class="want"><input type="checkbox" id="fbwant"> Je veux une réponse par email</label>
+    <input type="email" id="fbemail" maxlength="200" placeholder="ton@email.fr" aria-label="Ton email" autocomplete="email" hidden>
+    <p class="privacy">Envoyé à Vincent (base Supabase, en Europe)&nbsp;: ton message, ta note et ton email si tu le donnes. N’écris pas les noms ou coordonnées de tes contacts.</p>
+    <p class="err" id="fberr" role="alert" hidden></p>
+    <button class="btn" type="submit" id="fbsend">Envoyer</button>
+  </form>
+</dialog>
+
 <footer>
   <div class="tiles">
     <div class="tile say"><p>Synapses lit ton export LinkedIn dans ton navigateur et en fait une carte de ton réseau.</p><p class="legal">Outil indépendant, non affilié à LinkedIn.<br>Voix de la vidéo&nbsp;: ElevenLabs.</p></div>
-    <nav class="tile nav" aria-label="Pied de page"><ul><li><a href="#situations">Situations</a></li><li><a href="#demarrer">Démarrer</a></li><li><a href="#confidentialite">Confidentialité</a></li><li><a href="#questions">Questions</a></li><li><a href="app/">Ouvrir l’outil</a></li></ul></nav>
+    <nav class="tile nav" aria-label="Pied de page"><ul><li><a href="#situations">Situations</a></li><li><a href="#demarrer">Démarrer</a></li><li><a href="#confidentialite">Confidentialité</a></li><li><a href="#questions">Questions</a></li><li><a href="#demandes" data-fb>Donner mon avis</a></li><li><a href="app/">Ouvrir l’outil</a></li></ul></nav>
     <div class="tile by"><p>Conçu et développé par <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, avec Claude Code.</p><p>Le code est public&nbsp;: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div>
     <div class="tile word" aria-hidden="true"><span class="wmark"><svg viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span><span class="wname">Synapses</span></div>
     <a class="tile go" href="app/"><b>Essayer la démo</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
@@ -1079,6 +1165,57 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     };
     new IntersectionObserver(([e]) => { if(e.isIntersecting) play(); }, {threshold:.6}).observe(tally);
   };
+  /* ---------- Ton avis (supabase/retours.sql, choix de Vincent du 4 novembre 2026) : rien ne part sans clic sur « Envoyer » ;
+     seuls partent le message, la note facultative, l’email si la personne veut une réponse, la page et la langue ---------- */
+  const LANG = document.documentElement.lang === 'en' ? 'en' : 'fr';
+  const T = {
+    short: 'Écris quelques mots avant d’envoyer.',
+    mail: 'Vérifie ton email, ou décoche la case.',
+    fail: 'L’envoi n’a pas abouti. Réessaie dans un instant.',
+    sending: 'Envoi…', send: 'Envoyer',
+    thanks: 'Merci&nbsp;!',
+    thanksReply: 'Ton avis est bien arrivé. Vincent te répondra à l’adresse indiquée.',
+    thanksPlain: 'Ton avis est bien arrivé. Vincent le lira et s’en servira pour les prochaines versions.',
+    close: 'Fermer'
+  };
+  const fb = $('#fb'), fbform = $('#fbform'), fbform0 = fbform.innerHTML;
+  const wireForm = () => {
+    const msg = $('#fbmsg'), want = $('#fbwant'), mail = $('#fbemail');
+    msg.addEventListener('input', () => { $('#fbcnt').textContent = `${msg.value.length} / 2000`; });
+    want.addEventListener('change', () => { mail.hidden = !want.checked; if(want.checked) mail.focus(); });
+  };
+  wireForm();
+  const openFb = () => { if(fbform.dataset.done){ fbform.innerHTML = fbform0; delete fbform.dataset.done; wireForm(); } if(typeof fb.showModal === 'function'){ fb.showModal(); $('#fbmsg').focus(); } };
+  $$('[data-fb]').forEach(a => a.addEventListener('click', e => { if(typeof fb.showModal !== 'function') return; e.preventDefault(); openFb(); }));
+  fb.addEventListener('click', e => { if(e.target === fb || e.target.closest('[data-close]')) fb.close(); });
+  fbform.addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = $('#fbmsg').value.trim(), want = $('#fbwant').checked, email = $('#fbemail').value.trim(), err = $('#fberr');
+    const note = +((fbform.querySelector('input[name=note]:checked') || {}).value || 0) || null;
+    const fail = (t, focus) => { err.textContent = t; err.hidden = false; if(focus) focus.focus(); };
+    if(msg.length < 3) return fail(T.short, $('#fbmsg'));
+    if(want && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(T.mail, $('#fbemail'));
+    err.hidden = true;
+    const btn = $('#fbsend'); btn.disabled = true; btn.textContent = T.sending;
+    try {
+      const c = new AbortController(); setTimeout(() => c.abort(), 8000);
+      const r = await fetch(SB_URL + '/rpc/envoyer_retour', {method:'POST', signal:c.signal, headers:{apikey:SB_KEY, 'Content-Type':'application/json'},
+        body:JSON.stringify({p_message:msg, p_note:note, p_email:want ? email : null, p_page:'landing', p_langue:LANG})});
+      if(!r.ok) throw new Error(r.status);
+      fbform.dataset.done = '1';
+      fbform.innerHTML = `<h2 id="fb-titre">${T.thanks}</h2><p class="sub">${want ? T.thanksReply : T.thanksPlain}</p><button class="btn" type="button" data-close>${T.close}</button>`;
+    } catch(x){ btn.disabled = false; btn.textContent = T.send; fail(T.fail); }
+  });
+
+  /* « Vous l’avez demandé » : les améliorations nées des retours (data/ameliorations.json), la plus récente d’abord */
+  fetch('data/ameliorations.json').then(r => r.ok ? r.json() : Promise.reject()).then(d => {
+    const list = (d && d.ameliorations || []).filter(x => x && x[LANG]);
+    if(!list.length) return;
+    const month = ym => { const [y, m] = String(ym).split('-').map(Number); return m ? new Date(y, m - 1, 1).toLocaleDateString(LANG === 'en' ? 'en-US' : 'fr-FR', {month:'short', year:'numeric'}) : esc(ym); };
+    $('#asked').innerHTML = list.map(x => `<li><time datetime="${esc(x.date)}">${month(x.date)}</time><span>${esc(x[LANG])}</span></li>`).join('');
+    $('#asked').hidden = false; $('#asked-empty').hidden = true;
+  }).catch(() => {});
+
   const ctl = new AbortController(); setTimeout(() => ctl.abort(), 6000);
   fetch(SB_URL + '/compteur?select=total', {headers:{apikey:SB_KEY}, signal:ctl.signal})
     .then(r => r.ok ? r.json() : Promise.reject(r.status))
