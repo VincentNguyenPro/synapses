@@ -96,7 +96,7 @@ p{margin:0}
 /* Colonne de droite : réglage de couleur et légende en haut, puis la liste du secteur choisi (le graphe garde toute la hauteur) */
 .live .rail{background:#F4F7FA;display:flex;flex-direction:column;min-width:0}
 .live .rail .tools{border-bottom:1px solid #E1E7EE}
-.live svg{display:block;width:100%;height:auto;max-height:calc(100svh - 268px)}
+.live svg{display:block;width:100%;height:auto;max-height:calc(100svh - 302px)}
 .live .tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:16px;color:#5B6B7C;font-size:13px}
 .live .tools button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid #D5DDE5;background:#fff;color:#17212E;cursor:pointer;transition:background .15s,border-color .15s} /* taste-skill-ignore : convention de l’outil, dans un fragment data-ui */
 .live .tools button[aria-pressed="true"]{background:#E4EAFD;border-color:#2F5BEA;color:#2448C4}
@@ -128,7 +128,7 @@ p{margin:0}
 .vitrine.shots .wrap.top h3{font-size:clamp(1.4rem,1rem + 1vw,2rem)}
 .vitrine h2{font-size:var(--step-head);max-width:14ch}
 .film{display:grid;gap:16px 56px;scroll-margin-top:88px}
-@media (min-width:960px){ .film{grid-template-columns:auto minmax(0,1fr);align-items:baseline;column-gap:40px} .film .live{grid-column:1/-1;margin-top:8px} }
+@media (min-width:960px){ .film{row-gap:6px} .film .live{margin-top:14px} } /* la phrase sous le titre */
 /* Section du graphe : un bandeau de titre compact, le graphe prend le reste de l’écran */
 .vitrine:not(.shots){padding:clamp(28px,4.5svh,48px) 0}
 .film h2{font-size:clamp(1.75rem,1rem + 1.8vw,2.6rem);max-width:none;line-height:1.1}
