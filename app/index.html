@@ -2632,14 +2632,14 @@ function hideTip(){ tip.classList.remove('on'); }
 /* Allume les traits groupe → grappe dont la clé (« groupe|valeur ») est dans keys ; null les éteint tous */
 /* L’entreprise ou la filiale choisie dans la légende (legendHL) garde son trait allumé, survol ou pas */
 function spokeHot(keys){
-  const pin = legendHL && state.view === 'graph' ? new Set(legendNodes(legendHL.kind, legendHL.v).map(n => n.hub + '|' + levelOf(n.c))) : null;
+  const pin = legendHL && state.view === 'graph' ? new Set(legendNodes(legendHL.kind, legendHL.v, legendHL.g).map(n => n.hub + '|' + levelOf(n.c))) : null;
   gRings.selectAll('line.spoke').classed('hot', d => (!!keys && keys.has(d.key)) || (!!pin && pin.has(d.key)));
 }
 /* Clic sur une grappe : comme un clic sur sa valeur dans la légende (surbrillance et zoom) ; la grappe « autres » se comporte comme le fond */
 function blobClick(e, d){
   e.stopPropagation(); hideTip();
   if(d.lv === colorOther || e.currentTarget.classList.contains('dim')){ clearSelection(); return; }
-  legendHL = legendHL && legendHL.kind === 'v' && legendHL.v === d.lv ? null : {kind:'v', v:d.lv};
+  legendHL = legendHL && legendHL.kind === 'v' && legendHL.v === d.lv && legendHL.g === d.hub.key ? null : {kind:'v', v:d.lv, g:d.hub.key};
   updateLegend(contacts.filter(pass));
   if(legendHL) applyLegendHL(!state.selected); else restoreLegendFocus();
 }
@@ -2677,16 +2677,17 @@ function legendUp(lvl, v){
 }
 /* Contacts d’une valeur (kind 'v') ou d’une filiale (kind 'e') ; secteur ouvert dans la légende : seuls ceux de ce secteur
    (BNP Paribas a aussi des contacts en Immobilier, en Finance…) */
-function legendNodes(kind, v){
+/* Contacts d’une valeur de la légende ; grp : le groupe de la ligne cliquée (« Dirigeant » dans Conseil), sinon le groupe ouvert */
+function legendNodes(kind, v, grp){
   const get = DIMS[state.colorBy].get;
   let ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? entityOf(n.c) === v : get(n.c) === v));
-  const g = [...legendOpen].find(x => x.startsWith('g:')), hub = g && nodes.find(n => n.type === 'hub' && n.key === g.slice(2));
+  const g = grp ? 'g:' + grp : [...legendOpen].find(x => x.startsWith('g:')), hub = g && nodes.find(n => n.type === 'hub' && n.key === g.slice(2));
   if(hub && ms.some(n => n.hub === hub.id)) ms = ms.filter(n => n.hub === hub.id);
   return ms;
 }
 function applyLegendHL(zoomTo){
   if(!legendHL || state.view !== 'graph') return false;
-  const ms = legendNodes(legendHL.kind, legendHL.v);
+  const ms = legendNodes(legendHL.kind, legendHL.v, legendHL.g);
   if(!ms.length){ legendHL = null; return false; }
   focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
   spokeHot(null);
@@ -2709,7 +2710,7 @@ document.addEventListener('pointerover', e => {
   if(row === legendHover) return;
   legendHover = row;
   if(!row){ spokeHot(null); restoreLegendFocus(); return; }
-  const kind = row.dataset.lghlv != null ? 'v' : 'e', ms = legendNodes(kind, kind === 'v' ? row.dataset.lghlv : row.dataset.lghl);
+  const grpEl = row.closest('[data-lggrp]'), kind = row.dataset.lghlv != null ? 'v' : 'e', ms = legendNodes(kind, kind === 'v' ? row.dataset.lghlv : row.dataset.lghl, grpEl && grpEl.dataset.lggrp);
   spokeHot(new Set(ms.map(n => n.hub + '|' + levelOf(n.c))));
   if(ms.length) focus(new Set([...ms.map(n => n.id), ...ms.map(n => n.hub)]));
 });
@@ -2762,10 +2763,10 @@ function legendTree(vis){
     const canMore = Math.min(eligible, OPEN_MAX) - openTop, more = Math.min(10, canMore);
     const moreHtml = levelMap.size && (canMore > 0 || openTop > LEGEND_TOP) ? `<li class="lgmore">${canMore > 0 ? `<button type="button" class="linkbtn" data-act="lgmore">Afficher ${more} grappe${more > 1 ? 's' : ''} de plus</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">Revenir à ${LEGEND_TOP}</button>` : ''}</li>` : '';
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
-    return `<li>${head}<ul class="lgvals">${top.map(v => {
+    return `<li data-lggrp="${esc(h.key)}">${head}<ul class="lgvals">${top.map(v => {
       const lu = state.colorBy === 'company' && levelMap.size ? logoUrl(v) : '';
       const inner = `<span class="dot${state.colorBy === 'company' && levelMap.size ? ' ldot' : ''}" style="background:${dot(v)};--c:${dot(v)}">${lu ? `<img class="lgimg" src="${esc(lu)}" alt="" data-dom="${esc(domainOf(v))}">` : ''}</span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
-      const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v;
+      const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v && (!legendHL.g || legendHL.g === h.key);
       const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="Voir les contacts de ${esc(v)} dans le graphe">${inner}</button>`;
       /* Groupe d’entreprises : un chevron déplie ses filiales */
       const subs = state.colorBy === 'company' ? entitiesOf(ms.filter(c => coOf(c) === v)) : [];
@@ -3280,7 +3281,7 @@ function zoomAnchor(){
   const px = n => n.ax ?? n.x, py = n => n.ay ?? n.y;
   const sel = state.selected && nodes.find(n => n.id === state.selected);
   let p = sel ? at(px(sel), py(sel)) : null;
-  if(!p && legendHL){ const ms = legendNodes(legendHL.kind, legendHL.v); if(ms.length) p = at(d3.mean(ms, px), d3.mean(ms, py)); }
+  if(!p && legendHL){ const ms = legendNodes(legendHL.kind, legendHL.v, legendHL.g); if(ms.length) p = at(d3.mean(ms, px), d3.mean(ms, py)); }
   if(!p){ const k = [...legendOpen].find(x => x.startsWith('g:')), hub = k && nodes.find(n => n.type === 'hub' && n.key === k.slice(2)); if(hub) p = at(px(hub), py(hub)); }
   /* Rien de choisi : autour du rond « Moi », le centre du graphe */
   if(!p){ const me = nodes.find(n => n.type === 'me'); if(me) p = at(px(me), py(me)); }
@@ -3384,8 +3385,9 @@ document.addEventListener('click', e => {
   const hlb = e.target.closest('#legend [data-lghl], #legend [data-lghlv]');
   if(hlb){
     const kind = hlb.dataset.lghlv != null ? 'v' : 'e', v = kind === 'v' ? hlb.dataset.lghlv : hlb.dataset.lghl;
-    const same = legendHL && legendHL.kind === kind && legendHL.v === v;
-    legendHL = same ? null : {kind, v};
+    const grpEl = hlb.closest('[data-lggrp]'), grp = grpEl ? grpEl.dataset.lggrp : undefined;
+    const same = legendHL && legendHL.kind === kind && legendHL.v === v && legendHL.g === grp;
+    legendHL = same ? null : {kind, v, g:grp};
     /* Société mère : un clic la choisit et déplie ses filiales (les autres sociétés mères se replient) ; un second clic la replie.
        Ses filiales restent dépliées si l’on clique ensuite sur l’une d’elles */
     if(kind === 'v'){
