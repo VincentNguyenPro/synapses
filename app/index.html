@@ -496,6 +496,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 .who .proxrow{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .who .pchip{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px}
 .h3sub{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
+button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
 .lk{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;padding:8px;border-radius:8px;white-space:nowrap}
 .lk:hover{background:var(--accent-soft)}
 .more{font-size:12.5px;color:var(--muted);margin-top:8px}
@@ -3204,7 +3205,7 @@ function personRow(o){
   /* Tout s’affiche en entier (retours à la ligne, jamais de « … ») : nom, poste, valeur de « Colorer par », raisons de proximité */
   const byCo = state.colorBy === 'company', val = DIMS[state.colorBy].get(o);
   const valTxt = byCo && o.company && o.company !== val ? `${val} · ${o.company}` : val;
-  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(t)}</span>` : ''}</strong><span>${esc(o.position || 'Poste non renseigné')}${!byCo && o.company ? ', ' + esc(o.company) : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : ''}</li>`;
+  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(t)}</span>` : ''}</strong><span>${esc(o.position || 'Poste non renseigné')}${!byCo && o.company ? ', ' + esc(o.company) : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : isDemo ? `<button class="lk" type="button" data-act="demolink" aria-label="Profil LinkedIn de ${esc(o.name)} (contact fictif)">LinkedIn ${ICON_EXT}</button>` : ''}</li>`;
 }
 function peopleList(items, title, limit, keepOrder){
   if(!items.length) return '';
@@ -3299,7 +3300,8 @@ function showContact(c){
       <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || 'Poste non renseigné')}${c.company ? ' chez ' + esc(c.company) : ''}</p></div></div>
     ${hlNote}
     ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">Voir le profil LinkedIn ${ICON_EXT}</a>`
-          : `<p class="hint">${isDemo ? 'Contact fictif : le lien vers le profil LinkedIn apparaîtra avec ton propre fichier.' : 'Aucun lien de profil dans le fichier pour ce contact.'}</p>`}
+          : isDemo ? `<button class="btn primary block" type="button" data-act="demolink">Voir le profil LinkedIn ${ICON_EXT}</button>`
+          : '<p class="hint">Aucun lien de profil dans le fichier pour ce contact.</p>'}
     <h3>Tag</h3>
     <div class="tagrow">${TAGS.map(x => `<button class="tag" type="button" data-tc="${c.id}" data-tag="${esc(x)}" aria-pressed="${t === x}">${esc(x)}</button>`).join('')}</div>
     <dl class="facts">
@@ -3909,6 +3911,8 @@ document.addEventListener('click', e => {
     }
     else if(a === 'keepyes') setKeep(true);
     else if(a === 'cibles') showCibles();
+    /* Démo : lien de profil factice (une adresse inventée pourrait être celle d’une vraie personne) */
+    else if(a === 'demolink') toast('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.');
     else if(a === 'relance') showRelance();
     else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
     else if(a === 'cbgo') pickTarget(act.dataset.v);
