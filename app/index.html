@@ -1839,6 +1839,7 @@ const zoom = d3.zoom().scaleExtent([0.02, 5]).on('zoom', e => { root.attr('trans
 svg.call(zoom).on('dblclick.zoom', null).on('click', e => { if(e.target === svg.node()) clearSelection(); });
 
 let nodes = [], links = [], linkSel = null, nodeSel = null, labelSel = null, countSel = null, badgeSel = null, needFit = true;
+let backHub = null; /* groupe dont la fiche était ouverte avant celle du contact (retour à sa fermeture) */
 let gathered = [], collSel = null, tipSel = null, tipHub = null, tipR = 0, collLbl = null, collR = 0, selBlob = null;
 /* Sélection d’un contact : il part au bout de sa branche, ses collègues forment un cercle autour de lui, puis tout revient en place */
 function releaseColleagues(){
@@ -2598,6 +2599,11 @@ function reapplySelection(){
   }
 }
 function clearSelection(){
+  if(backHub && /^c:/.test(state.selected || '')){
+    const h = nodes.find(n => n.id === backHub); backHub = null;
+    if(h){ select(null); clearFocus(); drawerHover = null; spokeHot(null); showHub(h); return; }
+  }
+  backHub = null;
   const was = openHubInfo && ![...legendOpen].some(x => x.startsWith('g:'));
   /* Entreprise ramenée à sa taille normale pendant la sélection : elle retrouve son logo agrandi */
   const shrunk = state.groupBy === 'company' && nodes.some(n => n.type === 'hub' && n.id === state.selected && n.baseR && n.r <= n.baseR && !legendOpen.has('g:' + n.key));
@@ -2667,7 +2673,7 @@ function zoomToNode(n){
 }
 
 function onNodeClick(e, d){
-  e.stopPropagation(); hideTip();
+  e.stopPropagation(); hideTip(); backHub = null;
   if(d.type === 'me'){ showMe(); return; }
   d.type === 'hub' ? showHub(d) : showContact(d.c);
 }
@@ -3495,7 +3501,8 @@ document.addEventListener('click', e => {
   const f = e.target.closest('[data-k]');
   if(f){ toggleInclude(f.dataset.k, f.dataset.v); return; }
   const person = e.target.closest('[data-cid]');
-  if(person){ const c = contacts.find(o => o.id === +person.dataset.cid); if(c){ closePanel(); showContact(c); } }
+  /* Contact ouvert depuis la fiche d’un groupe : en fermant sa fiche, on revient à celle du groupe */
+  if(person){ const c = contacts.find(o => o.id === +person.dataset.cid); if(c){ const from = /^h:/.test(state.selected || '') ? state.selected : null; closePanel(); showContact(c); backHub = from; } }
 });
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
