@@ -72,7 +72,10 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - Graphe (D3) : « Moi » au centre, groupes sur un cercle à angles égaux (ordre croissant depuis midi, sens horaire), contacts en grappes homogènes par valeur de « Colorer par », dans l’ordre de la légende : la plus grosse à midi, puis dans le sens horaire, « autres » en dernier (choix de Vincent du 4 novembre 2026).
 - Performance (mesurée jusqu’à 5 000 contacts, ~10 000 éléments SVG) : ne jamais mettre `opacity` sur les éléments du graphe
   (chaque élément est alors dessiné à part) — estomper avec `fill-opacity` / `stroke-opacity` ; pas de fondu au-delà de 2 500 contacts
-  (classe `heavy`) ; `ticked` ne réécrit que les points qui ont bougé ; la largeur des noms de groupes est mise en cache (`__w13`).
+  (classe `heavy`) ; `ticked` ne réécrit que les points qui ont bougé ; la largeur des noms de groupes est mise en cache par texte (`LBL_W`).
+  Au-delà de 2 000 contacts affichés (800 sur téléphone ou écran tactile), les points sont placés directement sans glissement (`settle`) : l’animation tombait à 5 images/s sur téléphone.
+  Taille du graphe en mémoire (`svgW`, remise à zéro par le ResizeObserver) ; PapaParse et JSZip chargés à la demande (`loadImportLibs`, SRI conservée), préchargés 3 s après l’affichage.
+  Mesurer : `perf-mobile` (processeur ÷ 4, 4G lente, 4 566 contacts) ; repères du 5 novembre 2026 : actions 0,2 à 0,5 s, 43 à 59 images/s.
 - Le code lié à claude.ai (`window.claude`, capacité `sample`) est inactif ici : sur le site public, le classement par IA passe par `callLLM` et la clé de l’utilisateur.
 
 ## Règles de design acquises (validées avec Vincent)

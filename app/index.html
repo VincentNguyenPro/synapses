@@ -23,8 +23,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <!-- Empreintes SRI : le navigateur refuse une bibliothèque modifiée sur le CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="preconnect" href="https://afvmshbacxaznhmlgkzc.supabase.co" crossorigin>
 <style>
 :root{
   --bg:#EDF1F5; --surface:#FFFFFF; --surface-2:#F4F7FA; --ink:#17212E; --muted:#5B6B7C; --line:#D5DDE5; --link:#C3CEDA;
@@ -943,10 +942,14 @@ const cibleOf = v => cibleIndex().find(r => norm(r.v) === norm(v));
    Ceux avec qui tu as vraiment échangé (au moins 3 messages) mais plus depuis un an, les plus proches d’abord ;
    et tes invitations encore sans réponse (Invitations.csv). Calculé dans le navigateur, rien n’est envoyé. */
 const RELANCE_MIN_MSG = 3, RELANCE_MONTHS = 12;
+let relanceMemo = null; /* recalculée seulement quand le réseau, la proximité ou les tags changent (elle l’était à chaque affichage) */
 function relanceList(){
   if(isDemo || !proxData) return [];
-  return contacts.filter(c => { const d = proxData.u[slugOf(c.url)]; return d && d.t && (d.m || 0) >= RELANCE_MIN_MSG && monthsSince(d.t) >= RELANCE_MONTHS; })
+  if(relanceMemo && relanceMemo.c === contacts && relanceMemo.p === proxData && relanceMemo.x === proxCache) return relanceMemo.list;
+  const list = contacts.filter(c => { const d = proxData.u[slugOf(c.url)]; return d && d.t && (d.m || 0) >= RELANCE_MIN_MSG && monthsSince(d.t) >= RELANCE_MONTHS; })
     .sort((a, b) => proxOf(b).score - proxOf(a).score || a.name.localeCompare(b.name, 'fr'));
+  relanceMemo = {c:contacts, p:proxData, x:proxCache, list};
+  return list;
 }
 const pendingInv = () => (!isDemo && proxData && proxData.p) || {o:[], i:[]};
 function syncRelanceHint(){
@@ -1184,9 +1187,11 @@ let ALIASES = new Map();
 /* Charge les dictionnaires (fichiers statiques du site : aucune donnée de l’utilisateur n’est envoyée) */
 async function loadDictionary(){
   const get = async f => { const r = await fetch(f); if(!r.ok) throw new Error(f + ' : ' + r.status); return r.json(); };
+  /* Les trois fichiers partent en même temps (les domaines attendaient les deux autres) */
+  const domP = get('../data/domaines.json');
   const [co, po] = await Promise.all([get('../data/entreprises.json'), get('../data/postes.json')]);
   /* Domaines des logos : facultatif, sans eux les monogrammes s’affichent */
-  get('../data/domaines.json').then(d => { COMPANY_DOMAINS.clear(); for(const [n, dom] of Object.entries(d.domaines || {})) COMPANY_DOMAINS.set(nkey(n), dom); if(contacts.length && state.groupBy === 'company') render(); }).catch(() => {});
+  domP.then(d => { COMPANY_DOMAINS.clear(); for(const [n, dom] of Object.entries(d.domaines || {})) COMPANY_DOMAINS.set(nkey(n), dom); if(contacts.length && state.groupBy === 'company') render(); }).catch(() => {});
   SECTORS = co.mots_cles.map(m => [m.secteur, new RegExp(m.motif)]);
   BUILTIN.clear();
   for(const [sec, names] of Object.entries(co.secteurs)) names.forEach(n => { const k = nkey(n); if(k && !BUILTIN.has(k)) BUILTIN.set(k, sec); });
@@ -1839,7 +1844,13 @@ async function pushNow(kind, entries){
     } catch(e) { return; } /* hors ligne : on réessaiera au prochain import */
   }
 }
-async function loadShared(){
+/* Une seule requête à la fois : plusieurs appels pendant le chargement attendent la même réponse (elle partait 2 à 3 fois) */
+let sharedPromise = null;
+function loadShared(){
+  if(!sharedPromise) sharedPromise = loadSharedNow().then(ok => { if(!ok) sharedPromise = null; return ok; });
+  return sharedPromise;
+}
+async function loadSharedNow(){
   try {
     const [cos, poss] = await Promise.all([sbAll('dict_entreprises', 'cle,secteur'), sbAll('dict_postes', 'cle,fonction,seniorite')]);
     /* Ajouts validés par l’administrateur : traités comme des corrections humaines */
@@ -2114,7 +2125,7 @@ function releaseColleagues(){
   if(tipHub){ tipHub.extra = 0; tipHub = null; }
   if(selBlob){ selBlob = null; drawRings(); }
   gColl.selectAll('*').remove(); collSel = null; tipSel = null; collLbl = null; collSide = null;
-  setXY(); sim.alpha(0.5).restart(); positionLabels();
+  setXY(); settle(0.5); positionLabels();
 }
 /* Étiquette « N collègues chez … » : hors du cercle de la grappe, du premier côté libre (dessous, dessus, droite, gauche),
    sans toucher le nœud du groupe, sa jauge ni son nom */
@@ -2191,11 +2202,24 @@ function gatherColleagues(sn, cn){
     collLbl = gColl.append('text').attr('class', 'colllbl').text(`${cn.length} collègue${cn.length > 1 ? 's' : ''} chez ${coOf(sn.c)}`);
     styleLabels();
   }
-  setXY(); sim.alpha(0.7).restart(); positionLabels(); drawRings();
+  setXY(); settle(0.7); positionLabels(); drawRings();
 }
 const pos = new Map();
-const W = () => svg.node().clientWidth || 600, H = () => svg.node().clientHeight || 500;
+/* Taille du graphe gardée en mémoire (remise à zéro par le ResizeObserver) : la relire après chaque changement forçait
+   le navigateur à recalculer toute la page en plein milieu du dessin */
+let svgW = 0, svgH = 0;
+const W = () => svgW || (svgW = svg.node().clientWidth) || 600, H = () => svgH || (svgH = svg.node().clientHeight) || 500;
 const sim = d3.forceSimulation().alphaDecay(0.035).on('tick', ticked);
+/* Mise en place des points : glissement animé sur un petit réseau ; au-delà de 2 000 contacts affichés (800 sur téléphone
+   ou écran tactile), placement direct à leur position finale. Animer des milliers de points tombait à 5 images par seconde
+   pendant plus de 3 s sur téléphone ; les positions finales sont les mêmes. */
+function settle(alpha){
+  const nc = nodes.reduce((s, n) => s + (n.type === 'c'), 0);
+  if(nc <= (coarse || narrowScreen() ? 800 : 2000)){ sim.alpha(alpha).restart(); return; }
+  sim.stop();
+  for(const n of nodes) if(n.type === 'c' && n.ax != null){ n.x = n.ax; n.y = n.ay; n.vx = n.vy = 0; }
+  sim.alpha(0); ticked();
+}
 
 const drag = d3.drag()
   .filter((e, d) => !e.ctrlKey && !e.button && d.type !== 'me')
@@ -2223,14 +2247,21 @@ function positionLabels(){
   if(badgeSel) badgeSel.attr('transform', d => `translate(${d.x},${d.y})`);
 }
 /* Géométrie d’un nom : point d’ancrage dans le graphe et largeur à l’écran en taille pleine (13 px) */
+const LBL_W = new Map();
 function lblGeo(el){
   const d = el.__data__, a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0);
   /* Largeur à l’écran en taille pleine : constante quel que soit le zoom, donc mesurée une seule fois par affichage */
   let m = el.__w13;
   if(!m){
     const K = Math.max(zk, LK), len = sel => { const t = el.querySelector(sel); try { return t && t.getComputedTextLength() * K / labelF || 0; } catch(e) { return 0; } };
-    const a1 = len('tspan.lblName:not(.lblName2)'), a1b = len('tspan.lblName2'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
-    m = {w1:a1 + a1b + a2 + a3 + 4, w2:Math.max(a1, a1b, a2 + a3)};
+    /* Même texte, même largeur : mesurée une fois par texte (la remesurer à chaque affichage coûtait 0,15 s sur téléphone) */
+    const ck = el.textContent + '|' + (el.__nl || 1) + '|' + (el.__small ? 1 : 0), hit = LBL_W.get(ck);
+    if(hit) m = hit;
+    else {
+      const a1 = len('tspan.lblName:not(.lblName2)'), a1b = len('tspan.lblName2'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
+      m = {w1:a1 + a1b + a2 + a3 + 4, w2:Math.max(a1, a1b, a2 + a3)};
+      if(m.w1 > 4 && isFinite(m.w1)){ if(LBL_W.size > 2000) LBL_W.clear(); LBL_W.set(ck, m); }
+    }
     if(m.w1 > 4 && isFinite(m.w1)) el.__w13 = m; else { const n = (el.textContent || '').length * 7.4; m = {w1:n, w2:n * 0.6}; }
   }
   return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w:m.w1, w2:m.w2, nl:el.__nl || 1};
@@ -2609,8 +2640,10 @@ function sizePins(){
 document.addEventListener('load', e => { if(e.target.classList && e.target.classList.contains('lgimg')) e.target.parentNode.classList.add('hasl'); }, true);
 document.addEventListener('error', e => { if(e.target.classList && e.target.classList.contains('lgimg')){ logoFails.add(e.target.dataset.dom); e.target.remove(); } }, true);
 function setXY(){
-  sim.force('x', d3.forceX(d => d.type === 'c' ? d.ax : W() / 2).strength(d => d.type === 'c' ? 0.3 : 0))
-     .force('y', d3.forceY(d => d.type === 'c' ? d.ay : H() / 2).strength(d => d.type === 'c' ? 0.3 : 0));
+  /* Largeur et hauteur lues une seule fois (les relire pour chacun des milliers de points coûtait 0,1 s sur téléphone) */
+  const cx = W() / 2, cy = H() / 2;
+  sim.force('x', d3.forceX(d => d.type === 'c' ? d.ax : cx).strength(d => d.type === 'c' ? 0.3 : 0))
+     .force('y', d3.forceY(d => d.type === 'c' ? d.ay : cy).strength(d => d.type === 'c' ? 0.3 : 0));
 }
 
 /* Au-delà de la palette (groupe ouvert avec plus de 15 grappes) : teintes réparties selon l’angle d’or, jamais déjà utilisées dans le groupe */
@@ -2786,7 +2819,7 @@ function renderGraph(vis){
   setXY();
   /* Les branches « Moi » sont recalculées au prochain tick (le groupe ouvert a pu changer sans que rien ne bouge) */
   nodes.forEach(n => { if(n.type === 'me') n._rx = undefined; });
-  sim.alpha(pos.size ? 0.6 : 1).restart();
+  settle(pos.size ? 0.6 : 1);
 }
 
 /* Zone réellement visible du graphe : on retire la place occupée par la légende (à droite ou en bas, selon ce qui laisse le plus d’espace) */
@@ -3766,9 +3799,22 @@ function profileFrom(texts){
   if(!out.position && out.headline) out.position = out.headline;
   return out;
 }
+/* PapaParse et JSZip ne servent qu’à l’import : chargés à la demande (ou en tâche de fond une fois la page prête),
+   pas au premier affichage. Versions figées et empreintes SRI, comme avant. */
+const IMPORT_LIBS = [['https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js', 'sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=='], ['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==']];
+let importLibsP = null;
+function loadImportLibs(){
+  if(window.Papa && window.JSZip) return Promise.resolve();
+  if(!importLibsP) importLibsP = Promise.all(IMPORT_LIBS.map(([src, integrity]) => new Promise((res, rej) => {
+    const sc = Object.assign(document.createElement('script'), {src, integrity, crossOrigin:'anonymous', referrerPolicy:'no-referrer', onload:res, onerror:rej});
+    document.head.appendChild(sc);
+  }))).catch(e => { importLibsP = null; throw e; });
+  return importLibsP;
+}
 async function handleFiles(fileList){
   const files = [...(fileList || [])];
   if(!files.length) return;
+  try { await loadImportLibs(); } catch(e){ showHelp('Le lecteur de fichiers n’a pas pu être chargé. Vérifie ta connexion, puis réessaie.'); return; }
   const texts = {}, sig = {};
   try {
     for(const f of files){
@@ -4029,6 +4075,7 @@ window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; dz.hidden = true; if(e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
 
 new ResizeObserver(() => {
+  svgW = svgH = 0;
   syncLegendRoom();
   if(!nodes.length || state.view !== 'graph') return;
   applyLayout(); drawRings();
@@ -4036,7 +4083,7 @@ new ResizeObserver(() => {
   gathered.forEach(n => { n.homeX = n.homeY = null; }); gathered = [];
   gColl.selectAll('*').remove(); collSel = null; collLbl = null; collSide = null; selBlob = null;
   reapplySelection();
-  setXY(); sim.alpha(0.3).restart();
+  setXY(); settle(0.3);
   needFit = true;
   /* Sélection en cours (par exemple fiche ouverte sur téléphone, qui masque les bandeaux) : on la recadre dans la nouvelle zone libre */
   const sn = state.selected && drawer.classList.contains('open') ? nodes.find(n => n.id === state.selected) : null;
@@ -4052,6 +4099,8 @@ loadDictionary()
     if(list.length){ lastRaw = kept.raw; keptAt = kept.saved || 0; setProx(kept.prox); cibleData = Array.isArray(kept.cibles) ? kept.cibles : null; load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
     else load(demoContacts(), true);
     if(location.hash === '#importer') showHelp();
+    /* Lecteurs de fichiers en tâche de fond, une fois la page affichée : l’import reste immédiat */
+    setTimeout(() => loadImportLibs().catch(() => {}), 3000);
   });
 })();
 </script>
