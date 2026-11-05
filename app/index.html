@@ -2601,7 +2601,7 @@ function clearSelection(){
   const was = openHubInfo && ![...legendOpen].some(x => x.startsWith('g:'));
   /* Entreprise ramenée à sa taille normale pendant la sélection : elle retrouve son logo agrandi */
   const shrunk = state.groupBy === 'company' && nodes.some(n => n.type === 'hub' && n.id === state.selected && n.baseR && n.r <= n.baseR && !legendOpen.has('g:' + n.key));
-  select(null); clearFocus(); closeDrawer();
+  select(null); clearFocus(); closeDrawer(); drawerHover = null; spokeHot(null);
   if(shrunk && !(was && levelMap.size)){ needFit = true; render(); return; }
   /* Retour au cadrage d’avant la fiche : l’entreprise choisie dans la légende, sinon le groupe ouvert, sinon tout le réseau */
   if(was && levelMap.size) render(); else if(state.view === 'graph' && !applyLegendHL(true) && !focusLegendGroup(true)) fit();
@@ -3022,8 +3022,10 @@ document.addEventListener('pointerover', e => {
   const hub = nodes.find(n => n.id === state.selected && n.type === 'hub'); if(!hub) return;
   const members = nodes.filter(n => n.type === 'c' && n.hub === hub.id);
   const ref = row || dbody.querySelector('.hl.on');
-  const match = ref ? rowMatch(ref) : () => true;
-  focus(new Set([hub.id, ...members.filter(match).map(n => n.id)]));
+  const match = ref ? rowMatch(ref) : () => true, ms = members.filter(match);
+  focus(new Set([hub.id, ...ms.map(n => n.id)]));
+  /* Trait entre le groupe et la ou les grappes de la ligne */
+  spokeHot(ref ? new Set(ms.map(n => hub.id + '|' + levelOf(n.c))) : null);
 });
 function highlightRow(row){
   const hub = nodes.find(n => n.id === state.selected && n.type === 'hub'); if(!hub) return;
@@ -3032,7 +3034,9 @@ function highlightRow(row){
   dbody.querySelectorAll('.hl.on').forEach(r => r.classList.remove('on'));
   let match = () => true;
   if(on){ row.classList.add('on'); match = rowMatch(row); }
-  focus(new Set([hub.id, ...members.filter(match).map(n => n.id)]));
+  const ms = members.filter(match);
+  focus(new Set([hub.id, ...ms.map(n => n.id)]));
+  spokeHot(on ? new Set(ms.map(n => hub.id + '|' + levelOf(n.c))) : null);
 }
 /* Bulle avec le nom complet au survol d’un nom coupé par « … » (répartition, légende, filtres) */
 const NAME_SEL = '.drawer .legendlist :is(div,summary) > span:not(.dot):not(.n):not(.pct), .lgl, .lgsubs li span:first-child, .chip.frow .flbl';
