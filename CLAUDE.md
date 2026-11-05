@@ -78,7 +78,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - Filtres et légende en lignes avec un fin trait de poids ; sélection = case cochée + fond bleuté + bordure.
 - Typographie française : apostrophe ’, guillemets « », espace insécable avant « : » et « % ».
 
-- Un seul groupe affiché (filtre) : branche courte (60 px) et cadrage sur le groupe, « Moi » à moitié visible en bas (`fit`, `solo`), pour que la bulle prenne le plus de place possible (choix de Vincent du 5 novembre 2026).
+- Un seul groupe affiché (filtre) : branche courte (25 px) et cadrage sur le groupe, « Moi » réduit (initiales) et à moitié visible en bas, nom du groupe agrandi (`fit`, `solo`), pour que la bulle prenne le plus de place possible (choix de Vincent du 5 novembre 2026).
 - Téléphone (≤ 760 px) : écran petit, ne pas le charger. Champs à 16 px (sinon Safari iOS zoome), sections du panneau repliées au départ, phrases d’aide fixes masquées, bandeau de démo sur une ligne, noms de groupes du graphe sur deux lignes (`wrapLabel`) plutôt que tronqués. Vérifier dans le simulateur iPhone (Xcode, Safari) en plus de l’émulation.
 - Textes : courts et synthétiques (choix de Vincent du 5 novembre 2026) ; « Tes données » en liste à puces.
 
