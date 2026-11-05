@@ -46,6 +46,8 @@
   --accent:#7D95FF; --accent-soft:#25304F; --on-accent:#0F151C; --hub:#22303D; --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
+/* Le contenu d’un <details> passe par un emplacement interne qui n’hérite pas : on rétablit border-box (sinon champs et listes débordent) */
+details > *{box-sizing:border-box}
 [hidden]{display:none !important}
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
 html,body{height:100%;margin:0}
@@ -64,7 +66,7 @@ header{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:10px 16
 .search{flex:1;max-width:640px;margin:0 auto;position:relative}
 .search input[type=search]{width:100%;padding:10px 14px 10px 40px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);font-size:14px}
 .search input[type=search]:focus{background:var(--surface);border-color:var(--accent)}
-.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;z-index:1;width:18px;height:18px}
 .hdr-actions{display:flex;gap:8px;flex:none}
 
 /* Buttons */
@@ -145,14 +147,17 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .chip[aria-pressed="true"]::before{content:"✓";background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:800}
 .chipfoot{flex-basis:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:4px}
 /* Filtres en barres : la longueur de chaque barre montre le poids de la valeur (relatif à la plus grande) */
-.chip.frow{position:relative;width:100%;border-radius:9px;padding:6px 10px 12px;gap:8px;overflow:hidden;isolation:isolate;min-height:38px}
+.chip.frow{position:relative;width:100%;border-radius:9px;padding:5px 10px 9px;gap:8px;overflow:hidden;isolation:isolate;min-height:34px}
+.chips:has(.frow){gap:4px}
 /* Barre de poids : fin trait sous le libellé, pour ne jamais être confondue avec une sélection (fond bleuté + bordure) */
-.chip.frow .fbar{position:absolute;left:10px;bottom:5px;height:4px;background:var(--accent);opacity:.55;border-radius:2px;transition:width .3s ease}
-.chip.frow .flbl{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.frow .fbar{position:absolute;left:10px;bottom:4px;height:3px;background:var(--accent);opacity:.55;border-radius:2px;transition:width .3s ease}
+/* Nom entier, sur deux lignes si besoin (« Secteur public & éducation ») */
+.chip.frow .flbl{flex:1;text-align:left;min-width:0;line-height:1.25;overflow-wrap:anywhere}
 .chip.frow .n{font-weight:700;color:var(--ink)}
 .chip.frow .pct{background:none;padding:0;min-width:36px;text-align:right}
 .chip.frow[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .chip.frow[aria-pressed="true"] .fbar{opacity:1}
+.chip.frow[aria-pressed="true"] .pct{background:none}
 .hlnote{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:8px 10px;margin:0 0 14px !important}
 .hldot{width:10px;height:10px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--surface);flex:none;margin-top:4px}
 .hlkey{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
@@ -161,6 +166,9 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .colllbl{font-weight:700;fill:var(--ink);text-anchor:middle;dominant-baseline:hanging;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;pointer-events:none}
 @media (prefers-reduced-motion: reduce){.chip.frow .fbar{transition:none}}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.dlist{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.dlist li{margin-bottom:5px}
+.dlist b{color:var(--ink)}
 .privacy{font-size:12.5px;color:var(--muted);padding:16px 18px 24px;margin:0}
 .stats{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;margin:0}
 .stats dt{color:var(--muted)}
@@ -225,6 +233,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .spoke.hot{display:inline}
 .pin{cursor:pointer}
 .tgwrap,.search{position:relative}
+.tgwrap .btn{min-height:0;padding:8px 13px;flex:none}
 #q{position:relative}
 .tgghost{position:absolute;pointer-events:none;color:var(--muted);white-space:pre;overflow:hidden;box-sizing:border-box;z-index:1}
 .tgghost .tgt{color:transparent}
@@ -517,6 +526,13 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
   /* Safari iOS zoome sur un champ dont le texte fait moins de 16 px : on les met à 16 px sur téléphone */
   input[type=text],input[type=search],input[type=email],input[type=url],select,textarea{font-size:16px !important}
   aside .privacy{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  /* Téléphone : moins de texte, l’écran est petit (phrases d’aide fixes masquées ; les aides calculées, avec un id, restent) */
+  /* Bandeau de démo sur une ligne : le bouton d’aide reste dans l’en-tête (?) */
+  .demo.isdemo{flex-wrap:nowrap;padding:8px 10px;gap:8px}
+  .demo.isdemo div:first-child{min-width:0;font-size:12.5px}
+  .demo.isdemo strong{font-size:13px}
+  .demo.isdemo .demohelp{display:none}
+  #panel .field > .hint:not([id]), #panel details.acc > .hint, #myViews .hint, #timeline .hint{display:none}
   .sheethead{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--surface);padding:18px 18px 12px;border-bottom:1px solid var(--line);z-index:1}
   .grab{position:absolute;left:50%;top:7px;width:40px;height:4px;border-radius:2px;background:var(--line);transform:translateX(-50%)}
   .bar{padding:10px 12px 0}
@@ -582,7 +598,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
       <div class="field">
         <label for="target">Trouver une porte d’entrée</label>
         <p class="hint">Qui peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
-        <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
+        <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
           <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
         <p class="hint" id="cibleHint" hidden></p>
         <p class="hint" id="relanceHint" hidden></p>
@@ -942,7 +958,7 @@ function showRelance(){
   const invRow = x => `<li class="invrow"><span class="who"><strong>${esc(x.n)}</strong><span>${x.d ? 'Envoyée ' + esc(sinceFr(x.d + '-15')) : ''}</span></span><a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(x.n)}">LinkedIn ${ICON_EXT}</a></li>`;
   const invList = (arr, title, note) => arr.length ? `<h3>${title} <small class="h3sub">${arr.length}</small></h3><p class="pos">${note}</p><ul class="people">${[...arr].sort((a, b) => (b.d || '').localeCompare(a.d || '')).slice(0, 30).map(invRow).join('')}</ul>${arr.length > 30 ? `<p class="more">et ${arr.length - 30} autres</p>` : ''}` : '';
   openDrawer(`<h2 id="dtitle" tabindex="-1">Contacts à relancer</h2>
-    <p class="pos">${list.length ? `Les ${list.length} personnes avec qui tu as échangé au moins ${RELANCE_MIN_MSG} messages, mais plus depuis un an, les plus proches de toi d’abord. Un message pour prendre des nouvelles entretient ton réseau avant d’en avoir besoin.` : `Personne à relancer&nbsp;: tu as échangé récemment avec tous les contacts à qui tu écrivais souvent.`}</p>
+    <p class="pos">${list.length ? `${list.length} personnes avec qui tu as échangé au moins ${RELANCE_MIN_MSG} messages, mais plus depuis un an. Les plus proches d’abord.` : `Personne à relancer&nbsp;: tu as échangé récemment avec tous les contacts à qui tu écrivais souvent.`}</p>
     ${peopleList(list, '', 50, true)}
     ${invList(inv.o, 'Invitations envoyées sans réponse', 'Tu as invité ces personnes, elles n’ont pas encore accepté. Les plus récentes d’abord.')}
     ${invList(inv.i, 'Invitations reçues en attente', 'Ces personnes t’ont invité ; tu n’as pas encore répondu.')}
@@ -963,7 +979,7 @@ function showCibles(){
   const logo = v => { const u = logoUrl(v); return `<span class="cblogo" aria-hidden="true">${u ? `<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${esc((v.match(/[A-Za-zÀ-ÿ0-9]/) || ['?'])[0].toUpperCase())}</span>`; };
   const row = r => `<li><button class="cbrow" type="button" data-act="cbgo" data-v="${esc(r.v)}">${logo(r.v)}<span class="cbtxt"><b>${esc(r.v)}</b><small>${esc(cibleMeta(r))}</small></span><span class="n">${r.n}<small>contact${r.n > 1 ? 's' : ''}</small></span></button></li>`;
   openDrawer(`<h2 id="dtitle" tabindex="-1">Tes entreprises cibles</h2>
-    <p class="pos">Les entreprises où tu as postulé, dont tu as enregistré une offre, que tu as notées comme entreprises de rêve ou que tu suis, d’après ton export LinkedIn, avec le nombre de tes contacts qui y travaillent. Clique sur une entreprise pour voir qui peut t’en ouvrir la porte.</p>
+    <p class="pos">Où tu as postulé, enregistré une offre ou que tu suis, et combien de tes contacts y travaillent. Touche une entreprise pour voir qui peut t’en ouvrir la porte.</p>
     <div class="cbchips" role="group" aria-label="Filtrer les entreprises cibles">${chip('', 'Toutes', all.length)}${Object.keys(CIBLE_KIND).filter(cnt).map(k => chip(k, CIBLE_KIND[k].pl, cnt(k))).join('')}</div>
     ${withC.length ? `<h3>${withC.length} où tu connais quelqu’un</h3><ul class="cbl">${withC.map(row).join('')}</ul>` : '<p class="pos">Aucun de tes contacts n’y travaille pour l’instant.</p>'}
     ${without.length ? `<h3>${without.length} sans contact dans ton réseau</h3><p class="pos">${without.slice(0, 25).map(r => esc(r.v)).join(', ')}${without.length > 25 ? `, et ${without.length - 25} autres` : ''}.</p>` : ''}
@@ -1007,7 +1023,7 @@ async function setKeep(on){
 }
 function keepCard(){
   if(isDemo || keepAsked || keepOn() || !contacts.length) return '';
-  return `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Tu le retrouveras après un rafraîchissement, sans réimporter ton fichier. Il reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.</span></div>
+  return `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé ; à éviter sur un ordinateur partagé.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Garder sur cet appareil</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
 }
 /* Section « Mon réseau » en haut du panneau : état du réseau importé et bouton pour le garder ou l’oublier */
@@ -1367,7 +1383,7 @@ function buildChips(k, id){
   if(fld){ fld.hidden = !!DIMS[k].optional && !contacts.some(c => c[DIMS[k].optional]); if(fld.hidden){ document.getElementById(id).innerHTML = ''; return; } }
   const el = document.getElementById(id);
   if(k === 'tag' && !contacts.some(c => tagOf(c))){
-    el.innerHTML = '<p class="hint" style="margin:0">Ouvre la fiche d’un contact pour lui attribuer un tag (client, mentor…). Tu pourras ensuite filtrer ici.</p>';
+    el.innerHTML = '<p class="hint" style="margin:0">Ajoute un tag depuis la fiche d’un contact (client, mentor…) pour filtrer ici.</p>';
     return;
   }
   const counts = d3.rollup(contacts, v => v.length, DIMS[k].get);
@@ -1977,7 +1993,7 @@ function aiCard(){
   const {cos, poss} = aiPending();
   if(!cos.length && !poss.length) return '';
   const nc = contacts.filter(c => c.sector === 'Non classé').length;
-  return `<div class="demo" role="note"><div><strong>Affine la classification avec une IA</strong><span>${nc ? `${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». ` : 'Certaines entreprises ou certains intitulés de poste ne sont pas reconnus. '}Claude, ChatGPT ou Gemini, avec ta clé API, peut reconnaître les entreprises et lire les intitulés de poste. Seuls les noms d’entreprises et les intitulés de poste sont envoyés.</span></div>
+  return `<div class="demo" role="note"><div><strong>Affine la classification avec une IA</strong><span>${nc ? `${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». ` : 'Certaines entreprises ou certains intitulés de poste ne sont pas reconnus. '}Une IA (ta clé Claude, ChatGPT ou Gemini) peut les classer. Seuls les noms d’entreprises et les intitulés de poste lui sont envoyés.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="${sampleFn ? 'ai' : 'aisetup'}">${sampleFn ? 'Affiner avec Claude' : 'Choisir une IA'}</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Masquer ce message">✕</button></div></div>`;
 }
 
@@ -1988,7 +2004,7 @@ function syncAIField(){
   if(f.hidden) return;
   const nc = contacts.filter(c => c.sector === 'Non classé').length, b = document.getElementById('aiBtn');
   document.getElementById('aiHint').textContent = aiRun ? 'Classification en cours…'
-    : `${nc ? `${nc} contact${nc > 1 ? 's' : ''} en « Non classé » (${pct(nc, contacts.length)}). ` : 'Tous tes contacts ont un secteur. '}Avec ta clé API Claude, ChatGPT ou Gemini, une IA classe les entreprises et intitulés de poste non reconnus.`;
+    : `${nc ? `${nc} contact${nc > 1 ? 's' : ''} en « Non classé » (${pct(nc, contacts.length)}). ` : 'Tous tes contacts ont un secteur. '}Une IA (ta clé Claude, ChatGPT ou Gemini) peut classer les entreprises et postes non reconnus.`;
   b.dataset.act = sampleFn ? 'ai' : 'aisetup';
   b.textContent = sampleFn ? 'Affiner avec Claude' : 'Classer avec une IA';
   b.disabled = !!aiRun;
@@ -1998,10 +2014,10 @@ function syncAIField(){
 function renderBar(vis){
   syncAIField(); syncKeepField();
   const af = activeFilters();
-  const demo = isDemo && !demoHidden ? `<div class="demo" role="note">
-      <div><strong>Tu explores un réseau de démonstration</strong><span>150 contacts fictifs. Importe ton export LinkedIn avec le bouton en haut à droite pour voir ton propre réseau.</span></div>
+  const demo = isDemo && !demoHidden ? `<div class="demo isdemo" role="note">
+      <div><strong>Tu explores un réseau de démonstration</strong><span>150 contacts fictifs. Importe ton export pour voir ton réseau.</span></div>
       <div class="demo-actions">
-        <button class="btn sm" type="button" data-act="help">Comment l’obtenir</button>
+        <button class="btn sm demohelp" type="button" data-act="help">Comment l’obtenir</button>
         <button class="btn icon-btn sm" type="button" data-act="dismiss" aria-label="Masquer ce message">✕</button>
       </div></div>` : '';
   const keep = aiRun ? '' : keepCard();
@@ -2064,7 +2080,7 @@ function syncTopN(total){
     f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, Math.min(tot, OPEN_MAX)); r.value = n;
     lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
     document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
-    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, sur un seul cercle, dans l’ordre de la légende (la plus grosse à midi, puis dans le sens horaire), jusqu’à ${OPEN_MAX} ; les autres sont réunies dans « autres ». Survole une grappe pour voir son nom. Replie le groupe dans la légende pour régler à nouveau les branches.`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, la plus grosse à midi, jusqu’à ${OPEN_MAX} ; le reste dans « autres ».`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
@@ -3118,7 +3134,7 @@ function legendTree(vis){
     }
   }
   const crumbHtml = crumbs.length ? `<nav class="lgcrumbs" aria-label="Niveau affiché">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<button type="button" class="linkbtn" data-lgup="${c.lvl}" data-v="${esc(c.label)}">${esc(c.label)}</button>` : `<strong aria-current="true">${esc(c.label)}</strong>`).join('<span aria-hidden="true"> › </span>')}</nav>` : '';
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour zoomer dessus et voir sa répartition par ${esc(cdim.label.toLowerCase())}, puis une valeur pour zoomer sur ses contacts.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour zoomer dessus, puis une valeur pour voir ses contacts.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
   $('#legend').hidden = !vis.length;
 }
 function updateLegend(vis){
@@ -3222,6 +3238,7 @@ const ACC_KEY = 'synapses-panneau-v1';
   let st = {}; try { st = JSON.parse(localStorage.getItem(ACC_KEY) || '{}') || {}; } catch(e) {}
   document.querySelectorAll('details.acc').forEach(d => {
     if(st[d.dataset.acc] != null) d.open = st[d.dataset.acc];
+    else if(narrowScreen()) d.open = false; /* téléphone : tout replié au départ, chaque section visible avec son résumé */
     d.addEventListener('toggle', () => { st[d.dataset.acc] = d.open; try { localStorage.setItem(ACC_KEY, JSON.stringify(st)); } catch(e) {} });
     d.querySelector('summary').addEventListener('click', e => { if(e.target.closest('button')) e.preventDefault(); });
   });
@@ -3262,7 +3279,7 @@ function showContact(c){
   const shownIds = new Set(nodes.map(n => n.id));
   const coVals = colorDomain.filter(v => [c, ...sameCo].some(o => shownIds.has('c:' + o.id) && cdimK.get(o) === v));
   const keyHtml = visCo ? `<span class="hlkey"><span class="hlkt">Couleur des points : ${esc(cdimK.label.toLowerCase())}</span>${coVals.map(v => `<span class="hlki"><span class="dot" style="background:${colorFn(v)}"></span>${esc(v)}</span>`).join('')}</span>` : '';
-  const hlNote = state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(coOf(c))}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Son point est placé au centre de sa grappe le temps de la sélection. Les autres contacts sont atténués, ce n’est pas un filtre.${keyHtml}</span></p>` : '';
+  const hlNote = state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(coOf(c))}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Les autres sont atténués, pas filtrés.${keyHtml}</span></p>` : '';
   openDrawer(`
     <div class="dhead">${avatar(c, true)}
       <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || 'Poste non renseigné')}${c.company ? ' chez ' + esc(c.company) : ''}</p></div></div>
@@ -3285,7 +3302,7 @@ function showContact(c){
     </dl>
     ${peopleList(sameCo, `Aussi chez ${esc(coOf(c))} (${sameCo.length})`, 8)}
     ${peopleList(sameSchool, `Même formation (${sameSchool.length})`, 6)}
-    <p class="note">Secteur, fonction et séniorité sont estimés. Une estimation te semble fausse ? Corrige-la ci-dessus : la correction s’applique à tous les contacts de la même entreprise ou du même intitulé de poste. L’icône est déduite du prénom et reste neutre quand il est mixte ou inconnu.</p>
+    <p class="note">Secteur, fonction et séniorité sont estimés. Une erreur&nbsp;? Corrige-la ci-dessus&nbsp;: elle vaut pour toute l’entreprise ou tout l’intitulé.</p>
     ${shareBox()}`);
   zoomToNode(node);
 }
@@ -3466,8 +3483,14 @@ async function sendFeedback(){
 }
 
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun et note la date du dernier, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Les entreprises où tu as postulé, dont tu as enregistré une offre ou que tu suis sont croisées avec ton réseau de la même façon, sans rien envoyer. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as choisi de le garder (section « Mon réseau » du panneau). Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
-    <p class="pos">En regroupant ou en colorant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
+    <ul class="dlist">
+      <li><b>Ton fichier</b> est lu dans ce navigateur, jamais envoyé.</li>
+      <li><b>Emails</b> de tes contacts&nbsp;: affichés, jamais enregistrés ni envoyés.</li>
+      <li><b>Proximité</b>&nbsp;: nombre et date des messages, recommandations, compétences recommandées. Jamais le texte des messages.</li>
+      <li><b>Entreprises cibles</b>&nbsp;: candidatures, offres et entreprises suivies, croisées avec ton réseau sur place.</li>
+      <li><b>Sur cet appareil</b>&nbsp;: profil, tags, vues, corrections, et ton réseau sans les emails si tu le gardes.</li>
+      <li><b>Seuls envois</b>&nbsp;: +1 à un compteur anonyme par import, ton avis si tu l’envoies, et le site des entreprises à Brandfetch pour les logos (désactivable dans Affichage).</li>
+    </ul>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
 
@@ -3537,15 +3560,14 @@ function showHelp(msg){
     ${msg ? `<p class="hint" style="color:#C2417A;font-weight:700">${msg}</p>` : ''}
     <h2 id="dtitle" tabindex="-1">Récupérer tes contacts LinkedIn</h2>
     <ol>
-      <li>Sur LinkedIn, ouvre Préférences, puis Confidentialité des données, puis « Obtenir une copie de vos données ».</li>
-      <li>Coche uniquement « Relations » et demande l’archive. Elle arrive par email en une dizaine de minutes.</li>
-      <li>Importe directement l’archive .zip reçue, ou seulement le fichier Connections.csv qu’elle contient. Tu peux aussi la déposer sur cette page.</li>
+      <li>Sur LinkedIn&nbsp;: Préférences › Confidentialité des données › « Obtenir une copie de vos données ».</li>
+      <li>Demande l’archive complète&nbsp;: ton profil, tes messages et tes candidatures enrichissent le graphe. « Relations » seule arrive plus vite, en une dizaine de minutes.</li>
+      <li>Importe le .zip reçu (ou dépose-le sur la page).</li>
     </ol>
-    <p class="pos">Pour afficher ton nom et ton poste au centre du graphe, demande plutôt l’archive complète : elle contient aussi ton profil, que l’app lit automatiquement, ainsi que tes candidatures et offres enregistrées&nbsp;: Synapses te montre alors qui tu connais dans ces entreprises.</p>
     <h3>Ce que contient l’export</h3>
-    <p class="pos">Nom, entreprise actuelle, poste, date de connexion et lien du profil, ainsi que l’email des contacts qui ont autorisé son partage. Secteur, fonction et séniorité sont estimés à partir de ces champs.</p>
+    <p class="pos">Pour chaque contact&nbsp;: nom, entreprise, poste, date de connexion, lien du profil, et l’email s’il l’a partagé. Secteur, fonction et séniorité en sont estimés.</p>
     <h3>Aller plus loin</h3>
-    <p class="pos">Pour filtrer par pays, ville, formation ou expérience, ajoute dans le CSV des colonnes « Localisation » (par exemple « Paris, France »), « Pays », « Formation », « Expérience » (en années) ou « Secteur » avant l’import. Le pays est déduit automatiquement de la localisation.</p>
+    <p class="pos">Pays, ville, formation et expérience n’y sont pas. Pour filtrer dessus, ajoute au CSV des colonnes « Localisation » (ex. « Paris, France »), « Formation », « Expérience » (en années) ou « Secteur ».</p>
     <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>
     ${WIPE_BLOCK()}`);
 }
@@ -3670,7 +3692,7 @@ function findEntry(exact){
   select(null); focus(ids);
   openDrawer(`<h2 id="dtitle" tabindex="-1">Portes d’entrée vers ${esc(raw)}</h2>
     ${(cb => cb ? `<p class="pos"><strong>Entreprise cible</strong>&nbsp;: ${esc(cibleMeta(cb))}.</p>` : '')(cibleOf(raw))}
-    <p class="pos">${m.length ? `${m.length} contact${m.length > 1 ? 's' : ''} lié${m.length > 1 ? 's' : ''} à ta recherche, les plus seniors en premier.` : 'Aucun contact ne correspond. Essaie un nom d’entreprise plus court, un secteur ou une école.'}</p>
+    <p class="pos">${m.length ? `${m.length} contact${m.length > 1 ? 's' : ''} lié${m.length > 1 ? 's' : ''} à ta recherche, les plus seniors en premier.` : 'Aucun contact. Essaie un nom plus court, un secteur ou une école.'}</p>
     ${peopleList(m, '', 30, true)}`);
 }
 
