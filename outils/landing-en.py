@@ -325,6 +325,9 @@ if missing:
 # ---------- Captures de l’outil : versions anglaises (interface en anglais, même démo) ----------
 s = re.sub(r'assets/demo/(1-import|3-groupe|4-collegues|5-filtre|6-entreprises)(-900)?\.webp(\?v=\d+)?', r'assets/demo/\1-en\2.webp?v=1', s)
 
+# Aperçu animé du héros : version filmée sur l’outil en anglais (mêmes plans et réglages que la française)
+s = re.sub(r'assets/demo/synapses-apercu(-affiche)?\.(mp4|webp)(\?v=\d+)?', r'assets/demo/synapses-apercu\1-en.\2?v=1', s)
+
 # ---------- Chemins : la page est servie depuis en/ ----------
 s = re.sub(r'(?<=["\s,(])(assets/|app/|favicon\.svg|apple-touch-icon\.png)', r'../\1', s)
 # L’outil s’ouvre en anglais depuis la page anglaise
