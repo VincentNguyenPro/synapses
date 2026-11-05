@@ -201,6 +201,12 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .spoke{stroke:var(--accent);stroke-opacity:.6;stroke-width:1.6px;pointer-events:none;display:none}
 .spoke.hot{display:inline}
 .pin{cursor:pointer}
+.tgwrap{position:relative}
+.tgsug{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:30;max-height:300px;overflow:auto}
+.tgsug li{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13.5px}
+.tgsug li span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tgsug li:hover,.tgsug li.on{background:var(--accent-soft)}
+.tgsug .tgmeta{color:var(--muted);font-size:12px;white-space:nowrap}
 .hubLabel .lblN{fill:var(--muted);font-weight:600}
 .pin .pmono,.pin .plogo{pointer-events:none}
 .hubcenter .hcdisc{fill:var(--surface);stroke:var(--accent);stroke-opacity:.45;stroke-width:1.5px;vector-effect:non-scaling-stroke;cursor:pointer}
@@ -567,7 +573,8 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
       <div class="field">
         <label for="target">Trouver une porte d’entrée</label>
         <p class="hint">Qui, dans ton réseau, peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
-        <div class="row"><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC"><button class="btn" id="targetBtn" type="button">Chercher</button></div>
+        <div class="row tgwrap"><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
+          <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
       </div>
       <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
     </section>
@@ -3279,12 +3286,51 @@ function showHelp(msg){
     ${WIPE_BLOCK()}`);
 }
 
-function findEntry(){
-  const raw = $('#target').value.trim(), t = norm(raw);
+/* Saisie intelligente de la porte d’entrée : entreprises (groupes et entités), secteurs et écoles du réseau, trouvés
+   sans tenir compte des accents ni des majuscules, par début de mot, morceau de nom ou faute de frappe (« societe genrale ») */
+let tgItems = null, tgSel = -1;
+function targetIndex(){
+  if(tgItems) return tgItems;
+  const m = new Map(), add = (v, type, c) => { if(!v) return; const k = type + '|' + v; const e = m.get(k) || {v, type, n:0, key:compactKey(v), words:norm(v).split(/[^a-z0-9]+/).filter(Boolean)}; e.n++; m.set(k, e); };
+  contacts.forEach(c => { add(coOf(c), 'Entreprise'); if(entityOf(c) !== coOf(c)) add(entityOf(c), 'Entité'); add(c.sector, 'Secteur'); add(c.school, 'École'); });
+  return tgItems = [...m.values()].filter(e => !NO_COMPANY_GROUPS.has(e.v));
+}
+function targetMatches(q, max = 8){
+  const t = norm(q).trim(), tk = compactKey(q); if(!t) return [];
+  const score = e => {
+    const nv = norm(e.v);
+    if(nv === t) return 100;
+    if(e.key === tk) return 95; /* même nom à l’espace ou à l’accent près (« swisslife » = « Swiss Life ») */
+    if(tk.length >= 3 && e.key.startsWith(tk)) return 78 + Math.min(10, Math.log2(e.n + 1));
+    if(nv.startsWith(t)) return 80;
+    if(e.words.some(w => w.startsWith(t))) return 70;
+    if(nv.includes(t) || (tk.length >= 3 && e.key.includes(tk))) return 60;
+    const mx = tk.length >= 8 ? 2 : tk.length >= 4 ? 1 : 0;
+    if(mx && editDist(tk, e.key.slice(0, tk.length + mx), mx) <= mx) return 40; /* faute de frappe sur le début du nom */
+    if(mx && e.words.some(w => w.length >= 4 && editDist(tk, w, mx) <= mx)) return 35;
+    return 0;
+  };
+  return targetIndex().map(e => ({...e, s:score(e)})).filter(e => e.s > 0)
+    .sort((a, b) => b.s - a.s || b.n - a.n || a.v.localeCompare(b.v, 'fr')).slice(0, max);
+}
+function renderTargetSug(){
+  const box = $('#targetSug'), list = targetMatches($('#target').value);
+  tgSel = -1;
+  box.innerHTML = list.map((e, i) => `<li role="option" id="tgo${i}" data-tgv="${esc(e.v)}"><span>${esc(e.v)}</span><span class="tgmeta">${e.type} · ${e.n}</span></li>`).join('');
+  box.hidden = !list.length; $('#target').setAttribute('aria-expanded', String(!!list.length));
+}
+function pickTarget(v){ $('#target').value = v; $('#targetSug').hidden = true; $('#target').setAttribute('aria-expanded', 'false'); findEntry(true); }
+function findEntry(exact){
+  let raw = $('#target').value.trim(), t = norm(raw);
   if(!t){ $('#target').focus(); return; }
+  $('#targetSug').hidden = true;
   closePanel();
   const rank = ['Dirigeant','Direction','Manager','Senior','Confirmé','Junior','Non renseignée'];
-  const m = contacts.filter(c => [c.company, c.group, c.sector, c.school].some(x => norm(x).includes(t)))
+  const hit = x => norm(x).includes(t);
+  let m = contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit));
+  /* Rien d’exact : la meilleure suggestion (faute de frappe, nom approché) */
+  if(!m.length && !exact){ const best = targetMatches(raw, 1)[0]; if(best){ raw = best.v; t = norm(raw); $('#target').value = raw; m = contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit)); } }
+  m = m
     .sort((a, b) => rank.indexOf(a.seniority) - rank.indexOf(b.seniority));
   const ids = new Set(m.map(c => 'c:' + c.id));
   nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
@@ -3434,8 +3480,20 @@ $('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = Math.min(
 $('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } applyFilters(); });
 $('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
-$('#targetBtn').addEventListener('click', findEntry);
-$('#target').addEventListener('keydown', e => { if(e.key === 'Enter') findEntry(); });
+$('#targetBtn').addEventListener('click', () => findEntry());
+$('#target').addEventListener('focus', () => { tgItems = null; }); /* index refait à chaque visite (import, corrections, IA) */
+$('#target').addEventListener('input', renderTargetSug);
+$('#target').addEventListener('keydown', e => {
+  const items = [...$('#targetSug').children], open = !$('#targetSug').hidden && items.length;
+  if(open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){
+    e.preventDefault(); tgSel = (tgSel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+    items.forEach((li, i) => li.classList.toggle('on', i === tgSel)); $('#target').setAttribute('aria-activedescendant', 'tgo' + tgSel); return;
+  }
+  if(e.key === 'Escape'){ $('#targetSug').hidden = true; return; }
+  if(e.key === 'Enter'){ if(open && tgSel >= 0) pickTarget(items[tgSel].dataset.tgv); else findEntry(); }
+});
+$('#targetSug').addEventListener('mousedown', e => { const li = e.target.closest('[data-tgv]'); if(li){ e.preventDefault(); pickTarget(li.dataset.tgv); } });
+$('#target').addEventListener('blur', () => setTimeout(() => { $('#targetSug').hidden = true; }, 150));
 $('#fab').addEventListener('click', openPanel);
 $('#closePanel').addEventListener('click', closePanel);
 $('#backdrop').addEventListener('click', closePanel);
