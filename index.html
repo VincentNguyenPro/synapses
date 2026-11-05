@@ -422,6 +422,7 @@ details[open] summary .pm::after{transform:rotate(0)}
 details p{padding:0 24px 24px;max-width:52ch}
 
 /* ---------- Ton avis : la boucle d’amélioration (supabase/retours.sql, data/ameliorations.json) ---------- */
+.legalnk{margin-top:20px;font-size:var(--step-small)}
 .ask{padding:var(--pad) 0}
 .ask .grid{display:grid;gap:32px}
 @media (min-width:960px){ .ask .grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:start} }
@@ -875,13 +876,14 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
         <thead><tr><th scope="col">Quoi</th><th scope="col">Envoyé à</th><th scope="col">Quand</th></tr></thead>
         <tbody>
           <tr><td>Tes contacts&nbsp;: noms, profils, emails</td><td data-l="Envoyé à" class="never">Personne</td><td data-l="Quand" class="never">Jamais</td></tr>
-          <tr><td>Le domaine des entreprises, par exemple doctolib.fr</td><td data-l="Envoyé à">Brandfetch, pour les logos</td><td data-l="Quand">Tant que l’option Logos est cochée. Elle l’est par défaut et se décoche en un clic.</td></tr>
+          <tr><td>Le domaine des entreprises, par exemple doctolib.fr</td><td data-l="Envoyé à">Brandfetch, pour les logos</td><td data-l="Quand">Seulement si tu coches l’option Logos, décochée par défaut</td></tr>
           <tr><td>Des noms d’entreprises et intitulés de poste non reconnus</td><td data-l="Envoyé à">L’IA que tu choisis, avec ta propre clé</td><td data-l="Quand">Seulement si tu lances le classement par IA</td></tr>
           <tr><td>Tes corrections de classement</td><td data-l="Envoyé à">Le dictionnaire partagé de Synapses</td><td data-l="Quand">Seulement si tu coches «&nbsp;Partager mes corrections&nbsp;»</td></tr>
           <tr><td>Ton avis&nbsp;: message, note, email si tu veux une réponse</td><td data-l="Envoyé à">Vincent, par la base Supabase de Synapses</td><td data-l="Quand">Seulement quand tu cliques sur «&nbsp;Envoyer&nbsp;»</td></tr>
           <tr><td>+1 au compteur de réseaux visualisés</td><td data-l="Envoyé à">Un compteur anonyme</td><td data-l="Quand">Après un import, au plus une fois par jour</td></tr>
         </tbody>
       </table>
+      <p class="legalnk"><a href="legal/">Tout le détail&nbsp;: mentions légales et confidentialité</a></p>
     </div>
   </section>
 
@@ -955,7 +957,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
 <footer>
   <div class="tiles">
     <div class="tile say"><p>Synapses lit ton export LinkedIn dans ton navigateur et en fait une carte de ton réseau.</p><p class="legal">Outil indépendant, non affilié à LinkedIn.<br>Voix de la vidéo&nbsp;: ElevenLabs.</p></div>
-    <nav class="tile nav" aria-label="Pied de page"><ul><li><a href="#situations">Situations</a></li><li><a href="#demarrer">Démarrer</a></li><li><a href="#confidentialite">Confidentialité</a></li><li><a href="#questions">Questions</a></li><li><a href="#demandes" data-fb>Donner mon avis</a></li><li><a href="app/">Ouvrir l’outil</a></li></ul></nav>
+    <nav class="tile nav" aria-label="Pied de page"><ul><li><a href="#situations">Situations</a></li><li><a href="#demarrer">Démarrer</a></li><li><a href="#confidentialite">Confidentialité</a></li><li><a href="#questions">Questions</a></li><li><a href="#demandes" data-fb>Donner mon avis</a></li><li><a href="app/">Ouvrir l’outil</a></li><li><a href="legal/">Mentions légales</a></li></ul></nav>
     <div class="tile by"><p>Conçu et développé par <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, avec Claude Code.</p><p>Le code est public&nbsp;: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div>
     <div class="tile word" aria-hidden="true"><span class="wmark"><svg viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span><span class="wname">Synapses</span></div>
     <a class="tile go" href="app/"><b>Essayer la démo</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
