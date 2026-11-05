@@ -91,8 +91,8 @@ rep('alt="Un contact sélectionné, entouré de ses collègues de la même entre
 rep('data-t="Des filtres qui se combinent" data-d="Juniors et seniors seulement&nbsp;: le graphe se recompose et se recentre aussitôt."',
     'data-t="Filters that combine" data-d="Juniors and seniors only: the graph rearranges and recenters at once."')
 rep('alt="Le réseau filtré sur les juniors et les seniors"', 'alt="The network filtered on juniors and seniors"')
-rep('data-t="Par entreprise, logos compris" data-d="Chaque entreprise devient un nœud avec son logo. Tu vois où se concentrent tes contacts."',
-    'data-t="By company, logos included" data-d="Each company becomes a node with its logo. You see where your contacts cluster."')
+rep('data-t="Par entreprise, logos en option" data-d="Chaque entreprise devient un nœud, avec son logo si tu actives l’option. Tu vois où se concentrent tes contacts."',
+    'data-t="By company, logos optional" data-d="Each company becomes a node, with its logo if you turn the option on. You see where your contacts cluster."')
 rep('alt="Le réseau regroupé par entreprise, chaque nœud portant le logo de l’entreprise"', 'alt="The network grouped by company, each node showing the company’s logo"')
 rep('data-t="L’aide pour récupérer ton export" data-d="Le panneau d’aide explique où demander l’archive à LinkedIn, et quoi en faire."',
     'data-t="Help to get your export" data-d="The help panel explains where to request the archive from LinkedIn, and what to do with it."')

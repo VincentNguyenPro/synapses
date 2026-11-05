@@ -603,8 +603,8 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
       <summary><h2>Explorer</h2><span class="accsum" id="sum-explore"></span></summary>
       <div class="field">
         <label for="target">Trouver une porte d’entrée</label>
-        <p class="hint">Qui peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
-        <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
+        <p class="hint">Qui peut t’ouvrir une entreprise ou un secteur&nbsp;?</p>
+        <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. Doctolib, Santé" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
           <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
         <p class="hint" id="cibleHint" hidden></p>
         <p class="hint" id="relanceHint" hidden></p>
@@ -3708,7 +3708,7 @@ function findEntry(exact){
   select(null); focus(ids);
   openDrawer(`<h2 id="dtitle" tabindex="-1">Portes d’entrée vers ${esc(raw)}</h2>
     ${(cb => cb ? `<p class="pos"><strong>Entreprise cible</strong>&nbsp;: ${esc(cibleMeta(cb))}.</p>` : '')(cibleOf(raw))}
-    <p class="pos">${m.length ? `${m.length} contact${m.length > 1 ? 's' : ''} lié${m.length > 1 ? 's' : ''} à ta recherche, les plus seniors en premier.` : 'Aucun contact. Essaie un nom plus court, un secteur ou une école.'}</p>
+    <p class="pos">${m.length ? `${m.length} contact${m.length > 1 ? 's' : ''} lié${m.length > 1 ? 's' : ''} à ta recherche, les plus seniors en premier.` : 'Aucun contact. Essaie un nom plus court ou un secteur.'}</p>
     ${peopleList(m, '', 30, true)}`);
 }
 
