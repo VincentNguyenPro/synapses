@@ -322,6 +322,9 @@ rep("flap.setAttribute('aria-label', `${n.toLocaleString('fr-FR')} réseaux`);",
 if missing:
     sys.exit('Phrases introuvables dans index.html, à mettre à jour dans outils/landing-en.py :\n- ' + '\n- '.join(missing))
 
+# ---------- Captures de l’outil : versions anglaises (interface en anglais, même démo) ----------
+s = re.sub(r'assets/demo/(1-import|3-groupe|4-collegues|5-filtre|6-entreprises)(-900)?\.webp(\?v=\d+)?', r'assets/demo/\1-en\2.webp?v=1', s)
+
 # ---------- Chemins : la page est servie depuis en/ ----------
 s = re.sub(r'(?<=["\s,(])(assets/|app/|favicon\.svg|apple-touch-icon\.png)', r'../\1', s)
 # L’outil s’ouvre en anglais depuis la page anglaise
