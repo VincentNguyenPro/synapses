@@ -202,6 +202,11 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .spoke.hot{display:inline}
 .pin{cursor:pointer}
 .tgwrap{position:relative}
+.tgghost{position:absolute;pointer-events:none;color:var(--muted);white-space:pre;overflow:hidden;box-sizing:border-box;z-index:1}
+.tgghost .tgt{color:transparent}
+#target{position:relative}
+.tgsug .tghead{cursor:default;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:none;padding:8px 10px 3px}
+.tgsug .tghead:hover{background:none}
 .tgsug{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:30;max-height:300px;overflow:auto}
 .tgsug li{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13.5px}
 .tgsug li span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -573,7 +578,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
       <div class="field">
         <label for="target">Trouver une porte d’entrée</label>
         <p class="hint">Qui, dans ton réseau, peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
-        <div class="row tgwrap"><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
+        <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
           <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
       </div>
       <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
@@ -3313,11 +3318,53 @@ function targetMatches(q, max = 8){
   return targetIndex().map(e => ({...e, s:score(e)})).filter(e => e.s > 0)
     .sort((a, b) => b.s - a.s || b.n - a.n || a.v.localeCompare(b.v, 'fr')).slice(0, max);
 }
+/* Recherches récentes : gardées sur cet appareil seulement (noms d’entreprises, secteurs ou écoles), effacées avec les données */
+const TG_RECENT_KEY = 'synapses-portes-v1';
+const tgRecent = () => { try { return JSON.parse(localStorage.getItem(TG_RECENT_KEY) || '[]').slice(0, 5); } catch(e) { return []; } };
+function tgRemember(v){ try { localStorage.setItem(TG_RECENT_KEY, JSON.stringify([v, ...tgRecent().filter(x => norm(x) !== norm(v))].slice(0, 5))); } catch(e) {} }
+/* Prédictions quand le champ est vide : selon ce que tu regardes (groupe ouvert ou sélectionné, contact), tes recherches récentes,
+   puis les entreprises les plus présentes dans ton réseau */
+function targetPredictions(){
+  const idx = targetIndex(), find = (v, type) => idx.find(e => e.v === v && (!type || e.type === type));
+  const sections = [], seen = new Set();
+  const push = (title, arr) => { const items = arr.filter(e => e && !seen.has(e.type + e.v)).slice(0, 4); items.forEach(e => seen.add(e.type + e.v)); if(items.length) sections.push({title, items}); };
+  const sel = state.selected && nodes.find(n => n.id === state.selected);
+  const gOpen = [...legendOpen].find(x => x.startsWith('g:'));
+  const grpKey = sel && sel.type === 'hub' ? sel.key : gOpen ? gOpen.slice(2) : null;
+  if(sel && sel.type === 'c'){ push('Autour de ' + sel.c.name.split(' ')[0], [find(coOf(sel.c), 'Entreprise'), find(sel.c.sector, 'Secteur'), find(sel.c.school, 'École')]); }
+  else if(grpKey){
+    const dim = DIMS[state.groupBy], inG = contacts.filter(c => dim.get(c) === grpKey);
+    const tops = [...d3.rollup(inG, v => v.length, coOf)].filter(([k]) => !NO_COMPANY_GROUPS.has(k)).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k]) => find(k, 'Entreprise'));
+    push('Dans ' + grpKey, tops);
+  }
+  push('Recherches récentes', tgRecent().map(v => idx.find(e => e.v === v) || {v, type:'Recherche', n:''}));
+  push('Les plus présentes dans ton réseau', idx.filter(e => e.type === 'Entreprise').sort((a, b) => b.n - a.n).slice(0, 8));
+  return sections;
+}
+const tgLi = (e, i) => `<li role="option" id="tgo${i}" data-tgv="${esc(e.v)}"><span>${esc(e.v)}</span><span class="tgmeta">${e.type}${e.n !== '' ? ' · ' + e.n : ''}</span></li>`;
 function renderTargetSug(){
-  const box = $('#targetSug'), list = targetMatches($('#target').value);
+  const box = $('#targetSug'), q = $('#target').value;
   tgSel = -1;
-  box.innerHTML = list.map((e, i) => `<li role="option" id="tgo${i}" data-tgv="${esc(e.v)}"><span>${esc(e.v)}</span><span class="tgmeta">${e.type} · ${e.n}</span></li>`).join('');
-  box.hidden = !list.length; $('#target').setAttribute('aria-expanded', String(!!list.length));
+  let html = '', i = 0, top = null;
+  if(!q.trim()){
+    html = targetPredictions().map(sec => `<li class="tghead" role="presentation">${esc(sec.title)}</li>` + sec.items.map(e => tgLi(e, i++)).join('')).join('');
+  } else {
+    const list = targetMatches(q); top = list[0];
+    html = list.map(e => tgLi(e, i++)).join('');
+  }
+  box.innerHTML = html;
+  box.hidden = !i; $('#target').setAttribute('aria-expanded', String(!!i));
+  renderGhost(top);
+}
+/* Complétion en ligne : la fin du nom le plus probable s’affiche en gris après ce que tu tapes ; Tab ou → la valide */
+let tgGhost = '';
+function renderGhost(top){
+  const inp = $('#target'), g = $('#targetGhost'), q = inp.value;
+  tgGhost = top && q && norm(top.v).startsWith(norm(q)) && top.v.length > q.length ? top.v : '';
+  if(!tgGhost || inp.scrollWidth > inp.clientWidth + 1){ g.innerHTML = ''; return; }
+  const cs = getComputedStyle(inp);
+  Object.assign(g.style, {left:inp.offsetLeft + 'px', top:inp.offsetTop + 'px', width:inp.clientWidth + 'px', height:inp.offsetHeight + 'px', paddingLeft:cs.paddingLeft, font:cs.font, lineHeight:inp.offsetHeight + 'px'});
+  g.innerHTML = `<span class="tgt">${esc(q)}</span>${esc(tgGhost.slice(q.length))}`;
 }
 function pickTarget(v){ $('#target').value = v; $('#targetSug').hidden = true; $('#target').setAttribute('aria-expanded', 'false'); findEntry(true); }
 function findEntry(exact){
@@ -3330,6 +3377,8 @@ function findEntry(exact){
   let m = contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit));
   /* Rien d’exact : la meilleure suggestion (faute de frappe, nom approché) */
   if(!m.length && !exact){ const best = targetMatches(raw, 1)[0]; if(best){ raw = best.v; t = norm(raw); $('#target').value = raw; m = contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit)); } }
+  $('#targetGhost').innerHTML = '';
+  if(m.length) tgRemember(raw);
   m = m
     .sort((a, b) => rank.indexOf(a.seniority) - rank.indexOf(b.seniority));
   const ids = new Set(m.map(c => 'c:' + c.id));
@@ -3481,10 +3530,12 @@ $('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(st
 $('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
 $('#targetBtn').addEventListener('click', () => findEntry());
-$('#target').addEventListener('focus', () => { tgItems = null; }); /* index refait à chaque visite (import, corrections, IA) */
+$('#target').addEventListener('focus', () => { tgItems = null; renderTargetSug(); }); /* index refait à chaque visite (import, corrections, IA) ; champ vide : prédictions */
 $('#target').addEventListener('input', renderTargetSug);
 $('#target').addEventListener('keydown', e => {
-  const items = [...$('#targetSug').children], open = !$('#targetSug').hidden && items.length;
+  const inp = $('#target');
+  if(tgGhost && (e.key === 'Tab' || (e.key === 'ArrowRight' && inp.selectionStart === inp.value.length))){ e.preventDefault(); inp.value = tgGhost; renderTargetSug(); return; }
+  const items = [...$('#targetSug').querySelectorAll('[data-tgv]')], open = !$('#targetSug').hidden && items.length;
   if(open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){
     e.preventDefault(); tgSel = (tgSel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
     items.forEach((li, i) => li.classList.toggle('on', i === tgSel)); $('#target').setAttribute('aria-activedescendant', 'tgo' + tgSel); return;
@@ -3493,7 +3544,7 @@ $('#target').addEventListener('keydown', e => {
   if(e.key === 'Enter'){ if(open && tgSel >= 0) pickTarget(items[tgSel].dataset.tgv); else findEntry(); }
 });
 $('#targetSug').addEventListener('mousedown', e => { const li = e.target.closest('[data-tgv]'); if(li){ e.preventDefault(); pickTarget(li.dataset.tgv); } });
-$('#target').addEventListener('blur', () => setTimeout(() => { $('#targetSug').hidden = true; }, 150));
+$('#target').addEventListener('blur', () => setTimeout(() => { $('#targetSug').hidden = true; $('#targetGhost').innerHTML = ''; }, 150));
 $('#fab').addEventListener('click', openPanel);
 $('#closePanel').addEventListener('click', closePanel);
 $('#backdrop').addEventListener('click', closePanel);
