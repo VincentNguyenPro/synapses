@@ -724,7 +724,10 @@
    "colliers international france",
    "biogeo constructions",
    "edgerton contractors",
-   "sfpi"
+   "sfpi",
+   "rocamat",
+   "sfpi home",
+   "geocorail"
   ],
   "Agroalimentaire": [
    "danone",
@@ -1113,7 +1116,8 @@
    "betclic",
    "betclic group",
    "paris saint-germain",
-   "acpm"
+   "acpm",
+   "constructel"
   ],
   "Transport & mobilité": [
    "sncf",
@@ -2107,7 +2111,9 @@
    "mavoie.org",
    "mavoie",
    "association internationale des maires francophones",
-   "cooperation cote d ivoire-union europeenne"
+   "cooperation cote d ivoire-union europeenne",
+   "cosumaf",
+   "equipop"
   ],
   "Tech & logiciel": [
    "google",
@@ -2576,7 +2582,8 @@
    "agrivolt",
    "la societe africaine de raffinage",
    "societe africaine de raffinage",
-   "societe camerounaise de raffinage"
+   "societe camerounaise de raffinage",
+   "izili"
   ]
  },
  "mots_cles": [
@@ -2602,7 +2609,7 @@
   },
   {
    "secteur": "Conseil",
-   "motif": "\\b(consult\\w*|conseil|accenture|capgemini|deloitte|kpmg|pwc|ey|ernst|mckinsey|bcg|bain|sopra|wavestone|cgi|devoteam|onepoint|sia partners|alten|altran|akkodis|bartle|wefiit|aubay|advisory|partners|esn|recrutement|recruitment|interim|executive search|headhunt\\w*|staffing|expertise comptable|expert-comptable|experts-comptables|audit|fiduci\\w*)\\b"
+   "motif": "\\b(consult\\w*|conseil|accenture|capgemini|deloitte|kpmg|pwc|ey|ernst|mckinsey|bcg|bain|sopra|wavestone|cgi|devoteam|onepoint|sia partners|alten|altran|akkodis|bartle|wefiit|aubay|advisory|partners|esn|recrutement|recruitment|interim|executive search|headhunt\\w*|staffing|expertise comptable|expert-comptable|experts-comptables|audit|fiduci\\w*|conseils|coach\\w*|coaching|transformation|associes|fiscal\\w*|fiscalite|tax)\\b"
   },
   {
    "secteur": "Banque & assurance",
@@ -2610,7 +2617,7 @@
   },
   {
    "secteur": "Énergie & industrie",
-   "motif": "\\b(engie|edf|total\\w*|equans|schneider|airbus|safran|thales|renault|stellantis|michelin|alstom|veolia|saint-gobain|industr\\w*|energ\\w*|nuclear|ampere|alpine|horse|nexans|ariane\\w*|aerospace|aeronauti\\w*|automoti\\w*|automobile|manufactur\\w*|chimi\\w*|chemicals?|defense|chimie|chemie|hydrogen\\w*|hydrogene|solaire|solar|electroni\\w*|metallurg\\w*|alloys?|inox|aluminium|electrification|semiconduct\\w*|plasturg\\w*)\\b"
+   "motif": "\\b(engie|edf|total\\w*|equans|schneider|airbus|safran|thales|renault|stellantis|michelin|alstom|veolia|saint-gobain|industr\\w*|energ\\w*|nuclear|ampere|alpine|horse|nexans|ariane\\w*|aerospace|aeronauti\\w*|automoti\\w*|automobile|manufactur\\w*|chimi\\w*|chemicals?|defense|chimie|chemie|hydrogen\\w*|hydrogene|solaire|solar|electroni\\w*|metallurg\\w*|alloys?|inox|aluminium|electrification|semiconduct\\w*|plasturg\\w*|environnement|environmental)\\b"
   },
   {
    "secteur": "Télécom & médias",
@@ -2630,11 +2637,11 @@
   },
   {
    "secteur": "Secteur public & éducation",
-   "motif": "\\b(ministere|universite|university|ecole|school|mairie|region|departement|cnrs|inria|france travail|ap-hp|education|supmeca|esa|european space agency|institut\\w*|iae|edhec|essec|hec|insead|polytechnique|centrale\\w*|epita|epitech|ensam|arts et metiers|business school|prefecture|agence nationale|collectivite|commune|metropole|conseil (regional|departemental)|academie|lycee|college|universidad|universitat|universita|facultad|faculte|iut|cfa|ambassade|embassy|diplomati\\w*|ong|ngo|red cross|croix-rouge|sans frontieres|nations unies|united nations|sdis|cci|chambre de commerce|ville de|commune de)\\b"
+   "motif": "\\b(ministere|universite|university|ecole|school|mairie|region|departement|cnrs|inria|france travail|ap-hp|education|supmeca|esa|european space agency|institut\\w*|iae|edhec|essec|hec|insead|polytechnique|centrale\\w*|epita|epitech|ensam|arts et metiers|business school|prefecture|agence nationale|collectivite|commune|metropole|conseil (regional|departemental)|academie|lycee|college|universidad|universitat|universita|facultad|faculte|iut|cfa|ambassade|embassy|diplomati\\w*|ong|ngo|red cross|croix-rouge|sans frontieres|nations unies|united nations|sdis|cci|chambre de commerce|ville de|commune de|associations?|fondation|foundation|ong|ngo)\\b"
   },
   {
    "secteur": "Tech & logiciel",
-   "motif": "\\b(google|microsoft|amazon|aws|meta|apple|salesforce|sap|oracle|ibm|datadog|doctolib|contentsquare|mirakl|alan|back market|dataiku|criteo|ovh\\w*|dassault systemes|atlassian|station f|software|tech\\w*|labs?|digital|data|cloud|saas|ai|pennylane|a2mac1|\\.io|\\.ai|app|apps|platform|logiciel\\w*|numerique|cyber\\w*|robotics?|robotique)\\b"
+   "motif": "\\b(google|microsoft|amazon|aws|meta|apple|salesforce|sap|oracle|ibm|datadog|doctolib|contentsquare|mirakl|alan|back market|dataiku|criteo|ovh\\w*|dassault systemes|atlassian|station f|software|tech\\w*|labs?|digital|data|cloud|saas|ai|pennylane|a2mac1|\\.io|\\.ai|app|apps|platform|logiciel\\w*|numerique|cyber\\w*|robotics?|robotique|\\w*soft)\\b"
   }
  ],
  "premiers_mots_ignores": [

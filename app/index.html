@@ -1131,6 +1131,14 @@ function assignGroups(list){
   });
   /* Indépendants, entreprise non communiquée ou absente : un secteur à part, pour que « Non classé » ne garde que les vraies entreprises inconnues */
   list.forEach(c => { if(!c.sectorGiven && c.sector === 'Non classé' && (!c.company || NO_COMPANY_GROUPS.has(c.group))) c.sector = NO_SECTOR; });
+  /* Entreprise inconnue mais rattachée à un groupe (« SG 29 Haussmann » → Société Générale, « Decathlon France » → Decathlon) :
+     le secteur du groupe, sinon le secteur le plus fréquent de ses autres contacts */
+  const grpSec = d3.rollup(list.filter(c => c.group && c.sector !== 'Non classé' && c.sector !== NO_SECTOR), v => d3.greatest(d3.rollup(v, w => w.length, c => c.sector), e => e[1])[0], c => c.group);
+  list.forEach(c => {
+    if(c.sectorGiven || c.sector !== 'Non classé' || !c.group || NO_COMPANY_GROUPS.has(c.group)) return;
+    const s = (c.group !== c.company && (builtinSector(nkey(c.group)) || classify(SECTORS, norm(c.group), null))) || grpSec.get(c.group);
+    if(s) c.sector = s;
+  });
   assignEntities(list);
 }
 /* Entités d’un groupe (filiales listées sous le chevron) : les écritures d’un même nom sont réunies sous la plus fréquente.
