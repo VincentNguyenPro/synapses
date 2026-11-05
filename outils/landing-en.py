@@ -204,7 +204,7 @@ rep('class="never">Jamais</td>', 'class="never">Never</td>')
 rep('<td>Le domaine des entreprises, par exemple doctolib.fr</td>', '<td>Company domains, for example doctolib.fr</td>')
 rep('>Brandfetch, pour les logos</td>', '>Brandfetch, for the logos</td>')
 rep('>Seulement si tu coches l’option Logos, décochée par défaut</td>', '>Only if you tick the Logos option, unticked by default</td>')
-rep('Tout le détail&nbsp;: mentions légales et confidentialité</a>', 'Full details: legal notice and privacy</a>')
+rep('<a href="legal/">Tout le détail</a></p>', '<a href="legal/">Full details</a></p>')
 rep('<li><a href="legal/">Mentions légales</a></li>', '<li><a href="legal/">Legal notice</a></li>')
 rep('<td>Des noms d’entreprises et intitulés de poste non reconnus</td>', '<td>Company names and job titles that weren’t recognized</td>')
 rep('>L’IA que tu choisis, avec ta propre clé</td>', '>The AI you choose, with your own key</td>')
@@ -277,7 +277,7 @@ rep('Outil indépendant, non affilié à LinkedIn.<br>Voix de la vidéo&nbsp;: E
 rep('aria-label="Pied de page"', 'aria-label="Footer"')
 rep('<a href="app/">Ouvrir l’outil</a>', '<a href="app/">Open the tool</a>')
 rep('<p>Conçu et développé par <a', '<p>Designed and built by <a')
-rep('Product Manager, avec Claude Code.</p><p>Le code est public&nbsp;: <a', 'Product Manager, with Claude Code.</p><p>The code is public: <a')
+rep('Product Manager, avec Claude Code.</p></div><p>Le code est public&nbsp;: <a', 'Product Manager, with Claude Code.</p></div><p>The code is public: <a')
 rep('<b>Essayer la démo</b>', '<b>Try the demo</b>')
 
 # ---------- Script : réseau de démo et textes générés ----------

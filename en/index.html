@@ -392,6 +392,7 @@ p{margin:0}
 .priv h2{font-size:var(--step-head);max-width:15ch}
 @media (min-width:960px){ .priv h2{max-width:none} .priv .grid{gap:28px} .priv .lead{margin-top:14px} } /* grand écran : titre sur une ligne, la section tient sur un écran */
 .priv .lead{font-size:var(--step-lead);line-height:1.4;margin-top:20px;max-width:40em}
+.priv .lead a{white-space:nowrap}
 table{width:100%;border-collapse:collapse;font-size:var(--step-body)}
 th{text-align:left;font-size:var(--step-small);font-weight:700;color:#DDE6FF;padding:0 18px 12px 0;border-bottom:2px solid rgba(255,255,255,.55)}
 td{padding:18px 18px 18px 0;vertical-align:top;border-bottom:1px solid rgba(255,255,255,.3)}
@@ -422,16 +423,15 @@ details[open] summary .pm::after{transform:rotate(0)}
 details p{padding:0 24px 24px;max-width:52ch}
 
 /* ---------- Ton avis : la boucle d’amélioration (supabase/retours.sql, data/ameliorations.json) ---------- */
-.legalnk{margin-top:20px;font-size:var(--step-small)}
 .ask{padding:var(--pad) 0}
 .ask .grid{display:grid;gap:32px}
 @media (min-width:960px){ .ask .grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:start} }
 .ask h2{font-size:var(--step-head)}
 .ask .lead{font-size:var(--step-lead);line-height:1.4;margin:20px 0 28px;color:var(--muted);max-width:30em}
 .auteur{display:flex;gap:16px;align-items:flex-start;margin:0 0 28px;max-width:30em}
-.auteur img{flex:none;width:72px;height:72px;border-radius:50%;object-fit:cover;background:var(--surface)}
 .auteur p{margin:0;font-size:15px;line-height:1.45;color:var(--muted)}
 .auteur b{display:block;color:var(--ink);font-size:var(--step-body)}
+.auteur a{white-space:nowrap}
 .loop{list-style:none;padding:0;margin:0 0 28px;display:grid;gap:10px;counter-reset:l}
 .loop li{counter-increment:l;display:flex;gap:14px;align-items:baseline;font-size:var(--step-body)}
 .loop li::before{content:counter(l);flex:none;width:28px;height:28px;border-radius:50%;background:var(--tone);color:var(--accent);font-weight:800;font-size:14px;display:grid;place-items:center;transform:translateY(5px)}
@@ -481,16 +481,27 @@ dialog.fb::backdrop{background:rgba(23,33,46,.45)}
 .end h2 a:hover{transform:translateY(-3px)}
 .end p{max-width:36em;font-size:var(--step-lead);line-height:1.4}
 
-/* Écrans peu hauts (portables 1280 × 800) : chaque section tient encore sur un écran */
-@media (min-width:960px) and (max-height:860px){
+/* Écrans peu hauts (portables de 1280 × 720 à 1536 × 864) : chaque section tient encore sur un écran, en français comme en anglais
+   (vérifié le 5 novembre 2026 : 1280 × 720, 1366 × 768, 1280 × 800, 1470 × 801, 1536 × 864 ; au-delà de 880 px de haut, rien ne change) */
+@media (min-width:960px) and (max-height:880px){
+  :root{--pad:clamp(20px,4svh,40px);--step-head:clamp(2rem,0.6rem + 6svh,4rem)}
   .bands li{min-height:44px;padding:4px 20px}
   .bands .who b,.bands .who span{display:inline}
   .bands .who span::before{content:" · "}
   .tabs button{min-height:60px;padding:10px 16px}
-  .steps li{padding:12px 20px;gap:4px}
-  .pin{min-height:320px}
-  td{padding:12px 18px 12px 0}
-  .priv .grid{gap:28px}
+  .steps{margin-top:18px}
+  .steps li{padding:10px 18px;gap:4px}
+  .steps li strong{font-size:clamp(1.1rem,0.5rem + 2.4svh,1.5rem)}
+  .steps li p{font-size:16px;line-height:1.45}
+  .pin{min-height:0;padding:16px}
+  .app.shot img{max-height:calc(100svh - 68px - 2 * var(--pad) - 64px);width:auto;max-width:100%;margin:0 auto}
+  td{padding:9px 18px 9px 0}
+  .priv .grid{gap:20px}
+  .priv .lead{margin-top:10px}
+  .ask .lead{margin:14px 0 18px}
+  .auteur{margin-bottom:18px}
+  .loop{margin-bottom:18px;gap:6px}
+  .faq .grid{gap:20px}
 }
 
 /* Chaque section occupe exactement un écran sous la barre (ordinateur et mobile), contenu centré verticalement ; la suivante ne déborde plus.
@@ -512,6 +523,8 @@ footer{padding:0 10px 10px}
 .tile ul a{text-decoration:none}
 .tile ul a:hover{text-decoration:underline}
 .tile.by p{font-size:var(--step-body)}
+.byhead{display:flex;gap:16px;align-items:center}
+.byhead img{flex:none;width:64px;height:64px;border-radius:50%;object-fit:cover}
 .tile.by a{font-weight:800}
 .tile.word{grid-column:1/-1;background:var(--ink);color:#fff;min-height:200px;flex-direction:row;align-items:center;justify-content:center;gap:.28em;font-size:clamp(3.5rem,9vw,9rem)}
 /* Logo de la marque à côté du nom : même carré bleu que dans l’en-tête, à la hauteur des majuscules */
@@ -870,7 +883,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     <div class="wrap grid">
       <div class="top">
         <h2 id="confidentialite-titre" class="rise">What leaves your browser</h2>
-        <p class="lead rise" style="--i:1">No server receives your file. Here is everything the page can send, line by line.</p>
+        <p class="lead rise" style="--i:1">No server receives your file. Here is everything the page can send, line by line. <a href="legal/">Full details</a></p>
       </div>
       <table class="rise" style="--i:2">
         <thead><tr><th scope="col">What</th><th scope="col">Sent to</th><th scope="col">When</th></tr></thead>
@@ -883,7 +896,6 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
           <tr><td>+1 on the counter of mapped networks</td><td data-l="Sent to">An anonymous counter</td><td data-l="When">After an import, at most once a day</td></tr>
         </tbody>
       </table>
-      <p class="legalnk"><a href="legal/">Full details: legal notice and privacy</a></p>
     </div>
   </section>
 
@@ -908,7 +920,6 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
         <h2 id="demandes-titre" class="rise">Your feedback shapes Synapses</h2>
         <p class="lead rise" style="--i:1">An idea, a bug, a missing feature: Vincent reads every message.</p>
         <div class="auteur rise" style="--i:2">
-          <img src="../assets/vincent.webp" width="72" height="72" alt="Vincent Nguyen" loading="lazy" decoding="async">
           <p><b>Vincent Nguyen</b>Product Manager. Inspired by mind mapping, I wanted to see my LinkedIn network at a glance: my circles, who I’m close to, and who to contact for a job, a sales lead or an expert’s opinion. <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">My LinkedIn profile</a></p>
         </div>
         <ol class="loop rise" style="--i:2">
@@ -959,7 +970,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   <div class="tiles">
     <div class="tile say"><p>Synapses reads your LinkedIn export in your browser and turns it into a map of your network.</p><p class="legal">Independent tool, not affiliated with LinkedIn.<br>Video voice: ElevenLabs.</p></div>
     <nav class="tile nav" aria-label="Footer"><ul><li><a href="#situations">Use cases</a></li><li><a href="#demarrer">Get started</a></li><li><a href="#confidentialite">Privacy</a></li><li><a href="#questions">FAQ</a></li><li><a href="#demandes" data-fb>Give feedback</a></li><li><a href="../app/">Open the tool</a></li><li><a href="legal/">Legal notice</a></li></ul></nav>
-    <div class="tile by"><p>Designed and built by <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, with Claude Code.</p><p>The code is public: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div>
+    <div class="tile by"><div class="byhead"><img src="../assets/vincent.webp" width="64" height="64" alt="Vincent Nguyen" loading="lazy" decoding="async"><p>Designed and built by <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, with Claude Code.</p></div><p>The code is public: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div>
     <div class="tile word" aria-hidden="true"><span class="wmark"><svg viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span><span class="wname">Synapses</span></div>
     <a class="tile go" href="../app/"><b>Try the demo</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
   </div>
