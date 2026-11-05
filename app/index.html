@@ -208,6 +208,20 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 #target{position:relative}
 .tgsug .tghead{cursor:default;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:none;padding:8px 10px 3px}
 .tgsug .tghead:hover{background:none}
+#cibleHint{margin:8px 0 0}
+.cbchips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px}
+.cbchips .chip::before{display:none}
+.cbl{list-style:none;margin:0;padding:0}
+.cbrow{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;border-radius:8px;cursor:pointer}
+.cbrow:hover,.cbrow:focus-visible{background:var(--surface-2)}
+.cbrow:focus-visible{outline:2px solid var(--accent)}
+.cblogo{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--surface-2);box-shadow:0 0 0 1px var(--line);overflow:hidden;font-weight:700;font-size:12px;color:var(--muted)}
+.cblogo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.cbtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.cbtxt b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbtxt small{font-size:12px;color:var(--muted);line-height:1.35}
+.cbrow .n{flex:none;font-weight:700;font-size:13px;text-align:right;min-width:64px}
+.cbrow .n small{display:block;font-weight:400;color:var(--muted);font-size:11px}
 .tgsug{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:30;max-height:300px;overflow:auto}
 .tgsug li{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13.5px}
 .tgsug li span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -458,6 +472,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 .dropzone div{background:var(--surface);border:2px dashed var(--accent);border-radius:16px;padding:32px 40px;font-size:17px;font-weight:700;box-shadow:var(--shadow)}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:calc(100% - 32px)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+.srlive{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (prefers-reduced-motion: reduce){
   .contact,.hub,.link,.hubLabel,.hubCount,.drawer,.toast,aside,.tip{transition:none !important}
 }
@@ -590,6 +605,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
         <p class="hint">Qui, dans ton réseau, peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
         <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
           <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
+        <p class="hint" id="cibleHint" hidden></p>
       </div>
       <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
     </section>
@@ -632,6 +648,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
   </button>
   <div class="dropzone" id="dropzone" hidden><div>Dépose ton fichier Connections.csv</div></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="srlive" id="srlive" role="status" aria-live="polite"></div>
 </div>
 
 <script>
@@ -775,6 +792,104 @@ function proxOf(c){
 }
 const byProx = (a, b) => proxOf(b).score - proxOf(a).score || a.name.localeCompare(b.name, 'fr');
 
+/* ---------- Entreprises cibles ----------
+   Lues dans le zip, dans le navigateur : candidatures (Jobs/Job Applications.csv : entreprise, intitulé, date ; jamais l’email,
+   le téléphone ni les réponses), offres enregistrées (Saved Jobs*.csv), entreprises suivies (Company Follows.csv) et entreprises
+   de rêve (Job Seeker Preferences.csv). Croisées avec ton réseau pour trouver qui peut t’y ouvrir la porte.
+   Rien n’est envoyé ; gardées sur l’appareil seulement avec le réseau, si tu le demandes. */
+const CIBLE_FILES = ['job applications.csv', 'company follows.csv', 'job seeker preferences.csv'];
+const isCibleFile = b => CIBLE_FILES.includes(b) || /^saved jobs(_\d+)?\.csv$/.test(b);
+const CIBLE_KIND = {a:{lbl:'Candidature', pl:'Candidatures', w:4}, d:{lbl:'Entreprise de rêve', pl:'Entreprises de rêve', w:3}, s:{lbl:'Offre enregistrée', pl:'Offres enregistrées', w:2}, f:{lbl:'Entreprise suivie', pl:'Entreprises suivies', w:1}};
+let cibleData = null, cibleCache = null, cibleKind = '';
+/* Dates de LinkedIn : « 3/14/26, 10:05 AM » ou « Thu Jan 01 12:00:00 UTC 2026 » → « 2026-03 » */
+function liMonth(s){
+  s = (s || '').trim();
+  let m = s.match(/^(\d{1,2})\/\d{1,2}\/(\d{2,4})/);
+  if(m) return `${+m[2] < 100 ? 2000 + +m[2] : m[2]}-${m[1].padStart(2, '0')}`;
+  m = s.match(/^\w{3} (\w{3}) .* (\d{4})$/);
+  const mo = m ? 'janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(m[1].toLowerCase()) / 3 + 1 : 0;
+  if(mo >= 1 && Number.isInteger(mo)) return `${m[2]}-${String(mo).padStart(2, '0')}`;
+  m = s.match(/(\d{4})-(\d{2})/); return m ? `${m[1]}-${m[2]}` : '';
+}
+const monthFr = d => { const [y, m] = (d || '').split('-').map(Number); return y && m ? new Date(y, m - 1, 15).toLocaleDateString('fr-FR', {month:'long', year:'numeric'}) : ''; };
+function ciblesFrom(sig){
+  const out = [];
+  Object.entries(sig).forEach(([f, text]) => {
+    if(!isCibleFile(f)) return;
+    const rows = parseRows(text);
+    if(f === 'job applications.csv') rows.forEach(r => out.push({n:r['Company Name'], k:'a', t:(r['Job Title'] || '').replace(/\s+/g, ' ').trim(), d:liMonth(r['Application Date'])}));
+    else if(f === 'company follows.csv') rows.forEach(r => out.push({n:r['Organization'], k:'f', d:liMonth(r['Followed On'])}));
+    else if(f === 'job seeker preferences.csv') rows.forEach(r => (r['Dream Companies'] || '').split(/\s*[|;]\s*/).forEach(n => out.push({n, k:'d', d:''})));
+    else rows.forEach(r => out.push({n:r['Company Name'], k:'s', d:liMonth(r['Saved Date'])}));
+  });
+  const list = out.map(x => ({...x, n:(x.n || '').trim()})).filter(x => x.n && !NOT_A_COMPANY.test(nkey(x.n)));
+  return list.length ? list : null;
+}
+/* Une ligne par entreprise : rattachée au groupe ou à l’entreprise du réseau (même nom à l’accent près, groupe connu, début de nom) */
+function cibleIndex(){
+  if(!cibleData || isDemo) return [];
+  if(cibleCache && cibleCache.c === contacts && cibleCache.d === cibleData) return cibleCache.rows;
+  const by = new Map(), count = d3.rollup(contacts, v => v.length, coOf);
+  const addK = (name, g) => { const k = compactKey(name || ''); if(k && !by.has(k)) by.set(k, g); };
+  contacts.forEach(c => { const g = coOf(c); if(g && !NO_COMPANY_GROUPS.has(g)){ addK(g, g); addK(entityOf(c), g); addK(c.company, g); } });
+  const resolve = name => {
+    const grp = groupOf(name);
+    if(grp && count.has(grp)) return grp;
+    const k = compactKey(name); if(by.has(k)) return by.get(k);
+    const w = spellKey(name).split(' ');
+    for(let n = w.length - 1; n >= 1; n--){
+      const pre = w.slice(0, n).join(' ');
+      if(pre.length < 4 || (n === 1 && PREFIX_STOP.has(pre))) continue;
+      const pk = pre.replace(/[^a-z0-9]/g, ''); if(by.has(pk)) return by.get(pk);
+    }
+    return grp || '';
+  };
+  const rows = new Map();
+  cibleData.forEach(x => {
+    const g = resolve(x.n), key = g ? 'g|' + g : 'n|' + compactKey(x.n);
+    const r = rows.get(key) || {v:g || x.n, n:g ? count.get(g) || 0 : 0, kinds:{}, last:'', w:0};
+    const k = r.kinds[x.k] = r.kinds[x.k] || {nb:0, items:[]};
+    k.nb++; if(x.k === 'a') k.items.push(x);
+    if(x.d > r.last) r.last = x.d;
+    r.w = Math.max(r.w, CIBLE_KIND[x.k].w);
+    rows.set(key, r);
+  });
+  const list = [...rows.values()].sort((a, b) => b.w - a.w || (b.last > a.last) - (b.last < a.last) || b.n - a.n || a.v.localeCompare(b.v, 'fr'));
+  cibleCache = {c:contacts, d:cibleData, rows:list};
+  return list;
+}
+/* Ce que tu as fait avec cette entreprise, en une ligne : « Candidature : Product Manager, mars 2026 · 3 offres enregistrées · Suivie » */
+function cibleMeta(r){
+  const out = [], K = r.kinds;
+  if(K.a){ const last = [...K.a.items].sort((x, y) => (y.d > x.d) - (y.d < x.d))[0]; out.push(K.a.nb > 1 ? `${K.a.nb} candidatures, la dernière en ${monthFr(last.d)}` : `Candidature${last.t ? ' : ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`); }
+  if(K.d) out.push('Entreprise de rêve');
+  if(K.s) out.push(K.s.nb > 1 ? `${K.s.nb} offres enregistrées` : 'Offre enregistrée');
+  if(K.f) out.push('Suivie');
+  return out.join(' · ');
+}
+const cibleOf = v => cibleIndex().find(r => norm(r.v) === norm(v));
+function syncCibleHint(){
+  const el = document.getElementById('cibleHint'); if(!el) return;
+  const rows = cibleIndex().filter(r => r.n);
+  el.hidden = !rows.length;
+  if(rows.length) el.innerHTML = `<button class="linkbtn" type="button" data-act="cibles">Tes entreprises cibles&nbsp;: ${rows.length} où tu connais quelqu’un</button>`;
+}
+function showCibles(){
+  select(null); clearFocus(); closePanel();
+  const all = cibleIndex(), cnt = k => all.filter(r => r.kinds[k]).length;
+  if(cibleKind && !cnt(cibleKind)) cibleKind = '';
+  const rows = all.filter(r => !cibleKind || r.kinds[cibleKind]), withC = rows.filter(r => r.n), without = rows.filter(r => !r.n);
+  const chip = (k, lbl, n) => `<button class="chip" type="button" data-act="cbkind" data-k="${k}" aria-pressed="${cibleKind === k}">${lbl} <span class="n">${n}</span></button>`;
+  const logo = v => { const u = logoUrl(v); return `<span class="cblogo" aria-hidden="true">${u ? `<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${esc((v.match(/[A-Za-zÀ-ÿ0-9]/) || ['?'])[0].toUpperCase())}</span>`; };
+  const row = r => `<li><button class="cbrow" type="button" data-act="cbgo" data-v="${esc(r.v)}">${logo(r.v)}<span class="cbtxt"><b>${esc(r.v)}</b><small>${esc(cibleMeta(r))}</small></span><span class="n">${r.n}<small>contact${r.n > 1 ? 's' : ''}</small></span></button></li>`;
+  openDrawer(`<h2 id="dtitle" tabindex="-1">Tes entreprises cibles</h2>
+    <p class="pos">Les entreprises où tu as postulé, dont tu as enregistré une offre, que tu as notées comme entreprises de rêve ou que tu suis, d’après ton export LinkedIn, avec le nombre de tes contacts qui y travaillent. Clique sur une entreprise pour voir qui peut t’en ouvrir la porte.</p>
+    <div class="cbchips" role="group" aria-label="Filtrer les entreprises cibles">${chip('', 'Toutes', all.length)}${Object.keys(CIBLE_KIND).filter(cnt).map(k => chip(k, CIBLE_KIND[k].pl, cnt(k))).join('')}</div>
+    ${withC.length ? `<h3>${withC.length} où tu connais quelqu’un</h3><ul class="cbl">${withC.map(row).join('')}</ul>` : '<p class="pos">Aucun de tes contacts n’y travaille pour l’instant.</p>'}
+    ${without.length ? `<h3>${without.length} sans contact dans ton réseau</h3><p class="pos">${without.slice(0, 25).map(r => esc(r.v)).join(', ')}${without.length > 25 ? `, et ${without.length - 25} autres` : ''}.</p>` : ''}
+    <p class="hint" style="margin-top:14px">Lu dans ce navigateur, rien n’est envoyé. Gardé sur cet appareil seulement avec ton réseau, si tu choisis de le garder.</p>`);
+}
+
 /* ---------- Réseau gardé sur cet appareil ----------
    Seulement si l’utilisateur le demande (décoché par défaut) : les champs bruts de Connections.csv, sans les emails,
    dans IndexedDB de ce navigateur. Rien n’est envoyé. Au retour, le réseau est reconstruit avec le dictionnaire du moment. */
@@ -795,7 +910,7 @@ async function netDo(mode, fn){
     tx.oncomplete = () => { db.close(); res(req.result); }; tx.onerror = tx.onabort = () => { db.close(); rej(tx.error); };
   });
 }
-const saveNet = raw => netDo('readwrite', st => st.put({raw, prox:proxData, saved:Date.now()}, 'courant'));
+const saveNet = raw => netDo('readwrite', st => st.put({raw, prox:proxData, cibles:cibleData, saved:Date.now()}, 'courant'));
 const readNet = () => netDo('readonly', st => st.get('courant'));
 const dropNet = () => new Promise(res => { try { const r = indexedDB.deleteDatabase(NET_DB); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch(e) { res(); } });
 async function setKeep(on){
@@ -1377,8 +1492,8 @@ document.getElementById('views').addEventListener('click', e => {
   /* Une seule vue à la fois (boutons radio) ; un clic sur la vue active la retire et revient à l’affichage de départ */
   const pick = (x, btn) => {
     if(!x) return;
-    if(btn.getAttribute('aria-checked') === 'true'){ applyView({g:'sector', c:'seniority', t:12, m:state.view, f:{}}); toast('Vue retirée : tout le réseau'); }
-    else { applyView(x.v); toast(`Vue « ${x.name} »`); }
+    if(btn.getAttribute('aria-checked') === 'true'){ applyView({g:'sector', c:'seniority', t:12, m:state.view, f:{}}); toast('Vue retirée : tout le réseau', true); }
+    else { applyView(x.v); toast(`Vue « ${x.name} »`, true); }
   };
   if(p) pick(presets().find(o => o.id === p.dataset.preset), p);
   else if(m) pick(myViews[+m.dataset.myview], m);
@@ -1819,6 +1934,8 @@ function renderBar(vis){
 
 /* ---------- Graph ---------- */
 const canvas = $('#canvas');
+/* Un message ne doit pas cacher le graphe pendant qu’on s’en sert : il disparaît au premier geste dessus */
+canvas.addEventListener('pointerdown', () => $('#toast').classList.remove('on'));
 const svg = d3.select('#graph');
 /* Découpe ronde des logos d’entreprise : ils remplissent le cercle du nœud */
 svg.append('defs').html('<clipPath id="logoClip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath>');
@@ -2924,6 +3041,7 @@ function updateLegend(vis){
 }
 
 function updatePanel(vis){
+  syncCibleHint();
   const dated = vis.filter(c => c.date).sort((a, b) => a.date - b.date);
   const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company && !TAIL.includes(coOf(c))), v => v.length, coOf), d => d[1]);
   const last = dated[dated.length - 1];
@@ -3218,7 +3336,7 @@ async function sendFeedback(){
 }
 
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as choisi de le garder (section « Mon réseau » du panneau). Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Les entreprises où tu as postulé, dont tu as enregistré une offre ou que tu suis sont croisées avec ton réseau de la même façon, sans rien envoyer. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as choisi de le garder (section « Mon réseau » du panneau). Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
     <p class="pos">En regroupant ou en colorant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -3292,7 +3410,7 @@ function showHelp(msg){
       <li>Coche uniquement « Relations » et demande l’archive. Elle arrive par email en une dizaine de minutes.</li>
       <li>Importe directement l’archive .zip reçue, ou seulement le fichier Connections.csv qu’elle contient. Tu peux aussi la déposer sur cette page.</li>
     </ol>
-    <p class="pos">Pour afficher ton nom et ton poste au centre du graphe, demande plutôt l’archive complète : elle contient aussi ton profil, que l’app lit automatiquement.</p>
+    <p class="pos">Pour afficher ton nom et ton poste au centre du graphe, demande plutôt l’archive complète : elle contient aussi ton profil, que l’app lit automatiquement, ainsi que tes candidatures et offres enregistrées&nbsp;: Synapses te montre alors qui tu connais dans ces entreprises.</p>
     <h3>Ce que contient l’export</h3>
     <p class="pos">Nom, entreprise actuelle, poste, date de connexion et lien du profil, ainsi que l’email des contacts qui ont autorisé son partage. Secteur, fonction et séniorité sont estimés à partir de ces champs.</p>
     <h3>Aller plus loin</h3>
@@ -3347,6 +3465,7 @@ function targetPredictions(recent = tgRecent){
     const tops = [...d3.rollup(inG, v => v.length, coOf)].filter(([k]) => !NO_COMPANY_GROUPS.has(k)).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k]) => find(k, 'Entreprise'));
     push('Dans ' + grpKey, tops);
   }
+  push('Tes entreprises cibles', cibleIndex().filter(r => r.n).slice(0, 4).map(r => ({...(find(r.v, 'Entreprise') || {v:r.v, type:'Entreprise', n:r.n}), sub:CIBLE_KIND[Object.keys(CIBLE_KIND).find(k => r.kinds[k])].lbl})));
   push('Recherches récentes', recent().map(v => idx.find(e => e.v === v) || {v, type:'Recherche', n:''}));
   push('Les plus présentes dans ton réseau', idx.filter(e => e.type === 'Entreprise').sort((a, b) => b.n - a.n).slice(0, 8));
   return sections;
@@ -3406,9 +3525,11 @@ function findEntry(exact){
   closePanel();
   const rank = ['Dirigeant','Direction','Manager','Senior','Confirmé','Junior','Non renseignée'];
   const hit = x => norm(x).includes(t);
-  let m = contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit));
+  /* Valeur exacte du réseau (suggestion choisie, entreprise cible) : seulement ses contacts, pas les noms qui la contiennent (« Bel » ≠ Tractebel) */
+  const exactOf = v => { const e = targetIndex().find(x => norm(x.v) === norm(v)); if(!e) return null; const f = {Entreprise:coOf, 'Entité':entityOf, Secteur:c => c.sector, 'École':c => c.school}[e.type]; return f ? contacts.filter(c => norm(f(c) || '') === norm(e.v)) : null; };
+  let m = exactOf(raw) || contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit));
   /* Rien d’exact : la meilleure suggestion (faute de frappe, nom approché) */
-  if(!m.length && !exact){ const best = targetMatches(raw, 1)[0]; if(best){ raw = best.v; t = norm(raw); $('#target').value = raw; m = contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit)); } }
+  if(!m.length && !exact){ const best = targetMatches(raw, 1)[0]; if(best){ raw = best.v; t = norm(raw); $('#target').value = raw; m = exactOf(raw) || contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit)); } }
   $('#targetGhost').innerHTML = '';
   if(m.length) tgRemember(raw);
   m = m
@@ -3417,6 +3538,7 @@ function findEntry(exact){
   nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
   select(null); focus(ids);
   openDrawer(`<h2 id="dtitle" tabindex="-1">Portes d’entrée vers ${esc(raw)}</h2>
+    ${(cb => cb ? `<p class="pos"><strong>Entreprise cible</strong>&nbsp;: ${esc(cibleMeta(cb))}.</p>` : '')(cibleOf(raw))}
     <p class="pos">${m.length ? `${m.length} contact${m.length > 1 ? 's' : ''} lié${m.length > 1 ? 's' : ''} à ta recherche, les plus seniors en premier.` : 'Aucun contact ne correspond. Essaie un nom d’entreprise plus court, un secteur ou une école.'}</p>
     ${peopleList(m, '', 30, true)}`);
 }
@@ -3427,14 +3549,15 @@ function closePanel(){ $('#panel').classList.remove('open'); $('#backdrop').hidd
 
 /* ---------- Toast ---------- */
 let toastT;
-function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200); }
+/* quiet : annoncé aux lecteurs d’écran seulement, sans bulle par-dessus le graphe (ex. changement de vue, déjà visible dans le panneau) */
+function toast(msg, quiet){ if(quiet){ $('#toast').classList.remove('on'); const l = $('#srlive'); l.textContent = ''; setTimeout(() => { l.textContent = msg; }, 50); return; } const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200); }
 
 /* ---------- Load ---------- */
 function load(list, demo){
   contacts = list; isDemo = demo;
-  assignGroups(list); proxCache = new Map();
+  assignGroups(list); proxCache = new Map(); tgItems = null;
   /* Démo : quelques échanges fictifs, pour montrer le classement par proximité */
-  if(demo){ setProx(null); list.forEach(c => { const h = (c.id * 2654435761) % 1000; c.demoMsgs = h < 160 ? 1 + h % 37 : 0; c.demoReco = h % 61 === 0; }); }
+  if(demo){ setProx(null); cibleData = null; list.forEach(c => { const h = (c.id * 2654435761) % 1000; c.demoMsgs = h < 160 ? 1 + h % 37 : 0; c.demoReco = h % 61 === 0; }); }
   if(!demo){ applyAI(list); refreshShared(); }
   nodes = []; pos.clear(); needFit = true; state.selected = null;
   gLinks.selectAll('*').remove(); gNodes.selectAll('*').remove(); gLabels.selectAll('*').remove(); gCounts.selectAll('*').remove();
@@ -3484,7 +3607,7 @@ async function handleFiles(fileList){
         const zip = await JSZip.loadAsync(await f.arrayBuffer());
         for(const [path, entry] of Object.entries(zip.files)){
           const base = path.split('/').pop().toLowerCase();
-          if(!entry.dir && PROX_FILES.includes(base)){ sig[base] = await entry.async('string'); continue; }
+          if(!entry.dir && (PROX_FILES.includes(base) || isCibleFile(base))){ sig[base] = await entry.async('string'); continue; }
           if(entry.dir || !['connections.csv','profile.csv','positions.csv'].includes(base)) continue;
           const t = await entry.async('string'); const k = kindOf(t);
           if(k && !texts[k]) texts[k] = t;
@@ -3503,7 +3626,7 @@ async function handleFiles(fileList){
   if(texts.connections){ try { list = parseLinkedIn(texts.connections); } catch(e) { list = []; } }
   if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
   closePanel();
-  if(list.length){ setProx(proximityFrom(sig, list)); state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).then(() => { keptAt = Date.now(); syncKeepField(); }).catch(() => {}); } else render();
+  if(list.length){ setProx(proximityFrom(sig, list)); cibleData = ciblesFrom(sig); state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).then(() => { keptAt = Date.now(); syncKeepField(); }).catch(() => {}); } else render();
   if(list.length) toast(`${list.length} contact${list.length > 1 ? 's' : ''} importé${list.length > 1 ? 's' : ''}${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
   else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
   if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
@@ -3618,6 +3741,9 @@ document.addEventListener('click', e => {
       else { updateLegend(contacts.filter(pass)); if(v.startsWith('g:')){ if(open) focusLegendGroup(true); else if(!state.selected){ clearFocus(); fit(); } } }
     }
     else if(a === 'keepyes') setKeep(true);
+    else if(a === 'cibles') showCibles();
+    else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
+    else if(a === 'cbgo') pickTarget(act.dataset.v);
     else if(a === 'keepforget'){ if(confirm('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.')) setKeep(false); }
     else if(a === 'keepno'){ keepAsked = true; renderBar(contacts.filter(pass)); }
     else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
@@ -3751,7 +3877,7 @@ loadDictionary()
     let kept = null;
     if(keepOn()){ try { kept = await readNet(); } catch(e) {} }
     const list = kept && Array.isArray(kept.raw) ? kept.raw.map((r, i) => buildContact(r, i)).filter(c => c.name) : [];
-    if(list.length){ lastRaw = kept.raw; keptAt = kept.saved || 0; setProx(kept.prox); load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
+    if(list.length){ lastRaw = kept.raw; keptAt = kept.saved || 0; setProx(kept.prox); cibleData = Array.isArray(kept.cibles) ? kept.cibles : null; load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
     else load(demoContacts(), true);
     if(location.hash === '#importer') showHelp();
   });
