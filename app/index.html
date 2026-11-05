@@ -2197,7 +2197,9 @@ function applyLayout(){
       /* Peu de grappes : serrées en arc du côté extérieur (à l’opposé de « Moi »), au lieu d’être réparties tout autour du groupe,
          où l’une d’elles se retrouvait entre le groupe et « Moi », traversée par la branche. Rotation appliquée plus bas (hn.arc) */
       const arcTh = ring.map(s => 2 * Math.asin(Math.min(1, (s.br + g / 2) / D))), arcSum = d3.sum(arcTh);
-      hn.arc = arcSum <= 2 * Math.PI * 0.6; /* une seule grappe aussi : posée du côté extérieur, jamais entre le groupe et « Moi » */
+      /* Une seule grappe aussi : posée du côté extérieur, jamais entre le groupe et « Moi ». Quand les groupes ont tous leur cercle
+         pointillé (soleHub), plusieurs grappes restent en cercle complet : même design pour tous, la branche s’arrête au pointillé */
+      hn.arc = ring.length === 1 || (!soleHub && arcSum <= 2 * Math.PI * 0.6);
       if(hn.arc){
         let a0 = -Math.PI / 2 - arcSum / 2;
         ring.forEach((s, j) => {
