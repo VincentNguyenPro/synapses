@@ -170,6 +170,9 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .dlist li{margin-bottom:5px}
 .dlist b{color:var(--ink)}
 .privacy{font-size:12.5px;color:var(--muted);padding:16px 18px 24px;margin:0}
+/* Langue : bouton FR · EN dans l’en-tête ; sur téléphone, lien en bas du panneau (l’en-tête n’a pas la place) */
+.langm{display:none;font-weight:700;color:var(--accent)}
+#langBtn{padding-left:10px;padding-right:10px}
 .stats{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;margin:0}
 .stats dt{color:var(--muted)}
 .stats dd{margin:0;min-width:0}
@@ -520,6 +523,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   .search{order:3;flex-basis:100%;max-width:none}
   .hdr-actions{margin-left:auto;gap:2px}
   #fbBtn span,#helpBtn span{display:none} /* icônes seules : l’en-tête tient sur une ligne */
+  #langBtn{display:none} .langm{display:inline}
   #fbBtn,#helpBtn{padding-left:10px;padding-right:10px}
   .stage{grid-column:1}
   aside{position:fixed;left:0;right:0;bottom:0;max-height:82vh;border-right:0;border-radius:18px 18px 0 0;z-index:20;box-shadow:var(--shadow);transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s;padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -574,6 +578,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
       <ul class="tgsug" id="qSug" role="listbox" hidden></ul>
     </div>
     <div class="hdr-actions">
+      <a class="btn ghost" id="langBtn" href="?lang=en" data-act="lang" data-lang="en" hreflang="en" lang="en" aria-label="English version" title="English version">EN</a>
       <button class="btn ghost" id="fbBtn" type="button" data-act="feedback" title="Donner mon avis sur Synapses" aria-label="Donner mon avis">
         <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>
         <span>Avis</span>
@@ -653,7 +658,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
         <button class="btn sm" type="button" id="aiBtn" data-act="aisetup">Classer avec une IA</button>
       </div>
     </details>
-    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part. Tes réglages restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.</p>
+    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part. Tes réglages restent sur cet appareil. Outil indépendant, non affilié à LinkedIn. <a class="langm" id="langBtnM" href="?lang=en" data-act="lang" data-lang="en" hreflang="en" lang="en">English version</a></p>
   </aside>
 
   <main class="stage">
@@ -705,6 +710,110 @@ const coarse = window.matchMedia('(pointer: coarse)').matches;
 /* Teinte des groupes : color-mix seulement si le navigateur le gère, sinon couleur de fond simple (jamais de noir par défaut) */
 const CM_OK = !!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red 50%, white)'));
 const ICON_EXT = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:15px;height:15px"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+
+/* ---------- Langue (FR · EN) ----------
+   Français par défaut ; anglais avec ?lang=en (liens de la landing anglaise), si le navigateur est en anglais au premier passage,
+   ou si l’utilisateur l’a choisi (bouton FR · EN de l’en-tête, gardé sur l’appareil : synapses-lang-v1).
+   Les valeurs du dictionnaire (secteurs, fonctions, séniorités, tags…) restent en français comme codes internes : filtres,
+   vues partagées (#vue=…), corrections, dictionnaire partagé et consignes de l’IA sont les mêmes dans les deux langues ;
+   seul l’affichage est traduit (dv). Changer de langue recharge la page. */
+const LANG_KEY = 'synapses-lang-v1';
+const LANG = (() => {
+  const u = (new URLSearchParams(location.search).get('lang') || '').toLowerCase();
+  if(u === 'en' || u === 'fr'){ try { localStorage.setItem(LANG_KEY, u); } catch(e) {} return u; }
+  try { const s = localStorage.getItem(LANG_KEY); if(s === 'en' || s === 'fr') return s; } catch(e) {}
+  return /^en\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || '') ? 'en' : 'fr';
+})();
+const EN = LANG === 'en', L = (fr, en) => EN ? en : fr, LOC = EN ? 'en-US' : 'fr-FR';
+/* Pluriel anglais : « 1 contact », « 0 contacts », « 2 contacts » */
+const sEN = n => n === 1 ? '' : 's';
+/* Valeurs affichées en anglais (codes internes en français) */
+const VALUE_EN = new Map(Object.entries({
+  /* secteurs (data/entreprises.json) */
+  'Agroalimentaire':'Food & beverage', 'Banque & assurance':'Banking & insurance', 'Conseil':'Consulting', 'Finance & investissement':'Finance & investment',
+  'Immobilier & construction':'Real estate & construction', 'Juridique':'Legal', 'Retail & conso':'Retail & consumer', 'Santé':'Healthcare',
+  'Secteur public & éducation':'Public sector & education', 'Tech & logiciel':'Tech & software', 'Tourisme, hôtellerie & restauration':'Travel, hospitality & food service',
+  'Transport & mobilité':'Transport & mobility', 'Télécom & médias':'Telecom & media', 'Énergie & industrie':'Energy & industry',
+  'Indépendant / sans entreprise':'Freelance / no company', 'Non classé':'Unclassified',
+  /* fonctions (data/postes.json) */
+  'Direction générale':'General management', 'Produit':'Product', 'RH':'HR', 'Enseignement & recherche':'Education & research', 'Opérations':'Operations', 'Autre':'Other',
+  /* séniorités */
+  'Confirmé':'Mid-level', 'Direction':'Director', 'Dirigeant':'Executive', 'Non renseignée':'Not specified', 'Non renseigné':'Not specified',
+  /* tags */
+  'Partenaire':'Partner', 'Recruteur':'Recruiter', 'À recontacter':'To follow up', 'Sans tag':'No tag',
+  /* groupes et valeurs de repli */
+  'Indépendant':'Freelance', 'Non communiqué':'Undisclosed', 'Autres':'Others', 'Autres entreprises':'Other companies', 'Sans entreprise':'No company', 'Inconnue':'Unknown',
+  /* expérience (colonne ajoutée au CSV) */
+  '0 à 2 ans':'0–2 years', '3 à 5 ans':'3–5 years', '6 à 10 ans':'6–10 years', '11 à 15 ans':'11–15 years', '16 ans et plus':'16+ years',
+  /* pays (colonne ajoutée au CSV) */
+  'Belgique':'Belgium', 'Suisse':'Switzerland', 'Royaume-Uni':'United Kingdom', 'Allemagne':'Germany', 'Espagne':'Spain', 'Italie':'Italy', 'Pays-Bas':'Netherlands',
+  'Irlande':'Ireland', 'Suède':'Sweden', 'Danemark':'Denmark', 'Pologne':'Poland', 'États-Unis':'United States', 'Maroc':'Morocco', 'Tunisie':'Tunisia', 'Algérie':'Algeria',
+  'Sénégal':'Senegal', 'Côte d’Ivoire':'Ivory Coast', 'Émirats arabes unis':'United Arab Emirates', 'Singapour':'Singapore', 'Inde':'India', 'Chine':'China', 'Japon':'Japan',
+  'Brésil':'Brazil', 'Australie':'Australia'
+}));
+const dv = v => EN && VALUE_EN.has(v) ? VALUE_EN.get(v) : v;
+/* Texte tapé en anglais → code interne (« Healthcare » → « Santé ») */
+const VALUE_FR = new Map([...VALUE_EN].map(([fr, en]) => [norm(en), fr]));
+const uv = s => EN && VALUE_FR.has(norm(s)) ? VALUE_FR.get(norm(s)) : s;
+/* Textes fixes de la page (HTML), traduits au chargement en anglais. Clés : texte français, espaces (insécables comprises) réduites à une espace */
+const STATIC_EN = {
+  'Ton réseau LinkedIn, vu comme un réseau de neurones':'Your LinkedIn network, seen as a neural network',
+  'Avis':'Feedback', 'Aide':'Help', 'Importer':'Import', 'mon export LinkedIn':'my LinkedIn export',
+  'Affichage et filtres':'Display and filters', 'Voir les résultats':'See results', 'Explorer':'Explore',
+  'Trouver une porte d’entrée':'Find a way in', 'Qui peut t’ouvrir une entreprise ou un secteur ?':'Who can get you into a company or an industry?',
+  'Chercher':'Search', 'Aperçu du réseau affiché':'Overview of the network shown', 'Vues':'Views', 'Prêtes à l’emploi':'Ready-made', 'Mes vues':'My views',
+  'Enregistrer':'Save', 'Copier le lien de cette vue':'Copy this view’s link', 'Filtres':'Filters', 'Tout effacer':'Clear all',
+  'Sans sélection, tous les contacts sont affichés.':'With nothing selected, all contacts are shown.',
+  'Secteur':'Industry', 'estimé':'estimated', 'estimée':'estimated', 'Fonction':'Function', 'Séniorité':'Seniority', 'Formation':'Education', 'Pays':'Country',
+  'Ville':'City', 'Expérience':'Experience', 'Année de connexion':'Year connected', 'à':'to', 'Affichage':'Display', 'Regrouper par':'Group by', 'Colorer par':'Color by',
+  'Branches affichées':'Branches shown', 'Les plus petits groupes sont réunis dans une branche « Autres ».':'The smallest groups are merged into an “Others” branch.',
+  'Logos des entreprises':'Company logos',
+  'Via Brandfetch, qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.':'Via Brandfetch, which receives the websites of the companies shown, never your contacts’ names.',
+  'Classification par IA':'AI classification', 'Classer avec une IA':'Classify with an AI',
+  'Ton fichier est lu dans ton navigateur et n’est envoyé nulle part. Tes réglages restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.':'Your file is read in your browser and never sent anywhere. Your settings stay on this device. Independent tool, not affiliated with LinkedIn.',
+  'Aucun contact ne correspond à ces filtres.':'No contacts match these filters.', 'Retire un filtre ou élargis ta recherche.':'Remove a filter or broaden your search.',
+  'Vue d’ensemble':'Overview', 'Dépose ton fichier Connections.csv':'Drop your Connections.csv file',
+  /* attributs */
+  'Découvrir Synapses':'About Synapses', 'Rechercher dans tes contacts':'Search your contacts', 'Donner mon avis sur Synapses':'Give feedback on Synapses',
+  'Donner mon avis':'Give feedback', 'Ex. Doctolib, Santé':'E.g. Doctolib, Health', 'Vues prêtes à l’emploi':'Ready-made views',
+  'Nom de la vue actuelle':'Name of the current view', 'Nom de la vue à enregistrer':'Name of the view to save',
+  'Le lien contient seulement les réglages (regroupement, couleurs, filtres), jamais tes contacts. Les entreprises ou écoles sur lesquelles tu filtres y apparaissent. La recherche n’y est pas incluse.':'The link only contains the settings (grouping, colors, filters), never your contacts. Companies or schools you filter on appear in it. The search isn’t included.',
+  'Depuis l’année':'From year', 'Jusqu’à l’année':'To year',
+  'Graphe de tes contacts LinkedIn. Le mode Liste en donne une version textuelle.':'Graph of your LinkedIn contacts. List mode gives a text version.',
+  'Zoomer':'Zoom in', 'Dézoomer':'Zoom out', 'Recadrer sur ce que tu regardes':'Reframe on what you’re looking at', 'Recadrer':'Reframe', 'Fermer':'Close'
+};
+if(EN){
+  document.documentElement.lang = 'en';
+  const key = s => s.replace(/\s+/g, ' ').trim();
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for(let n; (n = walk.nextNode());){
+    const t = STATIC_EN[key(n.nodeValue)];
+    if(t != null && !n.parentNode.closest('script,style')) n.nodeValue = n.nodeValue.replace(/^(\s*)[\s\S]*?(\s*)$/, (m, a, b) => a + t + b);
+  }
+  document.querySelectorAll('[placeholder],[aria-label],[title]').forEach(el => ['placeholder', 'aria-label', 'title'].forEach(a => { const v = el.getAttribute(a), t = v && STATIC_EN[key(v)]; if(t != null) el.setAttribute(a, t); }));
+  /* « Branches affichées : 12 » → « Branches shown: 12 » */
+  const tl = document.querySelector('label[for=topN]'); if(tl && tl.childNodes[1]) tl.childNodes[1].nodeValue = ': ';
+  /* Bouton de langue : propose le français */
+  const lb = document.getElementById('langBtn');
+  if(lb){ lb.textContent = 'FR'; lb.href = '?lang=fr'; lb.hreflang = 'fr'; lb.lang = 'fr'; lb.dataset.lang = 'fr'; lb.setAttribute('aria-label', 'Version française'); lb.title = 'Version française'; }
+  const lm = document.getElementById('langBtnM');
+  if(lm){ lm.textContent = 'Version française'; lm.href = '?lang=fr'; lm.hreflang = 'fr'; lm.lang = 'fr'; lm.dataset.lang = 'fr'; }
+  /* Titre, description et aperçu du lien */
+  document.title = 'Synapses, your LinkedIn network as a graph';
+  const meta = (sel, v) => { const m = document.querySelector(sel); if(m) m.setAttribute('content', v); };
+  meta('meta[name=description]', 'Visualize your LinkedIn network as a neural graph from your LinkedIn export. Free, no sign-up: your file stays in your browser.');
+  meta('meta[property="og:locale"]', 'en_US');
+  meta('meta[property="og:title"]', 'Synapses, your LinkedIn network as a graph');
+  meta('meta[property="og:description"]', 'Import your LinkedIn export and see your network as a neural network. Free, no sign-up: your file stays in your browser.');
+  meta('meta[property="og:image"]', 'https://vincentnguyenpro.github.io/synapses/og-image-en.png');
+  meta('meta[property="og:image:alt"]', 'Synapses: “Your LinkedIn network, as a map.”, the Try the demo button and the tool grouping contacts by industry');
+}
+/* Changer de langue recharge la page : un réseau importé mais non gardé sur l’appareil serait perdu, on prévient d’abord */
+function setLang(l){
+  if(!isDemo && contacts.length && !keepOn() && !confirm(L('Changer de langue recharge la page : ton réseau, non gardé sur cet appareil, devra être réimporté. Continuer ?', 'Switching language reloads the page: your network, not kept on this device, will need to be re-imported. Continue?'))) return;
+  try { localStorage.setItem(LANG_KEY, l); } catch(e) {}
+  const u = new URL(location.href); u.searchParams.set('lang', l); u.hash = ''; location.href = u.toString();
+}
 
 /* ---------- Classification heuristics ---------- */
 /* Dictionnaires de classification : chargés depuis data/entreprises.json et data/postes.json (voir loadDictionary) */
@@ -833,9 +942,9 @@ const monthsSince = day => { const [y, m] = day.split('-').map(Number), n = new 
 /* « en mars 2024 », « ce mois-ci », « il y a 3 ans » */
 function sinceFr(day){
   const mo = monthsSince(day);
-  if(mo <= 0) return 'ce mois-ci';
-  if(mo < 24) return 'en ' + new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, 15).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-  return `il y a ${Math.floor(mo / 12)} ans`;
+  if(mo <= 0) return L('ce mois-ci', 'this month');
+  if(mo < 24) return L('en ', 'in ') + new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, 15).toLocaleDateString(LOC, {month:'long', year:'numeric'});
+  return L(`il y a ${Math.floor(mo / 12)} ans`, `${Math.floor(mo / 12)} years ago`);
 }
 /* Raisons et score de proximité d’un contact (mis en cache) */
 function proxOf(c){
@@ -843,18 +952,18 @@ function proxOf(c){
   const why = [], short = []; let score = 0;
   const sl = slugOf(c.url), d = proxData && sl ? proxData.u[sl] || {} : {};
   const m = d.m || (isDemo ? c.demoMsgs || 0 : 0);
-  if(m){ why.push(`${m} message${m > 1 ? 's' : ''} échangé${m > 1 ? 's' : ''}${d.t ? `, le dernier ${sinceFr(d.t)}` : ''}`); short.push(`${m} msg`); score += 3 + Math.min(6, Math.floor(Math.log2(m))); }
+  if(m){ why.push(EN ? `${m} message${sEN(m)} exchanged${d.t ? `, the last one ${sinceFr(d.t)}` : ''}` : `${m} message${m > 1 ? 's' : ''} échangé${m > 1 ? 's' : ''}${d.t ? `, le dernier ${sinceFr(d.t)}` : ''}`); short.push(`${m} msg`); score += 3 + Math.min(6, Math.floor(Math.log2(m))); }
   /* Échange récent : plus proche aujourd’hui qu’un échange d’il y a cinq ans */
-  if(d.t){ const mo = monthsSince(d.t); score += mo <= 6 ? 2 : mo <= 24 ? 1 : 0; if(mo >= 12) short.push(`Silence ${mo < 24 ? 'depuis 1 an' : `depuis ${Math.floor(mo / 12)} ans`}`); }
-  if(d.i){ why.push('T’a invité à rejoindre ton réseau'); score += 1; }
-  if((proxData && proxData.n[personKey(c.first, c.name.slice(c.first.length))]) || (isDemo && c.demoReco)){ why.push('Recommandation'); short.push('Reco'); score += 5; }
-  if(d.e){ why.push('Compétences recommandées'); short.push('Compétences'); score += 2; }
+  if(d.t){ const mo = monthsSince(d.t); score += mo <= 6 ? 2 : mo <= 24 ? 1 : 0; if(mo >= 12) short.push(EN ? `Quiet ${mo < 24 ? 'for 1 year' : `for ${Math.floor(mo / 12)} years`}` : `Silence ${mo < 24 ? 'depuis 1 an' : `depuis ${Math.floor(mo / 12)} ans`}`); }
+  if(d.i){ why.push(L('T’a invité à rejoindre ton réseau', 'Invited you to connect')); score += 1; }
+  if((proxData && proxData.n[personKey(c.first, c.name.slice(c.first.length))]) || (isDemo && c.demoReco)){ why.push(L('Recommandation', 'Recommendation')); short.push(L('Reco', 'Rec.')); score += 5; }
+  if(d.e){ why.push(L('Compétences recommandées', 'Skills endorsed')); short.push(L('Compétences', 'Skills')); score += 2; }
   const me = myProfile();
   const myCos = new Set((me.companies || (me.company ? [me.company] : [])).map(x => groupOf(x) || x).map(nkey));
   const co = coOf(c);
-  if(co && myCos.has(nkey(co))){ const cur = me.company && nkey(groupOf(me.company) || me.company) === nkey(co); why.push(cur ? `Collègue chez ${co}` : `Passé par ${co} comme toi`); short.push(cur ? 'Collègue' : `Ex-${co}`); score += cur ? 3 : 2; }
+  if(co && myCos.has(nkey(co))){ const cur = me.company && nkey(groupOf(me.company) || me.company) === nkey(co); why.push(EN ? (cur ? `Colleague at ${dv(co)}` : `Worked at ${dv(co)}, like you`) : cur ? `Collègue chez ${co}` : `Passé par ${co} comme toi`); short.push(cur ? L('Collègue', 'Colleague') : `Ex-${dv(co)}`); score += cur ? 3 : 2; }
   const mySchools = new Set((me.schools || []).map(nkey));
-  if(c.school && mySchools.has(nkey(c.school))){ why.push('Même école'); short.push('Même école'); score += 2; }
+  if(c.school && mySchools.has(nkey(c.school))){ why.push(L('Même école', 'Same school')); short.push(L('Même école', 'Same school')); score += 2; }
   const t = tagOf(c); if(t) score += 3;
   const r = {score, why, short};
   proxCache.set(c.id, r);
@@ -869,7 +978,7 @@ const byProx = (a, b) => proxOf(b).score - proxOf(a).score || a.name.localeCompa
    Rien n’est envoyé ; gardées sur l’appareil seulement avec le réseau, si tu le demandes. */
 const CIBLE_FILES = ['job applications.csv', 'company follows.csv', 'job seeker preferences.csv'];
 const isCibleFile = b => CIBLE_FILES.includes(b) || /^saved jobs(_\d+)?\.csv$/.test(b);
-const CIBLE_KIND = {a:{lbl:'Candidature', pl:'Candidatures', w:4}, d:{lbl:'Entreprise de rêve', pl:'Entreprises de rêve', w:3}, s:{lbl:'Offre enregistrée', pl:'Offres enregistrées', w:2}, f:{lbl:'Entreprise suivie', pl:'Entreprises suivies', w:1}};
+const CIBLE_KIND = {a:{lbl:L('Candidature', 'Application'), pl:L('Candidatures', 'Applications'), w:4}, d:{lbl:L('Entreprise de rêve', 'Dream company'), pl:L('Entreprises de rêve', 'Dream companies'), w:3}, s:{lbl:L('Offre enregistrée', 'Saved job'), pl:L('Offres enregistrées', 'Saved jobs'), w:2}, f:{lbl:L('Entreprise suivie', 'Followed company'), pl:L('Entreprises suivies', 'Followed companies'), w:1}};
 let cibleData = null, cibleCache = null, cibleKind = '';
 /* Dates de LinkedIn : « 3/14/26, 10:05 AM » ou « Thu Jan 01 12:00:00 UTC 2026 » → « 2026-03 » */
 function liMonth(s){
@@ -881,7 +990,7 @@ function liMonth(s){
   if(mo >= 1 && Number.isInteger(mo)) return `${m[2]}-${String(mo).padStart(2, '0')}`;
   m = s.match(/(\d{4})-(\d{2})/); return m ? `${m[1]}-${m[2]}` : '';
 }
-const monthFr = d => { const [y, m] = (d || '').split('-').map(Number); return y && m ? new Date(y, m - 1, 15).toLocaleDateString('fr-FR', {month:'long', year:'numeric'}) : ''; };
+const monthFr = d => { const [y, m] = (d || '').split('-').map(Number); return y && m ? new Date(y, m - 1, 15).toLocaleDateString(LOC, {month:'long', year:'numeric'}) : ''; };
 function ciblesFrom(sig){
   const out = [];
   Object.entries(sig).forEach(([f, text]) => {
@@ -931,10 +1040,10 @@ function cibleIndex(){
 /* Ce que tu as fait avec cette entreprise, en une ligne : « Candidature : Product Manager, mars 2026 · 3 offres enregistrées · Suivie » */
 function cibleMeta(r){
   const out = [], K = r.kinds;
-  if(K.a){ const last = [...K.a.items].sort((x, y) => (y.d > x.d) - (y.d < x.d))[0]; out.push(K.a.nb > 1 ? `${K.a.nb} candidatures, la dernière en ${monthFr(last.d)}` : `Candidature${last.t ? ' : ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`); }
-  if(K.d) out.push('Entreprise de rêve');
-  if(K.s) out.push(K.s.nb > 1 ? `${K.s.nb} offres enregistrées` : 'Offre enregistrée');
-  if(K.f) out.push('Suivie');
+  if(K.a){ const last = [...K.a.items].sort((x, y) => (y.d > x.d) - (y.d < x.d))[0]; out.push(EN ? (K.a.nb > 1 ? `${K.a.nb} applications, the latest in ${monthFr(last.d)}` : `Application${last.t ? ': ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`) : K.a.nb > 1 ? `${K.a.nb} candidatures, la dernière en ${monthFr(last.d)}` : `Candidature${last.t ? ' : ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`); }
+  if(K.d) out.push(L('Entreprise de rêve', 'Dream company'));
+  if(K.s) out.push(K.s.nb > 1 ? L(`${K.s.nb} offres enregistrées`, `${K.s.nb} saved jobs`) : L('Offre enregistrée', 'Saved job'));
+  if(K.f) out.push(L('Suivie', 'Followed'));
   return out.join(' · ');
 }
 const cibleOf = v => cibleIndex().find(r => norm(r.v) === norm(v));
@@ -956,7 +1065,7 @@ function syncRelanceHint(){
   const el = document.getElementById('relanceHint'); if(!el) return;
   const n = relanceList().length, inv = pendingInv().o.length;
   el.hidden = !n && !inv;
-  if(!el.hidden) el.innerHTML = `<button class="qlink" type="button" data-act="relance"><span>Contacts à relancer<small>${[n && `Sans nouvelles depuis plus d’un an`, inv && `${inv} invitation${inv > 1 ? 's' : ''} sans réponse`].filter(Boolean).join(' · ')}</small></span><span class="n">${n || inv}</span></button>`;
+  if(!el.hidden) el.innerHTML = `<button class="qlink" type="button" data-act="relance"><span>${L('Contacts à relancer', 'Contacts to follow up')}<small>${[n && L(`Sans nouvelles depuis plus d’un an`, 'No news for over a year'), inv && L(`${inv} invitation${inv > 1 ? 's' : ''} sans réponse`, `${inv} unanswered invitation${sEN(inv)}`)].filter(Boolean).join(' · ')}</small></span><span class="n">${n || inv}</span></button>`;
 }
 function showRelance(){
   select(null); clearFocus(); closePanel();
@@ -964,9 +1073,14 @@ function showRelance(){
   const ids = new Set(list.map(c => 'c:' + c.id));
   nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
   if(list.length && state.view === 'graph') focus(ids);
-  const invRow = x => `<li class="invrow"><span class="who"><strong>${esc(x.n)}</strong><span>${x.d ? 'Envoyée ' + esc(sinceFr(x.d + '-15')) : ''}</span></span><a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(x.n)}">LinkedIn ${ICON_EXT}</a></li>`;
-  const invList = (arr, title, note) => arr.length ? `<h3>${title} <small class="h3sub">${arr.length}</small></h3><p class="pos">${note}</p><ul class="people">${[...arr].sort((a, b) => (b.d || '').localeCompare(a.d || '')).slice(0, 30).map(invRow).join('')}</ul>${arr.length > 30 ? `<p class="more">et ${arr.length - 30} autres</p>` : ''}` : '';
-  openDrawer(`<h2 id="dtitle" tabindex="-1">Contacts à relancer</h2>
+  const invRow = x => `<li class="invrow"><span class="who"><strong>${esc(x.n)}</strong><span>${x.d ? L('Envoyée ', 'Sent ') + esc(sinceFr(x.d + '-15')) : ''}</span></span><a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener" aria-label="${EN ? `Open ${esc(x.n)}’s LinkedIn profile` : `Ouvrir le profil LinkedIn de ${esc(x.n)}`}">LinkedIn ${ICON_EXT}</a></li>`;
+  const invList = (arr, title, note) => arr.length ? `<h3>${title} <small class="h3sub">${arr.length}</small></h3><p class="pos">${note}</p><ul class="people">${[...arr].sort((a, b) => (b.d || '').localeCompare(a.d || '')).slice(0, 30).map(invRow).join('')}</ul>${arr.length > 30 ? `<p class="more">${L(`et ${arr.length - 30} autres`, `and ${arr.length - 30} more`)}</p>` : ''}` : '';
+  openDrawer(EN ? `<h2 id="dtitle" tabindex="-1">Contacts to follow up</h2>
+    <p class="pos">${list.length ? `${list.length} ${list.length === 1 ? 'person' : 'people'} you exchanged at least ${RELANCE_MIN_MSG} messages with, but not in the past year. Closest first.` : `No one to follow up with: you’ve recently been in touch with everyone you used to write to often.`}</p>
+    ${peopleList(list, '', 50, true)}
+    ${invList(inv.o, 'Sent invitations with no reply', 'You invited these people; they haven’t accepted yet. Most recent first.')}
+    ${invList(inv.i, 'Received invitations pending', 'These people invited you; you haven’t replied yet.')}
+    <p class="hint" style="margin-top:14px">Computed in this browser from the dates of your messages (never their text) and your invitations. Nothing is sent.</p>` : `<h2 id="dtitle" tabindex="-1">Contacts à relancer</h2>
     <p class="pos">${list.length ? `${list.length} personnes avec qui tu as échangé au moins ${RELANCE_MIN_MSG} messages, mais plus depuis un an. Les plus proches d’abord.` : `Personne à relancer&nbsp;: tu as échangé récemment avec tous les contacts à qui tu écrivais souvent.`}</p>
     ${peopleList(list, '', 50, true)}
     ${invList(inv.o, 'Invitations envoyées sans réponse', 'Tu as invité ces personnes, elles n’ont pas encore accepté. Les plus récentes d’abord.')}
@@ -977,7 +1091,7 @@ function syncCibleHint(){
   const el = document.getElementById('cibleHint'); if(!el) return;
   const rows = cibleIndex().filter(r => r.n);
   el.hidden = !rows.length;
-  if(rows.length) el.innerHTML = `<button class="qlink" type="button" data-act="cibles"><span>Tes entreprises cibles<small>Où tu as postulé ou que tu suis, et où tu connais quelqu’un</small></span><span class="n">${rows.length}</span></button>`;
+  if(rows.length) el.innerHTML = `<button class="qlink" type="button" data-act="cibles"><span>${L('Tes entreprises cibles', 'Your target companies')}<small>${L('Où tu as postulé ou que tu suis, et où tu connais quelqu’un', 'Where you applied or that you follow, and where you know someone')}</small></span><span class="n">${rows.length}</span></button>`;
 }
 function showCibles(){
   select(null); clearFocus(); closePanel();
@@ -986,8 +1100,13 @@ function showCibles(){
   const rows = all.filter(r => !cibleKind || r.kinds[cibleKind]), withC = rows.filter(r => r.n), without = rows.filter(r => !r.n);
   const chip = (k, lbl, n) => `<button class="chip" type="button" data-act="cbkind" data-k="${k}" aria-pressed="${cibleKind === k}">${lbl} <span class="n">${n}</span></button>`;
   const logo = v => { const u = logoUrl(v); return `<span class="cblogo" aria-hidden="true">${u ? `<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${esc((v.match(/[A-Za-zÀ-ÿ0-9]/) || ['?'])[0].toUpperCase())}</span>`; };
-  const row = r => `<li><button class="cbrow" type="button" data-act="cbgo" data-v="${esc(r.v)}">${logo(r.v)}<span class="cbtxt"><b>${esc(r.v)}</b><small>${esc(cibleMeta(r))}</small></span><span class="n">${r.n}<small>contact${r.n > 1 ? 's' : ''}</small></span></button></li>`;
-  openDrawer(`<h2 id="dtitle" tabindex="-1">Tes entreprises cibles</h2>
+  const row = r => `<li><button class="cbrow" type="button" data-act="cbgo" data-v="${esc(r.v)}">${logo(r.v)}<span class="cbtxt"><b>${esc(r.v)}</b><small>${esc(cibleMeta(r))}</small></span><span class="n">${r.n}<small>contact${EN ? sEN(r.n) : r.n > 1 ? 's' : ''}</small></span></button></li>`;
+  openDrawer(EN ? `<h2 id="dtitle" tabindex="-1">Your target companies</h2>
+    <p class="pos">Where you applied, saved a job or that you follow, and how many of your contacts work there. Tap a company to see who can open the door.</p>
+    <div class="cbchips" role="group" aria-label="Filter target companies">${chip('', 'All', all.length)}${Object.keys(CIBLE_KIND).filter(cnt).map(k => chip(k, CIBLE_KIND[k].pl, cnt(k))).join('')}</div>
+    ${withC.length ? `<h3>${withC.length} where you know someone</h3><ul class="cbl">${withC.map(row).join('')}</ul>` : '<p class="pos">None of your contacts work there yet.</p>'}
+    ${without.length ? `<h3>${without.length} with no contact in your network</h3><p class="pos">${without.slice(0, 25).map(r => esc(r.v)).join(', ')}${without.length > 25 ? `, and ${without.length - 25} more` : ''}.</p>` : ''}
+    <p class="hint" style="margin-top:14px">Read in this browser, nothing is sent. Kept on this device only with your network, if you choose to keep it.</p>` : `<h2 id="dtitle" tabindex="-1">Tes entreprises cibles</h2>
     <p class="pos">Où tu as postulé, enregistré une offre ou que tu suis, et combien de tes contacts y travaillent. Touche une entreprise pour voir qui peut t’en ouvrir la porte.</p>
     <div class="cbchips" role="group" aria-label="Filtrer les entreprises cibles">${chip('', 'Toutes', all.length)}${Object.keys(CIBLE_KIND).filter(cnt).map(k => chip(k, CIBLE_KIND[k].pl, cnt(k))).join('')}</div>
     ${withC.length ? `<h3>${withC.length} où tu connais quelqu’un</h3><ul class="cbl">${withC.map(row).join('')}</ul>` : '<p class="pos">Aucun de tes contacts n’y travaille pour l’instant.</p>'}
@@ -1024,15 +1143,16 @@ async function setKeep(on){
   if(on){
     const raw = isDemo ? null : lastRaw;
     if(raw && raw.length){
-      try { await saveNet(raw); keptAt = Date.now(); toast('Ton réseau est gardé sur cet appareil (sans les emails) : plus besoin de réimporter ton fichier'); }
-      catch(e) { try { localStorage.removeItem(KEEP_KEY); } catch(_) {} toast('Ce navigateur refuse l’enregistrement local : ton réseau ne peut pas être gardé'); }
+      try { await saveNet(raw); keptAt = Date.now(); toast(L('Ton réseau est gardé sur cet appareil (sans les emails) : plus besoin de réimporter ton fichier', 'Your network is kept on this device (without emails): no need to re-import your file')); }
+      catch(e) { try { localStorage.removeItem(KEEP_KEY); } catch(_) {} toast(L('Ce navigateur refuse l’enregistrement local : ton réseau ne peut pas être gardé', 'This browser refuses local storage: your network can’t be kept')); }
     }
-  } else { await dropNet(); keptAt = 0; toast('Ton réseau n’est plus gardé sur cet appareil : il disparaîtra au prochain rafraîchissement'); }
+  } else { await dropNet(); keptAt = 0; toast(L('Ton réseau n’est plus gardé sur cet appareil : il disparaîtra au prochain rafraîchissement', 'Your network is no longer kept on this device: it will disappear on the next refresh')); }
   renderBar(contacts.filter(pass));
 }
 function keepCard(){
   if(isDemo || keepAsked || keepOn() || !contacts.length) return '';
-  return `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé ; à éviter sur un ordinateur partagé.</span></div>
+  return EN ? `<div class="demo" role="note"><div><strong>Keep your network on this device?</strong><span>To find it again without re-importing. Nothing is sent; avoid on a shared computer.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Keep on this device</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Don’t keep my network">✕</button></div></div>` : `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé ; à éviter sur un ordinateur partagé.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Garder sur cet appareil</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
 }
 /* Section « Mon réseau » en haut du panneau : état du réseau importé et bouton pour le garder ou l’oublier */
@@ -1041,10 +1161,12 @@ function syncKeepField(){
   const sec = document.getElementById('mynet'); if(!sec) return;
   sec.hidden = isDemo || !contacts.length;
   if(sec.hidden) return;
-  const n = contacts.length.toLocaleString('fr-FR'), on = keepOn();
-  const since = keptAt ? ` depuis le ${new Date(keptAt).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})}` : '';
-  const tip = 'Ton réseau reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.';
-  document.getElementById('mynetBody').innerHTML = on
+  const n = contacts.length.toLocaleString(LOC), on = keepOn();
+  const since = keptAt ? L(` depuis le ${new Date(keptAt).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})}`, ` since ${new Date(keptAt).toLocaleDateString(LOC, {day:'numeric', month:'long'})}`) : '';
+  const tip = L('Ton réseau reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.', 'Your network stays in this browser, without emails, and is never sent anywhere. Avoid on a shared computer.');
+  document.getElementById('mynetBody').innerHTML = EN ? (on
+    ? `<p class="netline on" title="Kept${since}. ${tip}"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts</strong> kept on this device</span><button class="linkbtn" type="button" data-act="keepforget">Forget</button></p>`
+    : `<p class="netline" title="${tip}"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts</strong>, not kept: lost on refresh</span><button class="btn primary sm" type="button" data-act="keepyes">Keep</button></p>`) : on
     ? `<p class="netline on" title="Gardé${since}. ${tip}"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts</strong> gardés sur cet appareil</span><button class="linkbtn" type="button" data-act="keepforget">Oublier</button></p>`
     : `<p class="netline" title="${tip}"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts</strong>, non gardés&nbsp;: perdus au rafraîchissement</span><button class="btn primary sm" type="button" data-act="keepyes">Garder</button></p>`;
 }
@@ -1076,6 +1198,11 @@ function parseLinkedIn(text){
 }
 
 /* ---------- Demo data ---------- */
+/* Version anglaise : postes traduits (même classement par fonction et séniorité que les intitulés français) */
+const DEMO_POS_EN = {'Développeur full-stack':'Full-stack Developer', 'CEO & co-fondateur':'CEO & Co-founder', 'Directeur commercial':'Sales Director',
+  'Responsable marketing':'Marketing Team Manager', 'Consultant senior':'Senior Consultant', 'Manager conseil':'Consulting Manager', 'Contrôleur de gestion':'Financial Controller',
+  'Directrice financière':'Finance Director', 'Chargée de recrutement':'Recruiter', 'Chef de projet digital':'Digital Project Manager', 'Stagiaire produit':'Product Intern',
+  'Alternant data':'Data Apprentice', 'Directeur des opérations':'Operations Director', 'Analyste financier':'Finance Associate'};
 function demoContacts(){
   let seed = 11;
   const rnd = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -1083,7 +1210,7 @@ function demoContacts(){
   const first = ['Camille','Lucas','Léa','Hugo','Chloé','Nathan','Manon','Thomas','Inès','Julien','Sarah','Antoine','Emma','Maxime','Clara','Nicolas','Yasmine','Paul','Lina','Romain','Zoé','Karim','Alice','Mehdi','Juliette','Bastien','Sofia','Arthur','Margaux','Adrien'];
   const last = ['Martin','Bernard','Dubois','Moreau','Laurent','Simon','Michel','Lefebvre','Leroy','Roux','Garnier','Faure','Rousseau','Blanc','Guerin','Muller','Henry','Perrin','Morel','Fournier','Benali','Nguyen','Lambert','Fontaine','Chevalier','Robin','Mercier','Boyer','Diallo','Lopez'];
   const companies = ['Capgemini','Capgemini','Accenture','BNP Paribas','BNP Paribas','Société Générale','AXA','Engie','Equans','TotalEnergies','Doctolib','Doctolib','Dataiku','Back Market','Qonto','Alan','Mirakl','Contentsquare','JCDecaux','Orange','SNCF','BlaBlaCar','BlaBlaCar','L’Oréal','LVMH','Decathlon','Carrefour','Sanofi','Ubisoft','Publicis','Wavestone','Ministère de l’Économie','Station F','Atelier Kairn'];
-  const positions = ['Product Manager','Product Manager','Senior Product Manager','Product Owner','Product Owner','Head of Product','Data Analyst','Data Scientist','Développeur full-stack','Software Engineer','Engineering Manager','Tech Lead','CTO','CEO & co-fondateur','Account Executive','Business Developer','Directeur commercial','Responsable marketing','Growth Marketing Manager','Consultant senior','Manager conseil','Contrôleur de gestion','Directrice financière','Talent Acquisition Manager','Chargée de recrutement','Chef de projet digital','UX Designer','Stagiaire produit','Alternant data','Directeur des opérations','Customer Success Manager','Analyste financier'];
+  const positions = ['Product Manager','Product Manager','Senior Product Manager','Product Owner','Product Owner','Head of Product','Data Analyst','Data Scientist','Développeur full-stack','Software Engineer','Engineering Manager','Tech Lead','CTO','CEO & co-fondateur','Account Executive','Business Developer','Directeur commercial','Responsable marketing','Growth Marketing Manager','Consultant senior','Manager conseil','Contrôleur de gestion','Directrice financière','Talent Acquisition Manager','Chargée de recrutement','Chef de projet digital','UX Designer','Stagiaire produit','Alternant data','Directeur des opérations','Customer Success Manager','Analyste financier'].map(p => EN ? DEMO_POS_EN[p] || p : p);
   const expRange = {Junior:[0,2],Confirmé:[2,7],Senior:[6,12],Manager:[5,14],Direction:[10,20],Dirigeant:[8,25]};
   const now = new Date();
   const list = [];
@@ -1117,15 +1244,15 @@ function setTag(c, t){
 
 /* ---------- Dimensions ---------- */
 const DIMS = {
-  sector:   {label:'Secteur', get:c => c.sector},
-  company:  {label:'Entreprise', get:c => c.group || c.company || 'Sans entreprise', minHub:2, other:'Autres entreprises'},
-  fn:       {label:'Fonction', get:c => c.fn},
-  seniority:{label:'Séniorité', get:c => c.seniority, order:SEN_ORDER},
-  year:     {label:'Année de connexion', get:c => c.year ? String(c.year) : 'Inconnue'},
-  country:  {label:'Pays', get:c => c.country || 'Non renseigné', optional:'country'},
-  location: {label:'Ville', get:c => c.location || 'Non renseignée', optional:'location'},
-  school:   {label:'Formation', get:c => c.school || 'Non renseignée', optional:'school'},
-  exp:      {label:'Expérience', get:c => c.exp || 'Non renseignée', order:EXP_ORDER, optional:'exp'},
+  sector:   {label:L('Secteur', 'Industry'), get:c => c.sector},
+  company:  {label:L('Entreprise', 'Company'), get:c => c.group || c.company || 'Sans entreprise', minHub:2, other:'Autres entreprises'},
+  fn:       {label:L('Fonction', 'Function'), get:c => c.fn},
+  seniority:{label:L('Séniorité', 'Seniority'), get:c => c.seniority, order:SEN_ORDER},
+  year:     {label:L('Année de connexion', 'Year connected'), get:c => c.year ? String(c.year) : 'Inconnue'},
+  country:  {label:L('Pays', 'Country'), get:c => c.country || 'Non renseigné', optional:'country'},
+  location: {label:L('Ville', 'City'), get:c => c.location || 'Non renseignée', optional:'location'},
+  school:   {label:L('Formation', 'Education'), get:c => c.school || 'Non renseignée', optional:'school'},
+  exp:      {label:L('Expérience', 'Experience'), get:c => c.exp || 'Non renseignée', order:EXP_ORDER, optional:'exp'},
   tag:      {label:'Tag', get:c => tagOf(c) || 'Sans tag', order:[...TAGS, 'Sans tag']}
 };
 const NO_SECTOR = 'Indépendant / sans entreprise', NO_COMPANY_GROUPS = new Set(['Indépendant', 'Non communiqué']);
@@ -1340,7 +1467,7 @@ function logoUrl(name){
   if(!dom || logoFails.has(dom)) return '';
   return LOGO_CONFIG.urlTemplate.replace('{domain}', encodeURIComponent(dom)).replace('{token}', encodeURIComponent(LOGO_CONFIG.token));
 }
-const pct = (n, t) => { if(!t) return ''; const p = n / t * 100; return (p > 0 && p < 1 ? '<1' : Math.round(p)) + '\u202f%'; };
+const pct = (n, t) => { if(!t) return ''; const p = n / t * 100; return (p > 0 && p < 1 ? '<1' : Math.round(p)) + (EN ? '%' : '\u202f%'); };
 
 /* Icône de profil déduite du prénom (neutre si inconnu ou mixte) */
 const FEMALE = new Set('marie lea chloe manon ines sarah emma clara yasmine lina zoe alice juliette sofia sophia margaux julie laura sophie anne nathalie isabelle sandrine celine aurelie audrey elodie emilie caroline christine catherine valerie stephanie virginie pauline marion lucie charlotte mathilde louise jade eva ambre anna lisa oceane amandine melanie helene claire cecile agnes sylvie veronique patricia karine laetitia fatima amina nadia leila sonia alexandra elise morgane justine laure melissa jessica jennifer emily hannah olivia mia priya aisha maria ana elena lucia chiara giulia francesca beatrice florence delphine severine coralie estelle gaelle maeva lola noemie romane salome victoria apolline capucine clemence diane eloise heloise jeanne josephine lena marine maya nina rose myriam samira sabrina khadija meriem hanane'.split(' '));
@@ -1351,7 +1478,7 @@ const SIL = {
   f:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.4 0-5.6 2.7-5.6 6.2 0 2.6.7 4.6 1.8 5.6h7.6c1.1-1 1.8-3 1.8-5.6C17.6 5.7 15.4 3 12 3z" fill="#fff" fill-opacity=".55"/><circle cx="12" cy="9" r="3.6" fill="#fff"/><path d="M4.5 21c0-4 3.3-7 7.5-7s7.5 3 7.5 7z" fill="#fff"/></svg>',
   n:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8.5" r="3.8"/><path d="M5 20.5c.6-3.8 3.4-6.3 7-6.3s6.4 2.5 7 6.3"/></svg>'
 };
-function avatar(c, big){ const g = genderOf(c); return `<span class="av${big ? ' lg2' : ''}" style="background:${colorOf(c)}" role="img" aria-label="${g === 'f' ? 'Femme' : g === 'm' ? 'Homme' : 'Contact'}">${SIL[g || 'n']}</span>`; }
+function avatar(c, big){ const g = genderOf(c); return `<span class="av${big ? ' lg2' : ''}" style="background:${colorOf(c)}" role="img" aria-label="${g === 'f' ? L('Femme', 'Woman') : g === 'm' ? L('Homme', 'Man') : 'Contact'}">${SIL[g || 'n']}</span>`; }
 const colorOf = c => colorFn(levelOf(c));
 
 /* Couleur d’un contact. Une dimension à beaucoup de valeurs (entreprise, formation, ville…) garde ses COLOR_MAX valeurs
@@ -1393,15 +1520,15 @@ function buildChips(k, id){
   if(fld){ fld.hidden = !!DIMS[k].optional && !contacts.some(c => c[DIMS[k].optional]); if(fld.hidden){ document.getElementById(id).innerHTML = ''; return; } }
   const el = document.getElementById(id);
   if(k === 'tag' && !contacts.some(c => tagOf(c))){
-    el.innerHTML = '<p class="hint" style="margin:0">Ajoute un tag depuis la fiche d’un contact (client, mentor…) pour filtrer ici.</p>';
+    el.innerHTML = `<p class="hint" style="margin:0">${L('Ajoute un tag depuis la fiche d’un contact (client, mentor…) pour filtrer ici.', 'Add a tag from a contact’s profile (client, mentor…) to filter here.')}</p>`;
     return;
   }
   const counts = d3.rollup(contacts, v => v.length, DIMS[k].get);
   const sel = state.include[k].size;
-  const foot = sel ? `<div class="chipfoot"><span>${sel} sélectionné${sel > 1 ? 's' : ''}, touche une valeur pour l’ajouter ou la retirer</span><button class="linkbtn" type="button" data-cleark="${k}">Effacer</button></div>` : '';
+  const foot = sel ? `<div class="chipfoot"><span>${L(`${sel} sélectionné${sel > 1 ? 's' : ''}, touche une valeur pour l’ajouter ou la retirer`, `${sel} selected, tap a value to add or remove it`)}</span><button class="linkbtn" type="button" data-cleark="${k}">${L('Effacer', 'Clear')}</button></div>` : '';
   const maxC = d3.max([...counts.values()]) || 1;
   el.innerHTML = domainFor(k, contacts).map(v =>
-    `<button class="chip frow" type="button" aria-pressed="${state.include[k].has(v)}" data-k="${k}" data-v="${esc(v)}"><span class="fbar" style="width:calc((100% - 20px) * ${Math.max(0.02, counts.get(v) / maxC).toFixed(3)})${k === state.colorBy ? `;background:${colorFn(v)}` : ''}"></span>${k === state.colorBy ? `<span class="dot" style="background:${colorFn(v)}"></span>` : ''}<span class="flbl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), contacts.length)}</span></button>`).join('') + foot;
+    `<button class="chip frow" type="button" aria-pressed="${state.include[k].has(v)}" data-k="${k}" data-v="${esc(v)}"><span class="fbar" style="width:calc((100% - 20px) * ${Math.max(0.02, counts.get(v) / maxC).toFixed(3)})${k === state.colorBy ? `;background:${colorFn(v)}` : ''}"></span>${k === state.colorBy ? `<span class="dot" style="background:${colorFn(v)}"></span>` : ''}<span class="flbl">${esc(dv(v))}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), contacts.length)}</span></button>`).join('') + foot;
 }
 const syncChips = () => FILTERS.forEach(([k, id]) => buildChips(k, id));
 function syncYears(){ if(allYears.length){ $('#yMin').value = state.yMin; $('#yMax').value = state.yMax; } }
@@ -1424,22 +1551,30 @@ function setupControls(){
   setupColor(); syncChips();
 }
 
+/* Codes internes dont le nom anglais contient la recherche (calculé une fois par recherche, pas pour chaque contact) */
+let enQ = null;
+const enCodes = q => { if(!enQ || enQ.q !== q) enQ = {q, codes:new Set([...VALUE_EN].filter(([, en]) => norm(en).includes(q)).map(([fr]) => fr))}; return enQ.codes; };
 function pass(c, skip){
   for(const k of FILTER_KEYS){ if(k === skip) continue; const s = state.include[k]; if(s.size && !s.has(DIMS[k].get(c))) return false; }
   if(c.year && (c.year < state.yMin || c.year > state.yMax)) return false;
   if(state.q){
     const hay = norm([c.name, c.company, c.group, c.position, c.location, c.country, c.school, c.sector, c.fn, tagOf(c)].join(' '));
-    if(!hay.includes(norm(state.q))) return false;
+    if(!hay.includes(norm(state.q))){
+      /* En anglais, les secteurs, fonctions, séniorités et tags se cherchent aussi par leur nom affiché (« Healthcare ») */
+      if(!EN) return false;
+      const cs = enCodes(norm(state.q));
+      if(!cs.size || ![c.sector, c.fn, c.seniority, c.group, c.country, tagOf(c)].some(v => cs.has(v))) return false;
+    }
   }
   return true;
 }
 
 function activeFilters(){
   const out = [];
-  FILTER_KEYS.forEach(k => state.include[k].forEach(v => out.push({k, v, label: k === 'year' ? 'Connectés en ' + v : v})));
+  FILTER_KEYS.forEach(k => state.include[k].forEach(v => out.push({k, v, label: k === 'year' ? L('Connectés en ', 'Connected in ') + v : dv(v)})));
   if(allYears.length && (state.yMin > allYears[0] || state.yMax < allYears[allYears.length - 1]))
-    out.push({k:'year', v:'', label: state.yMin === state.yMax ? `Connectés en ${state.yMin}` : `Connectés de ${state.yMin} à ${state.yMax}`});
-  if(state.q) out.push({k:'q', v:'', label:`« ${state.q} »`});
+    out.push({k:'year', v:'', label: state.yMin === state.yMax ? L(`Connectés en ${state.yMin}`, `Connected in ${state.yMin}`) : L(`Connectés de ${state.yMin} à ${state.yMax}`, `Connected ${state.yMin}–${state.yMax}`)});
+  if(state.q) out.push({k:'q', v:'', label:L(`« ${state.q} »`, `“${state.q}”`)});
   return out;
 }
 function clearFilter(k, v){
@@ -1523,10 +1658,10 @@ function applyView(v){
 function presets(){
   const last = allYears[allYears.length - 1];
   return [
-    {id:'deci', name:'Décideurs', v:{g:'sector', c:'seniority', t:12, m:'graph', f:{seniority:['Direction','Dirigeant']}}},
-    {id:'jun', name:'Juniors à recommander', v:{g:'fn', c:'sector', t:12, m:'graph', f:{seniority:['Junior']}}},
-    last && {id:'rec', name:`Contacts récents (${last})`, v:{g:'sector', c:'seniority', t:12, m:'graph', f:{}, y:[last, last]}},
-    {id:'co', name:'Par entreprise', v:{g:'company', c:'seniority', t:12, m:'graph', f:{}}}
+    {id:'deci', name:L('Décideurs', 'Decision-makers'), v:{g:'sector', c:'seniority', t:12, m:'graph', f:{seniority:['Direction','Dirigeant']}}},
+    {id:'jun', name:L('Juniors à recommander', 'Juniors to recommend'), v:{g:'fn', c:'sector', t:12, m:'graph', f:{seniority:['Junior']}}},
+    last && {id:'rec', name:L(`Contacts récents (${last})`, `Recent contacts (${last})`), v:{g:'sector', c:'seniority', t:12, m:'graph', f:{}, y:[last, last]}},
+    {id:'co', name:L('Par entreprise', 'By company'), v:{g:'company', c:'seniority', t:12, m:'graph', f:{}}}
   ].filter(Boolean);
 }
 function countView(v){
@@ -1541,11 +1676,11 @@ function renderViews(){
     return `<button class="chip vchip" type="button" role="radio" data-preset="${p.id}" aria-checked="${on}">${esc(p.name)}${p.id !== 'co' ? ` <span class="n">${countView(p.v)}</span>` : ''}</button>`;
   }).join('');
   document.getElementById('myViews').innerHTML = myViews.length ? myViews.map((x, i) => i === editView
-    ? `<form class="vrow" data-rename="${i}"><input type="text" maxlength="40" value="${esc(x.name)}" aria-label="Nouveau nom de la vue"><button class="btn sm" type="submit">OK</button></form>`
+    ? `<form class="vrow" data-rename="${i}"><input type="text" maxlength="40" value="${esc(x.name)}" aria-label="${L('Nouveau nom de la vue', 'New view name')}"><button class="btn sm" type="submit">OK</button></form>`
     : `<div class="vrow"><button class="chip vchip" type="button" role="radio" data-myview="${i}" aria-checked="${sameView(normView(x.v), cur)}"><span>${esc(x.name)}</span></button>
-        <button class="btn icon-btn sm" type="button" data-vedit="${i}" aria-label="Renommer la vue ${esc(x.name)}" title="Renommer">✎</button>
-        <button class="btn icon-btn sm" type="button" data-vdel="${i}" aria-label="Supprimer la vue ${esc(x.name)}" title="Supprimer">✕</button></div>`).join('')
-    : '<p class="hint" style="margin:0">Règle l’affichage et les filtres, puis enregistre la vue pour la retrouver en un clic.</p>';
+        <button class="btn icon-btn sm" type="button" data-vedit="${i}" aria-label="${L('Renommer la vue', 'Rename view')} ${esc(x.name)}" title="${L('Renommer', 'Rename')}">✎</button>
+        <button class="btn icon-btn sm" type="button" data-vdel="${i}" aria-label="${L('Supprimer la vue', 'Delete view')} ${esc(x.name)}" title="${L('Supprimer', 'Delete')}">✕</button></div>`).join('')
+    : `<p class="hint" style="margin:0">${L('Règle l’affichage et les filtres, puis enregistre la vue pour la retrouver en un clic.', 'Set the display and filters, then save the view to get back to it in one click.')}</p>`;
 }
 /* Une vue telle que le réseau chargé la rendrait (pour savoir si elle est active) */
 function normView(v){
@@ -1559,9 +1694,9 @@ function normView(v){
 }
 function suggestName(){
   const parts = [DIMS[state.groupBy].label];
-  FILTER_KEYS.forEach(k => { const a = [...state.include[k]]; if(a.length) parts.push(a.length > 2 ? `${a.slice(0, 2).join(', ')}…` : a.join(', ')); });
-  if(state.q) parts.push(`« ${state.q} »`);
-  if(/^h:/.test(state.selected || '')) parts.push(state.selected.slice(2));
+  FILTER_KEYS.forEach(k => { const a = [...state.include[k]]; if(a.length) parts.push(a.length > 2 ? `${a.slice(0, 2).map(dv).join(', ')}…` : a.map(dv).join(', ')); });
+  if(state.q) parts.push(L(`« ${state.q} »`, `“${state.q}”`));
+  if(/^h:/.test(state.selected || '')) parts.push(dv(state.selected.slice(2)));
   return parts.join(' · ').slice(0, 40);
 }
 const b64 = {
@@ -1570,8 +1705,8 @@ const b64 = {
 };
 async function shareView(){
   const url = location.origin + location.pathname + '#vue=' + b64.enc(getView(false));
-  try { await navigator.clipboard.writeText(url); toast('Lien de la vue copié : il ne contient aucun contact'); }
-  catch(e) { prompt('Copie ce lien :', url); }
+  try { await navigator.clipboard.writeText(url); toast(L('Lien de la vue copié : il ne contient aucun contact', 'View link copied: it contains no contacts')); }
+  catch(e) { prompt(L('Copie ce lien :', 'Copy this link:'), url); }
 }
 /* Dernière vue : enregistrée après chaque affichage, restaurée à la visite suivante et après un import */
 function rememberView(){ clearTimeout(lastT); lastT = setTimeout(() => { try { localStorage.setItem(LAST_KEY, JSON.stringify(getView())); } catch(e) {} }, 400); }
@@ -1579,7 +1714,7 @@ function startView(){
   const m = location.hash.match(/^#vue=([\w-]+)/);
   if(m){
     history.replaceState(null, '', location.pathname + location.search);
-    try { const v = b64.dec(m[1]); if(v && typeof v === 'object'){ delete v.q; setTimeout(() => toast(isDemo ? 'Vue partagée appliquée. Importe ton export pour la voir sur ton réseau.' : 'Vue partagée appliquée à ton réseau'), 600); return v; } } catch(e) {}
+    try { const v = b64.dec(m[1]); if(v && typeof v === 'object'){ delete v.q; setTimeout(() => toast(isDemo ? L('Vue partagée appliquée. Importe ton export pour la voir sur ton réseau.', 'Shared view applied. Import your export to see it on your network.') : L('Vue partagée appliquée à ton réseau', 'Shared view applied to your network')), 600); return v; } } catch(e) {}
   }
   try { const v = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); if(v && typeof v === 'object') return v; } catch(e) {}
   return null;
@@ -1590,7 +1725,7 @@ document.getElementById('saveView').addEventListener('submit', e => {
   const i = myViews.findIndex(x => x.name === name), v = getView();
   if(i >= 0) myViews[i].v = v; else myViews.push({name, v});
   saveViews(); inp.value = ''; renderViews();
-  toast(i >= 0 ? `Vue « ${name} » mise à jour` : `Vue « ${name} » enregistrée`);
+  toast(EN ? `View “${name}” ${i >= 0 ? 'updated' : 'saved'}` : i >= 0 ? `Vue « ${name} » mise à jour` : `Vue « ${name} » enregistrée`);
 });
 document.getElementById('views').addEventListener('submit', e => {
   const f = e.target.closest('[data-rename]'); if(!f) return;
@@ -1604,13 +1739,13 @@ document.getElementById('views').addEventListener('click', e => {
   /* Une seule vue à la fois (boutons radio) ; un clic sur la vue active la retire et revient à l’affichage de départ */
   const pick = (x, btn) => {
     if(!x) return;
-    if(btn.getAttribute('aria-checked') === 'true'){ applyView({g:'sector', c:'seniority', t:12, m:state.view, f:{}}); toast('Vue retirée : tout le réseau', true); }
-    else { applyView(x.v); toast(`Vue « ${x.name} »`, true); }
+    if(btn.getAttribute('aria-checked') === 'true'){ applyView({g:'sector', c:'seniority', t:12, m:state.view, f:{}}); toast(L('Vue retirée : tout le réseau', 'View removed: whole network'), true); }
+    else { applyView(x.v); toast(L(`Vue « ${x.name} »`, `View “${x.name}”`), true); }
   };
   if(p) pick(presets().find(o => o.id === p.dataset.preset), p);
   else if(m) pick(myViews[+m.dataset.myview], m);
   else if(ed){ editView = +ed.dataset.vedit; renderViews(); const i = document.querySelector('[data-rename] input'); if(i){ i.focus(); i.select(); } }
-  else if(dl){ const x = myViews[+dl.dataset.vdel]; if(x && confirm(`Supprimer la vue « ${x.name} » ?`)){ myViews.splice(+dl.dataset.vdel, 1); editView = -1; saveViews(); renderViews(); } }
+  else if(dl){ const x = myViews[+dl.dataset.vdel]; if(x && confirm(L(`Supprimer la vue « ${x.name} » ?`, `Delete the view “${x.name}”?`))){ myViews.splice(+dl.dataset.vdel, 1); editView = -1; saveViews(); renderViews(); } }
 });
 
 /* ---------- Classification par Claude (capacité sample) ----------
@@ -1637,11 +1772,11 @@ let sampleFn = null, aiRun = null, aiHidden = false;
 const LLM_KEY = 'synapses-llm-v1';
 const PROVIDERS = {
   anthropic:{name:'Claude', vendor:'Anthropic', keyUrl:'https://console.anthropic.com/settings/keys', keyHint:'sk-ant-…', billUrl:'https://console.anthropic.com/settings/billing', sub:'Claude Pro',
-    models:[['claude-opus-5-5', 'Claude Opus 5.5 (recommandé)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (plus économique)']]},
+    models:[['claude-opus-5-5', L('Claude Opus 5.5 (recommandé)', 'Claude Opus 5.5 (recommended)')], ['claude-haiku-5-5', L('Claude Haiku 5.5 (plus économique)', 'Claude Haiku 5.5 (cheaper)')]]},
   openai:{name:'ChatGPT', vendor:'OpenAI', keyUrl:'https://platform.openai.com/api-keys', keyHint:'sk-…', billUrl:'https://platform.openai.com/settings/organization/billing/overview', sub:'ChatGPT Plus',
-    models:[['gpt-6.1-terra', 'GPT-6.1 Terra (recommandé)'], ['gpt-6-luna', 'GPT-6 Luna (plus économique)']]},
+    models:[['gpt-6.1-terra', L('GPT-6.1 Terra (recommandé)', 'GPT-6.1 Terra (recommended)')], ['gpt-6-luna', L('GPT-6 Luna (plus économique)', 'GPT-6 Luna (cheaper)')]]},
   gemini:{name:'Gemini', vendor:'Google', keyUrl:'https://aistudio.google.com/apikey', keyHint:'AIza…', billUrl:'https://aistudio.google.com/', sub:'Gemini Advanced',
-    models:[['gemini-3.6-flash', 'Gemini 3.6 Flash (recommandé)'], ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (plus économique)']]}
+    models:[['gemini-3.6-flash', L('Gemini 3.6 Flash (recommandé)', 'Gemini 3.6 Flash (recommended)')], ['gemini-3.5-flash-lite', L('Gemini 3.5 Flash-Lite (plus économique)', 'Gemini 3.5 Flash-Lite (cheaper)')]]}
 };
 let llm = {provider:'anthropic', model:'claude-opus-5-5', key:'', remember:false};
 try {
@@ -1735,12 +1870,33 @@ async function callLLM(prompt, signal){
 function showAI(problem){
   select(null); clearFocus();
   const {cos, poss} = aiPending(), P = PROVIDERS[llm.provider];
-  const why = problem === 'no_credit'
+  const why = EN ? (problem === 'no_credit'
+    ? `<strong>${P.vendor} says your API account has no credit.</strong> The API is billed separately: a ${P.sub} subscription doesn’t include API credit. ${llm.provider === 'gemini' ? `Check your plan on <a href="${P.billUrl}" target="_blank" rel="noopener">Google AI Studio</a>.` : `<a href="${P.billUrl}" target="_blank" rel="noopener">Add credit at ${P.vendor}</a>, a few dollars are enough.`} Gemini also has a free tier.`
+    : problem === 'rate_limited'
+    ? `<strong>${P.vendor} is limiting your account’s requests</strong> (per minute or per day), even after several automatic retries. Free or new accounts have low limits. The work already done is kept: try again in a few minutes, the classification will resume where it stopped.`
+    : '') : problem === 'no_credit'
     ? `<strong>${P.vendor} indique que ton compte API n’a pas de crédit.</strong> L’API est facturée à part : un abonnement ${P.sub} ne donne pas de crédit API. ${llm.provider === 'gemini' ? `Vérifie ton offre sur <a href="${P.billUrl}" target="_blank" rel="noopener">Google AI Studio</a>.` : `<a href="${P.billUrl}" target="_blank" rel="noopener">Ajouter du crédit chez ${P.vendor}</a>, quelques euros suffisent.`} Gemini propose aussi une offre gratuite.`
     : problem === 'rate_limited'
     ? `<strong>${P.vendor} limite le nombre de requêtes de ton compte</strong> (par minute ou par jour), même après plusieurs essais automatiques. Les comptes gratuits ou récents ont des limites basses. Le travail déjà fait est gardé : relance dans quelques minutes, la classification reprendra où elle s’est arrêtée.`
     : '';
-  openDrawer(`
+  openDrawer(EN ? `
+    ${why ? `<p class="aierr" role="alert">${why}</p>` : ''}
+    <h2 id="dtitle" tabindex="-1">Classify with an AI</h2>
+    <p class="pos">${cos.length} compan${cos.length === 1 ? 'y' : 'ies'} and ${poss.length} job title${sEN(poss.length)} aren’t recognized by the dictionary. An AI can classify them by industry, function and seniority.</p>
+    <h3>Your AI</h3>
+    <div class="aiprov" role="radiogroup" aria-label="AI provider">${Object.entries(PROVIDERS).map(([id, x]) => `<label class="aiopt"><input type="radio" name="llmprov" value="${id}" data-llm="provider"${id === llm.provider ? ' checked' : ''}><span><strong>${x.name}</strong><span>${x.vendor}</span></span></label>`).join('')}</div>
+    <div class="meform">
+      <label for="llm-model">Model</label>
+      <select id="llm-model" data-llm="model">${P.models.map(([id, l]) => `<option value="${id}"${id === llm.model ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      <label for="llm-key">${P.vendor} API key</label>
+      <input id="llm-key" type="password" data-llm="key" autocomplete="off" spellcheck="false" placeholder="${esc(P.keyHint)}" value="${esc(llm.key)}">
+    </div>
+    <p class="hint" style="margin-top:8px">No key yet? <a href="${P.keyUrl}" target="_blank" rel="noopener">Create one at ${P.vendor}</a>. ${P.name} doesn’t let a website connect to your subscription: the API key is billed per use by ${P.vendor}, usually from a few cents to less than a dollar for a network of 1,500 contacts.</p>
+    <label class="sharebox"><input type="checkbox" data-llm="remember"${llm.remember ? ' checked' : ''}> <span>Remember my key on this device</span></label>
+    <h3>What is sent</h3>
+    <p class="pos">To ${P.vendor} only: unrecognized company names and job titles. Never your contacts’ names, profiles or emails. Your key is only sent to ${P.vendor}.</p>
+    ${shareBox()}
+    <button class="btn primary block" type="button" data-act="airun" style="margin-top:16px">Start the classification</button>` : `
     ${why ? `<p class="aierr" role="alert">${why}</p>` : ''}
     <h2 id="dtitle" tabindex="-1">Classer avec une IA</h2>
     <p class="pos">${cos.length} entreprise${cos.length > 1 ? 's' : ''} et ${poss.length} intitulé${poss.length > 1 ? 's' : ''} de poste ne sont pas reconnus par le dictionnaire. Une IA peut les classer par secteur, fonction et séniorité.</p>
@@ -1812,9 +1968,9 @@ function setShare(on){
   try { localStorage.setItem(SHARE_KEY, shareOn ? '1' : '0'); } catch(e) {}
   document.querySelectorAll('input[data-share]').forEach(i => { i.checked = shareOn; });
   if(shareOn && !isDemo) refreshShared();
-  toast(shareOn ? 'Tes corrections seront proposées au dictionnaire partagé' : 'Tes corrections restent sur cet appareil');
+  toast(shareOn ? L('Tes corrections seront proposées au dictionnaire partagé', 'Your corrections will be suggested to the shared dictionary') : L('Tes corrections restent sur cet appareil', 'Your corrections stay on this device'));
 }
-const shareBox = () => `<label class="sharebox"><input type="checkbox" data-share${shareOn ? ' checked' : ''}> <span>Partager mes corrections pour améliorer le dictionnaire de tous. Seuls le nom de l’entreprise ou l’intitulé du poste et la catégorie choisie sont envoyés, jamais le nom d’un contact.</span></label>`;
+const shareBox = () => `<label class="sharebox"><input type="checkbox" data-share${shareOn ? ' checked' : ''}> <span>${L('Partager mes corrections pour améliorer le dictionnaire de tous. Seuls le nom de l’entreprise ou l’intitulé du poste et la catégorie choisie sont envoyés, jamais le nom d’un contact.', 'Share my corrections to improve everyone’s dictionary. Only the company name or job title and the chosen category are sent, never a contact’s name.')}</span></label>`;
 /* Les envois passent par une file unique, dans l’ordre des corrections */
 let pushChain = Promise.resolve();
 function pushShared(kind, entries){ pushChain = pushChain.then(() => pushNow(kind, entries)).catch(() => {}); return pushChain; }
@@ -1875,7 +2031,7 @@ async function refreshShared(){
   if(!ok) return;
   applyAI(contacts); setupColor(); syncChips(); render();
   const known = new Set(contacts.filter(c => c.company && sharedCo[nkey(c.company)]).map(c => nkey(c.company))).size;
-  if(known) toast(`Dictionnaire partagé : ${known} de tes entreprises y étaient déjà classées`);
+  if(known) toast(L(`Dictionnaire partagé : ${known} de tes entreprises y étaient déjà classées`, `Shared dictionary: ${known} of your companies were already classified there`));
 }
 /* Priorité : ta correction > correction partagée > dictionnaire intégré > mot-clé d’un secteur ajouté récemment > classement IA (local puis partagé) > mots-clés */
 const NEW_SECTORS = new Set(['Juridique','Finance & investissement','Immobilier & construction','Agroalimentaire','Tourisme, hôtellerie & restauration']);
@@ -1920,8 +2076,9 @@ function aiPending(){
 }
 /* Liste déroulante de correction dans la fiche d’un contact */
 function fixSelect(kind, raw, opts, cur, label){
-  if(!raw) return esc(cur);
-  return `<select class="fixsel" data-fix="${kind}" data-raw="${esc(raw)}" aria-label="${esc(label)}">${opts.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  if(!raw) return esc(dv(cur));
+  /* Valeur = code interne (français), texte = nom affiché */
+  return `<select class="fixsel" data-fix="${kind}" data-raw="${esc(raw)}" aria-label="${esc(label)}">${opts.map(o => `<option value="${esc(o)}"${o === cur ? ' selected' : ''}>${esc(dv(o))}</option>`).join('')}</select>`;
 }
 /* Consignes avec des numéros de catégorie : plus fiable que de recopier un libellé exact (accents, majuscules, « et » au lieu de « & ») */
 const numbered = labels => labels.map((l, i) => `${i + 1} = ${l}`).join(' ; ');
@@ -1957,7 +2114,7 @@ async function runAI(){
   const {cos, poss} = aiPending();
   const chunk = (a, n) => { const out = []; for(let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
   const jobs = [...chunk(cos, 120).map(items => ({kind:'co', items})), ...chunk(poss, 100).map(items => ({kind:'pos', items}))];
-  if(!jobs.length){ toast('Tout ton réseau est déjà classé'); return; }
+  if(!jobs.length){ toast(L('Tout ton réseau est déjà classé', 'Your whole network is already classified')); return; }
   const modelName = sampleFn ? null : llm.model;
   aiRun = {done:0, total:jobs.length, ctl:new AbortController(), error:null};
   const fresh = {co:{}, pos:{}};
@@ -1991,26 +2148,30 @@ async function runAI(){
   aiRun = null;
   const n = applyAI(contacts);
   setupColor(); syncChips(); render();
-  if(err === 'not_granted' || err === 'sampling_disabled' || err === 'not_declared' || err === 'capability_disabled'){ aiHidden = true; renderBar(contacts.filter(pass)); toast('Claude n’est pas disponible ici : la classification par mots-clés est conservée'); }
-  else if(err === 'bad_key'){ toast(`Clé API refusée par ${P.vendor} : vérifie-la`); showAI(); }
-  else if(err === 'no_credit'){ toast(`${P.vendor} indique que ton compte API n’a pas de crédit`); showAI('no_credit'); }
-  else if(err === 'bad_model') toast(`Ce modèle n’est pas disponible sur ton compte ${P.vendor} : choisis-en un autre`);
-  else if(err === 'network') toast(`${P.vendor} ne répond pas : vérifie ta connexion, puis relance`);
-  else if(err === 'rate_limited'){ toast('Limite de débit toujours atteinte : le travail déjà fait est gardé'); showAI('rate_limited'); }
-  else if(err) toast('Classification interrompue : relance pour terminer, le travail déjà fait est gardé');
-  else if(!Object.keys(fresh.co).length && !Object.keys(fresh.pos).length && !stopped) toast(`${who} n’a renvoyé aucun classement exploitable : réessaie dans un moment`);
-  else toast(stopped ? 'Classification arrêtée : les résultats déjà obtenus sont appliqués' : `Classification terminée : ${Object.keys(fresh.co).length} entreprises et ${Object.keys(fresh.pos).length} intitulés classés par ${who}`);
+  if(err === 'not_granted' || err === 'sampling_disabled' || err === 'not_declared' || err === 'capability_disabled'){ aiHidden = true; renderBar(contacts.filter(pass)); toast(L('Claude n’est pas disponible ici : la classification par mots-clés est conservée', 'Claude isn’t available here: keyword classification is kept')); }
+  else if(err === 'bad_key'){ toast(L(`Clé API refusée par ${P.vendor} : vérifie-la`, `API key rejected by ${P.vendor}: check it`)); showAI(); }
+  else if(err === 'no_credit'){ toast(L(`${P.vendor} indique que ton compte API n’a pas de crédit`, `${P.vendor} says your API account has no credit`)); showAI('no_credit'); }
+  else if(err === 'bad_model') toast(L(`Ce modèle n’est pas disponible sur ton compte ${P.vendor} : choisis-en un autre`, `This model isn’t available on your ${P.vendor} account: choose another one`));
+  else if(err === 'network') toast(L(`${P.vendor} ne répond pas : vérifie ta connexion, puis relance`, `${P.vendor} isn’t responding: check your connection, then try again`));
+  else if(err === 'rate_limited'){ toast(L('Limite de débit toujours atteinte : le travail déjà fait est gardé', 'Rate limit still reached: the work already done is kept')); showAI('rate_limited'); }
+  else if(err) toast(L('Classification interrompue : relance pour terminer, le travail déjà fait est gardé', 'Classification interrupted: run it again to finish, the work already done is kept'));
+  else if(!Object.keys(fresh.co).length && !Object.keys(fresh.pos).length && !stopped) toast(L(`${who} n’a renvoyé aucun classement exploitable : réessaie dans un moment`, `${who} returned no usable classification: try again in a moment`));
+  else toast(stopped ? L('Classification arrêtée : les résultats déjà obtenus sont appliqués', 'Classification stopped: the results already obtained are applied') : L(`Classification terminée : ${Object.keys(fresh.co).length} entreprises et ${Object.keys(fresh.pos).length} intitulés classés par ${who}`, `Classification done: ${Object.keys(fresh.co).length} companies and ${Object.keys(fresh.pos).length} job titles classified by ${who}`));
 }
 function aiCard(){
   if(isDemo || aiHidden || !contacts.length) return '';
   if(aiRun){
     const p = Math.round(aiRun.done / Math.max(1, aiRun.total) * 100);
+    if(EN) return `<div class="demo" role="status"><div><strong>${aiName()} is classifying your network…</strong><span>${aiRun.waiting ? `${PROVIDERS[llm.provider].vendor} rate limit reached: resuming automatically in ${aiRun.waiting}s. ` : ''}Batch ${Math.min(aiRun.done + 1, aiRun.total)} of ${aiRun.total}. Only company names and job titles are sent, never your contacts’ names.</span><span class="aiprog"><span style="width:${p}%"></span></span></div>
+      <div class="demo-actions"><button class="btn sm" type="button" data-act="aistop">Stop</button></div></div>`;
     return `<div class="demo" role="status"><div><strong>${aiName()} classe ton réseau…</strong><span>${aiRun.waiting ? `Limite de débit de ${PROVIDERS[llm.provider].vendor} atteinte : reprise automatique dans ${aiRun.waiting}\u00a0s. ` : ''}Lot ${Math.min(aiRun.done + 1, aiRun.total)} sur ${aiRun.total}. Seuls les noms d’entreprises et les intitulés de poste sont envoyés, jamais les noms de tes contacts.</span><span class="aiprog"><span style="width:${p}%"></span></span></div>
       <div class="demo-actions"><button class="btn sm" type="button" data-act="aistop">Arrêter</button></div></div>`;
   }
   const {cos, poss} = aiPending();
   if(!cos.length && !poss.length) return '';
   const nc = contacts.filter(c => c.sector === 'Non classé').length;
+  if(EN) return `<div class="demo" role="note"><div><strong>Refine the classification with an AI</strong><span>${nc ? `${pct(nc, contacts.length)} of your contacts are “Unclassified”. ` : 'Some companies or job titles aren’t recognized. '}An AI (your Claude, ChatGPT or Gemini key) can classify them. Only company names and job titles are sent to it.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="${sampleFn ? 'ai' : 'aisetup'}">${sampleFn ? 'Refine with Claude' : 'Choose an AI'}</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Hide this message">✕</button></div></div>`;
   return `<div class="demo" role="note"><div><strong>Affine la classification avec une IA</strong><span>${nc ? `${pct(nc, contacts.length)} de tes contacts sont en « Non classé ». ` : 'Certaines entreprises ou certains intitulés de poste ne sont pas reconnus. '}Une IA (ta clé Claude, ChatGPT ou Gemini) peut les classer. Seuls les noms d’entreprises et les intitulés de poste lui sont envoyés.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="${sampleFn ? 'ai' : 'aisetup'}">${sampleFn ? 'Affiner avec Claude' : 'Choisir une IA'}</button><button class="btn icon-btn sm" type="button" data-act="aihide" aria-label="Masquer ce message">✕</button></div></div>`;
 }
@@ -2021,10 +2182,11 @@ function syncAIField(){
   f.hidden = isDemo || !contacts.length;
   if(f.hidden) return;
   const nc = contacts.filter(c => c.sector === 'Non classé').length, b = document.getElementById('aiBtn');
-  document.getElementById('aiHint').textContent = aiRun ? 'Classification en cours…'
+  document.getElementById('aiHint').textContent = EN ? (aiRun ? 'Classification in progress…'
+    : `${nc ? `${nc} contact${sEN(nc)} “Unclassified” (${pct(nc, contacts.length)}). ` : 'All your contacts have an industry. '}An AI (your Claude, ChatGPT or Gemini key) can classify unrecognized companies and job titles.`) : aiRun ? 'Classification en cours…'
     : `${nc ? `${nc} contact${nc > 1 ? 's' : ''} en « Non classé » (${pct(nc, contacts.length)}). ` : 'Tous tes contacts ont un secteur. '}Une IA (ta clé Claude, ChatGPT ou Gemini) peut classer les entreprises et postes non reconnus.`;
   b.dataset.act = sampleFn ? 'ai' : 'aisetup';
-  b.textContent = sampleFn ? 'Affiner avec Claude' : 'Classer avec une IA';
+  b.textContent = sampleFn ? L('Affiner avec Claude', 'Refine with Claude') : L('Classer avec une IA', 'Classify with an AI');
   b.disabled = !!aiRun;
 }
 
@@ -2033,23 +2195,23 @@ function renderBar(vis){
   syncAIField(); syncKeepField();
   const af = activeFilters();
   const demo = isDemo && !demoHidden ? `<div class="demo isdemo" role="note">
-      <div><strong>Tu explores un réseau de démonstration</strong><span>150 contacts fictifs. Importe ton export pour voir ton réseau.</span></div>
+      <div><strong>${L('Tu explores un réseau de démonstration', 'You’re exploring a demo network')}</strong><span>${L('150 contacts fictifs. Importe ton export pour voir ton réseau.', '150 fictional contacts. Import your export to see your network.')}</span></div>
       <div class="demo-actions">
-        <button class="btn sm demohelp" type="button" data-act="help">Comment l’obtenir</button>
-        <button class="btn icon-btn sm" type="button" data-act="dismiss" aria-label="Masquer ce message">✕</button>
+        <button class="btn sm demohelp" type="button" data-act="help">${L('Comment l’obtenir', 'How to get it')}</button>
+        <button class="btn icon-btn sm" type="button" data-act="dismiss" aria-label="${L('Masquer ce message', 'Hide this message')}">✕</button>
       </div></div>` : '';
   const keep = aiRun ? '' : keepCard();
   $('#bar').innerHTML = `${demo}${keep || aiCard()}<div class="toprow">
-    <span class="count"><strong>${vis.length}</strong> contact${vis.length > 1 ? 's' : ''}${vis.length !== contacts.length ? ` sur ${contacts.length}` : ''}</span>
-    ${af.map(f => `<button class="afchip" type="button" data-clear="${f.k}" data-v="${esc(f.v)}" aria-label="Retirer le filtre ${esc(f.label)}">${esc(f.label)}<span class="x" aria-hidden="true">✕</span></button>`).join('')}
-    ${af.length > 1 ? '<button class="linkbtn" type="button" data-act="clearall">Tout effacer</button>' : ''}
-    <div class="viewtoggle" role="group" aria-label="Mode d’affichage">
-      <button type="button" data-view="graph" aria-pressed="${state.view === 'graph'}">Graphe</button>
-      <button type="button" data-view="list" aria-pressed="${state.view === 'list'}">Liste</button>
+    <span class="count"><strong>${vis.length}</strong> contact${EN ? sEN(vis.length) : vis.length > 1 ? 's' : ''}${vis.length !== contacts.length ? L(` sur ${contacts.length}`, ` of ${contacts.length}`) : ''}</span>
+    ${af.map(f => `<button class="afchip" type="button" data-clear="${f.k}" data-v="${esc(f.v)}" aria-label="${L('Retirer le filtre', 'Remove filter')} ${esc(f.label)}">${esc(f.label)}<span class="x" aria-hidden="true">✕</span></button>`).join('')}
+    ${af.length > 1 ? `<button class="linkbtn" type="button" data-act="clearall">${L('Tout effacer', 'Clear all')}</button>` : ''}
+    <div class="viewtoggle" role="group" aria-label="${L('Mode d’affichage', 'Display mode')}">
+      <button type="button" data-view="graph" aria-pressed="${state.view === 'graph'}">${L('Graphe', 'Graph')}</button>
+      <button type="button" data-view="list" aria-pressed="${state.view === 'list'}">${L('Liste', 'List')}</button>
     </div></div>`;
   $('#fabCount').textContent = af.length; $('#fabCount').hidden = !af.length;
   $('#clearAllSide').hidden = !af.length;
-  $('#closePanel').textContent = `Voir ${vis.length} contact${vis.length > 1 ? 's' : ''}`;
+  $('#closePanel').textContent = L(`Voir ${vis.length} contact${vis.length > 1 ? 's' : ''}`, `See ${vis.length} contact${sEN(vis.length)}`);
 }
 
 /* ---------- Graph ---------- */
@@ -2069,7 +2231,7 @@ let labelF = 1;
 const LK = 0.06, lblScale = k => Math.min(1, k / LK) * labelF;
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
 /* Texte d’exemple de la barre de recherche : plus court sur téléphone, où il ne tenait pas en entier */
-{ const q = document.getElementById('q'), mq = window.matchMedia('(max-width:760px)'), setPh = () => { q.placeholder = mq.matches ? 'Nom, entreprise, poste…' : 'Rechercher un nom, une entreprise, un poste…'; };
+{ const q = document.getElementById('q'), mq = window.matchMedia('(max-width:760px)'), setPh = () => { q.placeholder = mq.matches ? L('Nom, entreprise, poste…', 'Name, company, job title…') : L('Rechercher un nom, une entreprise, un poste…', 'Search a name, a company, a job title…'); };
   setPh(); mq.addEventListener('change', setPh); }
 /* Nom en une ou deux lignes d’environ max caractères, coupé entre deux mots, au plus équilibré ; une ligne trop longue reste tronquée en dernier recours */
 function wrapLabel(nm, max){
@@ -2096,18 +2258,18 @@ function syncTopN(total){
   if(openHubInfo){
     const tot = openHubInfo.eligible, n = Math.min(openTop, tot, OPEN_MAX);
     f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, Math.min(tot, OPEN_MAX)); r.value = n;
-    lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
-    document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
-    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, la plus grosse à midi, jusqu’à ${OPEN_MAX} ; le reste dans « autres ».`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    lbl.textContent = EN ? `Clusters of ${dv(openHubInfo.key)}` : `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
+    document.getElementById('topNVal').textContent = n >= tot ? L(`toutes (${tot})`, `all (${tot})`) : L(`${n} sur ${tot}`, `${n} of ${tot}`);
+    hint.textContent = EN ? `One cluster per ${DIMS[state.colorBy].label.toLowerCase()}, the largest at 12 o’clock, up to ${OPEN_MAX}; the rest in “others”.` : `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, la plus grosse à midi, jusqu’à ${OPEN_MAX} ; le reste dans « autres ».`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
   r.min = 3; r.max = Math.max(3, total);
   const n = Math.min(state.topN, total);
   r.value = n;
-  lbl.textContent = 'Branches affichées';
-  hint.textContent = 'Les plus petits groupes sont réunis dans une branche «\u00a0Autres\u00a0».';
-  document.getElementById('topNVal').textContent = n >= total ? `toutes (${total})` : `${n} sur ${total}`;
+  lbl.textContent = L('Branches affichées', 'Branches shown');
+  hint.textContent = L('Les plus petits groupes sont réunis dans une branche «\u00a0Autres\u00a0».', 'The smallest groups are merged into an “Others” branch.');
+  document.getElementById('topNVal').textContent = n >= total ? L(`toutes (${total})`, `all (${total})`) : L(`${n} sur ${total}`, `${n} of ${total}`);
 }
 function updateOverview(){ const b = document.getElementById('overview'); if(b) b.hidden = state.view !== 'graph' || zk <= fitK * 1.2; }
 /* Borne basse sous le zoom de cadrage d’un grand réseau (~0,07) : sinon « − » ramenait à 0,15, c’est-à-dire zoomait */
@@ -2199,7 +2361,7 @@ function gatherColleagues(sn, cn){
   if(cn.length){
     collR = R0 + r;
     collSide = null;
-    collLbl = gColl.append('text').attr('class', 'colllbl').text(`${cn.length} collègue${cn.length > 1 ? 's' : ''} chez ${coOf(sn.c)}`);
+    collLbl = gColl.append('text').attr('class', 'colllbl').text(L(`${cn.length} collègue${cn.length > 1 ? 's' : ''} chez ${coOf(sn.c)}`, `${cn.length} colleague${sEN(cn.length)} at ${dv(coOf(sn.c))}`));
     styleLabels();
   }
   setXY(); settle(0.7); positionLabels(); drawRings();
@@ -2611,10 +2773,10 @@ function drawHubCenter(){
   g.lower();
   g.each(function(d){
     const rc = Math.min(d.inner * 0.9, d.inner - 4), el = d3.select(this).attr('transform', `translate(${d.ax},${d.ay})`);
-    const name = d.key, nameFs = Math.min(rc * 0.2, rc * 1.75 / Math.max(6, name.length * 0.56));
+    const name = dv(d.key), nameFs = Math.min(rc * 0.2, rc * 1.75 / Math.max(6, name.length * 0.56));
     el.select('circle.hcdisc').attr('r', rc);
-    el.select('text.hcnum').text(d.count.toLocaleString('fr-FR')).attr('y', -rc * 0.12).style('font-size', `${rc * 0.42}px`);
-    el.select('text.hcunit').text(d.count > 1 ? 'contacts' : 'contact').attr('y', rc * 0.14).style('font-size', `${rc * 0.13}px`);
+    el.select('text.hcnum').text(d.count.toLocaleString(LOC)).attr('y', -rc * 0.12).style('font-size', `${rc * 0.42}px`);
+    el.select('text.hcunit').text((EN ? d.count !== 1 : d.count > 1) ? 'contacts' : 'contact').attr('y', rc * 0.14).style('font-size', `${rc * 0.13}px`);
     el.select('text.hcname').text(name).attr('y', rc * 0.4).style('font-size', `${nameFs}px`);
     el.select('text.hcpct').text(pct(d.share, 1)).attr('y', rc * 0.4 + nameFs * 1.25).style('font-size', `${nameFs * 0.95}px`);
   });
@@ -2757,7 +2919,7 @@ function renderGraph(vis){
       t.selectAll('tspan').remove();
       if(d.type !== 'me'){ t.text(d.count); return; }
       const nm = (mp.name || '').trim();
-      if(!nm){ t.text('Moi'); return; }
+      if(!nm){ t.text(L('Moi', 'Me')); return; }
       /* Groupe seul affiché : « Moi » est réduit, ses initiales tiennent dans le rond */
       if(hubNodes.length === 1){ t.text(nm.split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')); return; }
       t.text(null);
@@ -2773,14 +2935,14 @@ function renderGraph(vis){
       const t = d3.select(this); t.text(null);
       /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
       /* Sur téléphone, le nom entier sur deux lignes coupées entre deux mots (« Tourisme, hôtellerie » / « & restauration ») plutôt que tronqué */
-      const nm = d.others ? `${d.key} (${d.others.length})` : d.key;
+      const nm = d.others ? `${dv(d.key)} (${d.others.length})` : dv(d.key);
       const lines = narrowScreen() ? wrapLabel(nm, 16) : [nm.length > 40 ? nm.slice(0, 39).trimEnd() + '…' : nm];
       t.append('tspan').attr('class', 'lblName').text(lines[0]);
       if(lines[1]) t.append('tspan').attr('class', 'lblName lblName2').text(lines[1]);
       this.__nl = lines.length;
       t.append('tspan').attr('class', 'lblPct').text(pct(d.count, vis.length));
       /* Nombre de contacts à côté du nom, affiché quand le rond est trop petit à l’écran pour qu’on lise le chiffre dedans */
-      if(d.type === 'hub') t.append('tspan').attr('class', 'lblN').text(' · ' + d.count.toLocaleString('fr-FR'));
+      if(d.type === 'hub') t.append('tspan').attr('class', 'lblN').text(' · ' + d.count.toLocaleString(LOC));
       this.__w13 = null; /* nouveau texte : largeur à remesurer */
     });
   styleLabels();
@@ -3013,9 +3175,9 @@ function showTip(e, d){
   if(e.pointerType && e.pointerType !== 'mouse') return;
   const [x, y] = d3.pointer(e, canvas);
   const mp = myProfile();
-  tip.innerHTML = d.type === 'me' ? `<strong>${esc(mp.name || 'Toi')}</strong><span>${mp.position ? esc(mp.position) + '. ' : ''}Clique pour voir ta fiche.</span>` : d.type === 'hub'
-    ? `<strong>${esc(d.key)}</strong><span>${d.count} contact${d.count > 1 ? 's' : ''}. Clique pour explorer ce groupe.</span>`
-    : `<strong>${esc(d.c.name)}</strong><span>${esc(d.c.position || 'Poste non renseigné')}${d.c.company ? ' chez ' + esc(d.c.company) : ''}</span>`;
+  tip.innerHTML = d.type === 'me' ? `<strong>${esc(mp.name || L('Toi', 'You'))}</strong><span>${mp.position ? esc(mp.position) + '. ' : ''}${L('Clique pour voir ta fiche.', 'Click to see your profile.')}</span>` : d.type === 'hub'
+    ? `<strong>${esc(dv(d.key))}</strong><span>${L(`${d.count} contact${d.count > 1 ? 's' : ''}. Clique pour explorer ce groupe.`, `${d.count} contact${sEN(d.count)}. Click to explore this group.`)}</span>`
+    : `<strong>${esc(d.c.name)}</strong><span>${esc(d.c.position || L('Poste non renseigné', 'No job title'))}${d.c.company ? L(' chez ', ' at ') + esc(d.c.company) : ''}</span>`;
   const w = canvas.clientWidth;
   tip.style.left = Math.max(8, Math.min(x + 16, w - 260)) + 'px';
   tip.style.top = (y + 16) + 'px';
@@ -3043,7 +3205,7 @@ function showBlobTip(e, d){
   const n = (d.hub.members || []).filter(m => levelOf(m.c) === d.lv).length;
   const [x, y] = d3.pointer(e, canvas);
   spokeHot(new Set([d.key]));
-  tip.innerHTML = `<strong>${esc(d.lv)}</strong><span>${n} contact${n > 1 ? 's' : ''} dans ${esc(d.hub.key)}</span>`;
+  tip.innerHTML = `<strong>${esc(dv(d.lv))}</strong><span>${L(`${n} contact${n > 1 ? 's' : ''} dans`, `${n} contact${sEN(n)} in`)} ${esc(dv(d.hub.key))}</span>`;
   tip.style.left = Math.max(8, Math.min(x + 16, canvas.clientWidth - 260)) + 'px';
   tip.style.top = (y + 16) + 'px';
   tip.classList.add('on');
@@ -3062,7 +3224,7 @@ function sortDesc(vals, counts, byCount){
 const legendOpen = new Set();
 /* Filiale de la légende : un clic met ses contacts en surbrillance dans le graphe, un second clic l’annule */
 let legendHL = null; /* {kind:'v', v} : valeur de « Colorer par » (société mère…) ; {kind:'e', v} : filiale */
-const subLi = (e, n, total) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="Voir les contacts de ${esc(e)} dans le graphe"><span>${esc(e)}</span><span class="n">${n}</span><span class="pct">${total ? pct(n, total) : ''}</span></button></li>`;
+const subLi = (e, n, total) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="${EN ? `Show ${esc(dv(e))}’s contacts in the graph` : `Voir les contacts de ${esc(e)} dans le graphe`}"><span>${esc(dv(e))}</span><span class="n">${n}</span><span class="pct">${total ? pct(n, total) : ''}</span></button></li>`;
 /* Remonter dans la légende en arbre : 0 = tout le réseau, 1 = le groupe, 2 = la société mère d’une filiale */
 function legendUp(lvl, v){
   if(lvl === 0){ [...legendOpen].filter(x => x.startsWith('g:')).forEach(x => legendOpen.delete(x)); legendHL = null; render(); if(state.selected) reapplySelection(); else { clearFocus(); fit(); } return; }
@@ -3124,11 +3286,11 @@ function zoomToNodes(ms){
 const legendFind = new Map();
 function restRow(h, others, cnt, total){
   const rk = 'r:' + h.key, open = legendOpen.has(rk), sum = d3.sum(others, v => cnt.get(v)), q = legendFind.get(rk) || '';
-  const head = `<span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${others.length} autre${others.length > 1 ? 's' : ''}</span><span class="n">${sum}</span><span class="pct">${pct(sum, total)}</span></span>`;
-  const chev = `<button type="button" class="lgx" data-act="lgsub" data-v="${esc(rk)}" aria-expanded="${open}" aria-label="${open ? 'Replier' : 'Voir'} les ${others.length} autres"></button>`;
+  const head = `<span class="lgv"><span class="dot" style="background:${GREY}"></span><span class="lgl">${L(`${others.length} autre${others.length > 1 ? 's' : ''}`, `${others.length} other${sEN(others.length)}`)}</span><span class="n">${sum}</span><span class="pct">${pct(sum, total)}</span></span>`;
+  const chev = `<button type="button" class="lgx" data-act="lgsub" data-v="${esc(rk)}" aria-expanded="${open}" aria-label="${EN ? `${open ? 'Collapse' : 'Show'} the ${others.length} others` : `${open ? 'Replier' : 'Voir'} les ${others.length} autres`}"></button>`;
   if(!open) return `<li class="lgwrap">${head}${chev}</li>`;
-  const items = others.map(v => { const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v; return `<li data-name="${esc(norm(v))}"${q && !norm(v).includes(norm(q)) ? ' hidden' : ''}><button type="button" class="lgsubbtn" data-lghlv="${esc(v)}" aria-pressed="${on}" title="Voir les contacts de ${esc(v)} dans le graphe"><span>${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), total)}</span></button></li>`; }).join('');
-  return `<li class="lgwrap">${head}${chev}<div class="lgrest"><input type="search" class="lgfind" data-rk="${esc(rk)}" value="${esc(q)}" placeholder="Chercher parmi les ${others.length}" aria-label="Chercher une valeur parmi les ${others.length} autres de ${esc(h.key)}"><ul class="lgsubs">${items}</ul></div></li>`;
+  const items = others.map(v => { const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v; return `<li data-name="${esc(norm(dv(v)))}"${q && !norm(dv(v)).includes(norm(q)) ? ' hidden' : ''}><button type="button" class="lgsubbtn" data-lghlv="${esc(v)}" aria-pressed="${on}" title="${EN ? `Show ${esc(dv(v))}’s contacts in the graph` : `Voir les contacts de ${esc(v)} dans le graphe`}"><span>${esc(dv(v))}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), total)}</span></button></li>`; }).join('');
+  return `<li class="lgwrap">${head}${chev}<div class="lgrest"><input type="search" class="lgfind" data-rk="${esc(rk)}" value="${esc(q)}" placeholder="${L(`Chercher parmi les ${others.length}`, `Search the ${others.length}`)}" aria-label="${EN ? `Search a value among the ${others.length} others in ${esc(dv(h.key))}` : `Chercher une valeur parmi les ${others.length} autres de ${esc(h.key)}`}"><ul class="lgsubs">${items}</ul></div></li>`;
 }
 document.addEventListener('input', e => {
   const f = e.target.closest && e.target.closest('.lgfind'); if(!f) return;
@@ -3149,39 +3311,39 @@ function legendTree(vis){
   const rows = hubs.slice(0, max).map(h => {
     /* Ouvert au clic, ou d’office quand le filtre porte sur des valeurs de ce groupe (ex. une entreprise filtrée) */
     const k = 'g:' + h.key, ms = members.get(h.id), open = legendOpen.has(k) || (sel.size > 0 && ms.some(c => sel.has(cdim.get(c))));
-    const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(h.key)}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
+    const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${EN ? `${open ? 'Collapse' : 'Show'} the breakdown of ${esc(dv(h.key))}` : `${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}`}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(dv(h.key))}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
     if(!open) return `<li>${head}</li>`;
     const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
     const vals = sortDesc([...cnt.keys()], cnt, true), top = vals.slice(0, openTop), rest = d3.sum(vals.slice(openTop), v => cnt.get(v));
     /* Grappes possibles : valeurs d’au moins 2 contacts (une grappe d’un seul point n’a pas de sens) */
     const eligible = vals.filter(v => cnt.get(v) >= 1 && !TAIL.includes(v)).length;
     const canMore = Math.min(eligible, OPEN_MAX) - openTop, more = Math.min(10, canMore);
-    const moreHtml = levelMap.size && (canMore > 0 || openTop > LEGEND_TOP) ? `<li class="lgmore">${canMore > 0 ? `<button type="button" class="linkbtn" data-act="lgmore">Afficher ${more} grappe${more > 1 ? 's' : ''} de plus</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">Revenir à ${LEGEND_TOP}</button>` : ''}</li>` : '';
+    const moreHtml = levelMap.size && (canMore > 0 || openTop > LEGEND_TOP) ? `<li class="lgmore">${canMore > 0 ? `<button type="button" class="linkbtn" data-act="lgmore">${L(`Afficher ${more} grappe${more > 1 ? 's' : ''} de plus`, `Show ${more} more cluster${sEN(more)}`)}</button>` : ''}${openTop > LEGEND_TOP ? `<button type="button" class="linkbtn" data-act="lgless">${L(`Revenir à ${LEGEND_TOP}`, `Back to ${LEGEND_TOP}`)}</button>` : ''}</li>` : '';
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li data-lggrp="${esc(h.key)}">${head}<ul class="lgvals">${top.map(v => {
       const lu = state.colorBy === 'company' && levelMap.size ? logoUrl(v) : '';
-      const inner = `<span class="dot${state.colorBy === 'company' && levelMap.size ? ' ldot' : ''}" style="background:${dot(v)};--c:${dot(v)}">${lu ? `<img class="lgimg" src="${esc(lu)}" alt="" data-dom="${esc(domainOf(v))}">` : ''}</span><span class="lgl">${esc(v)}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
+      const inner = `<span class="dot${state.colorBy === 'company' && levelMap.size ? ' ldot' : ''}" style="background:${dot(v)};--c:${dot(v)}">${lu ? `<img class="lgimg" src="${esc(lu)}" alt="" data-dom="${esc(domainOf(v))}">` : ''}</span><span class="lgl">${esc(dv(v))}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
       const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v && (!legendHL.g || legendHL.g === h.key);
-      const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="Voir les contacts de ${esc(v)} dans le graphe">${inner}</button>`;
+      const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="${EN ? `Show ${esc(dv(v))}’s contacts in the graph` : `Voir les contacts de ${esc(v)} dans le graphe`}">${inner}</button>`;
       /* Groupe d’entreprises : un chevron déplie ses filiales */
       const subs = state.colorBy === 'company' ? entitiesOf(ms.filter(c => coOf(c) === v)) : [];
       if(subs.length < 2) return `<li class="lgwrap">${btn}<span class="lgxsp" aria-hidden="true"></span></li>`;
       const sk = 'e:' + h.key + '|' + v, so = legendOpen.has(sk) || on || (sel.size === 1 && sel.has(v));
-      return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n, ms.length)).join('')}</ul>` : ''}</li>`;
+      return `<li class="lgwrap">${btn}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(sk)}" aria-expanded="${so}" aria-label="${EN ? `${so ? 'Collapse' : 'Expand'} ${esc(dv(v))}’s entities` : `${so ? 'Replier' : 'Déplier'} les entités de ${esc(v)}`}"></button>${so ? `<ul class="lgsubs">${subs.map(([e, n]) => subLi(e, n, ms.length)).join('')}</ul>` : ''}</li>`;
     }).join('')}${moreHtml}${rest ? restRow(h, vals.slice(openTop), cnt, ms.length) : ''}</ul></li>`;
   }).join('');
   /* Fil d’Ariane : où l’on se trouve (réseau › groupe › valeur › filiale), chaque niveau supérieur est cliquable pour remonter */
   const gOpen = [...legendOpen].find(x => x.startsWith('g:')), crumbs = [];
   if(gOpen){
-    crumbs.push({lvl:0, label:'Tout le réseau'}, {lvl:1, label:gOpen.slice(2)});
+    crumbs.push({lvl:0, label:L('Tout le réseau', 'Whole network')}, {lvl:1, label:gOpen.slice(2)});
     if(legendHL){
       const parent = legendHL.kind === 'e' ? (contacts.find(c => entityOf(c) === legendHL.v) || {}) : null;
       if(parent){ const pv = cdim.get(parent); if(pv && pv !== legendHL.v) crumbs.push({lvl:2, label:pv}); }
       crumbs.push({lvl:3, label:legendHL.v});
     }
   }
-  const crumbHtml = crumbs.length ? `<nav class="lgcrumbs" aria-label="Niveau affiché">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<button type="button" class="linkbtn" data-lgup="${c.lvl}" data-v="${esc(c.label)}">${esc(c.label)}</button>` : `<strong aria-current="true">${esc(c.label)}</strong>`).join('<span aria-hidden="true"> › </span>')}</nav>` : '';
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">Touche un ${esc(plural)} pour zoomer dessus, puis une valeur pour voir ses contacts.</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (hubs.length === 9 ? 'Voir l’autre' : `Voir les ${hubs.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}</div>`;
+  const crumbHtml = crumbs.length ? `<nav class="lgcrumbs" aria-label="${L('Niveau affiché', 'Level shown')}">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<button type="button" class="linkbtn" data-lgup="${c.lvl}" data-v="${esc(c.label)}">${esc(dv(c.label))}</button>` : `<strong aria-current="true">${esc(dv(c.label))}</strong>`).join('<span aria-hidden="true"> › </span>')}</nav>` : '';
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">${EN ? `Tap ${/^[aeiou]/i.test(plural) ? 'an' : 'a'} ${esc(plural)} to zoom in, then a value to see its contacts.` : `Touche un ${esc(plural)} pour zoomer dessus, puis une valeur pour voir ses contacts.`}</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? L('Réduire la liste', 'Show less') : (hubs.length === 9 ? L('Voir l’autre', 'Show the other one') : L(`Voir les ${hubs.length - 8} autres`, `Show ${hubs.length - 8} more`))}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">${L('Tout afficher', 'Show all')}</button></p>` : ''}</div>`;
   $('#legend').hidden = !vis.length;
 }
 function updateLegend(vis){
@@ -3200,15 +3362,15 @@ function updateLegend(vis){
   const shown = sortDesc(perHub ? [...counts.keys()] : colorDomain.filter(v => counts.get(v)), counts);
   const max = legendAll ? 999 : 8;
   const maxL = d3.max(shown, v => counts.get(v)) || 1;
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? '<p class="more" style="margin:0 6px 6px">Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire</p>' : ''}<ul>${shown.slice(0, max).map(v => {
-    const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${dotOf(v)}"></span><span class="dot" style="background:${dotOf(v)}"></span><span class="lgl">${esc(v)}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
-    const row = canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="Ajouter ou retirer ${esc(v)} du filtre">${inner}</button>` : `<span class="lg">${inner}</span>`;
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${EN ? `${state.groupBy !== state.colorBy ? 'Color and clusters' : 'Color'}: ${cdim.label.toLowerCase()}` : `${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}`}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? `<p class="more" style="margin:0 6px 6px">${L('Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire', 'One cluster per value around each group: the smallest at 12 o’clock, then larger and larger clockwise')}</p>` : ''}<ul>${shown.slice(0, max).map(v => {
+    const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${dotOf(v)}"></span><span class="dot" style="background:${dotOf(v)}"></span><span class="lgl">${esc(dv(v))}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
+    const row = canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="${EN ? `Add or remove ${esc(dv(v))} from the filter` : `Ajouter ou retirer ${esc(v)} du filtre`}">${inner}</button>` : `<span class="lg">${inner}</span>`;
     /* Groupe qui réunit plusieurs entités : un chevron déplie ses filiales */
     const subs = state.colorBy === 'company' ? entitiesOf(base.filter(c => coOf(c) === v)) : [];
     if(subs.length < 2) return `<li>${row}</li>`;
     const open = legendOpen.has(v);
-    return `<li class="lgwrap">${row}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(v)}" aria-expanded="${open}" aria-label="${open ? 'Replier' : 'Déplier'} les entités de ${esc(v)}"></button>${open ? `<ul class="lgsubs">${subs.map(([k, n]) => subLi(k, n)).join('')}</ul>` : ''}</li>`;
-  }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? 'Réduire la liste' : (shown.length === 9 ? 'Voir l’autre' : `Voir les ${shown.length - 8} autres`)}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">Tout afficher</button></p>` : ''}<p class="more" style="margin:8px 6px 0">Jauge et teinte d’un groupe : sa part des contacts affichés</p></div>`;
+    return `<li class="lgwrap">${row}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(v)}" aria-expanded="${open}" aria-label="${EN ? `${open ? 'Collapse' : 'Expand'} ${esc(dv(v))}’s entities` : `${open ? 'Replier' : 'Déplier'} les entités de ${esc(v)}`}"></button>${open ? `<ul class="lgsubs">${subs.map(([k, n]) => subLi(k, n)).join('')}</ul>` : ''}</li>`;
+  }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? L('Réduire la liste', 'Show less') : (shown.length === 9 ? L('Voir l’autre', 'Show the other one') : L(`Voir les ${shown.length - 8} autres`, `Show ${shown.length - 8} more`))}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">${L('Tout afficher', 'Show all')}</button></p>` : ''}<p class="more" style="margin:8px 6px 0">${L('Jauge et teinte d’un groupe : sa part des contacts affichés', 'A group’s gauge and shade: its share of the contacts shown')}</p></div>`;
   $('#legend').hidden = !base.length;
 }
 
@@ -3218,17 +3380,17 @@ function updatePanel(vis){
   const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company && !TAIL.includes(coOf(c))), v => v.length, coOf), d => d[1]);
   const last = dated[dated.length - 1];
   $('#summary').innerHTML = `<dl class="stats">
-    <dt>Top entreprise</dt><dd>${topCo ? `${esc(topCo[0])} (${topCo[1]})` : 'Aucune'}</dd>
-    ${dated.length ? `<dt>Plus ancien</dt><dd><button class="linkbtn" type="button" data-cid="${dated[0].id}">${esc(dated[0].name)}</button>, ${dated[0].year}</dd>
-    <dt>Plus récent</dt><dd><button class="linkbtn" type="button" data-cid="${last.id}">${esc(last.name)}</button>, ${last.year}</dd>` : ''}
-    <dt>Tagués</dt><dd>${vis.filter(c => tagOf(c)).length}</dd></dl>`;
+    <dt>${L('Top entreprise', 'Top company')}</dt><dd>${topCo ? `${esc(dv(topCo[0]))} (${topCo[1]})` : L('Aucune', 'None')}</dd>
+    ${dated.length ? `<dt>${L('Plus ancien', 'Oldest')}</dt><dd><button class="linkbtn" type="button" data-cid="${dated[0].id}">${esc(dated[0].name)}</button>, ${dated[0].year}</dd>
+    <dt>${L('Plus récent', 'Most recent')}</dt><dd><button class="linkbtn" type="button" data-cid="${last.id}">${esc(last.name)}</button>, ${last.year}</dd>` : ''}
+    <dt>${L('Tagués', 'Tagged')}</dt><dd>${vis.filter(c => tagOf(c)).length}</dd></dl>`;
   const base = contacts.filter(c => { const y = c.year; c.year = null; const ok = pass(c); c.year = y; return ok && y; });
   const yc = d3.rollup(base, v => v.length, c => c.year);
   const ymax = d3.max(allYears, y => yc.get(y) || 0) || 1;
   $('#timeline').innerHTML = allYears.length > 1 ? `<div class="timeline">${allYears.map(y => { const n = yc.get(y) || 0;
-      return `<button class="tl${y < state.yMin || y > state.yMax ? ' off' : ''}" type="button" data-year="${y}" title="${y} : ${n} connexion${n > 1 ? 's' : ''}" aria-label="${y}, ${n} connexions" style="height:${Math.max(4, n / ymax * 100)}%"></button>`; }).join('')}</div>
+      return `<button class="tl${y < state.yMin || y > state.yMax ? ' off' : ''}" type="button" data-year="${y}" title="${L(`${y} : ${n} connexion${n > 1 ? 's' : ''}`, `${y}: ${n} connection${sEN(n)}`)}" aria-label="${y}, ${n} ${L('connexions', 'connections')}" style="height:${Math.max(4, n / ymax * 100)}%"></button>`; }).join('')}</div>
     <div class="tlAxis"><span>${allYears[0]}</span><span>${allYears[allYears.length - 1]}</span></div>
-    <p class="hint" style="margin:6px 0 0">Touche une année pour l’isoler, touche-la de nouveau pour tout revoir.</p>` : '';
+    <p class="hint" style="margin:6px 0 0">${L('Touche une année pour l’isoler, touche-la de nouveau pour tout revoir.', 'Tap a year to isolate it, tap it again to see everything.')}</p>` : '';
 }
 
 function personRow(o){
@@ -3236,21 +3398,21 @@ function personRow(o){
   const t = tagOf(o);
   /* Tout s’affiche en entier (retours à la ligne, jamais de « … ») : nom, poste, valeur de « Colorer par », raisons de proximité */
   const byCo = state.colorBy === 'company', val = DIMS[state.colorBy].get(o);
-  const valTxt = byCo && o.company && o.company !== val ? `${val} · ${o.company}` : val;
-  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(t)}</span>` : ''}</strong><span>${esc(o.position || 'Poste non renseigné')}${!byCo && o.company ? ', ' + esc(o.company) : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : isDemo ? `<button class="lk" type="button" data-act="demolink" aria-label="Profil LinkedIn de ${esc(o.name)} (contact fictif)">LinkedIn ${ICON_EXT}</button>` : ''}</li>`;
+  const valTxt = byCo && o.company && o.company !== val ? `${dv(val)} · ${o.company}` : dv(val);
+  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(dv(t))}</span>` : ''}</strong><span>${esc(o.position || L('Poste non renseigné', 'No job title'))}${!byCo && o.company ? ', ' + esc(o.company) : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="${EN ? `Open ${esc(o.name)}’s LinkedIn profile` : `Ouvrir le profil LinkedIn de ${esc(o.name)}`}">LinkedIn ${ICON_EXT}</a>` : isDemo ? `<button class="lk" type="button" data-act="demolink" aria-label="${EN ? `${esc(o.name)}’s LinkedIn profile (fictional contact)` : `Profil LinkedIn de ${esc(o.name)} (contact fictif)`}">LinkedIn ${ICON_EXT}</button>` : ''}</li>`;
 }
 function peopleList(items, title, limit, keepOrder){
   if(!items.length) return '';
   const sorted = keepOrder ? items : [...items].sort(byProx);
   const close = !keepOrder && sorted.length > 1 && proxOf(sorted[0]).score > 0;
-  return `${title ? `<h3>${title}${close ? ' <small class="h3sub">les plus proches de toi d’abord</small>' : ''}</h3>` : ''}<ul class="people">${sorted.slice(0, limit).map(personRow).join('')}</ul>`
-    + (items.length > limit ? `<p class="more">et ${items.length - limit} autres</p>` : '');
+  return `${title ? `<h3>${title}${close ? ` <small class="h3sub">${L('les plus proches de toi d’abord', 'closest to you first')}</small>` : ''}</h3>` : ''}<ul class="people">${sorted.slice(0, limit).map(personRow).join('')}</ul>`
+    + (items.length > limit ? `<p class="more">${L(`et ${items.length - limit} autres`, `and ${items.length - limit} more`)}</p>` : '');
 }
 
 function renderList(vis){
   const dim = DIMS[state.groupBy];
   const groups = d3.groups(vis, dim.get).sort((a, b) => (TAIL.includes(a[0]) - TAIL.includes(b[0])) || b[1].length - a[1].length);
-  $('#list').innerHTML = groups.map(([k, arr]) => `<section class="lgroup"><h3>${state.groupBy === state.colorBy ? `<span class="dot" style="background:${colorFn(k)}"></span>` : ''}${esc(k)} <span class="n">${arr.length}</span></h3>${peopleList(arr, '', 500)}</section>`).join('');
+  $('#list').innerHTML = groups.map(([k, arr]) => `<section class="lgroup"><h3>${state.groupBy === state.colorBy ? `<span class="dot" style="background:${colorFn(k)}"></span>` : ''}${esc(dv(k))} <span class="n">${arr.length}</span></h3>${peopleList(arr, '', 500)}</section>`).join('');
 }
 
 /* ---------- Render ---------- */
@@ -3272,12 +3434,12 @@ function render(){
 function syncPanelSums(){
   const set = (id, html) => { const el = document.getElementById(id); if(el) el.innerHTML = html; };
   const on = document.querySelector('#presets [aria-checked="true"], #myViews [aria-checked="true"]');
-  set('sum-views', on ? `<b>${esc(on.childNodes[0].textContent.trim() || on.textContent.trim())}</b>` : 'Aucune active');
+  set('sum-views', on ? `<b>${esc(on.childNodes[0].textContent.trim() || on.textContent.trim())}</b>` : L('Aucune active', 'None active'));
   const n = activeFilters().length;
-  set('sum-filters', n ? `<b>${n} actif${n > 1 ? 's' : ''}</b>` : 'Aucun');
+  set('sum-filters', n ? `<b>${L(`${n} actif${n > 1 ? 's' : ''}`, `${n} active`)}</b>` : L('Aucun', 'None'));
   set('sum-display', esc(`${DIMS[state.groupBy].label} › ${DIMS[state.colorBy].label}`));
   const c = cibleIndex().filter(r => r.n).length, r = relanceList().length;
-  set('sum-explore', [c && `${c} cibles`, r && `${r} à relancer`].filter(Boolean).join(' · '));
+  set('sum-explore', [c && L(`${c} cibles`, `${c} target${sEN(c)}`), r && L(`${r} à relancer`, `${r} to follow up`)].filter(Boolean).join(' · '));
 }
 /* Sections ouvertes ou repliées : gardées sur cet appareil ; un bouton dans un titre (« Tout effacer ») ne replie pas la section */
 const ACC_KEY = 'synapses-panneau-v1';
@@ -3305,7 +3467,7 @@ function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('ar
    sinon elle occupe le milieu de la zone libre et le zoom ne peut plus cadrer la sélection */
 /* Fiche ouverte (groupe ou contact) : la légende s’efface pour laisser le graphe visible ; elle revient à la fermeture de la fiche */
 function syncLegendRoom(){ canvas.classList.toggle('lg-room', drawer.classList.contains('open')); }
-const fmtDate = d => d ? d.toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'Inconnue';
+const fmtDate = d => d ? d.toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'}) : L('Inconnue', 'Unknown');
 
 function showContact(c){
   const node = nodes.find(n => n.id === 'c:' + c.id);
@@ -3325,32 +3487,33 @@ function showContact(c){
   const cdimK = DIMS[state.colorBy];
   const shownIds = new Set(nodes.map(n => n.id));
   const coVals = colorDomain.filter(v => [c, ...sameCo].some(o => shownIds.has('c:' + o.id) && cdimK.get(o) === v));
-  const keyHtml = visCo ? `<span class="hlkey"><span class="hlkt">Couleur des points : ${esc(cdimK.label.toLowerCase())}</span>${coVals.map(v => `<span class="hlki"><span class="dot" style="background:${colorFn(v)}"></span>${esc(v)}</span>`).join('')}</span>` : '';
-  const hlNote = state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(coOf(c))}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Les autres sont atténués, pas filtrés.${keyHtml}</span></p>` : '';
+  const keyHtml = visCo ? `<span class="hlkey"><span class="hlkt">${L('Couleur des points :', 'Dot color:')} ${esc(cdimK.label.toLowerCase())}</span>${coVals.map(v => `<span class="hlki"><span class="dot" style="background:${colorFn(v)}"></span>${esc(dv(v))}</span>`).join('')}</span>` : '';
+  const hlNote = state.view === 'graph' && EN ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>Highlighted in the graph: ${esc(firstName)}${visCo ? ` and ${visCo === 1 ? 'their colleague' : `their ${visCo} colleagues`} at ${esc(dv(coOf(c)))}${visCo === 1 ? ', placed next to their dot' : ', in a circle around their dot'}` : ''}. The others are dimmed, not filtered.${keyHtml}</span></p>`
+    : state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(coOf(c))}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Les autres sont atténués, pas filtrés.${keyHtml}</span></p>` : '';
   openDrawer(`
     <div class="dhead">${avatar(c, true)}
-      <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || 'Poste non renseigné')}${c.company ? ' chez ' + esc(c.company) : ''}</p></div></div>
+      <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || L('Poste non renseigné', 'No job title'))}${c.company ? L(' chez ', ' at ') + esc(c.company) : ''}</p></div></div>
     ${hlNote}
-    ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">Voir le profil LinkedIn ${ICON_EXT}</a>`
-          : isDemo ? `<button class="btn primary block" type="button" data-act="demolink">Voir le profil LinkedIn ${ICON_EXT}</button>`
-          : '<p class="hint">Aucun lien de profil dans le fichier pour ce contact.</p>'}
+    ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">${L('Voir le profil LinkedIn', 'View LinkedIn profile')} ${ICON_EXT}</a>`
+          : isDemo ? `<button class="btn primary block" type="button" data-act="demolink">${L('Voir le profil LinkedIn', 'View LinkedIn profile')} ${ICON_EXT}</button>`
+          : `<p class="hint">${L('Aucun lien de profil dans le fichier pour ce contact.', 'No profile link in the file for this contact.')}</p>`}
     <h3>Tag</h3>
-    <div class="tagrow">${TAGS.map(x => `<button class="tag" type="button" data-tc="${c.id}" data-tag="${esc(x)}" aria-pressed="${t === x}">${esc(x)}</button>`).join('')}</div>
+    <div class="tagrow">${TAGS.map(x => `<button class="tag" type="button" data-tc="${c.id}" data-tag="${esc(x)}" aria-pressed="${t === x}">${esc(dv(x))}</button>`).join('')}</div>
     <dl class="facts">
-      <dt>Secteur</dt><dd>${c.sectorGiven ? esc(c.sector) : fixSelect('co', c.company, SECTOR_LABELS, c.sector, 'Secteur de ' + c.company)}</dd>
-      <dt>Fonction</dt><dd>${fixSelect('fn', c.position, FN_LABELS, c.fn, 'Fonction pour ' + c.position)}</dd>
-      <dt>Séniorité</dt><dd>${fixSelect('sen', c.position, SEN_LABELS, c.seniority, 'Séniorité pour ' + c.position)}</dd>
-      ${proxOf(c).why.length ? `<dt>Ton lien</dt><dd class="proxdd">${proxOf(c).why.map(esc).join('<br>')}</dd>` : ''}
-      <dt>Connecté le</dt><dd>${fmtDate(c.date)}</dd>
-      ${c.location ? `<dt>Ville</dt><dd>${esc(c.location)}</dd>` : ''}
-      ${c.country ? `<dt>Pays</dt><dd>${esc(c.country)}</dd>` : ''}
+      <dt>${L('Secteur', 'Industry')}</dt><dd>${c.sectorGiven ? esc(dv(c.sector)) : fixSelect('co', c.company, SECTOR_LABELS, c.sector, L('Secteur de ', 'Industry of ') + c.company)}</dd>
+      <dt>${L('Fonction', 'Function')}</dt><dd>${fixSelect('fn', c.position, FN_LABELS, c.fn, L('Fonction pour ', 'Function for ') + c.position)}</dd>
+      <dt>${L('Séniorité', 'Seniority')}</dt><dd>${fixSelect('sen', c.position, SEN_LABELS, c.seniority, L('Séniorité pour ', 'Seniority for ') + c.position)}</dd>
+      ${proxOf(c).why.length ? `<dt>${L('Ton lien', 'Your connection')}</dt><dd class="proxdd">${proxOf(c).why.map(esc).join('<br>')}</dd>` : ''}
+      <dt>${L('Connecté le', 'Connected on')}</dt><dd>${fmtDate(c.date)}</dd>
+      ${c.location ? `<dt>${L('Ville', 'City')}</dt><dd>${esc(c.location)}</dd>` : ''}
+      ${c.country ? `<dt>${L('Pays', 'Country')}</dt><dd>${esc(dv(c.country))}</dd>` : ''}
       ${c.email ? `<dt>Email</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>` : ''}
-      ${c.school ? `<dt>Formation</dt><dd>${esc(c.school)}</dd>` : ''}
-      ${c.exp ? `<dt>Expérience</dt><dd>${esc(c.exp)}</dd>` : ''}
+      ${c.school ? `<dt>${L('Formation', 'Education')}</dt><dd>${esc(c.school)}</dd>` : ''}
+      ${c.exp ? `<dt>${L('Expérience', 'Experience')}</dt><dd>${esc(dv(c.exp))}</dd>` : ''}
     </dl>
-    ${peopleList(sameCo, `Aussi chez ${esc(coOf(c))} (${sameCo.length})`, 8)}
-    ${peopleList(sameSchool, `Même formation (${sameSchool.length})`, 6)}
-    <p class="note">Secteur, fonction et séniorité sont estimés. Une erreur&nbsp;? Corrige-la ci-dessus&nbsp;: elle vaut pour toute l’entreprise ou tout l’intitulé.</p>
+    ${peopleList(sameCo, L(`Aussi chez ${esc(coOf(c))} (${sameCo.length})`, `Also at ${esc(dv(coOf(c)))} (${sameCo.length})`), 8)}
+    ${peopleList(sameSchool, L(`Même formation (${sameSchool.length})`, `Same school (${sameSchool.length})`), 6)}
+    <p class="note">${L('Secteur, fonction et séniorité sont estimés. Une erreur&nbsp;? Corrige-la ci-dessus&nbsp;: elle vaut pour toute l’entreprise ou tout l’intitulé.', 'Industry, function and seniority are estimates. Wrong? Correct it above: it applies to the whole company or job title.')}</p>
     ${shareBox()}`);
   zoomToNode(node);
 }
@@ -3360,8 +3523,8 @@ function entitiesOf(list){
   const m = d3.rollup(list.filter(c => c.company), v => v.length, entityOf);
   return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
 }
-const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div class="hl${top ? '' : ' sub'}" role="button" tabindex="0" data-hle="${esc(k)}"><span>${esc(k)}</span><span class="n">${n}</span><span class="pct">${pct(n, total)}</span></div>`).join('')
-  + (subs.length > 30 ? `<div class="${top ? '' : 'sub'}"><span>et ${subs.length - 30} autres</span></div>` : '');
+const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div class="hl${top ? '' : ' sub'}" role="button" tabindex="0" data-hle="${esc(k)}"><span>${esc(dv(k))}</span><span class="n">${n}</span><span class="pct">${pct(n, total)}</span></div>`).join('')
+  + (subs.length > 30 ? `<div class="${top ? '' : 'sub'}"><span>${L(`et ${subs.length - 30} autres`, `and ${subs.length - 30} more`)}</span></div>` : '');
 /* Fiche d’un groupe : une ligne de la répartition (entreprise, filiale ou « autres ») met ses contacts en surbrillance
    dans le graphe ; un second clic revient au groupe entier */
 /* Contacts d’une ligne de la répartition (valeur, entité ou « autres ») parmi ceux du groupe sélectionné */
@@ -3448,22 +3611,22 @@ function showHub(h){
   const canFilter = isFilterDim(state.groupBy) && h.key !== (DIMS[state.groupBy].other || 'Autres');
   openDrawer(`
     ${state.groupBy === 'company' && h.key !== DIMS.company.other ? `<span class="logo-badge" style="background:${brandColor(h.key)}" aria-hidden="true"><span class="mtext">${esc(mono(h.key))}</span>${logoUrl(h.key) ? `<img class="logo-img" src="${esc(logoUrl(h.key))}" alt="" hidden>` : ''}</span>` : ''}
-    <h2 id="dtitle" tabindex="-1">${esc(h.key)}</h2>
-    <p class="pos">${members.length} contact${members.length > 1 ? 's' : ''} dans ce groupe, soit ${pct(members.length, contacts.length)} de ton réseau</p>
-    ${canFilter ? `<button class="btn block" type="button" data-only="${state.groupBy}" data-v="${esc(h.key)}" style="margin-top:12px">N’afficher que ce groupe</button>` : ''}
-    ${h.others ? `<p class="pos" style="margin-top:6px">Cette branche réunit ${h.others.length} groupes plus petits.</p>
-      <button class="btn primary block" type="button" data-act="showall" style="margin-top:10px">Afficher toutes les branches</button>
-      <h3>Groupes réunis ici</h3>
-      <ul class="people">${h.others.map(([k, n]) => `<li><button class="lrow" type="button" ${isFilterDim(state.groupBy) ? `data-only="${state.groupBy}" data-v="${esc(k)}"` : ''} title="N’afficher que ce groupe"><span class="who"><strong>${esc(k)}</strong><span>${n} contact${n > 1 ? 's' : ''}</span></span></button></li>`).join('')}</ul>` : ''}
-    <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
-    <p class="hint" style="margin:0 0 10px">Touche une ligne pour voir ces contacts dans le graphe.</p>
+    <h2 id="dtitle" tabindex="-1">${esc(dv(h.key))}</h2>
+    <p class="pos">${L(`${members.length} contact${members.length > 1 ? 's' : ''} dans ce groupe, soit ${pct(members.length, contacts.length)} de ton réseau`, `${members.length} contact${sEN(members.length)} in this group, ${pct(members.length, contacts.length)} of your network`)}</p>
+    ${canFilter ? `<button class="btn block" type="button" data-only="${state.groupBy}" data-v="${esc(h.key)}" style="margin-top:12px">${L('N’afficher que ce groupe', 'Show only this group')}</button>` : ''}
+    ${h.others ? `<p class="pos" style="margin-top:6px">${L(`Cette branche réunit ${h.others.length} groupes plus petits.`, `This branch merges ${h.others.length} smaller groups.`)}</p>
+      <button class="btn primary block" type="button" data-act="showall" style="margin-top:10px">${L('Afficher toutes les branches', 'Show all branches')}</button>
+      <h3>${L('Groupes réunis ici', 'Groups merged here')}</h3>
+      <ul class="people">${h.others.map(([k, n]) => `<li><button class="lrow" type="button" ${isFilterDim(state.groupBy) ? `data-only="${state.groupBy}" data-v="${esc(k)}"` : ''} title="${L('N’afficher que ce groupe', 'Show only this group')}"><span class="who"><strong>${esc(dv(k))}</strong><span>${n} contact${EN ? sEN(n) : n > 1 ? 's' : ''}</span></span></button></li>`).join('')}</ul>` : ''}
+    <h3>${L('Répartition par', 'Breakdown by')} ${cdim.label.toLowerCase()}</h3>
+    <p class="hint" style="margin:0 0 10px">${L('Touche une ligne pour voir ces contacts dans le graphe.', 'Tap a row to see these contacts in the graph.')}</p>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${counts.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
     <div class="legendlist${state.colorBy === 'company' ? ' withsubs' : ''}">${top20.map(v => {
-      const row = `<span class="dot" style="background:${dotR(v)}"></span><span>${esc(v)}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span>`;
+      const row = `<span class="dot" style="background:${dotR(v)}"></span><span>${esc(dv(v))}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span>`;
       const subs = state.colorBy === 'company' ? entitiesOf(members.filter(c => coOf(c) === v)) : [];
       return subs.length > 1 ? `<details class="subs"><summary class="hl" data-hlv="${esc(v)}">${row}</summary>${subRows(subs, members.length)}</details>` : `<div class="hl" role="button" tabindex="0" data-hlv="${esc(v)}">${row}</div>`;
-    }).join('')}${rest > 0 ? `<div class="hl" role="button" tabindex="0" data-hlrest="1"><span class="dot" style="background:${GREY}"></span><span>${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
-    ${state.groupBy === 'company' && entitiesOf(members).length > 1 ? `<h3>Entités de ${esc(h.key)}</h3><div class="legendlist">${subRows(entitiesOf(members), members.length, true)}</div>` : ''}
+    }).join('')}${rest > 0 ? `<div class="hl" role="button" tabindex="0" data-hlrest="1"><span class="dot" style="background:${GREY}"></span><span>${EN ? `${realRows.length - 20} other${sEN(realRows.length - 20)}` : `${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}`}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
+    ${state.groupBy === 'company' && entitiesOf(members).length > 1 ? `<h3>${L(`Entités de ${esc(h.key)}`, `${esc(dv(h.key))} entities`)}</h3><div class="legendlist">${subRows(entitiesOf(members), members.length, true)}</div>` : ''}
     ${peopleList(members, 'Contacts', 40)}`);
   const li = dbody.querySelector('.logo-img');
   if(li){
@@ -3483,7 +3646,7 @@ try { meProfile = JSON.parse(localStorage.getItem(ME_KEY) || '{}') || {}; } catc
 const myProfile = () => isDemo ? {} : meProfile;
 /* Efface tout ce que Synapses garde dans ce navigateur (profil, tags, vues, corrections), puis repart de la démo */
 function wipeData(){
-  if(!confirm('Effacer ton profil, ton réseau gardé, tes tags, tes vues et tes corrections enregistrés dans ce navigateur ? Le réseau affiché sera aussi retiré.')) return;
+  if(!confirm(L('Effacer ton profil, ton réseau gardé, tes tags, tes vues et tes corrections enregistrés dans ce navigateur ? Le réseau affiché sera aussi retiré.', 'Clear your profile, kept network, tags, views and corrections stored in this browser? The network shown will also be removed.'))) return;
   try { Object.keys(localStorage).filter(k => k.startsWith('synapses-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
   dropNet().then(() => location.reload());
 }
@@ -3492,7 +3655,21 @@ function wipeData(){
    la page (« outil ») et la langue. Jamais le réseau. Le public ne peut qu’envoyer : seul Vincent lit les retours. */
 function showFeedback(){
   select(null); clearFocus();
-  openDrawer(`
+  openDrawer(EN ? `
+    <h2 id="dtitle" tabindex="-1">Give feedback</h2>
+    <p class="pos">What helped you, what’s missing, what’s in your way: Vincent reads every message and uses it to improve Synapses.</p>
+    <form class="fbform" id="fbform" novalidate>
+      <h3 id="fbnote-l">Is Synapses useful to you? <span style="font-weight:400;color:var(--muted)">(optional)</span></h3>
+      <div class="fbnote" role="radiogroup" aria-labelledby="fbnote-l">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="fbnote" value="${n}">${n}</label>`).join('')}</div>
+      <div class="fbscale" aria-hidden="true"><span>Not at all</span><span>Hugely</span></div>
+      <h3><label for="fbmsg" style="margin:0">Your message</label></h3>
+      <textarea id="fbmsg" maxlength="2000" required placeholder="An idea, a bug, a feature you’re missing…"></textarea>
+      <p class="fbcount" id="fbcount" aria-live="polite">0 / 2000</p>
+      <label class="sharebox"><input type="checkbox" id="fbwant"> <span>I’d like a reply from Vincent by email</span></label>
+      <input type="email" id="fbemail" maxlength="200" placeholder="you@email.com" aria-label="Your email" autocomplete="email" hidden>
+      <p class="hint" style="margin-top:12px">Sent to Vincent (Supabase database, in Europe): your message, your rating and your email if you give it. Nothing from your network. Don’t write your contacts’ names or details.</p>
+      <button class="btn primary block" type="submit" id="fbsend">Send</button>
+    </form>` : `
     <h2 id="dtitle" tabindex="-1">Donner mon avis</h2>
     <p class="pos">Ce qui t’a servi, ce qui manque, ce qui bloque&nbsp;: Vincent lit chaque message et s’en sert pour faire évoluer Synapses.</p>
     <form class="fbform" id="fbform" novalidate>
@@ -3515,22 +3692,35 @@ function showFeedback(){
 async function sendFeedback(){
   const msg = $('#fbmsg').value.trim(), want = $('#fbwant').checked, email = $('#fbemail').value.trim();
   const note = +((document.querySelector('input[name=fbnote]:checked') || {}).value || 0) || null;
-  if(msg.length < 3){ toast('Écris quelques mots avant d’envoyer'); $('#fbmsg').focus(); return; }
-  if(want && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast('Vérifie ton email, ou décoche la case'); $('#fbemail').focus(); return; }
-  const btn = $('#fbsend'); btn.disabled = true; btn.textContent = 'Envoi…';
+  if(msg.length < 3){ toast(L('Écris quelques mots avant d’envoyer', 'Write a few words before sending')); $('#fbmsg').focus(); return; }
+  if(want && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast(L('Vérifie ton email, ou décoche la case', 'Check your email, or untick the box')); $('#fbemail').focus(); return; }
+  const btn = $('#fbsend'); btn.disabled = true; btn.textContent = L('Envoi…', 'Sending…');
   try {
-    const r = await sbFetch('/rpc/envoyer_retour', {method:'POST', body:JSON.stringify({p_message:msg, p_note:note, p_email:want ? email : null, p_page:'outil', p_langue:'fr'})});
+    const r = await sbFetch('/rpc/envoyer_retour', {method:'POST', body:JSON.stringify({p_message:msg, p_note:note, p_email:want ? email : null, p_page:'outil', p_langue:LANG})});
     if(!r.ok) throw new Error(r.status);
-    openDrawer(`<h2 id="dtitle" tabindex="-1">Merci&nbsp;!</h2>
+    openDrawer(EN ? `<h2 id="dtitle" tabindex="-1">Thank you!</h2>
+      <p class="pos">Your feedback arrived. ${want ? 'Vincent will reply to the address you gave.' : 'Vincent will read it and use it for the next versions.'}</p>
+      <p class="pos">Improvements born from your feedback are listed on <a href="../en/#demandes">the home page</a>.</p>` : `<h2 id="dtitle" tabindex="-1">Merci&nbsp;!</h2>
       <p class="pos">Ton avis est bien arrivé. ${want ? 'Vincent te répondra à l’adresse indiquée.' : 'Vincent le lira et s’en servira pour les prochaines versions.'}</p>
       <p class="pos">Les améliorations nées de vos retours sont listées sur <a href="../#demandes">la page de présentation</a>.</p>`);
   } catch(e){
-    btn.disabled = false; btn.textContent = 'Envoyer';
-    toast('L’envoi n’a pas abouti. Réessaie dans un instant.');
+    btn.disabled = false; btn.textContent = L('Envoyer', 'Send');
+    toast(L('L’envoi n’a pas abouti. Réessaie dans un instant.', 'Sending failed. Try again in a moment.'));
   }
 }
 
-const WIPE_BLOCK = () => `<h3>Tes données</h3>
+const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
+    <ul class="dlist">
+      <li><b>Your file</b> is read in this browser, never sent.</li>
+      <li><b>Emails</b> of your contacts: shown, never stored or sent.</li>
+      <li><b>Closeness</b>: number and dates of messages, recommendations, endorsed skills. Never the text of messages.</li>
+      <li><b>Target companies</b>: job applications, saved jobs and followed companies, matched with your network locally.</li>
+      <li><b>On this device</b>: profile, tags, views, corrections, and your network without emails if you keep it.</li>
+      <li><b>Only things sent</b>: +1 to an anonymous counter per import, your feedback if you send it and, if you tick “Company logos” in Display, company websites to Brandfetch.</li>
+      <li><a href="../en/legal/" target="_blank" rel="noopener">Legal notice and privacy</a></li>
+    </ul>
+    ${shareBox()}
+    <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Clear my data from this browser</button>` : `<h3>Tes données</h3>
     <ul class="dlist">
       <li><b>Ton fichier</b> est lu dans ce navigateur, jamais envoyé.</li>
       <li><b>Emails</b> de tes contacts&nbsp;: affichés, jamais enregistrés ni envoyés.</li>
@@ -3549,7 +3739,7 @@ function showMe(){
   const url = /^https:\/\//.test(p.url || '') ? p.url : '';
   const top = k => {
     const r = d3.greatest(d3.rollup(contacts.filter(c => !TAIL.includes(DIMS[k].get(c))), v => v.length, DIMS[k].get), d => d[1]);
-    return r ? `${esc(r[0])} (${pct(r[1], total)})` : 'Aucun';
+    return r ? `${esc(dv(r[0]))} (${pct(r[1], total)})` : L('Aucun', 'None');
   };
   const years = contacts.map(c => c.year).filter(Boolean);
   const groups = new Set(contacts.map(DIMS[state.groupBy].get)).size;
@@ -3558,34 +3748,34 @@ function showMe(){
   const rows = sortDesc(colorDomain.filter(v => cc.get(v)), cc);
   const g = genderOf({first:(p.name || '').split(' ')[0]});
   openDrawer(`
-    <div class="dhead"><span class="av lg2" style="background:var(--accent)" role="img" aria-label="Toi">${SIL[g || 'n']}</span>
-      <div><h2 id="dtitle" tabindex="-1">${esc(p.name || 'Moi')}</h2>
-      <p class="pos">${p.position ? esc(p.position) + (p.company ? ' chez ' + esc(p.company) : '') : 'Complète ton profil en bas de cette fiche.'}</p>${p.location || p.industry ? `<p class="pos">${esc([p.location, p.industry].filter(Boolean).join(', '))}</p>` : ''}</div></div>
-    ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">Voir mon profil LinkedIn ${ICON_EXT}</a>` : ''}
-    <h3>Mon réseau</h3>
+    <div class="dhead"><span class="av lg2" style="background:var(--accent)" role="img" aria-label="${L('Toi', 'You')}">${SIL[g || 'n']}</span>
+      <div><h2 id="dtitle" tabindex="-1">${esc(p.name || L('Moi', 'Me'))}</h2>
+      <p class="pos">${p.position ? esc(p.position) + (p.company ? L(' chez ', ' at ') + esc(p.company) : '') : L('Complète ton profil en bas de cette fiche.', 'Complete your profile at the bottom of this panel.')}</p>${p.location || p.industry ? `<p class="pos">${esc([p.location, p.industry].filter(Boolean).join(', '))}</p>` : ''}</div></div>
+    ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">${L('Voir mon profil LinkedIn', 'View my LinkedIn profile')} ${ICON_EXT}</a>` : ''}
+    <h3>${L('Mon réseau', 'My network')}</h3>
     <dl class="facts">
       <dt>Contacts</dt><dd>${total}</dd>
-      <dt>Groupes</dt><dd>${groups} (par ${DIMS[state.groupBy].label.toLowerCase()})</dd>
-      <dt>Secteur principal</dt><dd>${top('sector')}</dd>
-      <dt>Fonction principale</dt><dd>${top('fn')}</dd>
-      <dt>Entreprise phare</dt><dd>${top('company')}</dd>
-      ${years.length ? `<dt>Réseau construit</dt><dd>de ${d3.min(years)} à ${d3.max(years)}</dd>` : ''}
-      <dt>Contacts tagués</dt><dd>${contacts.filter(c => tagOf(c)).length}</dd>
-      ${relanceList().length ? `<dt>À relancer</dt><dd><button class="linkbtn" type="button" data-act="relance">${relanceList().length} proche${relanceList().length > 1 ? 's' : ''} sans nouvelles</button></dd>` : ''}
+      <dt>${L('Groupes', 'Groups')}</dt><dd>${groups} (${L('par', 'by')} ${DIMS[state.groupBy].label.toLowerCase()})</dd>
+      <dt>${L('Secteur principal', 'Main industry')}</dt><dd>${top('sector')}</dd>
+      <dt>${L('Fonction principale', 'Main function')}</dt><dd>${top('fn')}</dd>
+      <dt>${L('Entreprise phare', 'Top company')}</dt><dd>${top('company')}</dd>
+      ${years.length ? `<dt>${L('Réseau construit', 'Network built')}</dt><dd>${L(`de ${d3.min(years)} à ${d3.max(years)}`, `from ${d3.min(years)} to ${d3.max(years)}`)}</dd>` : ''}
+      <dt>${L('Contacts tagués', 'Tagged contacts')}</dt><dd>${contacts.filter(c => tagOf(c)).length}</dd>
+      ${relanceList().length ? `<dt>${L('À relancer', 'To follow up')}</dt><dd><button class="linkbtn" type="button" data-act="relance">${L(`${relanceList().length} proche${relanceList().length > 1 ? 's' : ''} sans nouvelles`, `${relanceList().length} close contact${sEN(relanceList().length)} gone quiet`)}</button></dd>` : ''}
     </dl>
-    <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
+    <h3>${L('Répartition par', 'Breakdown by')} ${cdim.label.toLowerCase()}</h3>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${cc.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
-    <div class="legendlist">${rows.slice(0, 8).map(v => `<div class="hl" data-hlv="${esc(v)}"><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(v)}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>
-    ${isDemo ? `<h3>Mon profil</h3>
-    <p class="pos">Ceci est un réseau de démonstration. Importe ton export LinkedIn pour voir ton nom et ton poste au centre.</p>
-    <button class="btn primary block" type="button" data-act="import" style="margin-top:10px">Importer mon export LinkedIn</button>` : `<h3>Mon profil</h3>
+    <div class="legendlist">${rows.slice(0, 8).map(v => `<div class="hl" data-hlv="${esc(v)}"><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(dv(v))}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>
+    ${isDemo ? `<h3>${L('Mon profil', 'My profile')}</h3>
+    <p class="pos">${L('Ceci est un réseau de démonstration. Importe ton export LinkedIn pour voir ton nom et ton poste au centre.', 'This is a demo network. Import your LinkedIn export to see your name and job title in the center.')}</p>
+    <button class="btn primary block" type="button" data-act="import" style="margin-top:10px">${L('Importer mon export LinkedIn', 'Import my LinkedIn export')}</button>` : `<h3>${L('Mon profil', 'My profile')}</h3>
     <div class="meform">
-      <label for="me-name">Nom</label><input id="me-name" type="text" autocomplete="name" value="${esc(p.name || '')}">
-      <label for="me-pos">Poste</label><input id="me-pos" type="text" autocomplete="organization-title" value="${esc(p.position || '')}">
-      <label for="me-co">Entreprise</label><input id="me-co" type="text" autocomplete="organization" value="${esc(p.company || '')}">
-      <label for="me-url">Lien de ton profil LinkedIn</label><input id="me-url" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/…" value="${esc(p.url || '')}">
-      <button class="btn primary block" type="button" data-act="saveme">Enregistrer mon profil</button>
-      <p class="hint" style="margin-top:10px">Ces informations restent sur cet appareil.</p>
+      <label for="me-name">${L('Nom', 'Name')}</label><input id="me-name" type="text" autocomplete="name" value="${esc(p.name || '')}">
+      <label for="me-pos">${L('Poste', 'Job title')}</label><input id="me-pos" type="text" autocomplete="organization-title" value="${esc(p.position || '')}">
+      <label for="me-co">${L('Entreprise', 'Company')}</label><input id="me-co" type="text" autocomplete="organization" value="${esc(p.company || '')}">
+      <label for="me-url">${L('Lien de ton profil LinkedIn', 'Your LinkedIn profile link')}</label><input id="me-url" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/…" value="${esc(p.url || '')}">
+      <button class="btn primary block" type="button" data-act="saveme">${L('Enregistrer mon profil', 'Save my profile')}</button>
+      <p class="hint" style="margin-top:10px">${L('Ces informations restent sur cet appareil.', 'This information stays on this device.')}</p>
     </div>`}
     ${WIPE_BLOCK()}`);
   dbody.querySelectorAll('.meform input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') saveMe(); }));
@@ -3598,7 +3788,7 @@ function saveMe(){
   if(url){ url = url.replace(/^http:\/\//i, 'https://'); if(!/^https:\/\//i.test(url)) url = 'https://' + url; }
   meProfile = {...meProfile, name:v('me-name'), position:v('me-pos'), company:v('me-co'), url};
   try { localStorage.setItem(ME_KEY, JSON.stringify(meProfile)); } catch(e) {}
-  toast('Profil enregistré');
+  toast(L('Profil enregistré', 'Profile saved'));
   render();
   showMe();
 }
@@ -3607,7 +3797,17 @@ function showHelp(msg){
   select(null); clearFocus();
   openDrawer(`
     ${msg ? `<p class="hint" style="color:#C2417A;font-weight:700">${msg}</p>` : ''}
-    <h2 id="dtitle" tabindex="-1">Récupérer tes contacts LinkedIn</h2>
+    ${EN ? `<h2 id="dtitle" tabindex="-1">Get your LinkedIn contacts</h2>
+    <ol>
+      <li>On LinkedIn: Settings › Data privacy › “Get a copy of your data”.</li>
+      <li>Request the full archive: your profile, messages and job applications enrich the graph. “Connections” alone arrives faster, in about ten minutes.</li>
+      <li>Import the .zip you receive (or drop it on the page).</li>
+    </ol>
+    <h3>What the export contains</h3>
+    <p class="pos">For each contact: name, company, job title, connection date, profile link, and their email if they shared it. Industry, function and seniority are estimated from it.</p>
+    <h3>Going further</h3>
+    <p class="pos">Country, city, education and experience aren’t included. To filter on them, add columns to the CSV: “Location” (e.g. “London, United Kingdom”), “School”, “Experience” (in years) or “Industry”.</p>
+    <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Import my LinkedIn export</button>` : `<h2 id="dtitle" tabindex="-1">Récupérer tes contacts LinkedIn</h2>
     <ol>
       <li>Sur LinkedIn&nbsp;: Préférences › Confidentialité des données › « Obtenir une copie de vos données ».</li>
       <li>Demande l’archive complète&nbsp;: ton profil, tes messages et tes candidatures enrichissent le graphe. « Relations » seule arrive plus vite, en une dizaine de minutes.</li>
@@ -3617,7 +3817,7 @@ function showHelp(msg){
     <p class="pos">Pour chaque contact&nbsp;: nom, entreprise, poste, date de connexion, lien du profil, et l’email s’il l’a partagé. Secteur, fonction et séniorité en sont estimés.</p>
     <h3>Aller plus loin</h3>
     <p class="pos">Pays, ville, formation et expérience n’y sont pas. Pour filtrer dessus, ajoute au CSV des colonnes « Localisation » (ex. « Paris, France »), « Formation », « Expérience » (en années) ou « Secteur ».</p>
-    <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>
+    <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>`}
     ${WIPE_BLOCK()}`);
 }
 
@@ -3626,14 +3826,15 @@ function showHelp(msg){
 let tgItems = null, tgSel = -1;
 function targetIndex(){
   if(tgItems) return tgItems;
-  const m = new Map(), add = (v, type, c) => { if(!v) return; const k = type + '|' + v; const e = m.get(k) || {v, type, n:0, key:compactKey(v), words:norm(v).split(/[^a-z0-9]+/).filter(Boolean)}; e.n++; m.set(k, e); };
+  /* v : valeur du réseau (code interne pour un secteur) ; t : texte affiché et cherché (« Healthcare » en anglais) */
+  const m = new Map(), add = (v, type, c) => { if(!v) return; const k = type + '|' + v; const t = dv(v); const e = m.get(k) || {v, t, type, n:0, key:compactKey(t), words:norm(t).split(/[^a-z0-9]+/).filter(Boolean)}; e.n++; m.set(k, e); };
   contacts.forEach(c => { add(coOf(c), 'Entreprise'); if(entityOf(c) !== coOf(c)) add(entityOf(c), 'Entité'); add(c.sector, 'Secteur'); add(c.school, 'École'); });
   return tgItems = [...m.values()].filter(e => !NO_COMPANY_GROUPS.has(e.v));
 }
 function targetMatches(q, max = 8, idx = targetIndex()){
   const t = norm(q).trim(), tk = compactKey(q); if(!t) return [];
   const score = e => {
-    const nv = norm(e.v);
+    const nv = norm(e.t || e.v);
     if(nv === t) return 100;
     if(e.key === tk) return 95; /* même nom à l’espace ou à l’accent près (« swisslife » = « Swiss Life ») */
     if(tk.length >= 3 && e.key.startsWith(tk)) return 78 + Math.min(10, Math.log2(e.n + 1));
@@ -3661,18 +3862,19 @@ function targetPredictions(recent = tgRecent){
   const sel = state.selected && nodes.find(n => n.id === state.selected);
   const gOpen = [...legendOpen].find(x => x.startsWith('g:'));
   const grpKey = sel && sel.type === 'hub' ? sel.key : gOpen ? gOpen.slice(2) : null;
-  if(sel && sel.type === 'c'){ push('Autour de ' + sel.c.name.split(' ')[0], [find(coOf(sel.c), 'Entreprise'), find(sel.c.sector, 'Secteur'), find(sel.c.school, 'École')]); }
+  if(sel && sel.type === 'c'){ push(L('Autour de ', 'Around ') + sel.c.name.split(' ')[0], [find(coOf(sel.c), 'Entreprise'), find(sel.c.sector, 'Secteur'), find(sel.c.school, 'École')]); }
   else if(grpKey){
     const dim = DIMS[state.groupBy], inG = contacts.filter(c => dim.get(c) === grpKey);
     const tops = [...d3.rollup(inG, v => v.length, coOf)].filter(([k]) => !NO_COMPANY_GROUPS.has(k)).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k]) => find(k, 'Entreprise'));
-    push('Dans ' + grpKey, tops);
+    push(L('Dans ', 'In ') + dv(grpKey), tops);
   }
-  push('Tes entreprises cibles', cibleIndex().filter(r => r.n).slice(0, 4).map(r => ({...(find(r.v, 'Entreprise') || {v:r.v, type:'Entreprise', n:r.n}), sub:CIBLE_KIND[Object.keys(CIBLE_KIND).find(k => r.kinds[k])].lbl})));
-  push('Recherches récentes', recent().map(v => idx.find(e => e.v === v) || {v, type:'Recherche', n:''}));
-  push('Les plus présentes dans ton réseau', idx.filter(e => e.type === 'Entreprise').sort((a, b) => b.n - a.n).slice(0, 8));
+  push(L('Tes entreprises cibles', 'Your target companies'), cibleIndex().filter(r => r.n).slice(0, 4).map(r => ({...(find(r.v, 'Entreprise') || {v:r.v, type:'Entreprise', n:r.n}), sub:CIBLE_KIND[Object.keys(CIBLE_KIND).find(k => r.kinds[k])].lbl})));
+  push(L('Recherches récentes', 'Recent searches'), recent().map(v => idx.find(e => (e.t || e.v) === v) || {v, type:'Recherche', n:''}));
+  push(L('Les plus présentes dans ton réseau', 'Most common in your network'), idx.filter(e => e.type === 'Entreprise').sort((a, b) => b.n - a.n).slice(0, 8));
   return sections;
 }
-const tgLi = (e, i, pre = 'tgo') => `<li role="option" id="${pre}${i}" data-tgv="${esc(e.v)}"${e.cid != null ? ` data-tgc="${e.cid}"` : ''}><span>${esc(e.v)}</span><span class="tgmeta"${e.sub ? ` title="${esc(e.sub)}"` : ''}>${esc(e.sub || e.type)}${e.n !== '' && e.n != null ? ' · ' + e.n : ''}</span></li>`;
+const TG_TYPE_EN = {Entreprise:'Company', 'Entité':'Entity', Secteur:'Industry', 'École':'School', Contact:'Contact', Recherche:'Search'};
+const tgLi = (e, i, pre = 'tgo') => `<li role="option" id="${pre}${i}" data-tgv="${esc(e.t || e.v)}"${e.cid != null ? ` data-tgc="${e.cid}"` : ''}><span>${esc(e.t || e.v)}</span><span class="tgmeta"${e.sub ? ` title="${esc(e.sub)}"` : ''}>${esc(e.sub || (EN ? TG_TYPE_EN[e.type] || e.type : e.type))}${e.n !== '' && e.n != null ? ' · ' + e.n : ''}</span></li>`;
 function renderTargetSug(){
   const box = $('#targetSug'), q = $('#target').value;
   tgSel = -1;
@@ -3691,7 +3893,7 @@ function renderTargetSug(){
 let tgGhost = '';
 function renderGhost(top){ tgGhost = ghostFor($('#target'), $('#targetGhost'), top); }
 function ghostFor(inp, g, top){
-  const q = inp.value, val = top && q && norm(top.v).startsWith(norm(q)) && top.v.length > q.length ? top.v : '';
+  const tv = top && (top.t || top.v), q = inp.value, val = tv && q && norm(tv).startsWith(norm(q)) && tv.length > q.length ? tv : '';
   if(!val || inp.scrollWidth > inp.clientWidth + 1){ g.innerHTML = ''; return val; }
   const cs = getComputedStyle(inp);
   Object.assign(g.style, {left:inp.offsetLeft + 'px', top:inp.offsetTop + 'px', width:inp.clientWidth + 'px', height:inp.offsetHeight + 'px', paddingLeft:cs.paddingLeft, font:cs.font, lineHeight:inp.offsetHeight + 'px'});
@@ -3702,7 +3904,7 @@ function ghostFor(inp, g, top){
 const Q_RECENT_KEY = 'synapses-recherches-v1';
 /* Récentes : seulement des entreprises, secteurs ou écoles (jamais un nom de contact), sur cet appareil */
 const qRecent = () => { try { return JSON.parse(localStorage.getItem(Q_RECENT_KEY) || '[]').slice(0, 5); } catch(e) { return []; } };
-function qRemember(v){ if(!targetIndex().some(e => e.v === v)) return; try { localStorage.setItem(Q_RECENT_KEY, JSON.stringify([v, ...qRecent().filter(x => norm(x) !== norm(v))].slice(0, 5))); } catch(e) {} }
+function qRemember(v){ if(!targetIndex().some(e => (e.t || e.v) === v)) return; try { localStorage.setItem(Q_RECENT_KEY, JSON.stringify([v, ...qRecent().filter(x => norm(x) !== norm(v))].slice(0, 5))); } catch(e) {} }
 let qGhost = '', qSel = -1;
 function qIndex(){ return [...targetIndex(), ...contacts.map(c => ({v:c.name, type:'Contact', sub:[c.position, c.company].filter(Boolean).join(', ') || 'Contact', n:null, cid:c.id, key:compactKey(c.name), words:norm(c.name).split(/[^a-z0-9]+/).filter(Boolean)}))]; }
 function renderQSug(){
@@ -3721,25 +3923,29 @@ function pickQ(li){
 }
 function pickTarget(v){ $('#target').value = v; $('#targetSug').hidden = true; $('#target').setAttribute('aria-expanded', 'false'); findEntry(true); }
 function findEntry(exact){
-  let raw = $('#target').value.trim(), t = norm(raw);
+  /* En anglais, un nom de secteur affiché (« Healthcare ») est ramené à son code (« Santé ») */
+  let raw = uv($('#target').value.trim()), t = norm(raw);
   if(!t){ $('#target').focus(); return; }
   $('#targetSug').hidden = true;
   closePanel();
   const rank = ['Dirigeant','Direction','Manager','Senior','Confirmé','Junior','Non renseignée'];
-  const hit = x => norm(x).includes(t);
+  const hit = x => norm(x).includes(t), hitC = c => [c.company, c.group, c.entity, c.sector, c.school].some(hit) || (EN && hit(dv(c.sector)));
   /* Valeur exacte du réseau (suggestion choisie, entreprise cible) : seulement ses contacts, pas les noms qui la contiennent (« Bel » ≠ Tractebel) */
   const exactOf = v => { const e = targetIndex().find(x => norm(x.v) === norm(v)); if(!e) return null; const f = {Entreprise:coOf, 'Entité':entityOf, Secteur:c => c.sector, 'École':c => c.school}[e.type]; return f ? contacts.filter(c => norm(f(c) || '') === norm(e.v)) : null; };
-  let m = exactOf(raw) || contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit));
+  let m = exactOf(raw) || contacts.filter(hitC);
   /* Rien d’exact : la meilleure suggestion (faute de frappe, nom approché) */
-  if(!m.length && !exact){ const best = targetMatches(raw, 1)[0]; if(best){ raw = best.v; t = norm(raw); $('#target').value = raw; m = exactOf(raw) || contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit)); } }
+  if(!m.length && !exact){ const best = targetMatches(raw, 1)[0]; if(best){ raw = best.v; t = norm(raw); $('#target').value = best.t || raw; m = exactOf(raw) || contacts.filter(hitC); } }
   $('#targetGhost').innerHTML = '';
-  if(m.length) tgRemember(raw);
+  if(m.length) tgRemember(dv(raw));
   m = m
     .sort((a, b) => rank.indexOf(a.seniority) - rank.indexOf(b.seniority));
   const ids = new Set(m.map(c => 'c:' + c.id));
   nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
   select(null); focus(ids);
-  openDrawer(`<h2 id="dtitle" tabindex="-1">Portes d’entrée vers ${esc(raw)}</h2>
+  openDrawer(EN ? `<h2 id="dtitle" tabindex="-1">Ways into ${esc(dv(raw))}</h2>
+    ${(cb => cb ? `<p class="pos"><strong>Target company</strong>: ${esc(cibleMeta(cb))}.</p>` : '')(cibleOf(raw))}
+    <p class="pos">${m.length ? `${m.length} contact${sEN(m.length)} linked to your search, most senior first.` : 'No contacts. Try a shorter name or an industry.'}</p>
+    ${peopleList(m, '', 30, true)}` : `<h2 id="dtitle" tabindex="-1">Portes d’entrée vers ${esc(raw)}</h2>
     ${(cb => cb ? `<p class="pos"><strong>Entreprise cible</strong>&nbsp;: ${esc(cibleMeta(cb))}.</p>` : '')(cibleOf(raw))}
     <p class="pos">${m.length ? `${m.length} contact${m.length > 1 ? 's' : ''} lié${m.length > 1 ? 's' : ''} à ta recherche, les plus seniors en premier.` : 'Aucun contact. Essaie un nom plus court ou un secteur.'}</p>
     ${peopleList(m, '', 30, true)}`);
@@ -3814,7 +4020,7 @@ function loadImportLibs(){
 async function handleFiles(fileList){
   const files = [...(fileList || [])];
   if(!files.length) return;
-  try { await loadImportLibs(); } catch(e){ showHelp('Le lecteur de fichiers n’a pas pu être chargé. Vérifie ta connexion, puis réessaie.'); return; }
+  try { await loadImportLibs(); } catch(e){ showHelp(L('Le lecteur de fichiers n’a pas pu être chargé. Vérifie ta connexion, puis réessaie.', 'The file reader couldn’t be loaded. Check your connection, then try again.')); return; }
   const texts = {}, sig = {};
   try {
     for(const f of files){
@@ -3832,19 +4038,19 @@ async function handleFiles(fileList){
         if(k && !texts[k]) texts[k] = t;
       }
     }
-  } catch(err){ showHelp('Le fichier n’a pas pu être lu. Réessaie avec l’archive .zip de LinkedIn ou le fichier Connections.csv.'); return; }
+  } catch(err){ showHelp(L('Le fichier n’a pas pu être lu. Réessaie avec l’archive .zip de LinkedIn ou le fichier Connections.csv.', 'The file couldn’t be read. Try again with the LinkedIn .zip archive or the Connections.csv file.')); return; }
   const prof = profileFrom(texts);
   const hasProf = Object.keys(prof).length > 0;
   if(sig['education.csv']) prof.schools = [...new Set(parseRows(sig['education.csv']).map(r => (r['School Name'] || '').trim()).filter(Boolean))];
   if(hasProf){ meProfile = {...meProfile, ...prof}; try { localStorage.setItem(ME_KEY, JSON.stringify(meProfile)); } catch(e) {} }
   let list = [];
   if(texts.connections){ try { list = parseLinkedIn(texts.connections); } catch(e) { list = []; } }
-  if(!list.length && !hasProf){ showHelp('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.'); return; }
+  if(!list.length && !hasProf){ showHelp(L('Aucun contact trouvé. Importe l’archive .zip de ton export LinkedIn, ou le fichier Connections.csv qu’elle contient.', 'No contacts found. Import the .zip archive of your LinkedIn export, or the Connections.csv file it contains.')); return; }
   closePanel();
   if(list.length){ setProx(proximityFrom(sig, list)); cibleData = ciblesFrom(sig); state.view = 'graph'; keepAsked = false; load(list, false); countSubmission(); if(keepOn()) saveNet(lastRaw).then(() => { keptAt = Date.now(); syncKeepField(); }).catch(() => {}); } else render();
-  if(list.length) toast(`${list.length} contact${list.length > 1 ? 's' : ''} importé${list.length > 1 ? 's' : ''}${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
-  else toast(`Profil de ${meProfile.name || 'l’utilisateur'} importé`);
-  if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast('Ajoute ton nom pour l’afficher au centre du graphe'); }, 500);
+  if(list.length) toast(EN ? `${list.length} contact${sEN(list.length)} imported${hasProf && meProfile.name ? ` for ${meProfile.name}` : ''}${activeFilters().length ? ', with your last view’s filters' : ''}` : `${list.length} contact${list.length > 1 ? 's' : ''} importé${list.length > 1 ? 's' : ''}${hasProf && meProfile.name ? ` pour ${meProfile.name}` : ''}${activeFilters().length ? ', avec les filtres de ta dernière vue' : ''}`);
+  else toast(L(`Profil de ${meProfile.name || 'l’utilisateur'} importé`, `Profile of ${meProfile.name || 'the user'} imported`));
+  if(list.length && !meProfile.name) setTimeout(() => { showMe(); toast(L('Ajoute ton nom pour l’afficher au centre du graphe', 'Add your name to show it in the center of the graph')); }, 500);
 }
 
 /* ---------- Events ---------- */
@@ -3891,7 +4097,7 @@ $('#logosOn').addEventListener('change', e => {
   render();
   const sel = state.selected && nodes.find(n => n.id === state.selected);
   if(sel && sel.type === 'hub') showHub(sel);
-  toast(logosOn ? (state.groupBy === 'company' || state.colorBy === 'company' ? 'Logos activés' : 'Logos activés : regroupe ou colore par entreprise pour les voir') : 'Logos désactivés : monogrammes affichés');
+  toast(logosOn ? (state.groupBy === 'company' || state.colorBy === 'company' ? L('Logos activés', 'Logos on') : L('Logos activés : regroupe ou colore par entreprise pour les voir', 'Logos on: group or color by company to see them')) : L('Logos désactivés : monogrammes affichés', 'Logos off: monograms shown'));
 });
 $('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
 $('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
@@ -3938,6 +4144,7 @@ document.addEventListener('click', e => {
   if(act){
     const a = act.dataset.act;
     if(a === 'import') $('#file').click();
+    else if(a === 'lang'){ e.preventDefault(); setLang(act.dataset.lang); }
     else if(a === 'help'){ closePanel(); showHelp(); }
     else if(a === 'feedback'){ closePanel(); showFeedback(); }
     else if(a === 'dismiss'){ demoHidden = true; render(); }
@@ -3958,11 +4165,11 @@ document.addEventListener('click', e => {
     else if(a === 'keepyes') setKeep(true);
     else if(a === 'cibles') showCibles();
     /* Démo : lien de profil factice (une adresse inventée pourrait être celle d’une vraie personne) */
-    else if(a === 'demolink') toast('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.');
+    else if(a === 'demolink') toast(L('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.', 'Fictional contact. With your export, this link opens their LinkedIn profile.'));
     else if(a === 'relance') showRelance();
     else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
     else if(a === 'cbgo') pickTarget(act.dataset.v);
-    else if(a === 'keepforget'){ if(confirm('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.')) setKeep(false); }
+    else if(a === 'keepforget'){ if(confirm(L('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.', 'Forget your network on this device? It stays shown until the next refresh; you’ll then need to re-import your file.'))) setKeep(false); }
     else if(a === 'keepno'){ keepAsked = true; renderBar(contacts.filter(pass)); }
     else if(a === 'legend'){ legendCollapsed = !legendCollapsed; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
     else if(a === 'legendall'){ legendAll = !legendAll; updateLegend(contacts.filter(pass)); if(!state.selected) fit(); }
@@ -3971,7 +4178,7 @@ document.addEventListener('click', e => {
     else if(a === 'aisetup'){ closePanel(); showAI(); }
     else if(a === 'airun'){
       readAIForm();
-      if(!llm.key){ toast(`Colle ta clé API ${PROVIDERS[llm.provider].vendor} pour continuer`); document.getElementById('llm-key')?.focus(); return; }
+      if(!llm.key){ toast(L(`Colle ta clé API ${PROVIDERS[llm.provider].vendor} pour continuer`, `Paste your ${PROVIDERS[llm.provider].vendor} API key to continue`)); document.getElementById('llm-key')?.focus(); return; }
       saveLLM(); closeDrawer(); aiHidden = false; runAI();
     }
     else if(a === 'aistop'){ if(aiRun) aiRun.ctl.abort(); }
@@ -3987,7 +4194,7 @@ document.addEventListener('click', e => {
   const tagBtn = e.target.closest('[data-tc]');
   if(tagBtn){
     const c = contacts.find(o => o.id === +tagBtn.dataset.tc);
-    if(c){ const now = setTag(c, tagBtn.dataset.tag); syncChips(); if(state.colorBy === 'tag' || state.groupBy === 'tag') setupColor(); render(); showContact(c); toast(now ? `Tag « ${now} » ajouté` : 'Tag retiré'); }
+    if(c){ const now = setTag(c, tagBtn.dataset.tag); syncChips(); if(state.colorBy === 'tag' || state.groupBy === 'tag') setupColor(); render(); showContact(c); toast(now ? L(`Tag « ${now} » ajouté`, `Tag “${dv(now)}” added`) : L('Tag retiré', 'Tag removed')); }
     return;
   }
   const tl = e.target.closest('[data-year]');
@@ -4063,7 +4270,7 @@ document.addEventListener('change', e => {
   applyAI(contacts); setupColor(); syncChips(); render();
   const c = contacts.find(o => o.id === cid);
   if(c) showContact(c);
-  toast(`Correction appliquée à ${n} contact${n > 1 ? 's' : ''}${shareOn ? ' et proposée au dictionnaire partagé' : ''}`);
+  toast(L(`Correction appliquée à ${n} contact${n > 1 ? 's' : ''}${shareOn ? ' et proposée au dictionnaire partagé' : ''}`, `Correction applied to ${n} contact${sEN(n)}${shareOn ? ' and suggested to the shared dictionary' : ''}`));
 });
 
 /* Drag and drop */
@@ -4091,12 +4298,12 @@ new ResizeObserver(() => {
 }).observe(canvas);
 
 loadDictionary()
-  .catch(() => toast('Dictionnaire de classification indisponible : secteurs et fonctions ne seront pas estimés'))
+  .catch(() => toast(L('Dictionnaire de classification indisponible : secteurs et fonctions ne seront pas estimés', 'Classification dictionary unavailable: industries and functions won’t be estimated')))
   .then(async () => {
     let kept = null;
     if(keepOn()){ try { kept = await readNet(); } catch(e) {} }
     const list = kept && Array.isArray(kept.raw) ? kept.raw.map((r, i) => buildContact(r, i)).filter(c => c.name) : [];
-    if(list.length){ lastRaw = kept.raw; keptAt = kept.saved || 0; setProx(kept.prox); cibleData = Array.isArray(kept.cibles) ? kept.cibles : null; load(list, false); setTimeout(() => toast(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`), 400); }
+    if(list.length){ lastRaw = kept.raw; keptAt = kept.saved || 0; setProx(kept.prox); cibleData = Array.isArray(kept.cibles) ? kept.cibles : null; load(list, false); setTimeout(() => toast(L(`Ton réseau de ${list.length} contacts a été rouvert depuis cet appareil`, `Your network of ${list.length} contacts was reopened from this device`)), 400); }
     else load(demoContacts(), true);
     if(location.hash === '#importer') showHelp();
     /* Lecteurs de fichiers en tâche de fond, une fois la page affichée : l’import reste immédiat */

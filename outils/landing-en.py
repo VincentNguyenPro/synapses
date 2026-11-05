@@ -58,7 +58,7 @@ rep('<h1 id="titre" class="rise">Ton réseau LinkedIn, en&nbsp;carte.</h1>', '<h
 rep('Synapses range tes contacts par secteur, entreprise et séniorité pour te montrer qui peut t’ouvrir une porte&nbsp;: un job, un client, un rendez-vous.',
     'Synapses sorts your contacts by industry, company and seniority to show you who can open a door: a job, a client, a meeting.')
 rep('Gratuit, sans compte. Ton fichier est lu dans ton navigateur et n’est envoyé nulle part.',
-    'Free, no account. Your file is read in your browser and never sent anywhere. The tool itself is in French for now.')
+    'Free, no account. Your file is read in your browser and never sent anywhere.')
 rep('aria-label="Vidéo de démonstration de Synapses sur un réseau fictif, 1 min 45"', 'aria-label="Synapses demo video on a fictional network, 1 min 45"')
 # Film en anglais (voix, textes, sous-titres) ; les plans de l’app restent en français
 rep('poster="assets/demo/synapses-demo-affiche.webp"', 'poster="assets/demo/synapses-demo-affiche-en.webp"')
@@ -270,8 +270,7 @@ rep('<p>Oui. La démo s’ouvre directement sur un réseau fictif de 150 contact
     '<p>Yes. The demo opens straight onto a fictional network of 150 contacts, with every feature.</p>')
 rep('Et sur téléphone&nbsp;?<span', 'What about on a phone?<span')
 rep('<p>Le graphe s’adapte à l’écran, et une vue Liste reprend tout en texte. Pour récupérer et déposer l’archive, l’ordinateur reste plus pratique.</p></details>',
-    '<p>The graph adapts to the screen, and a List view shows everything as text. To get and drop the archive, a computer is still easier.</p></details>\n'
-    '        <details name="faq" class="rise" style="--i:6"><summary>Is the tool in English?<span class="pm" aria-hidden="true"></span></summary><p>Not yet: its interface is in French for now, and an English version is planned. Your export works the same, and English job titles are recognized.</p></details>')
+    '<p>The graph adapts to the screen, and a List view shows everything as text. To get and drop the archive, a computer is still easier.</p></details>')
 
 # ---------- Fin et pied de page ----------
 rep('Ouvre <a class="go" href="app/">la démo</a> ou <a class="alt" href="app/#importer">ton export</a>', 'Open <a class="go" href="app/">the demo</a> or <a class="alt" href="app/#importer">your export</a>')
@@ -325,6 +324,8 @@ if missing:
 
 # ---------- Chemins : la page est servie depuis en/ ----------
 s = re.sub(r'(?<=["\s,(])(assets/|app/|favicon\.svg|apple-touch-icon\.png)', r'../\1', s)
+# L’outil s’ouvre en anglais depuis la page anglaise
+s = s.replace('href="../app/"', 'href="../app/?lang=en"').replace('href="../app/#', 'href="../app/?lang=en#')
 
 out = ROOT / 'en' / 'index.html'
 out.parent.mkdir(exist_ok=True)
