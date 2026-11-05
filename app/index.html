@@ -2524,7 +2524,9 @@ function estimateFitK(){
   return Math.max(0.05, Math.min((vb.w - 28) / Math.max(1, R - L), (vb.h - 28) / Math.max(1, B - T)) * 0.85);
 }
 function viewport(){
-  const w = W(), h = H();
+  /* Fiche ouverte (bureau) : la zone utile s’arrête à sa gauche */
+  const dw = drawer.classList.contains('open') && !window.matchMedia('(max-width:760px)').matches ? drawer.offsetWidth : 0;
+  const w = W() - dw, h = H();
   const lg = document.getElementById('legend');
   if(!lg || lg.hidden || state.view !== 'graph' || !lg.offsetWidth) return {x:0, y:0, w, h};
   const lw = lg.offsetWidth + 28, lh = lg.offsetHeight + 28;
@@ -3042,6 +3044,13 @@ document.addEventListener('pointerover', e => {
   if(row === drawerHover) return;
   const prev = drawerHover; drawerHover = row;
   if(!row && !prev) return; /* rien à restaurer : on ne touche pas aux autres surbrillances */
+  if(state.selected === 'me'){
+    /* Fiche « Moi » : la valeur survolée (séniorité…) allume ses contacts dans tout le réseau */
+    if(!row || row.dataset.hlv == null){ clearFocus(); return; }
+    const get = DIMS[state.colorBy].get;
+    focus(new Set(nodes.filter(n => n.type === 'c' && get(n.c) === row.dataset.hlv).flatMap(n => [n.id, n.hub])));
+    return;
+  }
   const hub = nodes.find(n => n.id === state.selected && n.type === 'hub'); if(!hub) return;
   const members = nodes.filter(n => n.type === 'c' && n.hub === hub.id);
   if(nodeSel) nodeSel.classed('hov', false);
@@ -3223,7 +3232,7 @@ function showMe(){
     </dl>
     <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${cc.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
-    <div class="legendlist">${rows.slice(0, 8).map(v => `<div><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(v)}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>
+    <div class="legendlist">${rows.slice(0, 8).map(v => `<div class="hl" data-hlv="${esc(v)}"><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(v)}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>
     ${isDemo ? `<h3>Mon profil</h3>
     <p class="pos">Ceci est un réseau de démonstration. Importe ton export LinkedIn pour voir ton nom et ton poste au centre.</p>
     <button class="btn primary block" type="button" data-act="import" style="margin-top:10px">Importer mon export LinkedIn</button>` : `<h3>Mon profil</h3>
@@ -3237,7 +3246,8 @@ function showMe(){
     </div>`}
     ${WIPE_BLOCK()}`);
   dbody.querySelectorAll('.meform input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') saveMe(); }));
-  zoomToNode(nodes.find(n => n.type === 'me'));
+  /* Fiche « Moi » : tout le réseau, cadré dans la place laissée par la fiche (pas de zoom sur le rond « Moi ») */
+  fit();
 }
 function saveMe(){
   const v = id => (document.getElementById(id)?.value || '').trim();
