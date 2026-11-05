@@ -208,7 +208,10 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 #target{position:relative}
 .tgsug .tghead{cursor:default;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:none;padding:8px 10px 3px}
 .tgsug .tghead:hover{background:none}
-#cibleHint{margin:8px 0 0}
+#cibleHint,#relanceHint{margin:8px 0 0}
+.invrow{display:flex;align-items:center;gap:10px;padding:6px 0}
+.invrow .who{flex:1;min-width:0;display:flex;flex-direction:column}
+.invrow .who span{font-size:12.5px;color:var(--muted)}
 .cbchips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px}
 .cbchips .chip::before{display:none}
 .cbl{list-style:none;margin:0;padding:0}
@@ -606,6 +609,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
         <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
           <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
         <p class="hint" id="cibleHint" hidden></p>
+        <p class="hint" id="relanceHint" hidden></p>
       </div>
       <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
     </section>
@@ -742,7 +746,7 @@ function buildContact(r, i){
    Calculée dans le navigateur à partir de l’export : nombre de messages échangés (messages.csv, seules les adresses de profil
    sont lues, jamais le contenu), recommandations et compétences recommandées dans les deux sens, entreprises et écoles
    en commun avec ton parcours, tags. Rien n’est envoyé ; seuls ces nombres sont gardés avec le réseau si tu le demandes. */
-const PROX_FILES = ['messages.csv','recommendations_received.csv','recommendations_given.csv','endorsement_received_info.csv','endorsement_given_info.csv','education.csv'];
+const PROX_FILES = ['messages.csv','invitations.csv','recommendations_received.csv','recommendations_given.csv','endorsement_received_info.csv','endorsement_given_info.csv','education.csv'];
 let proxData = null, proxCache = new Map();
 const slugOf = u => { const m = (u || '').toString().toLowerCase().match(/linkedin\.com\/in\/([^/?#\s]+)/); if(!m) return ''; try { return decodeURIComponent(m[1]); } catch(e) { return m[1]; } };
 const personKey = (f, l) => nkey(`${f || ''} ${l || ''}`);
@@ -756,7 +760,21 @@ function proximityFrom(sig, list){
     const rows = Papa.parse(sig['messages.csv'].replace(/^\uFEFF/, ''), {header:true, skipEmptyLines:true}).data;
     rows.forEach(r => {
       const people = new Set([slugOf(r['SENDER PROFILE URL']), ...(r['RECIPIENT PROFILE URLS'] || '').split(/[,;\s]+/).map(slugOf)].filter(Boolean));
-      people.forEach(sl => bump(sl, 'm'));
+      /* Date du dernier échange (jour seulement), pour la liste « Contacts à relancer » */
+      const day = (r['DATE'] || '').slice(0, 10), okDay = /^\d{4}-\d{2}-\d{2}$/.test(day);
+      people.forEach(sl => { bump(sl, 'm'); if(okDay && u[sl] && !(u[sl].t >= day)) u[sl].t = day; });
+    });
+  }
+  /* Invitations : qui a fait le premier pas (relations acceptées), et invitations encore sans réponse
+     (nom et adresse du profil seulement ; le message joint n’est ni lu ni gardé) */
+  const pend = {o:[], i:[]};
+  if(sig['invitations.csv']){
+    parseRows(sig['invitations.csv']).forEach(r => {
+      const inc = /^in/i.test(r['Direction'] || ''), url = inc ? r['inviterProfileUrl'] : r['inviteeProfileUrl'], sl = slugOf(url);
+      if(!sl) return;
+      if(known.has(sl)){ if(inc) bump(sl, 'i'); return; }
+      const name = ((inc ? r['From'] : r['To']) || '').trim();
+      if(name) (inc ? pend.i : pend.o).push({n:name, u:`https://www.linkedin.com/in/${encodeURIComponent(sl)}`, d:liMonth(r['Sent At'])});
     });
   }
   [['endorsement_received_info.csv', 'Endorser Public Url'], ['endorsement_given_info.csv', 'Endorsee Public Url']].forEach(([f, col]) => {
@@ -768,7 +786,16 @@ function proximityFrom(sig, list){
     if(!sig[f]) return;
     parseRows(sig[f]).forEach(r => { const k = personKey(r['First Name'], r['Last Name']); if(k) n[k] = 1; });
   });
-  return Object.keys(u).length || Object.keys(n).length ? {u, n} : null;
+  const hasP = pend.o.length || pend.i.length;
+  return Object.keys(u).length || Object.keys(n).length || hasP ? {u, n, ...(hasP ? {p:pend} : {})} : null;
+}
+const monthsSince = day => { const [y, m] = day.split('-').map(Number), n = new Date(); return (n.getFullYear() - y) * 12 + n.getMonth() + 1 - m; };
+/* « en mars 2024 », « ce mois-ci », « il y a 3 ans » */
+function sinceFr(day){
+  const mo = monthsSince(day);
+  if(mo <= 0) return 'ce mois-ci';
+  if(mo < 24) return 'en ' + new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, 15).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+  return `il y a ${Math.floor(mo / 12)} ans`;
 }
 /* Raisons et score de proximité d’un contact (mis en cache) */
 function proxOf(c){
@@ -776,7 +803,10 @@ function proxOf(c){
   const why = [], short = []; let score = 0;
   const sl = slugOf(c.url), d = proxData && sl ? proxData.u[sl] || {} : {};
   const m = d.m || (isDemo ? c.demoMsgs || 0 : 0);
-  if(m){ why.push(`${m} message${m > 1 ? 's' : ''} échangé${m > 1 ? 's' : ''}`); short.push(`${m} msg`); score += 3 + Math.min(6, Math.floor(Math.log2(m))); }
+  if(m){ why.push(`${m} message${m > 1 ? 's' : ''} échangé${m > 1 ? 's' : ''}${d.t ? `, le dernier ${sinceFr(d.t)}` : ''}`); short.push(`${m} msg`); score += 3 + Math.min(6, Math.floor(Math.log2(m))); }
+  /* Échange récent : plus proche aujourd’hui qu’un échange d’il y a cinq ans */
+  if(d.t){ const mo = monthsSince(d.t); score += mo <= 6 ? 2 : mo <= 24 ? 1 : 0; if(mo >= 12) short.push(`Silence ${mo < 24 ? 'depuis 1 an' : `depuis ${Math.floor(mo / 12)} ans`}`); }
+  if(d.i){ why.push('T’a invité à rejoindre ton réseau'); score += 1; }
   if((proxData && proxData.n[personKey(c.first, c.name.slice(c.first.length))]) || (isDemo && c.demoReco)){ why.push('Recommandation'); short.push('Reco'); score += 5; }
   if(d.e){ why.push('Compétences recommandées'); short.push('Compétences'); score += 2; }
   const me = myProfile();
@@ -868,6 +898,37 @@ function cibleMeta(r){
   return out.join(' · ');
 }
 const cibleOf = v => cibleIndex().find(r => norm(r.v) === norm(v));
+/* ---------- Contacts à relancer ----------
+   Ceux avec qui tu as vraiment échangé (au moins 3 messages) mais plus depuis un an, les plus proches d’abord ;
+   et tes invitations encore sans réponse (Invitations.csv). Calculé dans le navigateur, rien n’est envoyé. */
+const RELANCE_MIN_MSG = 3, RELANCE_MONTHS = 12;
+function relanceList(){
+  if(isDemo || !proxData) return [];
+  return contacts.filter(c => { const d = proxData.u[slugOf(c.url)]; return d && d.t && (d.m || 0) >= RELANCE_MIN_MSG && monthsSince(d.t) >= RELANCE_MONTHS; })
+    .sort((a, b) => proxOf(b).score - proxOf(a).score || a.name.localeCompare(b.name, 'fr'));
+}
+const pendingInv = () => (!isDemo && proxData && proxData.p) || {o:[], i:[]};
+function syncRelanceHint(){
+  const el = document.getElementById('relanceHint'); if(!el) return;
+  const n = relanceList().length, inv = pendingInv().o.length;
+  el.hidden = !n && !inv;
+  if(!el.hidden) el.innerHTML = `<button class="linkbtn" type="button" data-act="relance">Contacts à relancer&nbsp;: ${n ? `${n} proche${n > 1 ? 's' : ''} sans nouvelles depuis plus d’un an` : ''}${n && inv ? ', ' : ''}${inv ? `${inv} invitation${inv > 1 ? 's' : ''} sans réponse` : ''}</button>`;
+}
+function showRelance(){
+  select(null); clearFocus(); closePanel();
+  const list = relanceList(), inv = pendingInv();
+  const ids = new Set(list.map(c => 'c:' + c.id));
+  nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
+  if(list.length && state.view === 'graph') focus(ids);
+  const invRow = x => `<li class="invrow"><span class="who"><strong>${esc(x.n)}</strong><span>${x.d ? 'Envoyée ' + esc(sinceFr(x.d + '-15')) : ''}</span></span><a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(x.n)}">LinkedIn ${ICON_EXT}</a></li>`;
+  const invList = (arr, title, note) => arr.length ? `<h3>${title} <small class="h3sub">${arr.length}</small></h3><p class="pos">${note}</p><ul class="people">${[...arr].sort((a, b) => (b.d || '').localeCompare(a.d || '')).slice(0, 30).map(invRow).join('')}</ul>${arr.length > 30 ? `<p class="more">et ${arr.length - 30} autres</p>` : ''}` : '';
+  openDrawer(`<h2 id="dtitle" tabindex="-1">Contacts à relancer</h2>
+    <p class="pos">${list.length ? `Les ${list.length} personnes avec qui tu as échangé au moins ${RELANCE_MIN_MSG} messages, mais plus depuis un an, les plus proches de toi d’abord. Un message pour prendre des nouvelles entretient ton réseau avant d’en avoir besoin.` : `Personne à relancer&nbsp;: tu as échangé récemment avec tous les contacts à qui tu écrivais souvent.`}</p>
+    ${peopleList(list, '', 50, true)}
+    ${invList(inv.o, 'Invitations envoyées sans réponse', 'Tu as invité ces personnes, elles n’ont pas encore accepté. Les plus récentes d’abord.')}
+    ${invList(inv.i, 'Invitations reçues en attente', 'Ces personnes t’ont invité ; tu n’as pas encore répondu.')}
+    <p class="hint" style="margin-top:14px">Calculé dans ce navigateur à partir des dates de tes messages (jamais leur texte) et de tes invitations. Rien n’est envoyé.</p>`);
+}
 function syncCibleHint(){
   const el = document.getElementById('cibleHint'); if(!el) return;
   const rows = cibleIndex().filter(r => r.n);
@@ -3049,7 +3110,7 @@ function updateLegend(vis){
 }
 
 function updatePanel(vis){
-  syncCibleHint();
+  syncCibleHint(); syncRelanceHint();
   const dated = vis.filter(c => c.date).sort((a, b) => a.date - b.date);
   const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company && !TAIL.includes(coOf(c))), v => v.length, coOf), d => d[1]);
   const last = dated[dated.length - 1];
@@ -3344,7 +3405,7 @@ async function sendFeedback(){
 }
 
 const WIPE_BLOCK = () => `<h3>Tes données</h3>
-    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Les entreprises où tu as postulé, dont tu as enregistré une offre ou que tu suis sont croisées avec ton réseau de la même façon, sans rien envoyer. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as choisi de le garder (section « Mon réseau » du panneau). Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
+    <p class="pos">Ton fichier est lu dans ce navigateur et n’est envoyé nulle part. Les emails de tes contacts, quand l’export en contient, sont affichés dans leur fiche mais jamais enregistrés ni envoyés. Pour classer tes contacts par proximité, la page compte les messages échangés avec chacun et note la date du dernier, les recommandations et les compétences recommandées : le texte de tes messages n’est ni lu ni gardé. Les entreprises où tu as postulé, dont tu as enregistré une offre ou que tu suis sont croisées avec ton réseau de la même façon, sans rien envoyer. Ton profil, tes tags, tes vues et tes corrections restent enregistrés sur cet appareil pour ta prochaine visite, ainsi que ton réseau (sans les emails) si tu as choisi de le garder (section « Mon réseau » du panneau). Chaque import ajoute 1 à un compteur anonyme du nombre de réseaux visualisés : rien d’autre n’est envoyé. Si tu donnes ton avis avec le bouton « Avis », seuls partent ton message, ta note et ton email si tu le donnes.</p>
     <p class="pos">En regroupant ou en colorant par entreprise, les logos sont chargés depuis Brandfetch, qui reçoit alors le site web des entreprises affichées (jamais le nom de tes contacts). Tu peux les désactiver dans Affichage, case « Logos des entreprises ».</p>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
@@ -3377,6 +3438,7 @@ function showMe(){
       <dt>Entreprise phare</dt><dd>${top('company')}</dd>
       ${years.length ? `<dt>Réseau construit</dt><dd>de ${d3.min(years)} à ${d3.max(years)}</dd>` : ''}
       <dt>Contacts tagués</dt><dd>${contacts.filter(c => tagOf(c)).length}</dd>
+      ${relanceList().length ? `<dt>À relancer</dt><dd><button class="linkbtn" type="button" data-act="relance">${relanceList().length} proche${relanceList().length > 1 ? 's' : ''} sans nouvelles</button></dd>` : ''}
     </dl>
     <h3>Répartition par ${cdim.label.toLowerCase()}</h3>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${cc.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
@@ -3750,6 +3812,7 @@ document.addEventListener('click', e => {
     }
     else if(a === 'keepyes') setKeep(true);
     else if(a === 'cibles') showCibles();
+    else if(a === 'relance') showRelance();
     else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
     else if(a === 'cbgo') pickTarget(act.dataset.v);
     else if(a === 'keepforget'){ if(confirm('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.')) setKeep(false); }

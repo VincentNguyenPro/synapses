@@ -13,7 +13,9 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
   Cochée, les champs bruts de Connections.csv **sans les emails** sont enregistrés dans IndexedDB (`synapses-reseau`) et le réseau est rouvert au chargement ; décochée ou « Effacer mes données », la base est supprimée. Rien n’est envoyé.
 - **Proximité avec les contacts** (choix de Vincent du 4 novembre 2026) : les listes de contacts des fiches sont triées « les plus proches de toi d’abord » (`proxOf`, `proximityFrom`).
   Signaux lus dans le zip, dans le navigateur : nombre de messages échangés (`messages.csv`, **seules les colonnes d’adresses de profil sont utilisées, jamais le texte**), recommandations et compétences recommandées (dans les deux sens), entreprises de `Positions.csv` et écoles d’`Education.csv` en commun, tags.
-  Seuls ces nombres sont gardés, avec le réseau et seulement s’il est gardé sur l’appareil. La démo a des échanges fictifs.
+  Aussi : date du dernier message (colonne `DATE`, jour seulement ; un échange récent rapproche) et invitations (`Invitations.csv` : qui a invité qui, jamais le message joint).
+  « Contacts à relancer » (`relanceList`, `showRelance`, lien sous « Trouver une porte d’entrée » et dans la fiche Moi) : au moins 3 messages et plus rien depuis 12 mois, les plus proches d’abord, puis les invitations envoyées sans réponse et reçues en attente (nom et adresse du profil seulement).
+  Seuls ces nombres, ces dates et les invitations en attente sont gardés, avec le réseau et seulement s’il est gardé sur l’appareil. La démo a des échanges fictifs.
 - **Seule exception, le dictionnaire partagé (Supabase, projet `afvmshbacxaznhmlgkzc`, région UE)** — choix de Vincent du 2 novembre 2026 :
   - lecture : la page télécharge les ajouts validés (`dict_entreprises`, `dict_postes`) sans rien envoyer de l’utilisateur ;
   - écriture : uniquement si l’utilisateur coche « Partager mes corrections » (désactivé par défaut) ; seuls partent un nom d’entreprise ou un intitulé de poste et la catégorie choisie, dans `contributions` ;
