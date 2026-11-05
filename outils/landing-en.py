@@ -59,10 +59,10 @@ rep('Synapses range tes contacts par secteur, entreprise et séniorité pour te 
     'Synapses sorts your contacts by industry, company and seniority to show you who can open a door: a job, a client, a meeting.')
 rep('Gratuit, sans compte. Ton fichier est lu dans ton navigateur et n’est envoyé nulle part.',
     'Free, no account. Your file is read in your browser and never sent anywhere. The tool itself is in French for now.')
-rep('aria-label="Vidéo de démonstration de Synapses sur un réseau fictif, 1 min 48"', 'aria-label="Synapses demo video on a fictional network, 1 min 48, in French"')
+rep('aria-label="Vidéo de démonstration de Synapses sur un réseau fictif, 1 min 45"', 'aria-label="Synapses demo video on a fictional network, 1 min 45, in French"')
 rep('Télécharger la vidéo de démonstration', 'Download the demo video')
-rep('aria-label="Lire la vidéo de démonstration, 1 min 48"', 'aria-label="Play the demo video, in French, 1 min 48"')
-rep('<span>Voir la vidéo · 1:48</span>', '<span>Watch the video (French) · 1:48</span>')
+rep('aria-label="Lire la vidéo de démonstration, 1 min 45"', 'aria-label="Play the demo video, in French, 1 min 45"')
+rep('<span>Voir la vidéo · 1:45</span>', '<span>Watch the video (French) · 1:45</span>')
 rep('aria-label="0 réseaux"', 'aria-label="0 networks"')
 rep('<span>réseaux LinkedIn déjà visualisés avec Synapses</span><small>Compteur anonyme&nbsp;: +1 à chaque import réussi, au plus une fois par jour et par navigateur.</small>',
     '<span>LinkedIn networks already mapped with Synapses</span><small>Anonymous counter: +1 for each successful import, at most once a day per browser.</small>')

@@ -28,6 +28,11 @@ Les trois premières secondes sont l’image de couverture (miniature dans les m
 - Messageries (WhatsApp, iMessage…) : elles prennent la première image, qui est la couverture.
 - LinkedIn : au moment de publier la vidéo, téléverse `out/miniature-16x9.png` (ou `miniature-1x1.png`) comme miniature.
 - Le MP4 embarque aussi la couverture comme pochette (Finder, VLC).
+- Landing page : `assets/demo/synapses-demo.mp4` commence directement sur « Tu as … contacts » (l’affiche du lecteur montre déjà la couverture). Couper les 3 premières secondes et décaler les sous-titres d’autant :
+
+```bash
+ffmpeg -i video/out/synapses-16x9.mp4 -ss 3 -map 0:0 -map 0:1 -c:v libx264 -preset slow -crf 30 -tune stillimage -pix_fmt yuv420p -af "afade=t=in:d=0.12" -c:a aac -b:a 128k -movflags +faststart assets/demo/synapses-demo.mp4
+```
 
 ## Fabriquer la bande-son et la vidéo
 
