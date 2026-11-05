@@ -2032,7 +2032,7 @@ function styleLabels(){
 const hubCentered = d => !!(envR(d) && d.inner > d.r * 2.5 && /* place suffisante pour un disque lisible ; sinon le rond et le nom habituels */ !/^c:/.test(state.selected || '') && state.groupBy !== 'company');
 /* Groupe ouvert dans la légende ou sélectionné, avec ses grappes tout autour : la branche « Moi » s’arrête sur le cercle qui les entoure */
 /* Aussi quand ce groupe est seul affiché (filtre sur un secteur) */
-let soleHub = false;
+let soleHub = false; const FEW_HUBS = 4;
 const envR = hn => hn.type === 'hub' && hn.blobs && hn.blobs.length > 1 && ((openHubInfo && hn.key === openHubInfo.key) || ((state.selected === hn.id || soleHub || legendOpen.has('g:' + hn.key)) && !hn.arc)) ? hn.outer + 8 : 0;
 function linkEnds(l){
   const s = l.source, t = l.target, sx = s._rx ?? s.x, sy = s._ry ?? s.y, tx = t._rx ?? t.x, ty = t._ry ?? t.y;
@@ -2062,7 +2062,7 @@ function layoutHubs(hubs, cx, cy, meR){
   const sorted = [...hubs].sort((a, b) => a.count - b.count || a.key.localeCompare(b.key, 'fr'));
   const n = sorted.length;
   const GAP = 10, LABEL = 4;
-  const room = hn => hn.outer + LABEL;
+  const room = hn => hn.outer + LABEL + (soleHub ? 10 : 0); /* place pour le cercle pointillé de chaque groupe */
   const [cmin, cmax] = d3.extent(sorted, hn => Math.sqrt(hn.count));
   /* Au-delà de 12 branches : quinconce, une branche sur deux courte, l’autre longue. Angles égaux et ordre croissant conservés. */
   const stagger = false; /* quinconce désactivée : toutes les branches sur un seul cercle */
@@ -2086,7 +2086,7 @@ function layoutHubs(hubs, cx, cy, meR){
       Rp = Math.max(Rp, (room(a) + room(b) + GAP) / (2 * Math.sin(dth / 2)));
     }
     /* + 50 : une vraie branche visible entre « Moi » et le cercle pointillé d’un groupe, même quand il est seul affiché */
-    tierR[t] = Math.max(Rp, meR + maxRoomT[t] + 90);
+    tierR[t] = Math.max(Rp, meR + maxRoomT[t] + (soleHub ? 170 : 90));
   }
   const minSep = stagger ? (maxRoomT[0] + maxRoomT[1]) * 0.6 : 0;
   const keepOrder = () => { if(stagger) tierR[1] = Math.max(tierR[1], tierR[0] + minSep); };
@@ -2364,6 +2364,8 @@ function renderGraph(vis){
   const w = W(), h = H();
   const keep = o => { const p = pos.get(o.id); if(p){ o.x = p.x; o.y = p.y; } else { o.x = w / 2 + (Math.random() - .5) * 240; o.y = h / 2 + (Math.random() - .5) * 240; } return o; };
   const hubNodes = [...hubCount].map(([k, n]) => keep({id:'h:' + k, type:'hub', key:k, count:n, share:n / Math.max(1, vis.length), r:HUB_R}));
+  /* Peu de groupes affichés (filtres) : chacun a le design « groupe ouvert » (cercle pointillé, branche arrêtée dessus) */
+  soleHub = hubNodes.length <= FEW_HUBS;
   const otherHub = hubNodes.find(hn => hn.key === other && !keepKeys.has(other));
   if(otherHub) otherHub.others = otherKeys.map(k => [k, raw.get(k)]).sort((a, b) => b[1] - a[1]);
   [...hubNodes].sort((a, b) => b.count - a.count).forEach((hn, i) => { hn.rankDesc = i; });
@@ -2421,7 +2423,6 @@ function renderGraph(vis){
     }
     if(best !== want){ setR(best); applyLayout(); }
   }
-  soleHub = hubNodes.length === 1;
   drawRings();
   links = [...hubNodes.map(hn => ({key:'me>' + hn.id, source:'me', target:hn.id, me:true})), ...cNodes.map(n => ({key:n.id, source:n.id, target:n.hub}))];
   const sameDim = state.groupBy === state.colorBy;
@@ -2539,7 +2540,7 @@ function fit(){
   /* Cadrage qui inclut les noms des groupes (largeur réelle à l’écran) : aucun nom coupé au bord */
   const vb = viewport();
   /* « Moi » est dessiné plus grand au dézoom : on lui réserve de la place pour qu’il ne soit pas coupé au bord */
-  const base = nodes.map(n => { const rr = n.type === 'me' ? n.r * 2 : n.r; return {x0:px(n) - rr, x1:px(n) + rr, y0:py(n) - rr, y1:py(n) + rr, l:0, r:0, t:0, b:0}; });
+  const base = nodes.map(n => { const rr = n.type === 'me' ? n.r * 2 : n.type === 'hub' && envR(n) ? envR(n) + 4 : n.r; return {x0:px(n) - rr, x1:px(n) + rr, y0:py(n) - rr, y1:py(n) + rr, l:0, r:0, t:0, b:0}; });
   const M = 14;
   const solve = radial => {
     const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b})));
