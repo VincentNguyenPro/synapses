@@ -1,11 +1,11 @@
 #!/bin/sh
 # Mixe la voix off et la musique : la musique baisse automatiquement quand la voix parle (ducking).
 # Usage : sh video/mixer.sh [en|yc|yc-en]   → video/out/bande-son.m4a, bande-son-en.m4a (voix anglaise),
-#   bande-son-yc.m4a (film de lancement : voix-yc.m4a + musique-yc.wav) ; à passer à render.js
+#   bande-son-yc.m4a (film de lancement : voix-yc.m4a + musique-yc.wav, ou MUSIQUE=autre.wav) ; à passer à render.js
 cd "$(dirname "$0")/out" || exit 1
 S=${1:+-$1}
 case "$1" in
-  yc*) VOIX=voix$S.m4a; MUS=musique-yc.wav; VOL=0.5 ;;
+  yc*) VOIX=voix$S.m4a; MUS=${MUSIQUE:-musique-yc.wav}; VOL=0.5 ;;
   *)   VOIX=voix-ia$S.m4a; MUS=musique.wav; VOL=0.42 ;;
 esac
 ffmpeg -y -loglevel error -i "$VOIX" -i "$MUS" -filter_complex "\

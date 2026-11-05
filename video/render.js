@@ -48,7 +48,7 @@ function serve() {
   /* Miniature : la première image (couverture), en PNG pour LinkedIn et comme pochette du MP4 */
   const name = (FILM ? FILM + '-' : '') + (fmt === '11' ? '1x1' : '16x9');
   const thumb = path.join(outDir, `miniature-${name}${SUF}.png`);
-  await page.evaluate(() => seek(0.1));
+  await page.evaluate(() => seek(window.COVER_T || 0.1));
   await page.screenshot({ path: thumb, type: 'png' });
 
   const total = Math.round(await page.evaluate(() => DURATION) * FPS);

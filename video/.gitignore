@@ -6,3 +6,5 @@ clips-en/
 # Échantillon de la voix de Vincent : jamais commité
 voix-vincent*
 __pycache__/
+# Musique Pixabay (licence Pixabay : pas de redistribution du fichier seul)
+musique-pixabay*

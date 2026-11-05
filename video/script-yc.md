@@ -1,8 +1,16 @@
 # Film de lancement Synapses, style YC : script de la voix off
 
 Durée totale : 0:57. Inspiré des films de lancement YC (Voyager) : typographie géante, interface en gros plan, montage rapide, une preuve, une fin sur dégradé.
-Ton : un fondateur qui présente son produit, à la première personne, tutoiement. Voix : celle de Vincent (clone ElevenLabs « Vincent ») ; en attendant, une voix de la bibliothèque pour caler le minutage.
-Images : `film-yc.html` (`node render.js 169 out/bande-son-yc.m4a --film yc`). Musique : `python3 musique-yc.py` (originale, synthétisée, sans droits).
+Ton : un fondateur qui présente son produit, à la première personne, tutoiement. Voix : celle de Vincent, clonée en local par Chatterbox (`voix-clone.py voix-vincent.m4a`, échantillon tiré des passages fluides de son enregistrement, jamais commité).
+Images : `film-yc.html` (`node render.js 169 out/bande-son-yc.m4a --film yc`).
+
+Musique : « Cinematic Space Journey – Interstellar Odyssey » de Lilliben, Pixabay
+(https://pixabay.com/music/ambient-cinematic-space-journey-interstellar-odyssey-365175/), licence de contenu Pixabay :
+gratuite, usage commercial permis, sans attribution ; le fichier seul ne doit pas être redistribué (`musique-pixabay*` hors de git).
+Le morceau (1:19) part de 21,8 s : sa montée accompagne le problème, sa partie pleine le logo et les plans, sa fin celle du film.
+  ffmpeg -ss 21.8 -i musique-pixabay.mp3 -t 57.4 -af "afade=t=in:d=0.8,aresample=48000" -ac 2 out/musique-pixabay-yc.wav
+  MUSIQUE=musique-pixabay-yc.wav sh mixer.sh yc
+Repli sans droits : `python3 musique-yc.py` (piano et cordes, synthétisés ici).
 
 | Début | Fin | À l’écran | Voix off |
 |---|---|---|---|
