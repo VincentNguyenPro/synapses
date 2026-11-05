@@ -2032,7 +2032,7 @@ function styleLabels(){
 const hubCentered = d => !!(envR(d) && d.inner > d.r * 2.5 && /* place suffisante pour un disque lisible ; sinon le rond et le nom habituels */ !/^c:/.test(state.selected || '') && state.groupBy !== 'company');
 /* Groupe ouvert dans la légende ou sélectionné, avec ses grappes tout autour : la branche « Moi » s’arrête sur le cercle qui les entoure */
 /* Aussi quand ce groupe est seul affiché (filtre sur un secteur) */
-let soleHub = false; const FEW_HUBS = 4;
+let soleHub = false; const FEW_HUBS = 16;
 const envR = hn => hn.type === 'hub' && hn.blobs && hn.blobs.length > 1 && ((openHubInfo && hn.key === openHubInfo.key) || ((state.selected === hn.id || soleHub || legendOpen.has('g:' + hn.key)) && !hn.arc)) ? hn.outer + 8 : 0;
 function linkEnds(l){
   const s = l.source, t = l.target, sx = s._rx ?? s.x, sy = s._ry ?? s.y, tx = t._rx ?? t.x, ty = t._ry ?? t.y;
