@@ -375,6 +375,14 @@ p{margin:0}
 .frag .peers i{width:16px;height:16px;border-radius:50%;flex:none}
 .frag .peers .more{padding:3px 10px;color:#5B6B7C}
 .frag .who b{display:block}
+/* Pistes : listes de contacts (porte d’entrée, proches d’abord, à relancer) */
+.frag .sub{margin-top:8px;color:#5B6B7C;font-size:12.5px}
+.frag .rows{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:2px}
+.frag .rows li{display:grid;grid-template-columns:1fr auto;column-gap:10px;padding:8px 2px;border-top:1px solid #EEF1F5}
+.frag .rows li:first-child{border-top:0}
+.frag .rows b{font-size:13.5px}
+.frag .rows span{grid-column:1;color:#5B6B7C;font-size:12.5px}
+.frag .rows em{grid-column:2;grid-row:1/3;align-self:center;font-style:normal;font-size:11.5px;font-weight:700;color:#2448C4;background:#E4EAFD;border-radius:999px;padding:2px 8px}
 .frag .who span{color:#5B6B7C;font-size:13px}
 
 /* ---------- Confidentialité : un champ de couleur, un vrai tableau ---------- */
@@ -661,7 +669,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <div class="player rise" style="--i:2" id="video">
         <video id="film" controls playsinline preload="none" width="1920" height="1080" poster="assets/demo/synapses-demo-affiche.webp" aria-label="Vidéo de démonstration de Synapses sur un réseau fictif, 1 min 45">
           <source src="assets/demo/synapses-demo.mp4" type="video/mp4">
-          <track kind="captions" src="assets/demo/synapses-demo.vtt" srclang="fr" label="Français">
+          <track kind="captions" src="assets/demo/synapses-demo.vtt" srclang="fr" label="Français" default>
           <a href="assets/demo/synapses-demo.mp4">Télécharger la vidéo de démonstration</a>
         </video>
         <video class="teaser" id="teaser" muted loop playsinline preload="none" poster="assets/demo/synapses-apercu-affiche.webp?v=4" aria-hidden="true" tabindex="-1"><source src="assets/demo/synapses-apercu.mp4?v=4" type="video/mp4"></video>
@@ -756,12 +764,38 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     </div>
   </section>
 
+  <section class="feat pistes" id="pistes" aria-labelledby="pistes-titre">
+    <div class="wrap">
+      <h2 id="pistes-titre" class="rise">Qui contacter, et par où commencer</h2>
+      <div class="cells">
+        <article class="cell rise">
+          <div class="t"><h3>Trouver une porte d’entrée</h3><p>Tape une entreprise ou un secteur&nbsp;: tes contacts qui y sont, les plus seniors d’abord. Tes candidatures et les entreprises que tu suis y sont rappelées.</p></div>
+          <div class="frag" data-ui><label>Trouver une porte d’entrée</label><div class="sel">BlaBlaCar <span aria-hidden="true">↵</span></div>
+            <p class="sub">11 contacts, les plus seniors en premier</p>
+            <ul class="rows"><li><b>Maxime Leroy</b><span>Directeur commercial · Direction</span></li><li><b>Léa Fournier</b><span>Consultant senior · Senior</span><em>Reco</em></li><li><b>Nicolas Simon</b><span>Product Owner · Confirmé</span></li></ul></div>
+        </article>
+        <article class="cell alt rise" style="--i:1">
+          <div class="t"><h3>Les plus proches d’abord</h3><p>Chaque liste commence par ceux que tu connais vraiment&nbsp;: messages échangés, recommandations, entreprises où vous êtes passés tous les deux.</p></div>
+          <div class="frag" data-ui><span class="lbl">Tech &amp; logiciel · 26 contacts</span>
+            <ul class="rows"><li><b>Nathan Morel</b><span>Développeur full-stack, Dataiku</span><em>28 msg</em></li><li><b>Juliette Guerin</b><span>Software Engineer, Doctolib</span><em>20 msg</em></li><li><b>Adrien Blanc</b><span>Product Owner, Doctolib</span></li></ul></div>
+        </article>
+        <article class="cell rise" style="--i:2">
+          <div class="t"><h3>Contacts à relancer</h3><p>Ceux à qui tu écrivais souvent et plus depuis un an, puis tes invitations restées sans réponse.</p></div>
+          <div class="frag" data-ui><span class="lbl">Contacts à relancer</span>
+            <ul class="rows"><li><b>Nathan Morel</b><span>28 messages, le dernier il y a 2 ans</span></li><li><b>Juliette Guerin</b><span>20 messages, le dernier il y a 3 ans</span></li><li><b>Hugo Roux</b><span>Invitation envoyée, sans réponse</span></li></ul>
+            <p class="sub">Exemple fictif</p></div>
+        </article>
+      </div>
+      <p class="count rise" style="margin-top:16px">Proximité, contacts à relancer et entreprises cibles demandent l’archive complète (messages, invitations, candidatures). Tout est calculé dans ton navigateur.</p>
+    </div>
+  </section>
+
   <section class="how" id="demarrer" aria-labelledby="demarrer-titre">
     <div class="wrap grid">
         <h2 id="demarrer-titre" class="rise">Trois gestes, sans compte</h2>
         <ol class="steps" id="steps">
-          <li class="on" data-s="0" tabindex="0"><strong>D’abord, demande ton export.</strong><p>Sur LinkedIn&nbsp;: Préférences, Confidentialité des données, «&nbsp;Obtenir une copie de vos données&nbsp;». Coche «&nbsp;Relations&nbsp;». <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Ouvrir la page de LinkedIn&nbsp;↗</a></p></li>
-          <li data-s="1" tabindex="0"><strong>Puis dépose l’archive.</strong><p>Le .zip tel quel, quand l’email de LinkedIn arrive, en général une dizaine de minutes plus tard. Il est lu sur ton appareil.</p></li>
+          <li class="on" data-s="0" tabindex="0"><strong>D’abord, demande ton export.</strong><p>Sur LinkedIn&nbsp;: Préférences, Confidentialité des données, «&nbsp;Obtenir une copie de vos données&nbsp;». Prends l’archive complète pour tout voir, ou «&nbsp;Relations&nbsp;» seule, plus rapide. <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Ouvrir la page de LinkedIn&nbsp;↗</a></p></li>
+          <li data-s="1" tabindex="0"><strong>Puis dépose l’archive.</strong><p>Le .zip tel quel, quand l’email de LinkedIn arrive&nbsp;: une dizaine de minutes pour «&nbsp;Relations&nbsp;», jusqu’à 24&nbsp;h pour l’archive complète. Il est lu sur ton appareil.</p></li>
           <li data-s="2" tabindex="0"><strong>Enfin, explore ta carte.</strong><p>Regroupe, colore, filtre, ouvre la fiche d’un contact. En attendant l’email, la démo marche déjà.</p></li>
         </ol>
       <div class="pin" aria-hidden="true">
@@ -857,7 +891,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <div class="qs">
         <details name="faq" class="rise"><summary>C’est vraiment gratuit&nbsp;?<span class="pm" aria-hidden="true"></span></summary><p>Oui. Pas de compte, pas d’abonnement, pas de publicité. Seul le classement par IA, facultatif, utilise ta propre clé chez le fournisseur que tu choisis.</p></details>
         <details name="faq" class="rise" style="--i:1"><summary>Synapses est-il lié à LinkedIn&nbsp;?<span class="pm" aria-hidden="true"></span></summary><p>Non. C’est un outil indépendant, non affilié à LinkedIn. Il ne se connecte pas à ton compte&nbsp;: il lit seulement l’export que tu télécharges.</p></details>
-        <details name="faq" class="rise" style="--i:2"><summary>Combien de temps pour avoir l’export&nbsp;?<span class="pm" aria-hidden="true"></span></summary><p>La demande prend deux minutes. L’archive des relations arrive par email, en général une dizaine de minutes plus tard.</p></details>
+        <details name="faq" class="rise" style="--i:2"><summary>Combien de temps pour avoir l’export&nbsp;?<span class="pm" aria-hidden="true"></span></summary><p>La demande prend deux minutes. L’archive des relations arrive par email, en général une dizaine de minutes plus tard&nbsp;; l’archive complète, jusqu’à 24&nbsp;h.</p></details>
         <details name="faq" class="rise" style="--i:3"><summary>Et si un secteur est mal deviné&nbsp;?<span class="pm" aria-hidden="true"></span></summary><p>Secteur, fonction et séniorité sont estimés. Corrige-les dans la fiche du contact&nbsp;: la correction s’applique à toute l’entreprise ou à tout l’intitulé de poste. Tu peux aussi affiner avec une IA, avec ta clé.</p></details>
         <details name="faq" class="rise" style="--i:4"><summary>Je peux essayer sans mon export&nbsp;?<span class="pm" aria-hidden="true"></span></summary><p>Oui. La démo s’ouvre directement sur un réseau fictif de 150 contacts, avec toutes les fonctions.</p></details>
         <details name="faq" class="rise" style="--i:5"><summary>Et sur téléphone&nbsp;?<span class="pm" aria-hidden="true"></span></summary><p>Le graphe s’adapte à l’écran, et une vue Liste reprend tout en texte. Pour récupérer et déposer l’archive, l’ordinateur reste plus pratique.</p></details>
@@ -1121,11 +1155,13 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   spin('contacts');
 
   /* ---------- Réglages : sur grand écran, une liste à gauche et l’illustration du réglage choisi à droite ---------- */
-  const cells = $$('.cell');
-  const cell = c => cells.forEach(x => x.classList.toggle('on', x === c));
-  cells.forEach(c => { const t = c.querySelector('.t'); t.tabIndex = 0;
-    t.addEventListener('click', () => cell(c)); t.addEventListener('mouseenter', () => cell(c)); t.addEventListener('focus', () => cell(c)); });
-  cell(cells[0]);
+  $$('.cells').forEach(box => {
+    const cells = [...box.querySelectorAll('.cell')];
+    const cell = c => cells.forEach(x => x.classList.toggle('on', x === c));
+    cells.forEach(c => { const t = c.querySelector('.t'); t.tabIndex = 0;
+      t.addEventListener('click', () => cell(c)); t.addEventListener('mouseenter', () => cell(c)); t.addEventListener('focus', () => cell(c)); });
+    cell(cells[0]);
+  });
 
   /* ---------- Entrées échelonnées ---------- */
   const rise = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); rise.unobserve(e.target); } }), {rootMargin:'0px 0px -8% 0px'});

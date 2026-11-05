@@ -117,12 +117,35 @@ rep('Les branches les plus fines montrent où il te manque du monde. Ici, la san
     'The thinnest branches show where you’re missing people. Here, healthcare and the public sector.')
 rep('Exemples tirés du réseau de démonstration, 150 contacts fictifs.', 'Examples from the demo network, 150 fictional contacts.')
 
+# ---------- Qui contacter ----------
+rep('Qui contacter, et par où commencer</h2>', 'Who to contact, and where to start</h2>')
+rep('<h3>Trouver une porte d’entrée</h3><p>Tape une entreprise ou un secteur&nbsp;: tes contacts qui y sont, les plus seniors d’abord. Tes candidatures et les entreprises que tu suis y sont rappelées.</p>',
+    '<h3>Find a way in</h3><p>Type a company or an industry: your contacts there, most senior first. Your job applications and the companies you follow are flagged too.</p>')
+rep('<label>Trouver une porte d’entrée</label>', '<label>Find a way in</label>')
+rep('11 contacts, les plus seniors en premier', '11 contacts, most senior first')
+rep('<span>Directeur commercial · Direction</span>', '<span>Sales Director · Executive</span>')
+rep('<span>Consultant senior · Senior</span>', '<span>Senior Consultant · Senior</span>')
+rep('<span>Product Owner · Confirmé</span>', '<span>Product Owner · Mid-level</span>')
+rep('<h3>Les plus proches d’abord</h3><p>Chaque liste commence par ceux que tu connais vraiment&nbsp;: messages échangés, recommandations, entreprises où vous êtes passés tous les deux.</p>',
+    '<h3>Closest first</h3><p>Every list starts with the people you really know: messages exchanged, recommendations, companies you both worked at.</p>')
+rep('Tech &amp; logiciel · 26 contacts', 'Tech &amp; software · 26 contacts')
+rep('<span>Développeur full-stack, Dataiku</span>', '<span>Full-stack Developer, Dataiku</span>')
+rep('<h3>Contacts à relancer</h3><p>Ceux à qui tu écrivais souvent et plus depuis un an, puis tes invitations restées sans réponse.</p>',
+    '<h3>Contacts to follow up</h3><p>People you used to write to often but not for a year, then your invitations still unanswered.</p>')
+rep('<span class="lbl">Contacts à relancer</span>', '<span class="lbl">Contacts to follow up</span>')
+rep('28 messages, le dernier il y a 2 ans', '28 messages, the last one 2 years ago')
+rep('20 messages, le dernier il y a 3 ans', '20 messages, the last one 3 years ago')
+rep('Invitation envoyée, sans réponse', 'Invitation sent, no reply')
+rep('<p class="sub">Exemple fictif</p>', '<p class="sub">Fictional example</p>')
+rep('Proximité, contacts à relancer et entreprises cibles demandent l’archive complète (messages, invitations, candidatures). Tout est calculé dans ton navigateur.',
+    'Closeness, contacts to follow up and target companies need the full archive (messages, invitations, job applications). Everything is computed in your browser.')
+
 # ---------- Démarrer ----------
 rep('Trois gestes, sans compte</h2>', 'Three steps, no account</h2>')
-rep('<strong>D’abord, demande ton export.</strong><p>Sur LinkedIn&nbsp;: Préférences, Confidentialité des données, «&nbsp;Obtenir une copie de vos données&nbsp;». Coche «&nbsp;Relations&nbsp;». <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Ouvrir la page de LinkedIn&nbsp;↗</a></p>',
-    '<strong>First, request your export.</strong><p>On LinkedIn: Settings, Data privacy, “Get a copy of your data”. Tick “Connections”. <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Open the LinkedIn page&nbsp;↗</a></p>')
-rep('<strong>Puis dépose l’archive.</strong><p>Le .zip tel quel, quand l’email de LinkedIn arrive, en général une dizaine de minutes plus tard. Il est lu sur ton appareil.</p>',
-    '<strong>Then drop the archive.</strong><p>The .zip as is, once LinkedIn’s email arrives, usually about ten minutes later. It’s read on your device.</p>')
+rep('<strong>D’abord, demande ton export.</strong><p>Sur LinkedIn&nbsp;: Préférences, Confidentialité des données, «&nbsp;Obtenir une copie de vos données&nbsp;». Prends l’archive complète pour tout voir, ou «&nbsp;Relations&nbsp;» seule, plus rapide. <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Ouvrir la page de LinkedIn&nbsp;↗</a></p>',
+    '<strong>First, request your export.</strong><p>On LinkedIn: Settings, Data privacy, “Get a copy of your data”. Take the full archive to see everything, or just “Connections”, which is faster. <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Open the LinkedIn page&nbsp;↗</a></p>')
+rep('<strong>Puis dépose l’archive.</strong><p>Le .zip tel quel, quand l’email de LinkedIn arrive&nbsp;: une dizaine de minutes pour «&nbsp;Relations&nbsp;», jusqu’à 24&nbsp;h pour l’archive complète. Il est lu sur ton appareil.</p>',
+    '<strong>Then drop the archive.</strong><p>The .zip as is, once LinkedIn’s email arrives: about ten minutes for “Connections”, up to 24 hours for the full archive. It’s read on your device.</p>')
 rep('<strong>Enfin, explore ta carte.</strong><p>Regroupe, colore, filtre, ouvre la fiche d’un contact. En attendant l’email, la démo marche déjà.</p>',
     '<strong>Finally, explore your map.</strong><p>Group, color, filter, open a contact’s profile. While you wait for the email, the demo already works.</p>')
 rep('src="assets/demo/linkedin-export-900.webp" srcset="assets/demo/linkedin-export-900.webp 900w, assets/demo/linkedin-export.webp 1400w"',
@@ -231,8 +254,8 @@ rep('Synapses est-il lié à LinkedIn&nbsp;?<span', 'Is Synapses linked to Linke
 rep('<p>Non. C’est un outil indépendant, non affilié à LinkedIn. Il ne se connecte pas à ton compte&nbsp;: il lit seulement l’export que tu télécharges.</p>',
     '<p>No. It’s an independent tool, not affiliated with LinkedIn. It doesn’t connect to your account: it only reads the export you download.</p>')
 rep('Combien de temps pour avoir l’export&nbsp;?<span', 'How long does the export take?<span')
-rep('<p>La demande prend deux minutes. L’archive des relations arrive par email, en général une dizaine de minutes plus tard.</p>',
-    '<p>Requesting it takes two minutes. The connections archive arrives by email, usually about ten minutes later.</p>')
+rep('<p>La demande prend deux minutes. L’archive des relations arrive par email, en général une dizaine de minutes plus tard&nbsp;; l’archive complète, jusqu’à 24&nbsp;h.</p>',
+    '<p>Requesting it takes two minutes. The connections archive arrives by email, usually about ten minutes later; the full archive, up to 24 hours.</p>')
 rep('Et si un secteur est mal deviné&nbsp;?<span', 'What if an industry is guessed wrong?<span')
 rep('<p>Secteur, fonction et séniorité sont estimés. Corrige-les dans la fiche du contact&nbsp;: la correction s’applique à toute l’entreprise ou à tout l’intitulé de poste. Tu peux aussi affiner avec une IA, avec ta clé.</p>',
     '<p>Industry, function and seniority are estimates. Correct them in the contact’s profile: the correction applies to the whole company or job title. You can also refine them with an AI, using your own key.</p>')
