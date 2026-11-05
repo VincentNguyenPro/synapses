@@ -2021,9 +2021,11 @@ function styleLabels(){
    qui entoure ces grappes, au lieu de les traverser jusqu’au centre */
 /* Groupe dont le nom et les chiffres sont affichés dans le disque central (drawHubCenter) */
 /* Pas pendant la sélection d’un contact : son cercle de collègues prend la place et le disque le cacherait */
-const hubCentered = d => !!(envR(d) && d.inner > d.r + 6 && !/^c:/.test(state.selected || '') && state.groupBy !== 'company');
+const hubCentered = d => !!(envR(d) && d.inner > d.r * 2.5 && /* place suffisante pour un disque lisible ; sinon le rond et le nom habituels */ !/^c:/.test(state.selected || '') && state.groupBy !== 'company');
 /* Groupe ouvert dans la légende ou sélectionné, avec ses grappes tout autour : la branche « Moi » s’arrête sur le cercle qui les entoure */
-const envR = hn => hn.type === 'hub' && hn.blobs && hn.blobs.length > 1 && ((openHubInfo && hn.key === openHubInfo.key) || (state.selected === hn.id && !hn.arc)) ? hn.outer + 8 : 0;
+/* Aussi quand ce groupe est seul affiché (filtre sur un secteur) */
+let soleHub = false;
+const envR = hn => hn.type === 'hub' && hn.blobs && hn.blobs.length > 1 && ((openHubInfo && hn.key === openHubInfo.key) || ((state.selected === hn.id || soleHub || legendOpen.has('g:' + hn.key)) && !hn.arc)) ? hn.outer + 8 : 0;
 function linkEnds(l){
   const s = l.source, t = l.target, sx = s._rx ?? s.x, sy = s._ry ?? s.y, tx = t._rx ?? t.x, ty = t._ry ?? t.y;
   const R = l.me ? envR(t) : 0;
@@ -2410,6 +2412,7 @@ function renderGraph(vis){
     }
     if(best !== want){ setR(best); applyLayout(); }
   }
+  soleHub = hubNodes.length === 1;
   drawRings();
   links = [...hubNodes.map(hn => ({key:'me>' + hn.id, source:'me', target:hn.id, me:true})), ...cNodes.map(n => ({key:n.id, source:n.id, target:n.hub}))];
   const sameDim = state.groupBy === state.colorBy;
@@ -2856,6 +2859,7 @@ function legendTree(vis){
   $('#legend').hidden = !vis.length;
 }
 function updateLegend(vis){
+  if(nodes.length) drawEnvelope(); /* un groupe ouvert ou replié dans la légende change le cercle pointillé et la branche « Moi » */
   if(state.view === 'graph' && state.groupBy !== state.colorBy && nodes.some(n => n.type === 'hub')) return legendTree(vis);
   const cdim = DIMS[state.colorBy];
   const canFilter = isFilterDim(state.colorBy);
