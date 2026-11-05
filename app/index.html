@@ -528,6 +528,10 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
   aside .privacy{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
   /* Téléphone : moins de texte, l’écran est petit (phrases d’aide fixes masquées ; les aides calculées, avec un id, restent) */
   /* Bandeau de démo sur une ligne : le bouton d’aide reste dans l’en-tête (?) */
+  /* Zones de toucher d’au moins 36 px : bascule Graphe / Liste, bouton de la légende repliée, × des filtres actifs */
+  .viewtoggle button{min-height:36px}
+  .lgtoggle{min-height:34px}
+  .afchip{min-height:36px}
   .demo.isdemo{flex-wrap:nowrap;padding:8px 10px;gap:8px}
   .demo.isdemo div:first-child{min-width:0;font-size:12.5px}
   .demo.isdemo strong{font-size:13px}
@@ -2345,8 +2349,8 @@ function layoutHubs(hubs, cx, cy, meR){
       if(dth === 0) dth = 2 * Math.PI;
       Rp = Math.max(Rp, (room(a) + room(b) + GAP) / (2 * Math.sin(dth / 2)));
     }
-    /* + 50 : une vraie branche visible entre « Moi » et le cercle pointillé d’un groupe, même quand il est seul affiché */
-    tierR[t] = Math.max(Rp, meR + maxRoomT[t] + (soleHub ? 170 : 90));
+    /* Écart entre « Moi » et le cercle pointillé : une vraie branche visible ; un groupe seul (filtre) reste près de « Moi » (une longue branche semblait vide) */
+    tierR[t] = Math.max(Rp, meR + maxRoomT[t] + (n === 1 ? 60 : soleHub ? 170 : 90));
   }
   const minSep = stagger ? (maxRoomT[0] + maxRoomT[1]) * 0.6 : 0;
   const keepOrder = () => { if(stagger) tierR[1] = Math.max(tierR[1], tierR[0] + minSep); };
@@ -2808,7 +2812,9 @@ function fit(){
   /* Cadrage qui inclut les noms des groupes (largeur réelle à l’écran) : aucun nom coupé au bord */
   const vb = viewport();
   /* « Moi » est dessiné plus grand au dézoom : on lui réserve de la place pour qu’il ne soit pas coupé au bord */
-  const base = nodes.map(n => { const rr = n.type === 'me' ? n.r * 2 : n.type === 'hub' && envR(n) ? envR(n) + 4 : n.r; return {x0:px(n) - rr, x1:px(n) + rr, y0:py(n) - rr, y1:py(n) + rr, l:0, r:0, t:0, b:0}; });
+  /* Un seul groupe affiché : il prend toute la place ; seul le centre de « Moi » est gardé dans le cadre (Moi à moitié visible au bout de la branche) */
+  const solo = nodes.filter(n => n.type === 'hub').length === 1;
+  const base = nodes.map(n => { const rr = n.type === 'me' ? (solo ? 0 : n.r * 2) : n.type === 'hub' && envR(n) ? envR(n) + 4 : n.r; return {x0:px(n) - rr, x1:px(n) + rr, y0:py(n) - rr, y1:py(n) + rr, l:0, r:0, t:0, b:0}; });
   const M = 14;
   const solve = radial => {
     const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b})));
