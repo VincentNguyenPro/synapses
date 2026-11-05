@@ -125,7 +125,9 @@ rep('<strong>Puis dépose l’archive.</strong><p>Le .zip tel quel, quand l’em
     '<strong>Then drop the archive.</strong><p>The .zip as is, once LinkedIn’s email arrives, usually about ten minutes later. It’s read on your device.</p>')
 rep('<strong>Enfin, explore ta carte.</strong><p>Regroupe, colore, filtre, ouvre la fiche d’un contact. En attendant l’email, la démo marche déjà.</p>',
     '<strong>Finally, explore your map.</strong><p>Group, color, filter, open a contact’s profile. While you wait for the email, the demo already works.</p>')
-rep('alt="Page « Télécharger mes données » de LinkedIn, dans Préférences, Confidentialité des données"', 'alt="LinkedIn’s “Download your data” page, in Settings, Data privacy (French interface)"')
+rep('src="assets/demo/linkedin-export-900.webp" srcset="assets/demo/linkedin-export-900.webp 900w, assets/demo/linkedin-export.webp 1400w"',
+    'src="assets/demo/linkedin-export-en-900.webp" srcset="assets/demo/linkedin-export-en-900.webp 900w, assets/demo/linkedin-export-en.webp 1400w"')
+rep('alt="Page « Télécharger mes données » de LinkedIn, dans Préférences, Confidentialité des données"', 'alt="LinkedIn’s “Download my data” page, in Settings, Data privacy"')
 rep('<figcaption>Sur LinkedIn&nbsp;: Préférences, Confidentialité des données. Quand l’archive est prête, «&nbsp;Télécharger les archives&nbsp;».</figcaption>',
     '<figcaption>On LinkedIn: Settings, Data privacy. When the archive is ready, “Download archive”.</figcaption>')
 rep('<div class="drop">Dépose ton fichier Connections.csv</div>', '<div class="drop">Drop your Connections.csv file</div>')
