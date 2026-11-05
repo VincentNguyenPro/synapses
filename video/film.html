@@ -238,13 +238,15 @@ if(LANG === 'en'){
     ['#ptxt .t h2', 3, 'A contact’s full profile.'], ['#ptxt .t p', 3, 'Your connection: messages, recommendations, and their colleagues at the same company.'],
     ['#ptxt .t h2', 4, 'Find a way in.'], ['#ptxt .t p', 4, 'Type a company: who can open the door, from most senior to most junior.'],
     ['#ptxt .t h2', 5, 'Group by company.'], ['#ptxt .t p', 5, 'Where your contacts cluster, with optional logos.'],
-    ['#fict', 0, 'Fictional demo network · interface in French'],
+    ['#fict', 0, 'Fictional demo network'],
     ['#s9 h1', 0, 'Your file never leaves <span class="o">your browser</span>.'],
     ['#s9 .chips', 0, '<span>Free</span><span>No sign-up</span><span>No ads</span>'],
     ['#s10 h1', 0, 'Finally see your network.'],
     ['#s10 .url', 0, 'vincentnguyenpro.github.io/synapses/en'],
     ['#s10 small', 0, 'Independent tool, not affiliated with LinkedIn.']
   ].forEach(([sel, i, html]) => set(sel, i, html));
+  /* Plans de l’app filmés sur l’interface anglaise (record.js --en) */
+  document.querySelectorAll('#win video, #cover img').forEach(el => { el.setAttribute('src', el.getAttribute('src').replace('clips/', 'clips-en/')); });
 }
 const W = SQUARE ? 1080 : 1920, H = 1080;
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];

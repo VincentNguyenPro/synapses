@@ -1,16 +1,18 @@
 // Filme l'app Synapses (réseau de démo fictif) plan par plan via le screencast CDP, puis encode chaque plan en MP4 dans clips/.
 // Prérequis : ffmpeg, Google Chrome, `npm install` dans ce dossier, et un serveur local à la racine du dépôt :
 //   python3 -m http.server 8765
-// Usage : node video/record.js [plan …]   (sans argument : tous les plans)
+// Usage : node video/record.js [--en] [plan …]   (sans argument : tous les plans ; --en : l’app en anglais, plans dans clips-en/)
 // Chrome tourne en fenêtre visible : Brandfetch refuse les logos aux navigateurs headless.
 const { chromium } = require('playwright-core');
 const { execFileSync } = require('child_process');
 const fs = require('fs'), os = require('os'), path = require('path');
 
 const W = 1600, H = 1000, DPR = 1.5;
-const CLIPS = path.join(__dirname, 'clips');
+const EN = process.argv.includes('--en');
+const CLIPS = path.join(__dirname, EN ? 'clips-en' : 'clips');
+fs.mkdirSync(CLIPS, { recursive: true });
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'synapses-rec-'));
-const only = process.argv.slice(2);
+const only = process.argv.slice(2).filter(a => !a.startsWith('--'));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /* La page de l'app est servie avec, en fin de script, des crochets de pilotage (window.__S) : le fichier du dépôt n'est pas modifié. */
@@ -64,12 +66,12 @@ const INIT = `
 
 (async () => {
   const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--hide-scrollbars'] });
-  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, locale: 'fr-FR',
+  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, locale: EN ? 'en-US' : 'fr-FR',
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36' });
   await ctx.addInitScript(INIT);
   const page = await ctx.newPage();
   await page.route(/supabase\.co/, r => r.abort());
-  await page.route(/\/app\/(index\.html)?(#.*)?$/, r => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: appHtml }));
+  await page.route(/\/app\/(index\.html)?(\?[^#]*)?(#.*)?$/, r => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: appHtml }));
   const cdp = await ctx.newCDPSession(page);
   let cur = { x: W * 0.55, y: H * 0.85 };
 
@@ -137,7 +139,7 @@ const INIT = `
     await sleep(1500);
   }
 
-  await page.goto('http://localhost:8765/app/', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:8765/app/' + (EN ? '?lang=en' : '?lang=fr'), { waitUntil: 'networkidle' });
   await sleep(1500);
   await page.mouse.move(cur.x, cur.y);
   /* Logos des entreprises : une option décochée par défaut, cochée ici hors caméra pour les plans par entreprise */

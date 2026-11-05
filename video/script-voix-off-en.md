@@ -1,6 +1,6 @@
 # Synapses demo video: English voice-over script
 
-Same timing as `script-voix-off.md` (the French script); the app shots are the same, with the interface in French.
+Same timing as `script-voix-off.md` (the French script); the app shots are filmed on the English interface: `node video/record.js --en` (clips in `video/clips-en/`).
 Tone: calm, direct, friendly. Voice: ElevenLabs « Charlie », v3 model: `node video/voix-ia.js Charlie --en`.
 Then `python3 video/musique.py && sh video/mixer.sh en`, and `node video/render.js 169 video/out/bande-son-en.m4a --en`.
 
