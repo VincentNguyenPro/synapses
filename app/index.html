@@ -2007,7 +2007,15 @@ function styleLabels(){
   /* Nombre au centre d’un groupe : environ la moitié du rayon, au moins 13 px à l’écran, et toujours dans le cercle selon son nombre de chiffres */
   if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => { const fit = d.r * 1.55 / Math.max(2, String(d.count).length * 0.62); return `${Math.min(fit, Math.max(d.r * 0.5, 13 / k))}px`; });
   /* Rond « Moi » : au dézoom, il garde au moins ~120 % de sa taille d’écran normale, pour rester lisible au centre du graphe */
-  const meF = Math.max(1, 1.2 / zk);
+  /* … mais jamais au point de toucher le groupe le plus proche (son cercle pointillé ou ses grappes) : on garde au moins
+     ~28 px de branche visible entre les deux */
+  const meN = nodes.find(n => n.type === 'me');
+  let meF = Math.max(1, 1.2 / zk);
+  if(meN){
+    const mx = meN.fx ?? meN.x, my = meN.fy ?? meN.y, hubs = nodes.filter(n => n.type === 'hub');
+    const room = hubs.length ? d3.min(hubs, h => Math.hypot(h.ax - mx, h.ay - my) - (envR(h) || h.outer || h.r)) - 22 / zk : Infinity;
+    meF = Math.max(1, Math.min(meF, room / meN.r));
+  }
   if(nodeSel) nodeSel.filter(d => d.type === 'me').attr('r', d => d.r * meF);
   if(countSel) countSel.filter(d => d.type === 'me').style('font-size', d => `${(d.r > 30 ? 11.5 : 14) * meF}px`);
   /* Vue d’ensemble (fort dézoom) : le chiffre dans un rond de quelques pixels serait illisible ; il passe à côté du nom */
@@ -2077,7 +2085,8 @@ function layoutHubs(hubs, cx, cy, meR){
       if(dth === 0) dth = 2 * Math.PI;
       Rp = Math.max(Rp, (room(a) + room(b) + GAP) / (2 * Math.sin(dth / 2)));
     }
-    tierR[t] = Math.max(Rp, meR + maxRoomT[t] + 14);
+    /* + 50 : une vraie branche visible entre « Moi » et le cercle pointillé d’un groupe, même quand il est seul affiché */
+    tierR[t] = Math.max(Rp, meR + maxRoomT[t] + 90);
   }
   const minSep = stagger ? (maxRoomT[0] + maxRoomT[1]) * 0.6 : 0;
   const keepOrder = () => { if(stagger) tierR[1] = Math.max(tierR[1], tierR[0] + minSep); };
@@ -2529,7 +2538,8 @@ function fit(){
   const px = n => n.ax ?? n.fx ?? n.x, py = n => n.ay ?? n.fy ?? n.y;
   /* Cadrage qui inclut les noms des groupes (largeur réelle à l’écran) : aucun nom coupé au bord */
   const vb = viewport();
-  const base = nodes.map(n => ({x0:px(n) - n.r, x1:px(n) + n.r, y0:py(n) - n.r, y1:py(n) + n.r, l:0, r:0, t:0, b:0}));
+  /* « Moi » est dessiné plus grand au dézoom : on lui réserve de la place pour qu’il ne soit pas coupé au bord */
+  const base = nodes.map(n => { const rr = n.type === 'me' ? n.r * 2 : n.r; return {x0:px(n) - rr, x1:px(n) + rr, y0:py(n) - rr, y1:py(n) + rr, l:0, r:0, t:0, b:0}; });
   const M = 14;
   const solve = radial => {
     const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b})));
