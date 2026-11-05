@@ -13,10 +13,10 @@ Les trois premières secondes sont l’image de couverture (miniature dans les m
 | 0:22,2 | 0:30,6 | Quatre cas d’usage | Pour décrocher une opportunité, développer ton business, préparer un rendez-vous, ou élargir ton réseau là où il te manque des contacts. |
 | 0:30,6 | 0:37,6 | Récupérer l’export | D’abord, demande ton export dans les préférences LinkedIn, en cochant « Relations ». L’archive arrive par email. |
 | 0:37,6 | 0:45,2 | 1. Dépose l’archive | Glisse l’archive telle quelle sur Synapses : elle est lue dans ton navigateur, et ton réseau apparaît. |
-| 0:45,2 | 0:54,2 | 2. Regrouper par | Regroupe tes contacts comme tu veux : par secteur, entreprise, fonction, séniorité, formation ou ville. |
+| 0:45,2 | 0:54,2 | 2. Regrouper par | Regroupe tes contacts comme tu veux : par secteur, entreprise, fonction, séniorité ou année de connexion. |
 | 0:54,2 | 1:02,2 | 3. Colorer par | Et colore-les selon ce qui compte pour toi : la séniorité, la fonction, l’année de connexion. |
 | 1:02,2 | 1:07,7 | 4. Secteur | Clique sur un secteur pour voir qui tu y connais, et à quel niveau. |
-| 1:07,7 | 1:18,7 | 5. Fiche contact | Choisis un contact : tu as toute sa fiche. Secteur, fonction, formation, ville, date de connexion… et surtout ses collègues de la même entreprise et les anciens de son école. |
+| 1:07,7 | 1:18,7 | 5. Fiche contact | Choisis un contact : tu as toute sa fiche. Ton lien avec ce contact : vos messages, vos recommandations… et surtout ses collègues de la même entreprise. |
 | 1:18,7 | 1:23,7 | 6. Filtres | Filtre en un clic : juniors, seniors, secteurs, fonctions. |
 | 1:23,7 | 1:28,3 | 7. Par entreprise | Regroupe par entreprise pour voir où se concentrent tes contacts. |
 | 1:28,3 | 1:38,3 | 8. Branches | Le curseur « Branches affichées » montre les plus gros groupes… ou ton réseau en entier, toutes les entreprises d’un coup. |

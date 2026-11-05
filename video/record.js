@@ -2,7 +2,7 @@
 // Prérequis : ffmpeg, Google Chrome, `npm install` dans ce dossier, et un serveur local à la racine du dépôt :
 //   python3 -m http.server 8765
 // Usage : node video/record.js [plan …]   (sans argument : tous les plans)
-// Chrome tourne en headless avec un user-agent standard, sinon Brandfetch refuse les logos.
+// Chrome tourne en fenêtre visible : Brandfetch refuse les logos aux navigateurs headless.
 const { chromium } = require('playwright-core');
 const { execFileSync } = require('child_process');
 const fs = require('fs'), os = require('os'), path = require('path');
@@ -61,7 +61,7 @@ const INIT = `
 })();`;
 
 (async () => {
-  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--hide-scrollbars'] });
+  const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--hide-scrollbars'] });
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, locale: 'fr-FR',
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36' });
   await ctx.addInitScript(INIT);
@@ -139,19 +139,19 @@ const INIT = `
   await page.evaluate(() => { __S.hide(); __S.render(); });
   await sleep(800);
 
-  // Regrouper par : les options, puis Fonction et Formation
+  // Regrouper par : les options, puis Fonction et Année de connexion
   await setup();
   await take('2-regrouper', async () => {
-    await pickFrom('groupBy', 'fn', ['company', 'fn', 'seniority', 'year', 'location', 'school']);
+    await pickFrom('groupBy', 'fn', ['company', 'fn', 'seniority', 'year', 'tag']);
     await sleep(2200);
-    await pickFrom('groupBy', 'school');
+    await pickFrom('groupBy', 'year');
     await sleep(2400);
   });
 
   // Colorer par : les options, puis Fonction
   await setup();
   await take('3-colorer', async () => {
-    await pickFrom('colorBy', 'fn', ['sector', 'fn', 'year', 'school']);
+    await pickFrom('colorBy', 'fn', ['sector', 'fn', 'year', 'tag']);
     await sleep(2400);
     await pickFrom('colorBy', 'year');
     await sleep(2200);
@@ -174,7 +174,9 @@ const INIT = `
       /* Un contact du secteur zoomé, réellement à l’écran (l’app atténue les autres par fill-opacity, plus par opacity) */
       const inView = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left > 320 && r.right < innerWidth - 300 && r.top > 80 && r.bottom < innerHeight - 20; };
       const vis = __S.nodes().selectAll('circle.contact').nodes().filter(el => el.__data__.c.sector === 'Tech & logiciel' && inView(el));
-      const el = vis.sort((a, b) => (n('company', b.__data__.c.company) * 10 + n('school', b.__data__.c.school)) - (n('company', a.__data__.c.company) * 10 + n('school', a.__data__.c.school)))[0];
+      /* Celui qui a le plus de collègues dans le réseau, et des messages ou une recommandation (rubrique « Ton lien ») */
+      const sc = c => (c.demoMsgs ? 100 : 0) + (c.demoReco ? 50 : 0) + n('company', c.company);
+      const el = vis.sort((a, b) => sc(b.__data__.c) - sc(a.__data__.c))[0];
       const r = el.getBoundingClientRect();
       return [r.x + r.width / 2, r.y + r.height / 2];
     });
