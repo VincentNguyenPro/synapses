@@ -6,7 +6,8 @@
 --   • partent : le message, une note de 1 à 5 (facultative), l’email seulement si la personne veut une réponse,
 --     la page d’où elle écrit (« outil » ou « landing ») et la langue de la page ; rien d’autre, jamais le réseau ;
 --   • le public peut seulement appeler envoyer_retour() : il ne peut ni lire, ni modifier, ni supprimer un retour ;
---   • Vincent lit les retours dans Supabase › Table Editor › retours, et suit leur traitement avec la colonne statut.
+--   • Vincent lit les retours dans Supabase › Table Editor › retours, et suit leur traitement avec la colonne statut ;
+--   • les retours de plus de 24 mois sont supprimés automatiquement (tâche « purger-retours », en bas du fichier).
 
 create table if not exists public.retours (
   id       bigint generated always as identity primary key,
@@ -39,6 +40,13 @@ alter table public.retours enable row level security;
 revoke all on public.retours from anon, authenticated;
 revoke all on function public.envoyer_retour(text, smallint, text, text, text) from public, anon, authenticated;
 grant execute on function public.envoyer_retour(text, smallint, text, text, text) to anon, authenticated;
+
+-- Purge automatique (choix de Vincent du 5 novembre 2026, promis sur la page legal/) : chaque nuit à 3 h 15 (UTC),
+-- les retours de plus de 24 mois sont supprimés, email compris. Tâche pg_cron, visible dans Supabase › Integrations › Cron.
+create extension if not exists pg_cron with schema pg_catalog;
+select cron.unschedule(jobid) from cron.job where jobname = 'purger-retours';
+select cron.schedule('purger-retours', '15 3 * * *',
+  $$delete from public.retours where cree_le < now() - interval '24 months'$$);
 
 -- Fait voir la nouvelle table et la fonction à l’API tout de suite
 notify pgrst, 'reload schema';
