@@ -425,13 +425,9 @@ details p{padding:0 24px 24px;max-width:52ch}
 /* ---------- Ton avis : la boucle d’amélioration (supabase/retours.sql, data/ameliorations.json) ---------- */
 .ask{padding:var(--pad) 0}
 .ask .grid{display:grid;gap:32px}
-@media (min-width:960px){ .ask .grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:start} }
+@media (min-width:960px){ .ask .grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:stretch} }
 .ask h2{font-size:var(--step-head)}
 .ask .lead{font-size:var(--step-lead);line-height:1.4;margin:20px 0 28px;color:var(--muted);max-width:30em}
-.auteur{display:flex;gap:16px;align-items:flex-start;margin:0 0 28px;max-width:30em}
-.auteur p{margin:0;font-size:15px;line-height:1.45;color:var(--muted)}
-.auteur b{display:block;color:var(--ink);font-size:var(--step-body)}
-.auteur a{white-space:nowrap}
 .loop{list-style:none;padding:0;margin:0 0 28px;display:grid;gap:10px;counter-reset:l}
 .loop li{counter-increment:l;display:flex;gap:14px;align-items:baseline;font-size:var(--step-body)}
 .loop li::before{content:counter(l);flex:none;width:28px;height:28px;border-radius:50%;background:var(--tone);color:var(--accent);font-weight:800;font-size:14px;display:grid;place-items:center;transform:translateY(5px)}
@@ -440,7 +436,11 @@ details p{padding:0 24px 24px;max-width:52ch}
 .asked ul{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:4px}
 .asked li{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;padding:14px 16px;background:var(--bg);border-radius:var(--radius)}
 .asked li time{color:var(--muted);font-size:var(--step-small);font-weight:700;padding-top:2px;min-width:5.5em}
-.asked .empty{margin-top:12px;color:var(--muted)}
+.asked{display:flex;flex-direction:column}
+.asked .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;margin-top:12px;padding:24px 0;color:var(--muted)}
+.asked .empty p{max-width:24em}
+.asked .empty .ico{width:52px;height:52px;border-radius:50%;background:var(--tone);color:var(--accent);display:grid;place-items:center}
+.asked .empty .ico svg{width:24px;height:24px}
 /* Fenêtre du formulaire */
 dialog.fb{width:min(560px,calc(100vw - 32px));max-height:calc(100svh - 32px);border:0;border-radius:12px;padding:clamp(20px,4vw,32px);background:var(--surface);color:var(--ink);box-shadow:0 24px 80px rgba(10,20,60,.28)}
 dialog.fb::backdrop{background:rgba(23,33,46,.45)}
@@ -499,7 +499,6 @@ dialog.fb::backdrop{background:rgba(23,33,46,.45)}
   .priv .grid{gap:20px}
   .priv .lead{margin-top:10px}
   .ask .lead{margin:14px 0 18px}
-  .auteur{margin-bottom:18px}
   .loop{margin-bottom:18px;gap:6px}
   .faq .grid{gap:20px}
 }
@@ -523,8 +522,12 @@ footer{padding:0 10px 10px}
 .tile ul a{text-decoration:none}
 .tile ul a:hover{text-decoration:underline}
 .tile.by p{font-size:var(--step-body)}
-.byhead{display:flex;gap:16px;align-items:center}
-.byhead img{flex:none;width:64px;height:64px;border-radius:50%;object-fit:cover}
+.tile.by{flex-direction:row;align-items:center;justify-content:flex-start;gap:20px}
+.tile.by img{flex:none;width:104px;height:130px;border-radius:8px;object-fit:cover;align-self:center}
+.bytext{display:flex;flex-direction:column;gap:12px}
+.tile.by p.idee{font-size:var(--step-small);line-height:1.45;color:var(--muted)}
+.tile.by a{white-space:nowrap}
+@media (max-width:759px){ .tile.by{gap:16px} .tile.by img{width:80px;height:100px} }
 .tile.by a{font-weight:800}
 .tile.word{grid-column:1/-1;background:var(--ink);color:#fff;min-height:200px;flex-direction:row;align-items:center;justify-content:center;gap:.28em;font-size:clamp(3.5rem,9vw,9rem)}
 /* Logo de la marque à côté du nom : même carré bleu que dans l’en-tête, à la hauteur des majuscules */
@@ -918,9 +921,6 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <div>
         <h2 id="demandes-titre" class="rise">Your feedback shapes Synapses</h2>
         <p class="lead rise" style="--i:1">An idea, a bug, a missing feature: Vincent reads every message.</p>
-        <div class="auteur rise" style="--i:2">
-          <p><b>Vincent Nguyen</b>Product Manager. Inspired by mind mapping, I wanted to see my LinkedIn network at a glance: my circles, who I’m close to, and who to contact for a job, a sales lead or an expert’s opinion. <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">My LinkedIn profile</a></p>
-        </div>
         <ol class="loop rise" style="--i:2">
           <li>You share your feedback, in two minutes.</li>
           <li>Vincent reads it and replies if you’d like.</li>
@@ -931,7 +931,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <div class="asked rise" style="--i:2">
         <h3>You asked for it</h3>
         <ul id="asked" hidden></ul>
-        <p class="empty" id="asked-empty">The first improvements that come from your feedback will appear here.</p>
+        <div class="empty" id="asked-empty"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><p>The first improvements that come from your feedback will appear here.</p></div>
       </div>
     </div>
   </section>
@@ -969,7 +969,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   <div class="tiles">
     <div class="tile say"><p>Synapses reads your LinkedIn export in your browser and turns it into a map of your network.</p><p class="legal">Independent tool, not affiliated with LinkedIn.<br>Video voice: ElevenLabs.</p></div>
     <nav class="tile nav" aria-label="Footer"><ul><li><a href="#situations">Use cases</a></li><li><a href="#demarrer">Get started</a></li><li><a href="#confidentialite">Privacy</a></li><li><a href="#questions">FAQ</a></li><li><a href="#demandes" data-fb>Give feedback</a></li><li><a href="../app/?lang=en">Open the tool</a></li><li><a href="legal/">Legal notice</a></li></ul></nav>
-    <div class="tile by"><div class="byhead"><img src="../assets/vincent.webp" width="64" height="64" alt="Vincent Nguyen" loading="lazy" decoding="async"><p>Designed and built by <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, with Claude Code.</p></div><p>The code is public: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div>
+    <div class="tile by"><img src="../assets/vincent.webp" width="104" height="130" alt="Vincent Nguyen" loading="lazy" decoding="async"><div class="bytext"><p>Designed and built by <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, with Claude Code.</p><p class="idee">Inspired by mind mapping, I wanted to see my LinkedIn network at a glance: my circles, who I’m close to, and who to contact for a job, a sales lead or an expert’s opinion.</p><p>The code is public: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div></div>
     <div class="tile word" aria-hidden="true"><span class="wmark"><svg viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span><span class="wname">Synapses</span></div>
     <a class="tile go" href="../app/?lang=en"><b>Try the demo</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
   </div>
