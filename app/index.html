@@ -49,7 +49,8 @@
 /* Le contenu d’un <details> passe par un emplacement interne qui n’hérite pas : on rétablit border-box (sinon champs et listes débordent) */
 details > *{box-sizing:border-box}
 [hidden]{display:none !important}
-html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+/* touch-action : pas de zoom de toute la page sur un double-toucher (iOS) ; le pincement reste possible */
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg);touch-action:manipulation}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit;color:inherit}
@@ -1785,6 +1786,8 @@ const sbFetch = (path, opt = {}) => {
    au plus une fois par jour et par navigateur. Aucune donnée n’est envoyée. */
 const COUNT_KEY = 'synapses-count-v1';
 function countSubmission(){
+  /* Seulement sur le site public : un import en local (tests) ne doit jamais gonfler le compteur */
+  if(!/(^|\.)github\.io$/.test(location.hostname)) return;
   const today = new Date().toISOString().slice(0, 10);
   try { if(localStorage.getItem(COUNT_KEY) === today) return; localStorage.setItem(COUNT_KEY, today); } catch(e) {}
   sbFetch('/rpc/compter_soumission', {method:'POST', body:'{}'}).catch(() => {});
