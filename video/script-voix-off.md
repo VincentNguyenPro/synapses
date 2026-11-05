@@ -17,7 +17,7 @@ Les trois premières secondes sont l’image de couverture (miniature dans les m
 | 0:54,2 | 1:04,2 | 3. Secteur | Clique sur un secteur : tu vois qui tu y connais, à quel niveau, et les plus proches de toi en premier. |
 | 1:04,2 | 1:15,2 | 4. Fiche contact | Choisis un contact : tu as toute sa fiche. Ton lien avec ce contact : vos messages, vos recommandations… et surtout ses collègues de la même entreprise. |
 | 1:15,2 | 1:28,2 | 5. Porte d’entrée | Tu vises une entreprise ? Tape son nom : Synapses te montre qui peut t’ouvrir la porte, des plus seniors aux plus juniors. |
-| 1:28,2 | 1:38,3 | 6. Par entreprise | Regroupe par entreprise, logos compris : tu vois d’un coup d’œil où se concentrent tes contacts. |
+| 1:28,2 | 1:38,3 | 6. Par entreprise | Regroupe par entreprise, avec les logos en option : tu vois d’un coup d’œil où se concentrent tes contacts. |
 | 1:38,3 | 1:42,7 | Cadenas | Et ton fichier ne quitte jamais ton navigateur. |
 | 1:42,7 | 1:48,3 | Fin : URL | Synapses. Gratuit, sans inscription. Vois enfin ton réseau. |
 
@@ -53,6 +53,8 @@ python3 video/musique.py && sh video/mixer.sh
 ```bash
 node video/render.js 169 video/out/bande-son.m4a && node video/render.js 11 video/out/bande-son.m4a
 ```
+
+Version anglaise : même minutage, script `script-voix-off-en.md`, `node video/voix-ia.js Charlie --en`, `sh video/mixer.sh en`, `node video/render.js 169 video/out/bande-son-en.m4a --en` (textes du film en anglais par `?lang=en`). Sur le site : `assets/demo/synapses-demo-en.mp4`, coupé et réencodé comme la version française ci-dessous, avec `synapses-demo-en.vtt` et l’affiche `synapses-demo-affiche-en.webp`.
 
 Pour enregistrer ta propre voix à la place : lis le tableau sur la vidéo muette (`node video/render.js 169` la produit), exporte `voix-ia.m4a` dans `video/out/`, puis reprends à l’étape 2.
 

@@ -171,7 +171,7 @@ h1,h2{font-weight:800;letter-spacing:-.035em;line-height:1.04}
       <div class="t"><span class="step">3</span><h2>Plonge dans un secteur.</h2><p>Qui tu y connais, à quel niveau, les plus proches d’abord.</p></div>
       <div class="t"><span class="step">4</span><h2>Toute la fiche d’un contact.</h2><p>Ton lien : messages échangés, recommandations, et ses collègues de la même entreprise.</p></div>
       <div class="t"><span class="step">5</span><h2>Trouve une porte d’entrée.</h2><p>Tape une entreprise&nbsp;: qui peut t’y ouvrir la porte, des plus seniors aux plus juniors.</p></div>
-      <div class="t"><span class="step">6</span><h2>Regroupe par entreprise.</h2><p>Où se concentrent tes contacts, logos compris.</p></div>
+      <div class="t"><span class="step">6</span><h2>Regroupe par entreprise.</h2><p>Où se concentrent tes contacts, logos en option.</p></div>
     </div>
     <div class="box" id="win">
       <video src="clips/1-import.mp4" muted preload="auto"></video>
@@ -199,6 +199,53 @@ h1,h2{font-weight:800;letter-spacing:-.035em;line-height:1.04}
 </div>
 <script>
 const SQUARE = new URLSearchParams(location.search).get('f') === '11';
+
+/* ---------- Version anglaise (?lang=en) : mêmes plans de l’app (interface en français), textes et voix en anglais ---------- */
+const LANG = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'fr';
+if(LANG === 'en'){
+  document.documentElement.lang = 'en';
+  const set = (sel, i, html) => { document.querySelectorAll(sel)[i].innerHTML = html; };
+  [
+    ['#s0 h2', 0, 'Your LinkedIn network, seen as <span class="o">a neural network</span>.'],
+    ['#s0 .play', 0, '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l11 7-11 7z"/></svg>Watch the demo'],
+    ['#s1 h1', 0, 'You have <span class="o num" id="n">0</span> LinkedIn contacts.'],
+    ['#s2 h2', 0, 'But you see them <span class="o">one by one</span>, in an endless list.'],
+    ['#s2 .txt p', 0, 'Sorted by date added. No overview.'],
+    ['#list .head', 0, '843 connections <span>Sort by: Recently added</span>'],
+    ['#s3 h2', 0, 'Impossible to answer <span class="o">at a glance</span>.'],
+    ['#qs .q', 0, '<i>?</i>Who do I know at Doctolib?'],
+    ['#qs .q', 1, '<i>?</i>Who can introduce me to a banking decision-maker?'],
+    ['#qs .q', 2, '<i>?</i>Who can open the door to a job or a client?'],
+    ['#qs .q', 3, '<i>?</i>Where is my network too thin?'],
+    ['#s4 p', 0, 'Your LinkedIn network, seen as a <span class="o">neural network</span>.'],
+    ['#s5 h2', 0, 'Your network becomes <span class="o">a tool</span>.'],
+    ['#s5 .txt p', 0, 'For networking with a clear goal.'],
+    ['#uc .uc b', 0, 'Land an opportunity'], ['#uc .uc > span', 0, 'Who you know at the target company, and who can recommend you.'],
+    ['#uc .uc b', 1, 'Grow your business'], ['#uc .uc > span', 1, 'The decision-makers of a target industry, already in your network.'],
+    ['#uc .uc b', 2, 'Prepare a meeting'], ['#uc .uc > span', 2, 'All your contacts at a client or prospect, in one click.'],
+    ['#uc .uc b', 3, 'Expand your network'], ['#uc .uc > span', 3, 'The industries and functions where you’re missing contacts.'],
+    ['#s6 h2', 0, 'First, get <span class="o">your LinkedIn export</span>.'],
+    ['#s6 .txt p', 0, 'Two minutes on your side, then the archive arrives by email.'],
+    ['#ex .ex b', 0, 'Open your LinkedIn settings'],
+    ['#ex .ex .path', 0, '<u>Settings</u><s>›</s><u>Data privacy</u><s>›</s><u class="hl">Get a copy of your data</u>'],
+    ['#ex .ex b', 1, 'Request the full archive'],
+    ['#ex .ex b + span', 1, '<span class="tick">✓</span>Connections, messages, invitations, job applications'],
+    ['#ex .ex b', 2, 'Get the .zip archive by email'],
+    ['#ex .ex b + span', 2, 'Drop it as is into Synapses.'],
+    ['#ptxt .t h2', 0, 'Drop the archive.'], ['#ptxt .t p', 0, 'It’s read in your browser, nothing is sent.'],
+    ['#ptxt .t h2', 1, 'Group however you like.'], ['#ptxt .t p', 1, 'By industry, company, function, seniority, connection year…'],
+    ['#ptxt .t h2', 2, 'Dive into an industry.'], ['#ptxt .t p', 2, 'Who you know there, at what level, closest first.'],
+    ['#ptxt .t h2', 3, 'A contact’s full profile.'], ['#ptxt .t p', 3, 'Your connection: messages, recommendations, and their colleagues at the same company.'],
+    ['#ptxt .t h2', 4, 'Find a way in.'], ['#ptxt .t p', 4, 'Type a company: who can open the door, from most senior to most junior.'],
+    ['#ptxt .t h2', 5, 'Group by company.'], ['#ptxt .t p', 5, 'Where your contacts cluster, with optional logos.'],
+    ['#fict', 0, 'Fictional demo network · interface in French'],
+    ['#s9 h1', 0, 'Your file never leaves <span class="o">your browser</span>.'],
+    ['#s9 .chips', 0, '<span>Free</span><span>No sign-up</span><span>No ads</span>'],
+    ['#s10 h1', 0, 'Finally see your network.'],
+    ['#s10 .url', 0, 'vincentnguyenpro.github.io/synapses/en'],
+    ['#s10 small', 0, 'Independent tool, not affiliated with LinkedIn.']
+  ].forEach(([sel, i, html]) => set(sel, i, html));
+}
 const W = SQUARE ? 1080 : 1920, H = 1080;
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const stage = $('#stage');
@@ -315,7 +362,7 @@ if(SQUARE){
   const K = ['#2F5BEA','#12A39A','#D9A21B','#C2417A','#6C4FD8','#3E9B4F','#E2702F','#4A86B5'];
   let s = 7; const r = a => a[(s = (s * 9301 + 49297) % 233280) % a.length];
   let h = '';
-  for(let i = 0; i < 40; i++){ const f = r(F), n = r(N); h += `<div class="row"><i style="background:${r(K)}">${f[0]}${n[0]}</i><div><b>${f} ${n}</b><small>${r(P)} chez ${r(C)}</small></div><em>Message</em></div>`; }
+  for(let i = 0; i < 40; i++){ const f = r(F), n = r(N); h += `<div class="row"><i style="background:${r(K)}">${f[0]}${n[0]}</i><div><b>${f} ${n}</b><small>${r(P)} ${LANG === 'en' ? 'at' : 'chez'} ${r(C)}</small></div><em>Message</em></div>`; }
   $('#rows').innerHTML = h;
 })();
 
@@ -334,7 +381,7 @@ async function seek(t){
   if(on('s1')){
     const k1 = t - S.s1[0];
     showWords(W1, k1, .15);
-    $('#n').textContent = Math.round(843 * inOut((k1 - .35) / 1.5)).toLocaleString('fr-FR');
+    $('#n').textContent = Math.round(843 * inOut((k1 - .35) / 1.5)).toLocaleString(LANG === 'en' ? 'en-US' : 'fr-FR');
     $('#s1 h1').style.transform = `scale(${lerp(1, 1.04, k1 / 3.2)})`;
   }
   if(on('s2')){

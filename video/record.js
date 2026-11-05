@@ -56,6 +56,8 @@ const INIT = `
       m.appendChild(d);
     });
     document.body.appendChild(m);
+    /* Pas assez de place sous le champ : le menu s’ouvre vers le haut, toutes ses options à l’écran */
+    if (r.bottom + 4 + m.offsetHeight > innerHeight - 8) m.style.top = Math.max(8, r.top - 4 - m.offsetHeight) + 'px';
   };
   if (document.body) add(); else addEventListener('DOMContentLoaded', add);
 })();`;
@@ -125,6 +127,8 @@ const INIT = `
   async function setup({ groupBy = 'sector', colorBy = 'seniority', topN = 12 } = {}) {
     await page.evaluate(({ groupBy, colorBy, topN }) => {
       __S.clearSelection();
+      document.getElementById('__menu')?.remove();
+      const tg = document.getElementById('target'); if (tg) tg.value = '';
       Object.values(__S.state.include).forEach(s => s.clear()); __S.syncChips();
       const set = (id, v, ev) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event(ev, { bubbles: true })); };
       set('topN', topN, 'input'); set('groupBy', groupBy, 'change'); set('colorBy', colorBy, 'change');
@@ -136,6 +140,8 @@ const INIT = `
   await page.goto('http://localhost:8765/app/', { waitUntil: 'networkidle' });
   await sleep(1500);
   await page.mouse.move(cur.x, cur.y);
+  /* Logos des entreprises : une option décochée par défaut, cochée ici hors caméra pour les plans par entreprise */
+  await page.evaluate(() => { const l = document.getElementById('logosOn'); if (l && !l.checked) { l.checked = true; l.dispatchEvent(new Event('change', { bubbles: true })); } });
   await page.evaluate(() => { __S.hide(); __S.render(); });
   await sleep(800);
 
