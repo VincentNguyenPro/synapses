@@ -12,7 +12,8 @@
   },
   {
    "fonction": "Data",
-   "motif": "\\b(data|analyst|analytics|bi|machine learning|ml|ia|ai|scientist)\\b"
+   "motif": "\\b(data|analytics|bi|machine learning|ml|ia|ai|scientist)\\b|^(?!.*\\b(financ\\w*|investment|credit|fp&a)( \\w+)? analyst\\b).*\\banalyst\\b",
+   "commentaire": "« Financial / Investment / Credit / FP&A (+ un mot) Analyst » vont en Finance ; « Business Analyst Finance » reste Data. Pas de lookbehind (anciens Safari iOS)."
   },
   {
    "fonction": "Tech",
