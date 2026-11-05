@@ -3147,7 +3147,7 @@
   },
   {
    "nom": "Indépendant",
-   "motif": "\\b(independant\\w*|freelance\\w*|free[- ]lance\\w*|frelance\\w*|freelancer\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*|business entrepreneur|entrepreneur individuel|a (mon|son) compte|kendi isim|projet personnel)\\b|عمل خاص"
+   "motif": "\\b(independant\\w*|freelance\\w*|free[- ]lance\\w*|frelance\\w*|freelancer\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*|business entrepreneur|entrepreneur individuel|entreprise individuelle|a (mon|son) compte|kendi isim|projet personnel)\\b|عمل خاص| ei$|^siren \\d"
   },
   {
    "nom": "Non communiqué",
