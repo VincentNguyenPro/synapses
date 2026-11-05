@@ -244,7 +244,7 @@ circle.logohub.sel{stroke:var(--accent) !important;stroke-width:3px !important}
 .contact:hover{stroke:var(--ink);stroke-width:2px}
 .hub{fill:var(--hub);stroke:var(--ink);stroke-width:1.5px;cursor:pointer}
 .hub:hover{stroke-width:3px}
-circle.sel{stroke:var(--ink) !important;stroke-width:3.5px !important}
+circle.sel,circle.hov{stroke:var(--ink) !important;stroke-width:3.5px !important}
 .hubLabel{font-weight:700;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;cursor:pointer}
 .hubLabel:hover{text-decoration:underline}
 .hubCount{font-weight:800;fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
@@ -3015,12 +3015,19 @@ function rowMatch(row){
 let drawerHover = null;
 document.addEventListener('pointerover', e => {
   if(e.pointerType === 'touch' || state.view !== 'graph') return;
-  const row = e.target.closest && e.target.closest('.drawer .hl[data-hlv], .drawer .hl[data-hle], .drawer .hl[data-hlrest]');
+  const row = e.target.closest && e.target.closest('.drawer .hl[data-hlv], .drawer .hl[data-hle], .drawer .hl[data-hlrest], .drawer .lrow[data-cid]');
   if(row === drawerHover) return;
   const prev = drawerHover; drawerHover = row;
   if(!row && !prev) return; /* rien à restaurer : on ne touche pas aux autres surbrillances */
   const hub = nodes.find(n => n.id === state.selected && n.type === 'hub'); if(!hub) return;
   const members = nodes.filter(n => n.type === 'c' && n.hub === hub.id);
+  if(nodeSel) nodeSel.classed('hov', false);
+  /* Contact de la liste : son point est cerclé et le trait mène à sa grappe */
+  if(row && row.dataset.cid != null){
+    const n = members.find(m => m.c.id === +row.dataset.cid);
+    if(n){ focus(new Set([hub.id, n.id])); spokeHot(new Set([hub.id + '|' + levelOf(n.c)])); nodeSel.filter(m => m === n).classed('hov', true).raise(); }
+    return;
+  }
   const ref = row || dbody.querySelector('.hl.on');
   const match = ref ? rowMatch(ref) : () => true, ms = members.filter(match);
   focus(new Set([hub.id, ...ms.map(n => n.id)]));
