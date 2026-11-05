@@ -201,7 +201,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .spoke{stroke:var(--accent);stroke-opacity:.6;stroke-width:1.6px;pointer-events:none;display:none}
 .spoke.hot{display:inline}
 .pin{cursor:pointer}
-.tgwrap{position:relative}
+.tgwrap,.search{position:relative}
+#q{position:relative}
 .tgghost{position:absolute;pointer-events:none;color:var(--muted);white-space:pre;overflow:hidden;box-sizing:border-box;z-index:1}
 .tgghost .tgt{color:transparent}
 #target{position:relative}
@@ -497,7 +498,9 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
     </a>
     <div class="search">
       <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input type="search" id="q" placeholder="Rechercher un nom, une entreprise, un poste…" aria-label="Rechercher dans tes contacts">
+      <span class="tgghost" id="qGhost" aria-hidden="true"></span>
+      <input type="search" id="q" placeholder="Rechercher un nom, une entreprise, un poste…" aria-label="Rechercher dans tes contacts" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qSug">
+      <ul class="tgsug" id="qSug" role="listbox" hidden></ul>
     </div>
     <div class="hdr-actions">
       <button class="btn ghost" id="fbBtn" type="button" data-act="feedback" title="Donner mon avis sur Synapses" aria-label="Donner mon avis">
@@ -3300,7 +3303,7 @@ function targetIndex(){
   contacts.forEach(c => { add(coOf(c), 'Entreprise'); if(entityOf(c) !== coOf(c)) add(entityOf(c), 'Entité'); add(c.sector, 'Secteur'); add(c.school, 'École'); });
   return tgItems = [...m.values()].filter(e => !NO_COMPANY_GROUPS.has(e.v));
 }
-function targetMatches(q, max = 8){
+function targetMatches(q, max = 8, idx = targetIndex()){
   const t = norm(q).trim(), tk = compactKey(q); if(!t) return [];
   const score = e => {
     const nv = norm(e.v);
@@ -3315,7 +3318,7 @@ function targetMatches(q, max = 8){
     if(mx && e.words.some(w => w.length >= 4 && editDist(tk, w, mx) <= mx)) return 35;
     return 0;
   };
-  return targetIndex().map(e => ({...e, s:score(e)})).filter(e => e.s > 0)
+  return idx.map(e => ({...e, s:score(e)})).filter(e => e.s > 0)
     .sort((a, b) => b.s - a.s || b.n - a.n || a.v.localeCompare(b.v, 'fr')).slice(0, max);
 }
 /* Recherches récentes : gardées sur cet appareil seulement (noms d’entreprises, secteurs ou écoles), effacées avec les données */
@@ -3324,7 +3327,7 @@ const tgRecent = () => { try { return JSON.parse(localStorage.getItem(TG_RECENT_
 function tgRemember(v){ try { localStorage.setItem(TG_RECENT_KEY, JSON.stringify([v, ...tgRecent().filter(x => norm(x) !== norm(v))].slice(0, 5))); } catch(e) {} }
 /* Prédictions quand le champ est vide : selon ce que tu regardes (groupe ouvert ou sélectionné, contact), tes recherches récentes,
    puis les entreprises les plus présentes dans ton réseau */
-function targetPredictions(){
+function targetPredictions(recent = tgRecent){
   const idx = targetIndex(), find = (v, type) => idx.find(e => e.v === v && (!type || e.type === type));
   const sections = [], seen = new Set();
   const push = (title, arr) => { const items = arr.filter(e => e && !seen.has(e.type + e.v)).slice(0, 4); items.forEach(e => seen.add(e.type + e.v)); if(items.length) sections.push({title, items}); };
@@ -3337,11 +3340,11 @@ function targetPredictions(){
     const tops = [...d3.rollup(inG, v => v.length, coOf)].filter(([k]) => !NO_COMPANY_GROUPS.has(k)).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k]) => find(k, 'Entreprise'));
     push('Dans ' + grpKey, tops);
   }
-  push('Recherches récentes', tgRecent().map(v => idx.find(e => e.v === v) || {v, type:'Recherche', n:''}));
+  push('Recherches récentes', recent().map(v => idx.find(e => e.v === v) || {v, type:'Recherche', n:''}));
   push('Les plus présentes dans ton réseau', idx.filter(e => e.type === 'Entreprise').sort((a, b) => b.n - a.n).slice(0, 8));
   return sections;
 }
-const tgLi = (e, i) => `<li role="option" id="tgo${i}" data-tgv="${esc(e.v)}"><span>${esc(e.v)}</span><span class="tgmeta">${e.type}${e.n !== '' ? ' · ' + e.n : ''}</span></li>`;
+const tgLi = (e, i, pre = 'tgo') => `<li role="option" id="${pre}${i}" data-tgv="${esc(e.v)}"${e.cid != null ? ` data-tgc="${e.cid}"` : ''}><span>${esc(e.v)}</span><span class="tgmeta">${esc(e.sub || e.type)}${e.n !== '' && e.n != null ? ' · ' + e.n : ''}</span></li>`;
 function renderTargetSug(){
   const box = $('#targetSug'), q = $('#target').value;
   tgSel = -1;
@@ -3358,13 +3361,35 @@ function renderTargetSug(){
 }
 /* Complétion en ligne : la fin du nom le plus probable s’affiche en gris après ce que tu tapes ; Tab ou → la valide */
 let tgGhost = '';
-function renderGhost(top){
-  const inp = $('#target'), g = $('#targetGhost'), q = inp.value;
-  tgGhost = top && q && norm(top.v).startsWith(norm(q)) && top.v.length > q.length ? top.v : '';
-  if(!tgGhost || inp.scrollWidth > inp.clientWidth + 1){ g.innerHTML = ''; return; }
+function renderGhost(top){ tgGhost = ghostFor($('#target'), $('#targetGhost'), top); }
+function ghostFor(inp, g, top){
+  const q = inp.value, val = top && q && norm(top.v).startsWith(norm(q)) && top.v.length > q.length ? top.v : '';
+  if(!val || inp.scrollWidth > inp.clientWidth + 1){ g.innerHTML = ''; return val; }
   const cs = getComputedStyle(inp);
   Object.assign(g.style, {left:inp.offsetLeft + 'px', top:inp.offsetTop + 'px', width:inp.clientWidth + 'px', height:inp.offsetHeight + 'px', paddingLeft:cs.paddingLeft, font:cs.font, lineHeight:inp.offsetHeight + 'px'});
-  g.innerHTML = `<span class="tgt">${esc(q)}</span>${esc(tgGhost.slice(q.length))}`;
+  g.innerHTML = `<span class="tgt">${esc(q)}</span>${esc(val.slice(q.length))}`;
+  return val;
+}
+/* ---------- Barre de recherche principale : mêmes suggestions, complétion et prédictions, plus les contacts par leur nom ---------- */
+const Q_RECENT_KEY = 'synapses-recherches-v1';
+/* Récentes : seulement des entreprises, secteurs ou écoles (jamais un nom de contact), sur cet appareil */
+const qRecent = () => { try { return JSON.parse(localStorage.getItem(Q_RECENT_KEY) || '[]').slice(0, 5); } catch(e) { return []; } };
+function qRemember(v){ if(!targetIndex().some(e => e.v === v)) return; try { localStorage.setItem(Q_RECENT_KEY, JSON.stringify([v, ...qRecent().filter(x => norm(x) !== norm(v))].slice(0, 5))); } catch(e) {} }
+let qGhost = '', qSel = -1;
+function qIndex(){ return [...targetIndex(), ...contacts.map(c => ({v:c.name, type:'Contact', sub:[c.position, c.company].filter(Boolean).join(', ').slice(0, 60) || 'Contact', n:null, cid:c.id, key:compactKey(c.name), words:norm(c.name).split(/[^a-z0-9]+/).filter(Boolean)}))]; }
+function renderQSug(){
+  const inp = $('#q'), box = $('#qSug'), q = inp.value;
+  qSel = -1;
+  let html = '', i = 0, top = null;
+  if(!q.trim()) html = targetPredictions(qRecent).map(sec => `<li class="tghead" role="presentation">${esc(sec.title)}</li>` + sec.items.map(e => tgLi(e, i++, 'qo')).join('')).join('');
+  else { const list = targetMatches(q, 8, qIndex()); top = list[0]; html = list.map(e => tgLi(e, i++, 'qo')).join(''); }
+  box.innerHTML = html; box.hidden = !i; inp.setAttribute('aria-expanded', String(!!i));
+  qGhost = ghostFor(inp, $('#qGhost'), top);
+}
+function pickQ(li){
+  const inp = $('#q'); $('#qSug').hidden = true; $('#qGhost').innerHTML = ''; inp.setAttribute('aria-expanded', 'false');
+  if(li.dataset.tgc != null){ const c = contacts.find(o => o.id === +li.dataset.tgc); if(c){ inp.blur(); showContact(c); } return; }
+  inp.value = li.dataset.tgv; clearTimeout(qt); state.q = inp.value.trim(); applyFilters(); qRemember(inp.value);
 }
 function pickTarget(v){ $('#target').value = v; $('#targetSug').hidden = true; $('#target').setAttribute('aria-expanded', 'false'); findEntry(true); }
 function findEntry(exact){
@@ -3528,7 +3553,21 @@ $('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; 
 $('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = Math.min(+e.target.value, OPEN_MAX); render(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
 $('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } applyFilters(); });
 $('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
-let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
+let qt; $('#q').addEventListener('input', e => { renderQSug(); clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
+$('#q').addEventListener('focus', () => { tgItems = null; renderQSug(); });
+$('#q').addEventListener('blur', () => setTimeout(() => { $('#qSug').hidden = true; $('#qGhost').innerHTML = ''; }, 150));
+$('#q').addEventListener('keydown', e => {
+  const inp = $('#q');
+  if(qGhost && (e.key === 'Tab' || (e.key === 'ArrowRight' && inp.selectionStart === inp.value.length))){ e.preventDefault(); inp.value = qGhost; inp.dispatchEvent(new Event('input')); return; }
+  const items = [...$('#qSug').querySelectorAll('[data-tgv]')], open = !$('#qSug').hidden && items.length;
+  if(open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){
+    e.preventDefault(); qSel = (qSel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+    items.forEach((li, i) => li.classList.toggle('on', i === qSel)); inp.setAttribute('aria-activedescendant', 'qo' + qSel); return;
+  }
+  if(e.key === 'Escape'){ $('#qSug').hidden = true; return; }
+  if(e.key === 'Enter'){ if(open && qSel >= 0) pickQ(items[qSel]); else { $('#qSug').hidden = true; qRemember(inp.value.trim()); } }
+});
+$('#qSug').addEventListener('mousedown', e => { const li = e.target.closest('[data-tgv]'); if(li){ e.preventDefault(); pickQ(li); } });
 $('#targetBtn').addEventListener('click', () => findEntry());
 $('#target').addEventListener('focus', () => { tgItems = null; renderTargetSug(); }); /* index refait à chaque visite (import, corrections, IA) ; champ vide : prédictions */
 $('#target').addEventListener('input', renderTargetSug);
