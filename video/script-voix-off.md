@@ -11,15 +11,13 @@ Les trois premières secondes sont l’image de couverture (miniature dans les m
 | 0:10,8 | 0:19,0 | Quatre questions | Qui tu connais chez Doctolib ? Qui peut t’ouvrir la porte d’un job ou d’un client ? Impossible de le savoir d’un coup d’œil. |
 | 0:19,0 | 0:22,2 | Logo Synapses | Synapses transforme ta liste en carte de ton réseau. |
 | 0:22,2 | 0:30,6 | Quatre cas d’usage | Pour décrocher une opportunité, développer ton business, préparer un rendez-vous, ou élargir ton réseau là où il te manque des contacts. |
-| 0:30,6 | 0:37,6 | Récupérer l’export | D’abord, demande ton export dans les préférences LinkedIn, en cochant « Relations ». L’archive arrive par email. |
+| 0:30,6 | 0:37,6 | Récupérer l’export | D’abord, demande l’archive complète de tes données dans les préférences LinkedIn. Elle arrive par email. |
 | 0:37,6 | 0:45,2 | 1. Dépose l’archive | Glisse l’archive telle quelle sur Synapses : elle est lue dans ton navigateur, et ton réseau apparaît. |
 | 0:45,2 | 0:54,2 | 2. Regrouper par | Regroupe tes contacts comme tu veux : par secteur, entreprise, fonction, séniorité ou année de connexion. |
-| 0:54,2 | 1:02,2 | 3. Colorer par | Et colore-les selon ce qui compte pour toi : la séniorité, la fonction, l’année de connexion. |
-| 1:02,2 | 1:07,7 | 4. Secteur | Clique sur un secteur pour voir qui tu y connais, et à quel niveau. |
-| 1:07,7 | 1:18,7 | 5. Fiche contact | Choisis un contact : tu as toute sa fiche. Ton lien avec ce contact : vos messages, vos recommandations… et surtout ses collègues de la même entreprise. |
-| 1:18,7 | 1:23,7 | 6. Filtres | Filtre en un clic : juniors, seniors, secteurs, fonctions. |
-| 1:23,7 | 1:28,3 | 7. Par entreprise | Regroupe par entreprise pour voir où se concentrent tes contacts. |
-| 1:28,3 | 1:38,3 | 8. Branches | Le curseur « Branches affichées » montre les plus gros groupes… ou ton réseau en entier, toutes les entreprises d’un coup. |
+| 0:54,2 | 1:04,2 | 3. Secteur | Clique sur un secteur : tu vois qui tu y connais, à quel niveau, et les plus proches de toi en premier. |
+| 1:04,2 | 1:15,2 | 4. Fiche contact | Choisis un contact : tu as toute sa fiche. Ton lien avec ce contact : vos messages, vos recommandations… et surtout ses collègues de la même entreprise. |
+| 1:15,2 | 1:28,2 | 5. Porte d’entrée | Tu vises une entreprise ? Tape son nom : Synapses te montre qui peut t’ouvrir la porte, des plus seniors aux plus juniors. |
+| 1:28,2 | 1:38,3 | 6. Par entreprise | Regroupe par entreprise, logos compris : tu vois d’un coup d’œil où se concentrent tes contacts. |
 | 1:38,3 | 1:42,7 | Cadenas | Et ton fichier ne quitte jamais ton navigateur. |
 | 1:42,7 | 1:48,3 | Fin : URL | Synapses. Gratuit, sans inscription. Vois enfin ton réseau. |
 

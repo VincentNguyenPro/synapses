@@ -148,22 +148,19 @@ const INIT = `
     await sleep(2400);
   });
 
-  // Colorer par : les options, puis Fonction
-  await setup();
-  await take('3-colorer', async () => {
-    await pickFrom('colorBy', 'fn', ['sector', 'fn', 'year', 'tag']);
-    await sleep(2400);
-    await pickFrom('colorBy', 'year');
-    await sleep(2200);
-  });
-
-  // Clic sur un secteur
+  // Clic sur un secteur, puis sa fiche : les contacts les plus proches d'abord (échanges fictifs de la démo)
   await setup();
   await take('4-secteur', async () => {
     await sleep(400);
     const [x, y] = await centerOf(page.locator('text.hubLabel').filter({ hasText: 'Tech' }).first());
     await clickAt(x, y, 900);
-    await sleep(3800);
+    await sleep(2600);
+    const rows = page.locator('#drawer .people li');
+    for (const i of [0, 1]) {
+      const b = await rows.nth(i).boundingBox();
+      if (b) { await move(b.x + 140, b.y + b.height / 2, 800); await sleep(1500); }
+    }
+    await sleep(2400);
   });
 
   // Fiche d'un contact : clic, puis défilement de toute la fiche
@@ -189,17 +186,26 @@ const INIT = `
     await sleep(2200);
   });
 
-  // Filtres de séniorité
+  // Porte d'entrée : « BlaBlaCar » tapé dans le panneau, la suggestion choisie, puis ses contacts des plus seniors aux plus juniors
   await setup();
-  await take('6-filtres', async () => {
-    await page.evaluate(() => document.querySelector('#f-seniority').scrollIntoView({ block: 'center' }));
+  await take('8-porte', async () => {
+    await page.evaluate(() => { const t = document.getElementById('target'); t.closest('details')?.setAttribute('open', ''); t.scrollIntoView({ block: 'center' }); });
     await sleep(500);
-    for (const v of ['Junior', 'Senior']) {
-      const [x, y] = await centerOf(page.locator(`#f-seniority button[data-v="${v}"]`));
-      await clickAt(x, y, 700);
-      await sleep(1400);
+    const [x, y] = await centerOf(page.locator('#target'));
+    await clickAt(x, y, 900);
+    await sleep(400);
+    for (const ch of 'BlaBla') { await page.keyboard.type(ch); await sleep(160); }
+    await sleep(1100);
+    const sug = page.locator('#targetSug [data-tgv="BlaBlaCar"]').first();
+    const [sx, sy] = await centerOf(sug);
+    await clickAt(sx, sy, 700);
+    await sleep(2600);
+    const rows = page.locator('#drawer .people li');
+    for (const i of [0, 1, 3]) {
+      const b = await rows.nth(i).boundingBox();
+      if (b) { await move(b.x + 120, b.y + b.height / 2, 700); await sleep(1100); }
     }
-    await sleep(1000);
+    await sleep(2000);
   });
 
   // Regrouper par entreprise, puis Branches affichées : de 5 à toutes

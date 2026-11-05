@@ -24,7 +24,7 @@ rows = [re.match(r'^\| (\d:\d\d,\d) \| (\d:\d\d,\d) \|', l) for l in open(os.pat
 rows = [(sec(m.group(1)), sec(m.group(2))) for m in rows if m]
 T = [a for a, _ in rows]
 END = rows[-1][1]
-LOGO, PROD, SHOTS, PRIV, FIN = T[4], T[7], T[7:15], T[15], T[16]
+LOGO, PROD, SHOTS, PRIV, FIN = T[4], T[7], T[7:-2], T[-2], T[-1]   # plans de l’app : de « Dépose l’archive » au cadenas
 N = int(END * SR) + SR
 out = np.zeros((N, 2))
 
