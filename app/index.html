@@ -19,7 +19,7 @@
 <meta property="og:image" content="https://vincentnguyenpro.github.io/synapses/og-image-2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Synapses : « Ton réseau LinkedIn, en carte. », le bouton Essayer la démo et l’outil qui regroupe des contacts par secteur">
+<meta property="og:image:alt" content="Synapses : « Ton réseau LinkedIn, en carte. », le bouton Essayer la démo et l’outil qui regroupe des contacts par secteur">
 <meta name="twitter:card" content="summary_large_image">
 <!-- Empreintes SRI : le navigateur refuse une bibliothèque modifiée sur le CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -152,7 +152,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .chips:has(.frow){gap:4px}
 /* Barre de poids : fin trait sous le libellé, pour ne jamais être confondue avec une sélection (fond bleuté + bordure) */
 .chip.frow .fbar{position:absolute;left:10px;bottom:4px;height:3px;background:var(--accent);opacity:.55;border-radius:2px;transition:width .3s ease}
-/* Nom entier, sur deux lignes si besoin (« Secteur public & éducation ») */
+/* Nom entier, sur deux lignes si besoin (« Secteur public & éducation ») */
 .chip.frow .flbl{flex:1;text-align:left;min-width:0;line-height:1.25;overflow-wrap:anywhere}
 .chip.frow .n{font-weight:700;color:var(--ink)}
 .chip.frow .pct{background:none;padding:0;min-width:36px;text-align:right}
@@ -326,7 +326,7 @@ circle.dim,text.dim{fill-opacity:.08;stroke-opacity:.08}
 line.dim{stroke-opacity:.08}
 .link.me.dim{stroke-opacity:.045}
 circle.blob.dim{fill-opacity:.012;stroke-opacity:.04}
-svg .ghost{visibility:hidden;pointer-events:none} /* points du graphe seulement : les boutons « btn ghost » de l’en-tête restent visibles */
+svg .ghost{visibility:hidden;pointer-events:none} /* points du graphe seulement : les boutons « btn ghost » de l’en-tête restent visibles */
 .canvas.heavy .contact,.canvas.heavy .hub,.canvas.heavy .link,.canvas.heavy .hubLabel,.canvas.heavy .hubCount,.canvas.heavy .blob,.canvas.heavy .spoke{transition:none}
 
 /* Overlays on canvas */
@@ -442,7 +442,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 .meform input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:14px}
 .meform input:focus{background:var(--surface);border-color:var(--accent)}
 .meform .btn{margin-top:18px}
-/* Formulaire « Donner mon avis » */
+/* Formulaire « Donner mon avis » */
 .fbnote{display:flex;gap:6px;margin:4px 0 2px}
 .fbnote label{flex:1;margin:0;display:grid;place-items:center;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-weight:700;font-size:15px;cursor:pointer}
 .fbnote input{position:absolute;opacity:0;pointer-events:none}
@@ -476,7 +476,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 .drawer .legendlist .hl:hover{background:var(--surface-2)}
 .drawer .legendlist .hl:focus-visible{outline:2px solid var(--accent)}
 .drawer .legendlist .hl.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent);font-weight:700;color:var(--ink)}
-/* Noms longs : une seule ligne, coupés par « … » ; le nom complet s’affiche dans une bulle au survol (namebubble) */
+/* Noms longs : une seule ligne, coupés par « … » ; le nom complet s’affiche dans une bulle au survol (namebubble) */
 .drawer .legendlist{grid-template-columns:minmax(0,1fr)}
 .drawer .legendlist details{min-width:0}
 .drawer .legendlist :is(div,summary) > span:not(.dot):not(.n):not(.pct){flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -645,7 +645,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
       <div class="field" id="fld-topn" hidden>
         <label for="topN"><span id="topNLbl">Branches affichées</span> : <strong id="topNVal">12</strong></label>
         <input type="range" id="topN" min="3" max="40" step="1" value="12">
-        <p class="hint" id="topNHint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
+        <p class="hint" id="topNHint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
       </div>
       <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong><br>Via Brandfetch, qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.</span></label>
       <div class="field" id="fld-ai" hidden style="margin-top:16px">
@@ -731,7 +731,7 @@ function parseDate(s){
   const d = new Date(s); return isNaN(d) ? null : d;
 }
 
-/* Localisation → ville + pays. « Paris, Île-de-France, France » donne Paris et France ; une ville seule connue donne aussi son pays */
+/* Localisation → ville + pays. « Paris, Île-de-France, France » donne Paris et France ; une ville seule connue donne aussi son pays */
 const COUNTRY_ALIASES = {
   'france':'France', 'belgique':'Belgique', 'belgium':'Belgique', 'suisse':'Suisse', 'switzerland':'Suisse', 'luxembourg':'Luxembourg',
   'royaume-uni':'Royaume-Uni', 'united kingdom':'Royaume-Uni', 'uk':'Royaume-Uni', 'england':'Royaume-Uni', 'allemagne':'Allemagne', 'germany':'Allemagne',
@@ -801,7 +801,7 @@ function proximityFrom(sig, list){
     const rows = Papa.parse(sig['messages.csv'].replace(/^\uFEFF/, ''), {header:true, skipEmptyLines:true}).data;
     rows.forEach(r => {
       const people = new Set([slugOf(r['SENDER PROFILE URL']), ...(r['RECIPIENT PROFILE URLS'] || '').split(/[,;\s]+/).map(slugOf)].filter(Boolean));
-      /* Date du dernier échange (jour seulement), pour la liste « Contacts à relancer » */
+      /* Date du dernier échange (jour seulement), pour la liste « Contacts à relancer » */
       const day = (r['DATE'] || '').slice(0, 10), okDay = /^\d{4}-\d{2}-\d{2}$/.test(day);
       people.forEach(sl => { bump(sl, 'm'); if(okDay && u[sl] && !(u[sl].t >= day)) u[sl].t = day; });
     });
@@ -831,7 +831,7 @@ function proximityFrom(sig, list){
   return Object.keys(u).length || Object.keys(n).length || hasP ? {u, n, ...(hasP ? {p:pend} : {})} : null;
 }
 const monthsSince = day => { const [y, m] = day.split('-').map(Number), n = new Date(); return (n.getFullYear() - y) * 12 + n.getMonth() + 1 - m; };
-/* « en mars 2024 », « ce mois-ci », « il y a 3 ans » */
+/* « en mars 2024 », « ce mois-ci », « il y a 3 ans » */
 function sinceFr(day){
   const mo = monthsSince(day);
   if(mo <= 0) return 'ce mois-ci';
@@ -872,7 +872,7 @@ const CIBLE_FILES = ['job applications.csv', 'company follows.csv', 'job seeker 
 const isCibleFile = b => CIBLE_FILES.includes(b) || /^saved jobs(_\d+)?\.csv$/.test(b);
 const CIBLE_KIND = {a:{lbl:'Candidature', pl:'Candidatures', w:4}, d:{lbl:'Entreprise de rêve', pl:'Entreprises de rêve', w:3}, s:{lbl:'Offre enregistrée', pl:'Offres enregistrées', w:2}, f:{lbl:'Entreprise suivie', pl:'Entreprises suivies', w:1}};
 let cibleData = null, cibleCache = null, cibleKind = '';
-/* Dates de LinkedIn : « 3/14/26, 10:05 AM » ou « Thu Jan 01 12:00:00 UTC 2026 » → « 2026-03 » */
+/* Dates de LinkedIn : « 3/14/26, 10:05 AM » ou « Thu Jan 01 12:00:00 UTC 2026 » → « 2026-03 » */
 function liMonth(s){
   s = (s || '').trim();
   let m = s.match(/^(\d{1,2})\/\d{1,2}\/(\d{2,4})/);
@@ -929,7 +929,7 @@ function cibleIndex(){
   cibleCache = {c:contacts, d:cibleData, rows:list};
   return list;
 }
-/* Ce que tu as fait avec cette entreprise, en une ligne : « Candidature : Product Manager, mars 2026 · 3 offres enregistrées · Suivie » */
+/* Ce que tu as fait avec cette entreprise, en une ligne : « Candidature : Product Manager, mars 2026 · 3 offres enregistrées · Suivie » */
 function cibleMeta(r){
   const out = [], K = r.kinds;
   if(K.a){ const last = [...K.a.items].sort((x, y) => (y.d > x.d) - (y.d < x.d))[0]; out.push(K.a.nb > 1 ? `${K.a.nb} candidatures, la dernière en ${monthFr(last.d)}` : `Candidature${last.t ? ' : ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`); }
@@ -1032,7 +1032,7 @@ function keepCard(){
   return `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé ; à éviter sur un ordinateur partagé.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Garder sur cet appareil</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
 }
-/* Section « Mon réseau » en haut du panneau : état du réseau importé et bouton pour le garder ou l’oublier */
+/* Section « Mon réseau » en haut du panneau : état du réseau importé et bouton pour le garder ou l’oublier */
 let keptAt = 0;
 function syncKeepField(){
   const sec = document.getElementById('mynet'); if(!sec) return;
@@ -1166,9 +1166,9 @@ const brandColor = name => { let h = 0; for(const ch of name) h = (h * 31 + ch.c
    token : Client ID Brandfetch (public par conception : il figure dans l’adresse de chaque image).
    Sans token, ou si l’option est décochée, les badges monogrammes s’affichent. */
 const LOGO_CONFIG = { urlTemplate:'https://cdn.brandfetch.io/domain/{domain}/w/128/h/128/fallback/404/type/icon?c={token}', token:'1idZzRfYk3Zw3y_iDaq' };
-/* Option « Logos des entreprises » : activée par défaut (choix du propriétaire), décochable dans Affichage.
+/* Option « Logos des entreprises » : activée par défaut (choix du propriétaire), décochable dans Affichage.
    Chaque logo affiché envoie le domaine de l’entreprise (et l’adresse IP du visiteur) à Brandfetch, jamais le nom d’un contact ;
-   l’utilisateur en est informé à côté de la case et dans « Tes données ». Une marque inconnue renvoie une erreur 404 : le monogramme reste affiché. */
+   l’utilisateur en est informé à côté de la case et dans « Tes données ». Une marque inconnue renvoie une erreur 404 : le monogramme reste affiché. */
 const LOGOS_KEY = 'synapses-logos-v1';
 let logosOn = true; try { logosOn = localStorage.getItem(LOGOS_KEY) !== '0'; } catch(e) {}
 const nkey = s => norm(s).replace(/['’]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -1176,10 +1176,10 @@ const nkey = s => norm(s).replace(/['’]/g, ' ').replace(/\s+/g, ' ').trim();
 /* ---------- Dictionnaire intégré entreprise → secteur ----------
    Classe sans IA (donc sans consommer de tokens) les entreprises les plus courantes dans un réseau français :
    CAC 40 et SBF 120, banques, assureurs, fonds, cabinets, ESN, start-up de la French Tech, écoles, organismes publics, grands groupes internationaux.
-   Correspondance exacte, puis par début de nom (« Capgemini Engineering » → Capgemini). */
+   Correspondance exacte, puis par début de nom (« Capgemini Engineering » → Capgemini). */
 const BUILTIN = new Map();
 let PREFIX_STOP = new Set();
-/* Marques renommées (data/entreprises.json, « alias ») : « Boursorama » → « BoursoBank » */
+/* Marques renommées (data/entreprises.json, « alias ») : « Boursorama » → « BoursoBank » */
 let ALIASES = new Map();
 /* Charge les dictionnaires (fichiers statiques du site : aucune donnée de l’utilisateur n’est envoyée) */
 async function loadDictionary(){
@@ -1200,11 +1200,11 @@ async function loadDictionary(){
   SECTOR_LABELS = [...SECTORS.map(x => x[0]), NO_SECTOR, 'Non classé'];
   FN_LABELS = [...FUNCTIONS.map(x => x[0]), FN_DEFAULT];
 }
-/* Groupe d’entreprises (data/entreprises.json, « groupes ») : « BNP Paribas Cardif » → BNP Paribas, « Freelance » → Indépendant.
-   Sans groupe connu, les écritures d’un même nom (casse, accents, « SA », « SE »…) sont réunies sous la plus fréquente. */
+/* Groupe d’entreprises (data/entreprises.json, « groupes ») : « BNP Paribas Cardif » → BNP Paribas, « Freelance » → Indépendant.
+   Sans groupe connu, les écritures d’un même nom (casse, accents, « SA », « SE »…) sont réunies sous la plus fréquente. */
 let GROUPS = [];
 function groupOf(name){ const k = nkey(name); if(!k) return ''; for(const [g, re] of GROUPS) if(re.test(k)) return g; return ''; }
-/* Clé d’écriture d’un nom : sans forme juridique (« SA », « S.A.S. »…), « Group », extension (« .fr ») ni précision après « | » */
+/* Clé d’écriture d’un nom : sans forme juridique (« SA », « S.A.S. »…), « Group », extension (« .fr ») ni précision après « | » */
 const LEGAL_END = / (s\.?a\.?s\.?u?|s\.?a\.?|s\.?e\.?|sarl|inc|ltd|llc|gmbh|ag|spa|bv|nv|plc|group|groupe)\.?$/;
 const spellKey = name => { let k = nkey(name).replace(/\s*\|.*$/, '').replace(/\.(fr|com|io|co|net|org|eu)$/, '').trim(), prev; do { prev = k; k = k.replace(LEGAL_END, '').trim(); } while(k !== prev && k.includes(' ')); return k; };
 function assignGroups(list){
@@ -1212,8 +1212,8 @@ function assignGroups(list){
   list.forEach(c => { if(!c.company) return; const k = spellKey(c.company); const m = spell.get(k) || new Map(); m.set(c.company, (m.get(c.company) || 0) + 1); spell.set(k, m); });
   const best = new Map([...spell].map(([k, m]) => [k, [...m].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0][0]]));
   /* Filiale d’une entreprise du réseau : un nom qui commence par celui d’une autre entreprise présente
-     (« Decathlon France » → Decathlon, « Bartle Business Consulting » → Bartle) lui est rattaché.
-     Préfixe le plus long, en mots entiers, d’au moins 4 lettres, jamais un mot générique (« groupe », « banque »…). */
+     (« Decathlon France » → Decathlon, « Bartle Business Consulting » → Bartle) lui est rattaché.
+     Préfixe le plus long, en mots entiers, d’au moins 4 lettres, jamais un mot générique (« groupe », « banque »…). */
   const parentOf = k => {
     const w = k.split(' ');
     for(let n = w.length - 1; n >= 1; n--){
@@ -1228,9 +1228,9 @@ function assignGroups(list){
     const k = spellKey(c.company);
     c.group = groupOf(c.company) || parentOf(k) || best.get(k) || c.company;
   });
-  /* Indépendants, entreprise non communiquée ou absente : un secteur à part, pour que « Non classé » ne garde que les vraies entreprises inconnues */
+  /* Indépendants, entreprise non communiquée ou absente : un secteur à part, pour que « Non classé » ne garde que les vraies entreprises inconnues */
   list.forEach(c => { if(!c.sectorGiven && c.sector === 'Non classé' && (!c.company || NO_COMPANY_GROUPS.has(c.group))) c.sector = NO_SECTOR; });
-  /* Entreprise inconnue mais rattachée à un groupe (« SG 29 Haussmann » → Société Générale, « Decathlon France » → Decathlon) :
+  /* Entreprise inconnue mais rattachée à un groupe (« SG 29 Haussmann » → Société Générale, « Decathlon France » → Decathlon) :
      le secteur du groupe, sinon le secteur le plus fréquent de ses autres contacts */
   const grpSec = d3.rollup(list.filter(c => c.group && c.sector !== 'Non classé' && c.sector !== NO_SECTOR), v => d3.greatest(d3.rollup(v, w => w.length, c => c.sector), e => e[1])[0], c => c.group);
   list.forEach(c => {
@@ -1241,9 +1241,9 @@ function assignGroups(list){
   assignEntities(list);
 }
 /* Entités d’un groupe (filiales listées sous le chevron) : les écritures d’un même nom sont réunies sous la plus fréquente.
-   1. accents, casse, espaces, ponctuation et forme juridique ignorés (« Societe Generale » = « Société Générale », « SwissLife » = « Swiss Life ») ;
+   1. accents, casse, espaces, ponctuation et forme juridique ignorés (« Societe Generale » = « Société Générale », « SwissLife » = « Swiss Life ») ;
    2. faute de frappe d’une lettre (deux pour un nom long), seulement entre entités d’une même société mère ;
-   3. marques renommées, d’après la liste « alias » du dictionnaire (« Boursorama » → « BoursoBank »).
+   3. marques renommées, d’après la liste « alias » du dictionnaire (« Boursorama » → « BoursoBank »).
    Le nom saisi reste affiché dans la fiche du contact ; c.entity sert à la légende, aux fiches de groupe et à la surbrillance. */
 const compactKey = s => spellKey(s).replace(/[^a-z0-9]/g, '');
 function editDist(a, b, max){
@@ -1273,7 +1273,7 @@ function assignEntities(list){
     ents.forEach((e, i) => {
       const max = e.k.length >= 12 ? 2 : e.k.length >= 6 ? 1 : 0;
       if(!max) return;
-      /* Jamais quand le dernier mot diffère et est un sigle court (« BNP Paribas CIB » ≠ « BNP Paribas CIS »), ni vers une entité plus petite */
+      /* Jamais quand le dernier mot diffère et est un sigle court (« BNP Paribas CIB » ≠ « BNP Paribas CIS »), ni vers une entité plus petite */
       const last = x => spellKey([...x.spell.keys()][0]).split(' ').pop();
       const into = ents.slice(0, i).find(b => !target.has(b.k) && b.k.length >= 6 && b.n >= e.n && editDist(e.k, b.k, max) <= max
         && !(last(e) !== last(b) && Math.min(last(e).length, last(b).length) <= 4));
@@ -1296,22 +1296,22 @@ function builtinMatch(k){
   }
   return null;
 }
-/* Variantes d’écriture : « Leboncoin.fr » → leboncoin, « Groupe Covéa » → covea,
-   « AFD - Agence Française de Développement » → afd puis agence française de développement */
+/* Variantes d’écriture : « Leboncoin.fr » → leboncoin, « Groupe Covéa » → covea,
+   « AFD - Agence Française de Développement » → afd puis agence française de développement */
 function builtinSector(k){
   if(!k) return null;
   const noTld = k.replace(/\.(fr|com|io|co|net|org|ai|eu|ch|be|ca)$/, '');
   const noLead = noTld.replace(/^(groupe|group|the) /, '');
   const parts = noLead.split(/ [-|–—:] | ?[()]/).map(s => s.trim()).filter(Boolean);
-  /* « Wilo Group », « GEZE GmbH », « Exameca SA » : sans la forme juridique ni « Group », le nom court est reconnu */
+  /* « Wilo Group », « GEZE GmbH », « Exameca SA » : sans la forme juridique ni « Group », le nom court est reconnu */
   for(const t of new Set([k, noTld, noLead, spellKey(k), ...parts])){ const r = builtinMatch(t); if(r) return r; }
   return null;
 }
 /* Domaines officiels des entreprises (data/domaines.json, chargé par loadDictionary) */
 const COMPANY_DOMAINS = new Map();
 const NOT_A_COMPANY = /\b(independant\w*|freelance\w*|self[- ]?employed|auto[- ]?entrepreneur\w*|confidenti\w*|prive|private|stealth|en recherche|open to work|^retraite\w*|retired|etudiant\w*|student|top secret|none|aucune?)\b|^[^a-z0-9]*$/;
-/* Domaine officiel d’une entreprise, pour son logo. Aucun domaine n’est deviné : « laposte.com » n’est pas La Poste,
-   et un mauvais logo est pire qu’un monogramme. Variantes reconnues : « Groupe X », « X Groupe », « X (sigle) », « A - B », début de nom. */
+/* Domaine officiel d’une entreprise, pour son logo. Aucun domaine n’est deviné : « laposte.com » n’est pas La Poste,
+   et un mauvais logo est pire qu’un monogramme. Variantes reconnues : « Groupe X », « X Groupe », « X (sigle) », « A - B », début de nom. */
 function domainOf(name){
   const k = nkey(name); if(!k || NOT_A_COMPANY.test(k)) return '';
   const noTld = k.replace(/\.(fr|com|io|co|net|org|ai|eu|ch|be|ca)$/, '');
@@ -1350,16 +1350,16 @@ function avatar(c, big){ const g = genderOf(c); return `<span class="av${big ? '
 const colorOf = c => colorFn(levelOf(c));
 
 /* Couleur d’un contact. Une dimension à beaucoup de valeurs (entreprise, formation, ville…) garde ses COLOR_MAX valeurs
-   les plus fréquentes ; les autres sont réunies en une seule grappe grise « Autres » (sinon une grappe par entreprise :
+   les plus fréquentes ; les autres sont réunies en une seule grappe grise « Autres » (sinon une grappe par entreprise :
    plus de 1 000 grappes, graphe illisible). */
 const COLOR_MAX = 10;
 let colorOther = null, colorTop = null;
 let colorLevel = c => DIMS[state.colorBy].get(c);
-/* Grappes par groupe : quand « Colorer par » a trop de valeurs (entreprise…) et diffère du regroupement, chaque groupe garde
-   une grappe pour chacune de ses HUB_MAX valeurs principales (au moins 2 contacts), les autres vont dans « Autres ».
+/* Grappes par groupe : quand « Colorer par » a trop de valeurs (entreprise…) et diffère du regroupement, chaque groupe garde
+   une grappe pour chacune de ses HUB_MAX valeurs principales (au moins 2 contacts), les autres vont dans « Autres ».
    levelMap (id du contact → grappe) est recalculé à chaque dessin du graphe. */
 const HUB_MAX = 8, LEGEND_TOP = 15, OPEN_MAX = 40; /* OPEN_MAX : au-delà, un seul cercle devient immense et les petites grappes illisibles */
-let openTop = LEGEND_TOP; /* nombre de valeurs (et de grappes) du groupe ouvert dans la légende ; « Afficher 10 grappes de plus » l’augmente */
+let openTop = LEGEND_TOP; /* nombre de valeurs (et de grappes) du groupe ouvert dans la légende ; « Afficher 10 grappes de plus » l’augmente */
 let levelMap = new Map(), colorAssign = new Map();
 const levelOf = c => levelMap.get(c.id) ?? colorLevel(c);
 function setupColor(){
@@ -1434,7 +1434,7 @@ function activeFilters(){
   FILTER_KEYS.forEach(k => state.include[k].forEach(v => out.push({k, v, label: k === 'year' ? 'Connectés en ' + v : v})));
   if(allYears.length && (state.yMin > allYears[0] || state.yMax < allYears[allYears.length - 1]))
     out.push({k:'year', v:'', label: state.yMin === state.yMax ? `Connectés en ${state.yMin}` : `Connectés de ${state.yMin} à ${state.yMax}`});
-  if(state.q) out.push({k:'q', v:'', label:`« ${state.q} »`});
+  if(state.q) out.push({k:'q', v:'', label:`« ${state.q} »`});
   return out;
 }
 function clearFilter(k, v){
@@ -1466,7 +1466,7 @@ function applyFilters(){
 
 /* ---------- Vues ----------
    Une vue = regroupement, couleurs, branches, mode, filtres, années et recherche. Jamais de contact ni de sélection.
-   « Mes vues » et la dernière vue restent dans ce navigateur ; le lien de partage encode la vue dans l’adresse (#vue=…), sans la recherche. */
+   « Mes vues » et la dernière vue restent dans ce navigateur ; le lien de partage encode la vue dans l’adresse (#vue=…), sans la recherche. */
 const VIEWS_KEY = 'synapses-views-v1', LAST_KEY = 'synapses-lastview-v1';
 let myViews = [];
 try { const v = JSON.parse(localStorage.getItem(VIEWS_KEY) || '[]'); if(Array.isArray(v)) myViews = v.filter(x => x && x.name && x.v); } catch(e) {}
@@ -1478,7 +1478,7 @@ function getView(withQ = true){
   const v = {g:state.groupBy, c:state.colorBy, t:state.topN, m:state.view, f};
   if(allYears.length && (state.yMin > allYears[0] || state.yMax < allYears[allYears.length - 1])) v.y = [state.yMin, state.yMax];
   if(withQ && state.q) v.q = state.q;
-  /* Groupe ouvert (« Banque & assurance »…) : la vue le rouvre. Jamais un contact. */
+  /* Groupe ouvert (« Banque & assurance »…) : la vue le rouvre. Jamais un contact. */
   if(/^h:/.test(state.selected || '') && state.view === 'graph') v.h = state.selected.slice(2);
   return v;
 }
@@ -1555,7 +1555,7 @@ function normView(v){
 function suggestName(){
   const parts = [DIMS[state.groupBy].label];
   FILTER_KEYS.forEach(k => { const a = [...state.include[k]]; if(a.length) parts.push(a.length > 2 ? `${a.slice(0, 2).join(', ')}…` : a.join(', ')); });
-  if(state.q) parts.push(`« ${state.q} »`);
+  if(state.q) parts.push(`« ${state.q} »`);
   if(/^h:/.test(state.selected || '')) parts.push(state.selected.slice(2));
   return parts.join(' · ').slice(0, 40);
 }
@@ -1585,7 +1585,7 @@ document.getElementById('saveView').addEventListener('submit', e => {
   const i = myViews.findIndex(x => x.name === name), v = getView();
   if(i >= 0) myViews[i].v = v; else myViews.push({name, v});
   saveViews(); inp.value = ''; renderViews();
-  toast(i >= 0 ? `Vue « ${name} » mise à jour` : `Vue « ${name} » enregistrée`);
+  toast(i >= 0 ? `Vue « ${name} » mise à jour` : `Vue « ${name} » enregistrée`);
 });
 document.getElementById('views').addEventListener('submit', e => {
   const f = e.target.closest('[data-rename]'); if(!f) return;
@@ -1600,12 +1600,12 @@ document.getElementById('views').addEventListener('click', e => {
   const pick = (x, btn) => {
     if(!x) return;
     if(btn.getAttribute('aria-checked') === 'true'){ applyView({g:'sector', c:'seniority', t:12, m:state.view, f:{}}); toast('Vue retirée : tout le réseau', true); }
-    else { applyView(x.v); toast(`Vue « ${x.name} »`, true); }
+    else { applyView(x.v); toast(`Vue « ${x.name} »`, true); }
   };
   if(p) pick(presets().find(o => o.id === p.dataset.preset), p);
   else if(m) pick(myViews[+m.dataset.myview], m);
   else if(ed){ editView = +ed.dataset.vedit; renderViews(); const i = document.querySelector('[data-rename] input'); if(i){ i.focus(); i.select(); } }
-  else if(dl){ const x = myViews[+dl.dataset.vdel]; if(x && confirm(`Supprimer la vue « ${x.name} » ?`)){ myViews.splice(+dl.dataset.vdel, 1); editView = -1; saveViews(); renderViews(); } }
+  else if(dl){ const x = myViews[+dl.dataset.vdel]; if(x && confirm(`Supprimer la vue « ${x.name} » ?`)){ myViews.splice(+dl.dataset.vdel, 1); editView = -1; saveViews(); renderViews(); } }
 });
 
 /* ---------- Classification par Claude (capacité sample) ----------
@@ -1615,7 +1615,7 @@ const AI_KEY = 'synapses-ai-v1';
 let aiStore = {co:{}, pos:{}};
 try { const s = JSON.parse(localStorage.getItem(AI_KEY) || 'null'); if(s && s.co && s.pos) aiStore = s; } catch(e) {}
 const saveAI = () => { try { localStorage.setItem(AI_KEY, JSON.stringify(aiStore)); } catch(e) {} };
-/* Nouvelles fonctions (Juridique, Enseignement & recherche…) : les postes classés « Autre » par l’ancienne version seront redemandés */
+/* Nouvelles fonctions (Juridique, Enseignement & recherche…) : les postes classés « Autre » par l’ancienne version seront redemandés */
 if(!(aiStore.v >= 2)){ for(const k of Object.keys(aiStore.pos)) if(aiStore.pos[k][0] === 'Autre') delete aiStore.pos[k]; aiStore.v = 2; saveAI(); }
 let SECTOR_LABELS = ['Non classé'], FN_LABELS = ['Autre'];
 const SEN_LABELS = SEN_ORDER.filter(s => s !== 'Non renseignée');
@@ -1656,7 +1656,7 @@ function parseLLMJson(text){
   }
   throw llmError('invalid_json');
 }
-/* Délai d’attente conseillé par le fournisseur, en secondes : en-tête retry-after, « retryDelay » de Gemini, ou « try again in 1.2s » d’OpenAI */
+/* Délai d’attente conseillé par le fournisseur, en secondes : en-tête retry-after, « retryDelay » de Gemini, ou « try again in 1.2s » d’OpenAI */
 function retryDelay(r, d, msg){
   const h = Number(r.headers.get('retry-after')); if(h > 0) return h;
   const g = (((d.error || {}).details) || []).map(x => x && x.retryDelay).find(Boolean); if(g) return parseFloat(g) || null;
@@ -1704,10 +1704,10 @@ async function callLLM(prompt, signal){
   if(!r.ok){
     const msg = JSON.stringify(d).toLowerCase();
     if(r.status === 401 || r.status === 403 || (r.status === 400 && /api[_ ]?key|authentication/.test(msg))) throw llmError('bad_key');
-    /* Vrai manque de crédit, dit explicitement : OpenAI « insufficient_quota », Anthropic « credit balance is too low » */
+    /* Vrai manque de crédit, dit explicitement : OpenAI « insufficient_quota », Anthropic « credit balance is too low » */
     if(/insufficient_quota|credit balance/.test(msg)) throw llmError('no_credit');
-    /* Limite de débit ou serveur surchargé : on attendra puis on réessaiera. Gemini répond 429 en parlant de « quota »
-       et de « billing » : ce n’est pas un manque de crédit (l’ancien diagnostic affichait à tort « crédit épuisé »). */
+    /* Limite de débit ou serveur surchargé : on attendra puis on réessaiera. Gemini répond 429 en parlant de « quota »
+       et de « billing » : ce n’est pas un manque de crédit (l’ancien diagnostic affichait à tort « crédit épuisé »). */
     if(r.status === 429 || r.status === 529 || r.status === 503 || r.status === 500) throw Object.assign(llmError('rate_limited'), {wait:retryDelay(r, d, msg)});
     if(r.status === 404) throw llmError('bad_model');
     throw llmError('upstream_error');
@@ -1768,7 +1768,7 @@ try { const s = JSON.parse(localStorage.getItem(FIX_KEY) || 'null'); if(s && s.c
 const saveFix = () => { try { localStorage.setItem(FIX_KEY, JSON.stringify(userFix)); } catch(e) {} };
 /* ---------- Dictionnaire partagé (Supabase) ----------
    Lecture : les ajouts validés au dictionnaire, téléchargés en entier (rien de l’utilisateur n’est envoyé pour les lire).
-   Écriture : seulement si l’utilisateur l’accepte (case « Partager mes corrections »). Seuls partent un nom d’entreprise
+   Écriture : seulement si l’utilisateur l’accepte (case « Partager mes corrections »). Seuls partent un nom d’entreprise
    ou un intitulé de poste et la catégorie choisie, jamais le nom, le profil ou l’email d’un contact.
    Les propositions restent en attente jusqu’à leur validation par l’administrateur (voir supabase/schema.sql). */
 const SB_URL = 'https://afvmshbacxaznhmlgkzc.supabase.co/rest/v1';
@@ -1895,7 +1895,7 @@ function applyAI(list){
   return n;
 }
 /* Économie de tokens : on n’envoie pas à Claude ce que les mots-clés reconnaissent déjà de façon fiable.
-   Un mot-clé fort (« banque », « université », « avocats »…) suffit ; un mot vague (« tech », « digital », « partners »…) part à Claude. */
+   Un mot-clé fort (« banque », « université », « avocats »…) suffit ; un mot vague (« tech », « digital », « partners »…) part à Claude. */
 const WEAK_CO = /\b(tech\w*|digital|data|labs?|apps?|platform|partners|advisory|studios?|ai|cloud|saas|group|groupe|services?|solutions?|consulting|conseil|agence|agency|\.io|\.ai)\b/g;
 const strongCo = name => !!classify(SECTORS, norm(name).replace(WEAK_CO, ' '), null);
 const strongPos = c => c.fn !== 'Autre' && c.seniority !== 'Confirmé' && c.seniority !== 'Non renseignée';
@@ -1912,11 +1912,11 @@ function fixSelect(kind, raw, opts, cur, label){
   if(!raw) return esc(cur);
   return `<select class="fixsel" data-fix="${kind}" data-raw="${esc(raw)}" aria-label="${esc(label)}">${opts.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
 }
-/* Consignes avec des numéros de catégorie : plus fiable que de recopier un libellé exact (accents, majuscules, « et » au lieu de « & ») */
+/* Consignes avec des numéros de catégorie : plus fiable que de recopier un libellé exact (accents, majuscules, « et » au lieu de « & ») */
 const numbered = labels => labels.map((l, i) => `${i + 1} = ${l}`).join(' ; ');
 const coPrompt = items => `Tu classes des entreprises par secteur d’activité.
 Secteurs (réponds par le numéro) : ${numbered(SECTOR_LABELS)}.
-Règles : choisis le secteur principal de l’entreprise. Si tu ne la connais pas, déduis-le de son nom (école, banque, cabinet, constructeur…). Une société de services numériques ou un cabinet de conseil est Conseil ; un cabinet d’avocats ou de notaires est Juridique ; un fonds, une société de gestion ou de capital-risque est Finance & investissement ; un promoteur, une foncière, une agence immobilière ou une entreprise du BTP est Immobilier & construction ; un industriel de l’alimentation ou des boissons est Agroalimentaire ; un hôtel, un restaurant, un voyagiste ou un parc de loisirs est Tourisme, hôtellerie & restauration ; une école ou un organisme public est Secteur public & éducation. Réponds ${SECTOR_LABELS.length} (Non classé) seulement si c’est vraiment impossible (par exemple « Indépendant », « Confidentiel », « Freelance »).
+Règles : choisis le secteur principal de l’entreprise. Si tu ne la connais pas, déduis-le de son nom (école, banque, cabinet, constructeur…). Une société de services numériques ou un cabinet de conseil est Conseil ; un cabinet d’avocats ou de notaires est Juridique ; un fonds, une société de gestion ou de capital-risque est Finance & investissement ; un promoteur, une foncière, une agence immobilière ou une entreprise du BTP est Immobilier & construction ; un industriel de l’alimentation ou des boissons est Agroalimentaire ; un hôtel, un restaurant, un voyagiste ou un parc de loisirs est Tourisme, hôtellerie & restauration ; une école ou un organisme public est Secteur public & éducation. Réponds ${SECTOR_LABELS.length} (Non classé) seulement si c’est vraiment impossible (par exemple « Indépendant », « Confidentiel », « Freelance »).
 Réponds uniquement par un tableau JSON, un objet par entreprise, dans l’ordre : [{"i": 1, "s": 3}]
 
 Entreprises :
@@ -1925,13 +1925,13 @@ const posPrompt = items => `Tu analyses des intitulés de poste, en français ou
 Pour chacun, donne :
 - "f" : le numéro de la fonction : ${numbered(FN_LABELS)}.
 - "n" : le numéro de la séniorité : 1 = Junior (stagiaire, alternant, junior, débutant) ; 2 = Confirmé (contributeur sans encadrement) ; 3 = Senior (senior, lead, expert, principal, sans équipe) ; 4 = Manager (encadre une équipe) ; 5 = Direction (directeur, head of, VP) ; 6 = Dirigeant (CEO, DG, fondateur, président, associé dirigeant).
-Un « Product Manager » ou un « Chef de projet » sans équipe est Confirmé. Un indépendant ou freelance est Senior sauf indication contraire.
-Pour la fonction, sers-toi de tout indice (domaine, métier, spécialité, même en anglais ou abrégé). Réponds ${FN_LABELS.length} (Autre) seulement si l’intitulé ne contient vraiment aucun indice de métier (par exemple « Manager », « Responsable », « Associate » tout court).
+Un « Product Manager » ou un « Chef de projet » sans équipe est Confirmé. Un indépendant ou freelance est Senior sauf indication contraire.
+Pour la fonction, sers-toi de tout indice (domaine, métier, spécialité, même en anglais ou abrégé). Réponds ${FN_LABELS.length} (Autre) seulement si l’intitulé ne contient vraiment aucun indice de métier (par exemple « Manager », « Responsable », « Associate » tout court).
 Réponds uniquement par un tableau JSON, un objet par intitulé, dans l’ordre : [{"i": 1, "f": 2, "n": 2}]
 
 Intitulés :
 ${items.map((x, i) => `${i + 1}. ${x}`).join('\n')}`;
-/* Accepte un numéro (1, "1") ou un libellé approchant (« energie et industrie ») */
+/* Accepte un numéro (1, "1") ou un libellé approchant (« energie et industrie ») */
 const lblKey = s => norm(s).replace(/\bet\b|&/g, '').replace(/[^a-z0-9]/g, '');
 function pickLabel(v, labels){
   if(v == null) return null;
@@ -2011,7 +2011,7 @@ function syncAIField(){
   if(f.hidden) return;
   const nc = contacts.filter(c => c.sector === 'Non classé').length, b = document.getElementById('aiBtn');
   document.getElementById('aiHint').textContent = aiRun ? 'Classification en cours…'
-    : `${nc ? `${nc} contact${nc > 1 ? 's' : ''} en « Non classé » (${pct(nc, contacts.length)}). ` : 'Tous tes contacts ont un secteur. '}Une IA (ta clé Claude, ChatGPT ou Gemini) peut classer les entreprises et postes non reconnus.`;
+    : `${nc ? `${nc} contact${nc > 1 ? 's' : ''} en « Non classé » (${pct(nc, contacts.length)}). ` : 'Tous tes contacts ont un secteur. '}Une IA (ta clé Claude, ChatGPT ou Gemini) peut classer les entreprises et postes non reconnus.`;
   b.dataset.act = sampleFn ? 'ai' : 'aisetup';
   b.textContent = sampleFn ? 'Affiner avec Claude' : 'Classer avec une IA';
   b.disabled = !!aiRun;
@@ -2074,8 +2074,8 @@ function wrapLabel(nm, max){
   const cut = x => x.length > max * 1.6 ? x.slice(0, Math.round(max * 1.6) - 1).trimEnd() + '…' : x;
   return [cut(best.a), cut(best.b)];
 }
-/* Curseur « Branches affichées » : nombre de groupes autour de « Moi » ; quand un groupe est ouvert dans la légende,
-   il règle le nombre de grappes de ce groupe (openTop), comme « Afficher 10 grappes de plus » */
+/* Curseur « Branches affichées » : nombre de groupes autour de « Moi » ; quand un groupe est ouvert dans la légende,
+   il règle le nombre de grappes de ce groupe (openTop), comme « Afficher 10 grappes de plus » */
 let openHubInfo = null, lastHubTotal = 0;
 function syncTopN(total){
   const f = document.getElementById('fld-topn'), r = document.getElementById('topN');
@@ -2087,7 +2087,7 @@ function syncTopN(total){
     f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, Math.min(tot, OPEN_MAX)); r.value = n;
     lbl.textContent = `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
     document.getElementById('topNVal').textContent = n >= tot ? `toutes (${tot})` : `${n} sur ${tot}`;
-    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, la plus grosse à midi, jusqu’à ${OPEN_MAX} ; le reste dans « autres ».`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    hint.textContent = `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, la plus grosse à midi, jusqu’à ${OPEN_MAX} ; le reste dans « autres ».`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
@@ -2099,7 +2099,7 @@ function syncTopN(total){
   document.getElementById('topNVal').textContent = n >= total ? `toutes (${total})` : `${n} sur ${total}`;
 }
 function updateOverview(){ const b = document.getElementById('overview'); if(b) b.hidden = state.view !== 'graph' || zk <= fitK * 1.2; }
-/* Borne basse sous le zoom de cadrage d’un grand réseau (~0,07) : sinon « − » ramenait à 0,15, c’est-à-dire zoomait */
+/* Borne basse sous le zoom de cadrage d’un grand réseau (~0,07) : sinon « − » ramenait à 0,15, c’est-à-dire zoomait */
 const zoom = d3.zoom().scaleExtent([0.02, 5]).on('zoom', e => { root.attr('transform', e.transform); zk = e.transform.k; styleLabels(); sizePins(); hideTip(); updateOverview(); });
 svg.call(zoom).on('dblclick.zoom', null).on('click', e => { if(e.target === svg.node()) clearSelection(); });
 
@@ -2116,7 +2116,7 @@ function releaseColleagues(){
   gColl.selectAll('*').remove(); collSel = null; tipSel = null; collLbl = null; collSide = null;
   setXY(); sim.alpha(0.5).restart(); positionLabels();
 }
-/* Étiquette « N collègues chez … » : hors du cercle de la grappe, du premier côté libre (dessous, dessus, droite, gauche),
+/* Étiquette « N collègues chez … » : hors du cercle de la grappe, du premier côté libre (dessous, dessus, droite, gauche),
    sans toucher le nœud du groupe, sa jauge ni son nom */
 let collSide = null;
 function collPlace(kTarget){
@@ -2273,7 +2273,7 @@ function styleLabels(){
   /* Chiffres des groupes : taille compensée au dézoom, sans déborder du cercle */
   /* Nombre au centre d’un groupe : environ la moitié du rayon, au moins 13 px à l’écran, et toujours dans le cercle selon son nombre de chiffres */
   if(countSel) countSel.filter(d => d.type === 'hub').style('font-size', d => { const fit = d.r * 1.55 / Math.max(2, String(d.count).length * 0.62); return `${Math.min(fit, Math.max(d.r * 0.5, 13 / k))}px`; });
-  /* Rond « Moi » : au dézoom, il garde au moins ~120 % de sa taille d’écran normale, pour rester lisible au centre du graphe */
+  /* Rond « Moi » : au dézoom, il garde au moins ~120 % de sa taille d’écran normale, pour rester lisible au centre du graphe */
   /* … mais jamais au point de toucher le groupe le plus proche (son cercle pointillé ou ses grappes) : on garde au moins
      ~28 px de branche visible entre les deux */
   const meN = nodes.find(n => n.type === 'me');
@@ -2282,7 +2282,7 @@ function styleLabels(){
     const mx = meN.fx ?? meN.x, my = meN.fy ?? meN.y, hubs = nodes.filter(n => n.type === 'hub');
     const room = hubs.length ? d3.min(hubs, h => Math.hypot(h.ax - mx, h.ay - my) - (envR(h) || h.outer || h.r)) - 22 / zk : Infinity;
     meF = Math.max(1, Math.min(meF, room / meN.r));
-    /* Groupe seul affiché : la bulle est la vedette, « Moi » plus discret */
+    /* Groupe seul affiché : la bulle est la vedette, « Moi » plus discret */
     if(hubs.length === 1) meF = 0.8 / zk;
   }
   if(nodeSel) nodeSel.filter(d => d.type === 'me').attr('r', d => d.r * meF);
@@ -2294,12 +2294,12 @@ function styleLabels(){
   layoutLabels();
   positionLabels();
 }
-/* Extrémités d’un trait. La branche « Moi » → groupe ouvert (ses grappes en cercle autour de lui) s’arrête sur le fin cercle
+/* Extrémités d’un trait. La branche « Moi » → groupe ouvert (ses grappes en cercle autour de lui) s’arrête sur le fin cercle
    qui entoure ces grappes, au lieu de les traverser jusqu’au centre */
 /* Groupe dont le nom et les chiffres sont affichés dans le disque central (drawHubCenter) */
 /* Pas pendant la sélection d’un contact : son cercle de collègues prend la place et le disque le cacherait */
 const hubCentered = d => !!(envR(d) && d.inner > d.r * 2.5 && /* place suffisante pour un disque lisible ; sinon le rond et le nom habituels */ !/^c:/.test(state.selected || '') && state.groupBy !== 'company');
-/* Groupe ouvert dans la légende ou sélectionné, avec ses grappes tout autour : la branche « Moi » s’arrête sur le cercle qui les entoure */
+/* Groupe ouvert dans la légende ou sélectionné, avec ses grappes tout autour : la branche « Moi » s’arrête sur le cercle qui les entoure */
 /* Aussi quand ce groupe est seul affiché (filtre sur un secteur) */
 let soleHub = false; const FEW_HUBS = 16;
 const envR = hn => hn.type === 'hub' && hn.blobs && hn.blobs.length > 1 && ((openHubInfo && hn.key === openHubInfo.key) || ((state.selected === hn.id || soleHub || legendOpen.has('g:' + hn.key)) && !hn.arc)) ? hn.outer + 8 : 0;
@@ -2326,7 +2326,7 @@ function ticked(){
   if(needFit && sim.alpha() < 0.06){ needFit = false; if(!state.selected) fit(); }
 }
 
-/* Branches réparties à angles égaux autour de « Moi », du plus petit au plus grand groupe, dans le sens horaire depuis midi */
+/* Branches réparties à angles égaux autour de « Moi », du plus petit au plus grand groupe, dans le sens horaire depuis midi */
 function layoutHubs(hubs, cx, cy, meR){
   const sorted = [...hubs].sort((a, b) => a.count - b.count || a.key.localeCompare(b.key, 'fr'));
   const n = sorted.length;
@@ -2354,7 +2354,7 @@ function layoutHubs(hubs, cx, cy, meR){
       if(dth === 0) dth = 2 * Math.PI;
       Rp = Math.max(Rp, (room(a) + room(b) + GAP) / (2 * Math.sin(dth / 2)));
     }
-    /* Écart entre « Moi » et le cercle pointillé : une vraie branche visible ; un groupe seul (filtre) reste près de « Moi » (une longue branche semblait vide) */
+    /* Écart entre « Moi » et le cercle pointillé : une vraie branche visible ; un groupe seul (filtre) reste près de « Moi » (une longue branche semblait vide) */
     tierR[t] = Math.max(Rp, meR + maxRoomT[t] + (n === 1 ? 25 : soleHub ? 170 : 90));
   }
   const minSep = stagger ? (maxRoomT[0] + maxRoomT[1]) * 0.6 : 0;
@@ -2433,7 +2433,7 @@ function applyLayout(){
     const subs = levels.map(lv => ({lv, arr:byName(byLvl.get(lv) || [])})).filter(s => s.arr.length)
       .sort((a, b) => a.arr.length - b.arr.length || levels.indexOf(a.lv) - levels.indexOf(b.lv));
     const c = step * 0.7;
-    /* Même avec un seul niveau (ex. filtre « Manager »), les contacts forment une vraie grappe reliée au groupe :
+    /* Même avec un seul niveau (ex. filtre « Manager »), les contacts forment une vraie grappe reliée au groupe :
        la sélection d’un profil le place toujours au centre de sa grappe */
     if(!byLevel || subs.length === 0){
       /* Un seul niveau : contacts serrés en tournesol autour du groupe */
@@ -2458,15 +2458,15 @@ function applyLayout(){
         });
       };
       /* Un seul cercle, quel que soit le nombre de grappes (choix de Vincent : ni anneaux ni bouquet). La grappe la plus proche
-         reste à distance de la jauge du groupe ; « autres » est placée en dernier */
+         reste à distance de la jauge du groupe ; « autres » est placée en dernier */
       /* Même ordre que la légende : la plus grosse à midi, puis de plus en plus petites dans le sens horaire (à nombre égal, ordre alphabétique) */
       const ring = [...subs].sort((a, b) => (a.lv === colorOther) - (b.lv === colorOther) || b.arr.length - a.arr.length || String(a.lv).localeCompare(String(b.lv), 'fr'));
       const tot = d3.sum(ring, s => s.br + g / 2);
       let D = hn.r + 12 + d3.max(ring, s => s.br);
-      /* Peu de grappes : serrées en arc du côté extérieur (à l’opposé de « Moi »), au lieu d’être réparties tout autour du groupe,
-         où l’une d’elles se retrouvait entre le groupe et « Moi », traversée par la branche. Rotation appliquée plus bas (hn.arc) */
+      /* Peu de grappes : serrées en arc du côté extérieur (à l’opposé de « Moi »), au lieu d’être réparties tout autour du groupe,
+         où l’une d’elles se retrouvait entre le groupe et « Moi », traversée par la branche. Rotation appliquée plus bas (hn.arc) */
       const arcTh = ring.map(s => 2 * Math.asin(Math.min(1, (s.br + g / 2) / D))), arcSum = d3.sum(arcTh);
-      /* Une seule grappe aussi : posée du côté extérieur, jamais entre le groupe et « Moi ». Quand les groupes ont tous leur cercle
+      /* Une seule grappe aussi : posée du côté extérieur, jamais entre le groupe et « Moi ». Quand les groupes ont tous leur cercle
          pointillé (soleHub), plusieurs grappes restent en cercle complet : même design pour tous, la branche s’arrête au pointillé */
       hn.arc = ring.length === 1 || (!soleHub && arcSum <= 2 * Math.PI * 0.6);
       if(hn.arc){
@@ -2519,7 +2519,7 @@ function drawRings(){
   if(selBlob) gRings.selectAll('circle.blob').filter(d => d.key === selBlob.key).raise();
   drawPins(data);
   spokeHot(null);
-  /* Fin cercle autour des grappes du groupe ouvert : la branche « Moi » s’y raccroche */
+  /* Fin cercle autour des grappes du groupe ouvert : la branche « Moi » s’y raccroche */
   drawHubCenter();
   /* Jauge circulaire autour de chaque groupe : sa part des contacts affichés */
   const hubs = nodes.filter(n => n.type === 'hub');
@@ -2533,7 +2533,7 @@ function drawRings(){
 }
 /* Pastille logo de chaque grappe du groupe ouvert, quand on colore par entreprise : posée juste à l’extérieur de la grappe,
    côté extérieur du cercle (toujours libre), de taille fixe à l’écran. Logo Brandfetch si l’option est cochée et le domaine connu,
-   sinon l’initiale sur la couleur de la grappe ; pas de pastille pour « autres », ni quand deux pastilles se toucheraient. */
+   sinon l’initiale sur la couleur de la grappe ; pas de pastille pour « autres », ni quand deux pastilles se toucheraient. */
 function drawPins(data){
   const pd = state.colorBy === 'company' && openHubInfo ? data.filter(d => d.hub.key === openHubInfo.key && d.lv !== colorOther) : [];
   const sel = gPins.selectAll('g.pin').data(pd, d => d.key).join(enter => {
@@ -2562,7 +2562,7 @@ function drawPins(data){
 function drawEnvelope(){
   gRings.selectAll('circle.envelope').data(nodes.filter(n => n.type === 'hub' && envR(n)), d => d.id).join('circle').attr('class', 'envelope')
     .attr('r', envR).attr('cx', d => d.ax).attr('cy', d => d.ay);
-  /* Branches « Moi » recalculées tout de suite (la sélection ne fait pas bouger les nœuds) */
+  /* Branches « Moi » recalculées tout de suite (la sélection ne fait pas bouger les nœuds) */
   if(linkSel) linkSel.filter(l => l.me && typeof l.target === 'object').each(function(l){ const [x1, y1, x2, y2] = linkEnds(l); this.setAttribute('x1', x1); this.setAttribute('y1', y1); this.setAttribute('x2', x2); this.setAttribute('y2', y2); });
 }
 function drawHubCenter(){
@@ -2615,7 +2615,7 @@ function setXY(){
 
 /* Au-delà de la palette (groupe ouvert avec plus de 15 grappes) : teintes réparties selon l’angle d’or, jamais déjà utilisées dans le groupe */
 function extraColor(used){ for(let i = 0; i < 360; i++){ const c = `hsl(${Math.round((i * 137.508 + 20) % 360)} 55% 46%)`; if(!used.has(c)) return c; } return GREY; }
-/* Tous les groupes autour de « Moi » ont la même taille : leur poids se lit par la jauge, la teinte, l’épaisseur de branche et le pourcentage */
+/* Tous les groupes autour de « Moi » ont la même taille : leur poids se lit par la jauge, la teinte, l’épaisseur de branche et le pourcentage */
 const HUB_R = 30;
 function renderGraph(vis){
   openHubInfo = null;
@@ -2624,7 +2624,7 @@ function renderGraph(vis){
   const dim = DIMS[state.groupBy];
   const raw = d3.rollup(vis, v => v.length, dim.get);
   const min = dim.minHub || 1, other = dim.other || 'Autres';
-  /* Top N : seuls les N plus grands groupes ont leur branche, les autres sont réunis dans « Autres » */
+  /* Top N : seuls les N plus grands groupes ont leur branche, les autres sont réunis dans « Autres » */
   const eligible = [...raw].filter(([k, n]) => n >= min).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'fr'));
   const keepKeys = new Set(eligible.slice(0, state.topN).map(([k]) => k));
   const otherKeys = [...raw.keys()].filter(k => !keepKeys.has(k));
@@ -2635,7 +2635,7 @@ function renderGraph(vis){
   const w = W(), h = H();
   const keep = o => { const p = pos.get(o.id); if(p){ o.x = p.x; o.y = p.y; } else { o.x = w / 2 + (Math.random() - .5) * 240; o.y = h / 2 + (Math.random() - .5) * 240; } return o; };
   const hubNodes = [...hubCount].map(([k, n]) => keep({id:'h:' + k, type:'hub', key:k, count:n, share:n / Math.max(1, vis.length), r:HUB_R}));
-  /* Peu de groupes affichés (filtres) : chacun a le design « groupe ouvert » (cercle pointillé, branche arrêtée dessus) */
+  /* Peu de groupes affichés (filtres) : chacun a le design « groupe ouvert » (cercle pointillé, branche arrêtée dessus) */
   soleHub = hubNodes.length <= FEW_HUBS;
   const otherHub = hubNodes.find(hn => hn.key === other && !keepKeys.has(other));
   if(otherHub) otherHub.others = otherKeys.map(k => [k, raw.get(k)]).sort((a, b) => b[1] - a[1]);
@@ -2648,7 +2648,7 @@ function renderGraph(vis){
   if(colorTop && state.groupBy !== state.colorBy){
     const get = DIMS[state.colorBy].get, hubTops = [];
     /* Groupe ouvert dans la légende : une grappe pour chacune des LEGEND_TOP valeurs qu’elle liste (au lieu de HUB_MAX) */
-    /* Groupe « ouvert » : celui déplié dans la légende, sinon celui sélectionné dans le graphe (sa fiche est ouverte) */
+    /* Groupe « ouvert » : celui déplié dans la légende, sinon celui sélectionné dans le graphe (sa fiche est ouverte) */
     const openHub = [...legendOpen].find(x => x.startsWith('g:')) || (/^h:/.test(state.selected || '') ? 'g:' + state.selected.slice(2) : null);
     d3.group(cNodes, n => n.hub).forEach((ms, hid) => {
       const cnt = d3.rollup(ms, v => v.length, n => get(n.c));
@@ -2725,7 +2725,7 @@ function renderGraph(vis){
       if(d.type !== 'me'){ t.text(d.count); return; }
       const nm = (mp.name || '').trim();
       if(!nm){ t.text('Moi'); return; }
-      /* Groupe seul affiché : « Moi » est réduit, ses initiales tiennent dans le rond */
+      /* Groupe seul affiché : « Moi » est réduit, ses initiales tiennent dans le rond */
       if(hubNodes.length === 1){ t.text(nm.split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')); return; }
       t.text(null);
       const parts = nm.split(/\s+/), cut = s => s.length > 12 ? s.slice(0, 11) + '…' : s;
@@ -2739,7 +2739,7 @@ function renderGraph(vis){
     .each(function(d){
       const t = d3.select(this); t.text(null);
       /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
-      /* Sur téléphone, le nom entier sur deux lignes coupées entre deux mots (« Tourisme, hôtellerie » / « & restauration ») plutôt que tronqué */
+      /* Sur téléphone, le nom entier sur deux lignes coupées entre deux mots (« Tourisme, hôtellerie » / « & restauration ») plutôt que tronqué */
       const nm = d.others ? `${d.key} (${d.others.length})` : d.key;
       const lines = narrowScreen() ? wrapLabel(nm, 16) : [nm.length > 40 ? nm.slice(0, 39).trimEnd() + '…' : nm];
       t.append('tspan').attr('class', 'lblName').text(lines[0]);
@@ -2784,7 +2784,7 @@ function renderGraph(vis){
     .force('charge', null)
     .force('collide', null);
   setXY();
-  /* Les branches « Moi » sont recalculées au prochain tick (le groupe ouvert a pu changer sans que rien ne bouge) */
+  /* Les branches « Moi » sont recalculées au prochain tick (le groupe ouvert a pu changer sans que rien ne bouge) */
   nodes.forEach(n => { if(n.type === 'me') n._rx = undefined; });
   sim.alpha(pos.size ? 0.6 : 1).restart();
 }
@@ -2818,8 +2818,8 @@ function fit(){
   const px = n => n.ax ?? n.fx ?? n.x, py = n => n.ay ?? n.fy ?? n.y;
   /* Cadrage qui inclut les noms des groupes (largeur réelle à l’écran) : aucun nom coupé au bord */
   const vb = viewport();
-  /* « Moi » est dessiné plus grand au dézoom : on lui réserve de la place pour qu’il ne soit pas coupé au bord */
-  /* Un seul groupe affiché : il prend toute la place ; seul le centre de « Moi » est gardé dans le cadre (Moi à moitié visible au bout de la branche) */
+  /* « Moi » est dessiné plus grand au dézoom : on lui réserve de la place pour qu’il ne soit pas coupé au bord */
+  /* Un seul groupe affiché : il prend toute la place ; seul le centre de « Moi » est gardé dans le cadre (Moi à moitié visible au bout de la branche) */
   const solo = nodes.filter(n => n.type === 'hub').length === 1;
   const base = nodes.map(n => { const rr = n.type === 'me' ? (solo ? 0 : n.r * 2) : n.type === 'hub' && envR(n) ? envR(n) + 4 : n.r; return {x0:px(n) - rr, x1:px(n) + rr, y0:py(n) - rr, y1:py(n) + rr, l:0, r:0, t:0, b:0}; });
   const M = 14;
@@ -2876,7 +2876,7 @@ function clearFocus(){ if(nodeSel){ nodeSel.classed('dim', false); linkSel.class
 function select(id){
   const wasHub = /^h:/.test(state.selected || '');
   releaseColleagues(); state.selected = id; if(nodeSel) nodeSel.classed('sel', n => n.id === id); if(badgeSel) badgeSel.classed('sel', n => n.id === id); if(nodes.length){ drawHubCenter(); sizePins(); } styleLabels();
-  /* Groupe ouvert ou refermé : la vue correspondante est cochée ou décochée dans « Mes vues » */
+  /* Groupe ouvert ou refermé : la vue correspondante est cochée ou décochée dans « Mes vues » */
   if(nodes.length && (wasHub || /^h:/.test(id || ''))) renderViews();
 }
 /* Après un nouveau rendu (filtre, redimensionnement…), on réapplique la surbrillance et le cercle de collègues de la sélection */
@@ -2914,7 +2914,7 @@ function zoomToNode(n){
   if(!n || state.view !== 'graph') return;
   const mobile = window.matchMedia('(max-width:760px)').matches;
   const open = drawer.classList.contains('open');
-  /* Téléphone, fiche ouverte : le haut du graphe est occupé par le bouton « Vue d’ensemble », on cadre en dessous */
+  /* Téléphone, fiche ouverte : le haut du graphe est occupé par le bouton « Vue d’ensemble », on cadre en dessous */
   const topRes = open && mobile ? 56 : 0;
   const vb = open ? {x:0, y:topRes, w:W(), h:H()} : viewport();
   const lgEl = document.getElementById('legend');
@@ -2989,13 +2989,13 @@ function showTip(e, d){
   tip.classList.add('on');
 }
 function hideTip(){ tip.classList.remove('on'); }
-/* Allume les traits groupe → grappe dont la clé (« groupe|valeur ») est dans keys ; null les éteint tous */
+/* Allume les traits groupe → grappe dont la clé (« groupe|valeur ») est dans keys ; null les éteint tous */
 /* L’entreprise ou la filiale choisie dans la légende (legendHL) garde son trait allumé, survol ou pas */
 function spokeHot(keys){
   const pin = legendHL && state.view === 'graph' ? new Set(legendNodes(legendHL.kind, legendHL.v, legendHL.g).map(n => n.hub + '|' + levelOf(n.c))) : null;
   gRings.selectAll('line.spoke').classed('hot', d => (!!keys && keys.has(d.key)) || (!!pin && pin.has(d.key)));
 }
-/* Clic sur une grappe : comme un clic sur sa valeur dans la légende (surbrillance et zoom) ; la grappe « autres » se comporte comme le fond */
+/* Clic sur une grappe : comme un clic sur sa valeur dans la légende (surbrillance et zoom) ; la grappe « autres » se comporte comme le fond */
 function blobClick(e, d){
   e.stopPropagation(); hideTip();
   if(d.lv === colorOther || e.currentTarget.classList.contains('dim')){ clearSelection(); return; }
@@ -3017,7 +3017,7 @@ function showBlobTip(e, d){
 }
 
 /* ---------- Legend, panel, list ---------- */
-/* Tri par nombre décroissant, valeurs « Autres » et non renseignées en dernier ; une dimension ordonnée (séniorité, année…) garde son ordre */
+/* Tri par nombre décroissant, valeurs « Autres » et non renseignées en dernier ; une dimension ordonnée (séniorité, année…) garde son ordre */
 /* byCount : toujours par nombre décroissant, même pour une dimension ordonnée (légende en arbre : même ordre que les grappes du graphe) */
 function sortDesc(vals, counts, byCount){
   const d = DIMS[state.colorBy];
@@ -3028,7 +3028,7 @@ function sortDesc(vals, counts, byCount){
 }
 const legendOpen = new Set();
 /* Filiale de la légende : un clic met ses contacts en surbrillance dans le graphe, un second clic l’annule */
-let legendHL = null; /* {kind:'v', v} : valeur de « Colorer par » (société mère…) ; {kind:'e', v} : filiale */
+let legendHL = null; /* {kind:'v', v} : valeur de « Colorer par » (société mère…) ; {kind:'e', v} : filiale */
 const subLi = (e, n, total) => `<li><button type="button" class="lgsubbtn" data-lghl="${esc(e)}" aria-pressed="${!!legendHL && legendHL.kind === 'e' && legendHL.v === e}" title="Voir les contacts de ${esc(e)} dans le graphe"><span>${esc(e)}</span><span class="n">${n}</span><span class="pct">${total ? pct(n, total) : ''}</span></button></li>`;
 /* Remonter dans la légende en arbre : 0 = tout le réseau, 1 = le groupe, 2 = la société mère d’une filiale */
 function legendUp(lvl, v){
@@ -3039,7 +3039,7 @@ function legendUp(lvl, v){
 }
 /* Contacts d’une valeur (kind 'v') ou d’une filiale (kind 'e') ; secteur ouvert dans la légende : seuls ceux de ce secteur
    (BNP Paribas a aussi des contacts en Immobilier, en Finance…) */
-/* Contacts d’une valeur de la légende ; grp : le groupe de la ligne cliquée (« Dirigeant » dans Conseil), sinon le groupe ouvert */
+/* Contacts d’une valeur de la légende ; grp : le groupe de la ligne cliquée (« Dirigeant » dans Conseil), sinon le groupe ouvert */
 function legendNodes(kind, v, grp){
   const get = DIMS[state.colorBy].get;
   let ms = nodes.filter(n => n.type === 'c' && (kind === 'e' ? entityOf(n.c) === v : get(n.c) === v));
@@ -3086,7 +3086,7 @@ function zoomToNodes(ms){
   const t = d3.zoomIdentity.translate(vb.x + vb.w / 2 - k * (L + R) / 2, vb.y + vb.h / 2 - k * (T + B) / 2).scale(k);
   (reduceMotion ? svg : svg.transition().duration(700).ease(d3.easeCubicInOut)).call(zoom.transform, t);
 }
-/* Ligne « N autres » d’un groupe : un chevron déplie toutes les valeurs restantes (triées), avec une recherche ;
+/* Ligne « N autres » d’un groupe : un chevron déplie toutes les valeurs restantes (triées), avec une recherche ;
    chaque valeur est cliquable comme les autres (surbrillance et zoom) */
 const legendFind = new Map();
 function restRow(h, others, cnt, total){
@@ -3104,7 +3104,7 @@ document.addEventListener('input', e => {
   f.parentNode.querySelectorAll('li[data-name]').forEach(li => { li.hidden = !!t && !li.dataset.name.includes(t); });
 });
 /* Légende en arbre (regroupement ≠ couleur) : la liste des groupes (secteurs…), du plus grand au plus petit ;
-   un clic sur un groupe déplie ses valeurs de « Colorer par » (entreprises…), un clic sur une valeur la filtre */
+   un clic sur un groupe déplie ses valeurs de « Colorer par » (entreprises…), un clic sur une valeur la filtre */
 function legendTree(vis){
   const gdim = DIMS[state.groupBy], cdim = DIMS[state.colorBy], other = gdim.other || 'Autres';
   const canFilter = isFilterDim(state.colorBy), sel = state.include[state.colorBy] || new Set();
@@ -3152,7 +3152,7 @@ function legendTree(vis){
   $('#legend').hidden = !vis.length;
 }
 function updateLegend(vis){
-  if(nodes.length) drawEnvelope(); /* un groupe ouvert ou replié dans la légende change le cercle pointillé et la branche « Moi » */
+  if(nodes.length) drawEnvelope(); /* un groupe ouvert ou replié dans la légende change le cercle pointillé et la branche « Moi » */
   if(state.view === 'graph' && state.groupBy !== state.colorBy && nodes.some(n => n.type === 'hub')) return legendTree(vis);
   const cdim = DIMS[state.colorBy];
   const canFilter = isFilterDim(state.colorBy);
@@ -3201,7 +3201,7 @@ function updatePanel(vis){
 function personRow(o){
   const url = /^https:\/\//.test(o.url) ? o.url : '';
   const t = tagOf(o);
-  /* Tout s’affiche en entier (retours à la ligne, jamais de « … ») : nom, poste, valeur de « Colorer par », raisons de proximité */
+  /* Tout s’affiche en entier (retours à la ligne, jamais de « … ») : nom, poste, valeur de « Colorer par », raisons de proximité */
   const byCo = state.colorBy === 'company', val = DIMS[state.colorBy].get(o);
   const valTxt = byCo && o.company && o.company !== val ? `${val} · ${o.company}` : val;
   return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(t)}</span>` : ''}</strong><span>${esc(o.position || 'Poste non renseigné')}${!byCo && o.company ? ', ' + esc(o.company) : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Ouvrir le profil LinkedIn de ${esc(o.name)}">LinkedIn ${ICON_EXT}</a>` : isDemo ? `<button class="lk" type="button" data-act="demolink" aria-label="Profil LinkedIn de ${esc(o.name)} (contact fictif)">LinkedIn ${ICON_EXT}</button>` : ''}</li>`;
@@ -3246,7 +3246,7 @@ function syncPanelSums(){
   const c = cibleIndex().filter(r => r.n).length, r = relanceList().length;
   set('sum-explore', [c && `${c} cibles`, r && `${r} à relancer`].filter(Boolean).join(' · '));
 }
-/* Sections ouvertes ou repliées : gardées sur cet appareil ; un bouton dans un titre (« Tout effacer ») ne replie pas la section */
+/* Sections ouvertes ou repliées : gardées sur cet appareil ; un bouton dans un titre (« Tout effacer ») ne replie pas la section */
 const ACC_KEY = 'synapses-panneau-v1';
 (() => {
   let st = {}; try { st = JSON.parse(localStorage.getItem(ACC_KEY) || '{}') || {}; } catch(e) {}
@@ -3322,16 +3322,16 @@ function showContact(c){
   zoomToNode(node);
 }
 
-/* Entités réunies sous un groupe (« BNP Paribas Cardif », « BNP Paribas CIB »…), triées par nombre décroissant */
+/* Entités réunies sous un groupe (« BNP Paribas Cardif », « BNP Paribas CIB »…), triées par nombre décroissant */
 function entitiesOf(list){
   const m = d3.rollup(list.filter(c => c.company), v => v.length, entityOf);
   return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fr'));
 }
 const subRows = (subs, total, top) => subs.slice(0, 30).map(([k, n]) => `<div class="hl${top ? '' : ' sub'}" role="button" tabindex="0" data-hle="${esc(k)}"><span>${esc(k)}</span><span class="n">${n}</span><span class="pct">${pct(n, total)}</span></div>`).join('')
   + (subs.length > 30 ? `<div class="${top ? '' : 'sub'}"><span>et ${subs.length - 30} autres</span></div>` : '');
-/* Fiche d’un groupe : une ligne de la répartition (entreprise, filiale ou « autres ») met ses contacts en surbrillance
+/* Fiche d’un groupe : une ligne de la répartition (entreprise, filiale ou « autres ») met ses contacts en surbrillance
    dans le graphe ; un second clic revient au groupe entier */
-/* Contacts d’une ligne de la répartition (valeur, entité ou « autres ») parmi ceux du groupe sélectionné */
+/* Contacts d’une ligne de la répartition (valeur, entité ou « autres ») parmi ceux du groupe sélectionné */
 function rowMatch(row){
   const get = DIMS[state.colorBy].get;
   if(row.dataset.hlv != null) return n => get(n.c) === row.dataset.hlv;
@@ -3347,7 +3347,7 @@ document.addEventListener('pointerover', e => {
   const prev = drawerHover; drawerHover = row;
   if(!row && !prev) return; /* rien à restaurer : on ne touche pas aux autres surbrillances */
   if(state.selected === 'me'){
-    /* Fiche « Moi » : la valeur survolée (séniorité…) allume ses contacts dans tout le réseau */
+    /* Fiche « Moi » : la valeur survolée (séniorité…) allume ses contacts dans tout le réseau */
     if(!row || row.dataset.hlv == null){ clearFocus(); return; }
     const get = DIMS[state.colorBy].get;
     focus(new Set(nodes.filter(n => n.type === 'c' && get(n.c) === row.dataset.hlv).flatMap(n => [n.id, n.hub])));
@@ -3379,7 +3379,7 @@ function highlightRow(row){
   focus(new Set([hub.id, ...ms.map(n => n.id)]));
   spokeHot(on ? new Set(ms.map(n => hub.id + '|' + levelOf(n.c))) : null);
 }
-/* Bulle avec le nom complet au survol d’un nom coupé par « … » (répartition, légende, filtres) */
+/* Bulle avec le nom complet au survol d’un nom coupé par « … » (répartition, légende, filtres) */
 const NAME_SEL = '.drawer .legendlist :is(div,summary) > span:not(.dot):not(.n):not(.pct), .lgl, .lgsubs li span:first-child, .chip.frow .flbl';
 const bubble = Object.assign(document.createElement('div'), {className:'namebubble', role:'tooltip'});
 document.body.appendChild(bubble);
@@ -3442,7 +3442,7 @@ function showHub(h){
   zoomToNode(h);
 }
 
-/* ---------- Fiche « Moi » ---------- */
+/* ---------- Fiche « Moi » ---------- */
 const ME_KEY = 'synapses-me-v1';
 let meProfile = {};
 try { meProfile = JSON.parse(localStorage.getItem(ME_KEY) || '{}') || {}; } catch(e) { meProfile = {}; }
@@ -3454,9 +3454,9 @@ function wipeData(){
   try { Object.keys(localStorage).filter(k => k.startsWith('synapses-')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
   dropNet().then(() => location.reload());
 }
-/* ---------- « Donner mon avis » (supabase/retours.sql, choix de Vincent du 4 novembre 2026) ----------
-   Rien ne part sans clic sur « Envoyer » : le message, la note facultative, l’email seulement si la personne veut une réponse,
-   la page (« outil ») et la langue. Jamais le réseau. Le public ne peut qu’envoyer : seul Vincent lit les retours. */
+/* ---------- « Donner mon avis » (supabase/retours.sql, choix de Vincent du 4 novembre 2026) ----------
+   Rien ne part sans clic sur « Envoyer » : le message, la note facultative, l’email seulement si la personne veut une réponse,
+   la page (« outil ») et la langue. Jamais le réseau. Le public ne peut qu’envoyer : seul Vincent lit les retours. */
 function showFeedback(){
   select(null); clearFocus();
   openDrawer(`
@@ -3555,7 +3555,7 @@ function showMe(){
     </div>`}
     ${WIPE_BLOCK()}`);
   dbody.querySelectorAll('.meform input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') saveMe(); }));
-  /* Fiche « Moi » : tout le réseau, cadré dans la place laissée par la fiche (pas de zoom sur le rond « Moi ») */
+  /* Fiche « Moi » : tout le réseau, cadré dans la place laissée par la fiche (pas de zoom sur le rond « Moi ») */
   fit();
 }
 function saveMe(){
@@ -3575,20 +3575,20 @@ function showHelp(msg){
     ${msg ? `<p class="hint" style="color:#C2417A;font-weight:700">${msg}</p>` : ''}
     <h2 id="dtitle" tabindex="-1">Récupérer tes contacts LinkedIn</h2>
     <ol>
-      <li>Sur LinkedIn&nbsp;: Préférences › Confidentialité des données › « Obtenir une copie de vos données ».</li>
-      <li>Demande l’archive complète&nbsp;: ton profil, tes messages et tes candidatures enrichissent le graphe. « Relations » seule arrive plus vite, en une dizaine de minutes.</li>
+      <li>Sur LinkedIn&nbsp;: Préférences › Confidentialité des données › « Obtenir une copie de vos données ».</li>
+      <li>Demande l’archive complète&nbsp;: ton profil, tes messages et tes candidatures enrichissent le graphe. « Relations » seule arrive plus vite, en une dizaine de minutes.</li>
       <li>Importe le .zip reçu (ou dépose-le sur la page).</li>
     </ol>
     <h3>Ce que contient l’export</h3>
     <p class="pos">Pour chaque contact&nbsp;: nom, entreprise, poste, date de connexion, lien du profil, et l’email s’il l’a partagé. Secteur, fonction et séniorité en sont estimés.</p>
     <h3>Aller plus loin</h3>
-    <p class="pos">Pays, ville, formation et expérience n’y sont pas. Pour filtrer dessus, ajoute au CSV des colonnes « Localisation » (ex. « Paris, France »), « Formation », « Expérience » (en années) ou « Secteur ».</p>
+    <p class="pos">Pays, ville, formation et expérience n’y sont pas. Pour filtrer dessus, ajoute au CSV des colonnes « Localisation » (ex. « Paris, France »), « Formation », « Expérience » (en années) ou « Secteur ».</p>
     <button class="btn primary block" type="button" data-act="import" style="margin-top:18px">Importer mon export LinkedIn</button>
     ${WIPE_BLOCK()}`);
 }
 
 /* Saisie intelligente de la porte d’entrée : entreprises (groupes et entités), secteurs et écoles du réseau, trouvés
-   sans tenir compte des accents ni des majuscules, par début de mot, morceau de nom ou faute de frappe (« societe genrale ») */
+   sans tenir compte des accents ni des majuscules, par début de mot, morceau de nom ou faute de frappe (« societe genrale ») */
 let tgItems = null, tgSel = -1;
 function targetIndex(){
   if(tgItems) return tgItems;
@@ -3601,7 +3601,7 @@ function targetMatches(q, max = 8, idx = targetIndex()){
   const score = e => {
     const nv = norm(e.v);
     if(nv === t) return 100;
-    if(e.key === tk) return 95; /* même nom à l’espace ou à l’accent près (« swisslife » = « Swiss Life ») */
+    if(e.key === tk) return 95; /* même nom à l’espace ou à l’accent près (« swisslife » = « Swiss Life ») */
     if(tk.length >= 3 && e.key.startsWith(tk)) return 78 + Math.min(10, Math.log2(e.n + 1));
     if(nv.startsWith(t)) return 80;
     if(e.words.some(w => w.startsWith(t))) return 70;
@@ -3693,7 +3693,7 @@ function findEntry(exact){
   closePanel();
   const rank = ['Dirigeant','Direction','Manager','Senior','Confirmé','Junior','Non renseignée'];
   const hit = x => norm(x).includes(t);
-  /* Valeur exacte du réseau (suggestion choisie, entreprise cible) : seulement ses contacts, pas les noms qui la contiennent (« Bel » ≠ Tractebel) */
+  /* Valeur exacte du réseau (suggestion choisie, entreprise cible) : seulement ses contacts, pas les noms qui la contiennent (« Bel » ≠ Tractebel) */
   const exactOf = v => { const e = targetIndex().find(x => norm(x.v) === norm(v)); if(!e) return null; const f = {Entreprise:coOf, 'Entité':entityOf, Secteur:c => c.sector, 'École':c => c.school}[e.type]; return f ? contacts.filter(c => norm(f(c) || '') === norm(e.v)) : null; };
   let m = exactOf(raw) || contacts.filter(c => [c.company, c.group, c.entity, c.sector, c.school].some(hit));
   /* Rien d’exact : la meilleure suggestion (faute de frappe, nom approché) */
@@ -3804,7 +3804,7 @@ async function handleFiles(fileList){
 $('#file').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 $('#closeDrawer').addEventListener('click', clearSelection);
 /* Recadrer : sur ce qu’on regarde (contact sélectionné, entreprise choisie, secteur ouvert), sinon sur tout le réseau.
-   « Vue d’ensemble » reste le bouton qui ramène à tout le réseau */
+   « Vue d’ensemble » reste le bouton qui ramène à tout le réseau */
 $('#recenter').addEventListener('click', () => {
   if(state.view !== 'graph') return;
   const sel = state.selected && nodes.find(n => n.id === state.selected);
@@ -3823,7 +3823,7 @@ function zoomAnchor(){
   let p = sel ? at(px(sel), py(sel)) : null;
   if(!p && legendHL){ const ms = legendNodes(legendHL.kind, legendHL.v, legendHL.g); if(ms.length) p = at(d3.mean(ms, px), d3.mean(ms, py)); }
   if(!p){ const k = [...legendOpen].find(x => x.startsWith('g:')), hub = k && nodes.find(n => n.type === 'hub' && n.key === k.slice(2)); if(hub) p = at(px(hub), py(hub)); }
-  /* Rien de choisi : autour du rond « Moi », le centre du graphe */
+  /* Rien de choisi : autour du rond « Moi », le centre du graphe */
   if(!p){ const me = nodes.find(n => n.type === 'me'); if(me) p = at(px(me), py(me)); }
   return p || [vb.x + vb.w / 2, vb.y + vb.h / 2];
 }
@@ -3940,7 +3940,7 @@ document.addEventListener('click', e => {
   const tagBtn = e.target.closest('[data-tc]');
   if(tagBtn){
     const c = contacts.find(o => o.id === +tagBtn.dataset.tc);
-    if(c){ const now = setTag(c, tagBtn.dataset.tag); syncChips(); if(state.colorBy === 'tag' || state.groupBy === 'tag') setupColor(); render(); showContact(c); toast(now ? `Tag « ${now} » ajouté` : 'Tag retiré'); }
+    if(c){ const now = setTag(c, tagBtn.dataset.tag); syncChips(); if(state.colorBy === 'tag' || state.groupBy === 'tag') setupColor(); render(); showContact(c); toast(now ? `Tag « ${now} » ajouté` : 'Tag retiré'); }
     return;
   }
   const tl = e.target.closest('[data-year]');
