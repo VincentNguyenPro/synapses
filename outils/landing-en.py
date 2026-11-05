@@ -137,12 +137,12 @@ rep('<span>à un poste de direction</span>', '<span>in leadership roles</span>')
 
 # ---------- Réglages ----------
 rep('Les réglages qui comptent</h2>', 'The settings that matter</h2>')
-rep('<h3>Regrouper par ce que tu veux</h3><p>Secteur, entreprise, fonction, séniorité, année de connexion, ville, formation. Le graphe se reconstruit autour de toi.</p>',
-    '<h3>Group by whatever you want</h3><p>Industry, company, function, seniority, year connected, city, education. The graph rebuilds around you.</p>')
+rep('<h3>Regrouper par ce que tu veux</h3><p>Secteur, entreprise, fonction, séniorité, année de connexion, tag. Le graphe se reconstruit autour de toi.</p>',
+    '<h3>Group by whatever you want</h3><p>Industry, company, function, seniority, year connected, tag. The graph rebuilds around you.</p>')
 rep('<label>Regrouper par</label><div class="sel">Secteur <span aria-hidden="true">⌄</span></div>',
     '<label>Group by</label><div class="sel">Industry <span aria-hidden="true">⌄</span></div>')
-rep('<div class="on">Secteur</div><div>Entreprise</div><div class="hv">Fonction</div><div>Séniorité</div><div>Année de connexion</div><div>Ville</div><div>Formation</div>',
-    '<div class="on">Industry</div><div>Company</div><div class="hv">Function</div><div>Seniority</div><div>Year connected</div><div>City</div><div>Education</div>')
+rep('<div class="on">Secteur</div><div>Entreprise</div><div class="hv">Fonction</div><div>Séniorité</div><div>Année de connexion</div><div>Tag</div>',
+    '<div class="on">Industry</div><div>Company</div><div class="hv">Function</div><div>Seniority</div><div>Year connected</div><div>Tag</div>')
 rep('<h3>Colorer par un autre critère</h3><p>Chaque point prend la couleur de sa séniorité, de sa fonction ou de son année de connexion. La légende donne les comptes.</p>',
     '<h3>Color by another criterion</h3><p>Each dot takes the color of its seniority, its function or the year you connected. The legend gives the counts.</p>')
 rep('<span class="lbl">Couleur et grappes&nbsp;: séniorité</span>', '<span class="lbl">Color and clusters: seniority</span>')
@@ -150,13 +150,12 @@ rep('<h3>Garder l’essentiel, ou tout voir</h3><p>Le curseur des branches réun
     '<h3>Keep the essentials, or see it all</h3><p>The branches slider gathers small groups into “Other”, or shows your whole network.</p>')
 rep('Branches affichées&nbsp;: <span id="brv">9 sur 28</span>', 'Branches shown: <span id="brv">9 of 28</span>')
 rep('>Regroupé par entreprise</p>', '>Grouped by company</p>')
-rep('<h3>La fiche complète d’un contact</h3><p>Secteur, fonction, séniorité, ville, formation, date de connexion, et les autres contacts de son entreprise et de son école.</p>',
-    '<h3>A contact’s full profile</h3><p>Industry, function, seniority, city, education, connection date, and your other contacts from the same company and school.</p>')
+rep('<h3>La fiche complète d’un contact</h3><p>Secteur, fonction, séniorité, date de connexion, ton lien avec lui (messages, recommandations) et les autres contacts de son entreprise.</p>',
+    '<h3>A contact’s full profile</h3><p>Industry, function, seniority, connection date, your bond with them (messages, recommendations) and your other contacts at the same company.</p>')
 rep('<span>Software Engineer chez Doctolib</span>', '<span>Software Engineer at Doctolib</span>')
-rep('<dl><dt>Secteur</dt><dd>Tech &amp; logiciel</dd><dt>Fonction</dt><dd>Tech</dd><dt>Séniorité</dt><dd>Confirmé</dd><dt>Ville</dt><dd>Lyon</dd><dt>Formation</dt><dd>CentraleSupélec</dd><dt>Connectée</dt><dd>en 2019</dd></dl>',
-    '<dl><dt>Industry</dt><dd>Tech &amp; software</dd><dt>Function</dt><dd>Tech</dd><dt>Seniority</dt><dd>Mid-level</dd><dt>City</dt><dd>Lyon</dd><dt>Education</dt><dd>CentraleSupélec</dd><dt>Connected</dt><dd>in 2019</dd></dl>')
+rep('<dl><dt>Secteur</dt><dd>Tech &amp; logiciel</dd><dt>Fonction</dt><dd>Tech</dd><dt>Séniorité</dt><dd>Confirmé</dd><dt>Ton lien</dt><dd>20 messages échangés</dd><dt>Connectée</dt><dd>en 2019</dd></dl>',
+    '<dl><dt>Industry</dt><dd>Tech &amp; software</dd><dt>Function</dt><dd>Tech</dd><dt>Seniority</dt><dd>Mid-level</dd><dt>Your bond</dt><dd>20 messages exchanged</dd><dt>Connected</dt><dd>in 2019</dd></dl>')
 rep('<p class="ptitle">Aussi chez Doctolib (6)</p>', '<p class="ptitle">Also at Doctolib (6)</p>')
-rep('<p class="ptitle">Aussi de CentraleSupélec (3)</p>', '<p class="ptitle">Also from CentraleSupélec (3)</p>')
 rep('<h3>Des filtres qui se cumulent</h3><p>Coche juniors et seniors, ajoute un secteur ou une fonction&nbsp;: seuls restent les contacts qui passent tous les filtres.</p>',
     '<h3>Filters that stack up</h3><p>Tick juniors and seniors, add an industry or a function: only the contacts that pass every filter remain.</p>')
 rep('<span class="lbl">Séniorité</span>', '<span class="lbl">Seniority</span>')

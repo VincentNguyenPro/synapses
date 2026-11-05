@@ -1081,8 +1081,6 @@ function demoContacts(){
   const last = ['Martin','Bernard','Dubois','Moreau','Laurent','Simon','Michel','Lefebvre','Leroy','Roux','Garnier','Faure','Rousseau','Blanc','Guerin','Muller','Henry','Perrin','Morel','Fournier','Benali','Nguyen','Lambert','Fontaine','Chevalier','Robin','Mercier','Boyer','Diallo','Lopez'];
   const companies = ['Capgemini','Capgemini','Accenture','BNP Paribas','BNP Paribas','Société Générale','AXA','Engie','Equans','TotalEnergies','Doctolib','Doctolib','Dataiku','Back Market','Qonto','Alan','Mirakl','Contentsquare','JCDecaux','Orange','SNCF','BlaBlaCar','BlaBlaCar','L’Oréal','LVMH','Decathlon','Carrefour','Sanofi','Ubisoft','Publicis','Wavestone','Ministère de l’Économie','Station F','Atelier Kairn'];
   const positions = ['Product Manager','Product Manager','Senior Product Manager','Product Owner','Product Owner','Head of Product','Data Analyst','Data Scientist','Développeur full-stack','Software Engineer','Engineering Manager','Tech Lead','CTO','CEO & co-fondateur','Account Executive','Business Developer','Directeur commercial','Responsable marketing','Growth Marketing Manager','Consultant senior','Manager conseil','Contrôleur de gestion','Directrice financière','Talent Acquisition Manager','Chargée de recrutement','Chef de projet digital','UX Designer','Stagiaire produit','Alternant data','Directeur des opérations','Customer Success Manager','Analyste financier'];
-  const cities = ['Paris','Paris','Paris','Lyon','Lille','Nantes','Bordeaux','Marseille','Toulouse','Londres'];
-  const schools = ['HEC Paris','ESSEC','ESCP','Sciences Po','École polytechnique','CentraleSupélec','Université Paris Dauphine','EM Lyon','Sorbonne Université','Epitech','IÉSEG','NEOMA'];
   const expRange = {Junior:[0,2],Confirmé:[2,7],Senior:[6,12],Manager:[5,14],Direction:[10,20],Dirigeant:[8,25]};
   const now = new Date();
   const list = [];
@@ -1092,8 +1090,9 @@ function demoContacts(){
     let d = new Date(2013 + Math.floor(rnd() * 14), Math.floor(rnd() * 12), 1 + Math.floor(rnd() * 28));
     if(d > now) d = now;
     list.push(buildContact({first:pick(first), last:pick(last), company:pick(companies), position,
-      connected:d.toISOString().slice(0,10), location:pick(cities), school:pick(schools),
-      exp:String(Math.round(a + rnd() * (b - a)))}, i));
+      connected:d.toISOString().slice(0,10)}, i));
+    /* Ville, formation, expérience : absentes d’un vrai export LinkedIn, donc absentes de la démo (rnd() tiré quand même : mêmes contacts qu’avant) */
+    rnd(); rnd(); rnd();
   }
   return list;
 }
