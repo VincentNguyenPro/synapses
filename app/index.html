@@ -87,13 +87,36 @@ aside{grid-row:2;grid-column:1;overflow-y:auto;background:var(--surface);border-
 .section{padding:18px 18px 6px;border-bottom:1px solid var(--line)}
 .section h2{font-size:15px;font-weight:800;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:-.01em}
 .field{margin-bottom:16px}
+/* Panneau : sections repliables, résumé de leur état quand elles sont fermées */
+details.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;margin:0 0 12px;border-radius:6px}
+details.acc>summary::-webkit-details-marker{display:none}
+details.acc>summary h2{margin:0;flex:none}
+details.acc>summary::after{content:"";width:7px;height:7px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg);margin:-3px 2px 0 0;flex:none;transition:transform .15s}
+details.acc[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
+details.acc>summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+details.acc:not([open]){padding-bottom:6px}
+details.acc[open] .accsum{visibility:hidden}
+.qlink{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;margin-top:6px}
+.qlink:hover{border-color:var(--accent);background:var(--accent-soft)}
+.qlink .n{margin-left:auto;font-weight:800;color:var(--accent)}
+.qlink small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+#cibleHint,#relanceHint{margin:0}
+details.acc:not([open])>summary{margin-bottom:12px}
+.accsum{flex:1;min-width:0;font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.accsum b{color:var(--accent);font-weight:700}
+details.sub{margin:0 0 14px}
+details.sub>summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);list-style-position:inside}
+details.sub[open]>summary{margin-bottom:8px}
+#mynet{padding:12px 18px}
+.netline{display:flex;align-items:center;gap:10px;font-size:13px;margin:0}
+.netline>span:nth-child(2){flex:1;min-width:0;line-height:1.35}
+.netline .netdot{margin-top:0}
+.netline.on .netdot{background:#3E9B4F;box-shadow:0 0 0 3px rgba(62,155,79,.2)}
 #mynet{background:var(--accent-soft)}
 .netstate{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;margin:0 0 10px}
 .netstate strong{color:var(--ink)}
 .netdot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:#D9A21B;box-shadow:0 0 0 3px rgba(217,162,27,.2)}
 .netstate.on .netdot{background:#3E9B4F;box-shadow:0 0 0 3px rgba(62,155,79,.2)}
-#mynet .linkbtn{margin-bottom:12px}
-#mynet .btn.block{margin-bottom:2px}
 .vrow{display:flex;align-items:center;gap:4px;margin-bottom:6px}
 .vrow .chip{flex:1;min-width:0;justify-content:flex-start}
 .vrow .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -208,7 +231,6 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 #target{position:relative}
 .tgsug .tghead{cursor:default;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:none;padding:8px 10px 3px}
 .tgsug .tghead:hover{background:none}
-#cibleHint,#relanceHint{margin:8px 0 0}
 .invrow{display:flex;align-items:center;gap:10px;padding:6px 0}
 .invrow .who{flex:1;min-width:0;display:flex;flex-direction:column}
 .invrow .who span{font-size:12.5px;color:var(--muted)}
@@ -551,40 +573,30 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
       <strong>Affichage et filtres</strong>
       <button class="btn sm primary" id="closePanel" type="button">Voir les résultats</button>
     </div>
-    <section class="section" id="mynet" hidden>
-      <h2>Mon réseau</h2>
-      <div id="mynetBody"></div>
-    </section>
-    <section class="section" id="views">
-      <h2>Vues</h2>
-      <div class="field"><span class="lbl">Vues prêtes à l’emploi</span><div class="chips" id="presets" role="radiogroup" aria-label="Vues prêtes à l’emploi"></div></div>
-      <div class="field"><span class="lbl">Mes vues</span><div id="myViews"></div>
-        <form class="row" id="saveView" style="margin-top:8px"><input type="text" id="viewName" maxlength="40" placeholder="Nom de la vue" aria-label="Nom de la vue à enregistrer"><button class="btn" type="submit">Enregistrer</button></form>
-      </div>
+    <section class="section" id="mynet" hidden><div id="mynetBody"></div></section>
+    <details class="section acc" data-acc="explore" open>
+      <summary><h2>Explorer</h2><span class="accsum" id="sum-explore"></span></summary>
       <div class="field">
-        <button class="linkbtn" type="button" data-act="shareview">Copier le lien de cette vue</button>
-        <p class="hint" style="margin:6px 0 0">Le lien contient seulement les réglages (regroupement, couleurs, filtres), jamais tes contacts. Les entreprises ou écoles sur lesquelles tu filtres y apparaissent. La recherche n’y est pas incluse.</p>
+        <label for="target">Trouver une porte d’entrée</label>
+        <p class="hint">Qui peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
+        <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
+          <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
+        <p class="hint" id="cibleHint" hidden></p>
+        <p class="hint" id="relanceHint" hidden></p>
       </div>
-    </section>
-    <section class="section">
-      <h2>Affichage</h2>
-      <div class="field"><label for="groupBy">Regrouper par</label><select id="groupBy"></select></div>
-      <div class="field"><label for="colorBy">Colorer par</label><select id="colorBy"></select></div>
-      <div class="field" id="fld-topn" hidden>
-        <label for="topN"><span id="topNLbl">Branches affichées</span> : <strong id="topNVal">12</strong></label>
-        <input type="range" id="topN" min="3" max="40" step="1" value="12">
-        <p class="hint" id="topNHint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
+      <details class="sub"><summary>Aperçu du réseau affiché</summary><div id="summary"></div></details>
+    </details>
+    <details class="section acc" data-acc="views" id="views" open>
+      <summary><h2>Vues</h2><span class="accsum" id="sum-views"></span></summary>
+      <div class="field"><span class="lbl">Prêtes à l’emploi</span><div class="chips" id="presets" role="radiogroup" aria-label="Vues prêtes à l’emploi"></div></div>
+      <div class="field"><span class="lbl">Mes vues</span><div id="myViews"></div>
+        <form class="row" id="saveView" style="margin-top:8px"><input type="text" id="viewName" maxlength="40" placeholder="Nom de la vue actuelle" aria-label="Nom de la vue à enregistrer"><button class="btn" type="submit">Enregistrer</button></form>
+        <button class="linkbtn" type="button" data-act="shareview" style="margin-top:10px" title="Le lien contient seulement les réglages (regroupement, couleurs, filtres), jamais tes contacts. Les entreprises ou écoles sur lesquelles tu filtres y apparaissent. La recherche n’y est pas incluse.">Copier le lien de cette vue</button>
       </div>
-      <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong>, visibles en regroupant ou en colorant par entreprise. Les logos viennent de Brandfetch, qui reçoit le site web des entreprises affichées (jamais le nom de tes contacts).</span></label>
-      <div class="field" id="fld-ai" hidden style="margin-top:16px">
-        <span class="lbl">Classification par IA</span>
-        <p class="hint" id="aiHint"></p>
-        <button class="btn sm" type="button" id="aiBtn" data-act="aisetup">Classer avec une IA</button>
-      </div>
-    </section>
-    <section class="section">
-      <h2>Filtres <button class="linkbtn" id="clearAllSide" type="button" data-act="clearall" hidden>Tout effacer</button></h2>
-      <p class="hint">Sélectionne une ou plusieurs valeurs. Sans sélection, tous les contacts sont affichés.</p>
+    </details>
+    <details class="section acc" data-acc="filters">
+      <summary><h2>Filtres</h2><span class="accsum" id="sum-filters"></span><button class="linkbtn" id="clearAllSide" type="button" data-act="clearall" hidden>Tout effacer</button></summary>
+      <p class="hint">Sans sélection, tous les contacts sont affichés.</p>
       <div class="field"><span class="lbl">Secteur<small>estimé</small></span><div class="chips" id="f-sector"></div></div>
       <div class="field"><span class="lbl">Fonction<small>estimée</small></span><div class="chips" id="f-fn"></div></div>
       <div class="field"><span class="lbl">Séniorité<small>estimée</small></span><div class="chips" id="f-seniority"></div></div>
@@ -600,20 +612,24 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
         </div>
         <div id="timeline"></div>
       </div>
-    </section>
-    <section class="section">
-      <h2>Exploration</h2>
-      <div class="field">
-        <label for="target">Trouver une porte d’entrée</label>
-        <p class="hint">Qui, dans ton réseau, peut t’ouvrir une entreprise, un secteur ou une école&nbsp;?</p>
-        <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. JCDecaux, banque, HEC" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
-          <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
-        <p class="hint" id="cibleHint" hidden></p>
-        <p class="hint" id="relanceHint" hidden></p>
+    </details>
+    <details class="section acc" data-acc="display">
+      <summary><h2>Affichage</h2><span class="accsum" id="sum-display"></span></summary>
+      <div class="field"><label for="groupBy">Regrouper par</label><select id="groupBy"></select></div>
+      <div class="field"><label for="colorBy">Colorer par</label><select id="colorBy"></select></div>
+      <div class="field" id="fld-topn" hidden>
+        <label for="topN"><span id="topNLbl">Branches affichées</span> : <strong id="topNVal">12</strong></label>
+        <input type="range" id="topN" min="3" max="40" step="1" value="12">
+        <p class="hint" id="topNHint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
       </div>
-      <div class="field"><span class="lbl">Aperçu</span><div id="summary"></div></div>
-    </section>
-    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part&nbsp;: aucun serveur, aucun compte, aucune donnée stockée en ligne. Tes tags, tes vues et tes corrections restent sur cet appareil, ainsi que ton réseau si tu choisis de le garder. Outil indépendant, non affilié à LinkedIn.</p>
+      <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong><br>Via Brandfetch, qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.</span></label>
+      <div class="field" id="fld-ai" hidden style="margin-top:16px">
+        <span class="lbl">Classification par IA</span>
+        <p class="hint" id="aiHint"></p>
+        <button class="btn sm" type="button" id="aiBtn" data-act="aisetup">Classer avec une IA</button>
+      </div>
+    </details>
+    <p class="privacy">Ton fichier est lu dans ton navigateur et n’est envoyé nulle part. Tes réglages restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.</p>
   </aside>
 
   <main class="stage">
@@ -912,7 +928,7 @@ function syncRelanceHint(){
   const el = document.getElementById('relanceHint'); if(!el) return;
   const n = relanceList().length, inv = pendingInv().o.length;
   el.hidden = !n && !inv;
-  if(!el.hidden) el.innerHTML = `<button class="linkbtn" type="button" data-act="relance">Contacts à relancer&nbsp;: ${n ? `${n} proche${n > 1 ? 's' : ''} sans nouvelles depuis plus d’un an` : ''}${n && inv ? ', ' : ''}${inv ? `${inv} invitation${inv > 1 ? 's' : ''} sans réponse` : ''}</button>`;
+  if(!el.hidden) el.innerHTML = `<button class="qlink" type="button" data-act="relance"><span>Contacts à relancer<small>${[n && `Sans nouvelles depuis plus d’un an`, inv && `${inv} invitation${inv > 1 ? 's' : ''} sans réponse`].filter(Boolean).join(' · ')}</small></span><span class="n">${n || inv}</span></button>`;
 }
 function showRelance(){
   select(null); clearFocus(); closePanel();
@@ -933,7 +949,7 @@ function syncCibleHint(){
   const el = document.getElementById('cibleHint'); if(!el) return;
   const rows = cibleIndex().filter(r => r.n);
   el.hidden = !rows.length;
-  if(rows.length) el.innerHTML = `<button class="linkbtn" type="button" data-act="cibles">Tes entreprises cibles&nbsp;: ${rows.length} où tu connais quelqu’un</button>`;
+  if(rows.length) el.innerHTML = `<button class="qlink" type="button" data-act="cibles"><span>Tes entreprises cibles<small>Où tu as postulé ou que tu suis, et où tu connais quelqu’un</small></span><span class="n">${rows.length}</span></button>`;
 }
 function showCibles(){
   select(null); clearFocus(); closePanel();
@@ -999,12 +1015,10 @@ function syncKeepField(){
   if(sec.hidden) return;
   const n = contacts.length.toLocaleString('fr-FR'), on = keepOn();
   const since = keptAt ? ` depuis le ${new Date(keptAt).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})}` : '';
+  const tip = 'Ton réseau reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.';
   document.getElementById('mynetBody').innerHTML = on
-    ? `<p class="netstate on"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts gardés sur cet appareil</strong>${since}. Tu le retrouves à chaque visite, sans réimporter ton fichier. Les emails ne sont pas gardés.</span></p>
-       <button class="linkbtn" type="button" data-act="keepforget">Oublier mon réseau sur cet appareil</button>`
-    : `<p class="netstate"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts, non gardés</strong> : ils disparaîtront si tu rafraîchis ou fermes la page.</span></p>
-       <button class="btn primary sm block" type="button" data-act="keepyes">Garder sur cet appareil</button>
-       <p class="hint" style="margin:8px 0 0">Il reste dans ce navigateur, sans les emails, et n’est envoyé nulle part. À éviter sur un ordinateur partagé.</p>`;
+    ? `<p class="netline on" title="Gardé${since}. ${tip}"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts</strong> gardés sur cet appareil</span><button class="linkbtn" type="button" data-act="keepforget">Oublier</button></p>`
+    : `<p class="netline" title="${tip}"><span class="netdot" aria-hidden="true"></span><span><strong>${n} contacts</strong>, non gardés&nbsp;: perdus au rafraîchissement</span><button class="btn primary sm" type="button" data-act="keepyes">Garder</button></p>`;
 }
 
 function parseLinkedIn(text){
@@ -3163,8 +3177,29 @@ function render(){
   else { renderGraph(vis); updateLegend(vis); needFit = false; if(!state.selected && !drawer.classList.contains('open')) fit(); }
   if(state.selected && !nodes.some(n => n.id === state.selected)) select(null);
   if(state.view === 'graph'){ clearFocus(); reapplySelection(); if(!legendHL) focusLegendGroup(true); applyLegendHL(!state.selected); }
-  renderViews(); rememberView();
+  renderViews(); rememberView(); syncPanelSums();
 }
+/* Résumé de chaque section du panneau, lisible même quand elle est repliée */
+function syncPanelSums(){
+  const set = (id, html) => { const el = document.getElementById(id); if(el) el.innerHTML = html; };
+  const on = document.querySelector('#presets [aria-checked="true"], #myViews [aria-checked="true"]');
+  set('sum-views', on ? `<b>${esc(on.childNodes[0].textContent.trim() || on.textContent.trim())}</b>` : 'Aucune active');
+  const n = activeFilters().length;
+  set('sum-filters', n ? `<b>${n} actif${n > 1 ? 's' : ''}</b>` : 'Aucun');
+  set('sum-display', esc(`${DIMS[state.groupBy].label} › ${DIMS[state.colorBy].label}`));
+  const c = cibleIndex().filter(r => r.n).length, r = relanceList().length;
+  set('sum-explore', [c && `${c} cibles`, r && `${r} à relancer`].filter(Boolean).join(' · '));
+}
+/* Sections ouvertes ou repliées : gardées sur cet appareil ; un bouton dans un titre (« Tout effacer ») ne replie pas la section */
+const ACC_KEY = 'synapses-panneau-v1';
+(() => {
+  let st = {}; try { st = JSON.parse(localStorage.getItem(ACC_KEY) || '{}') || {}; } catch(e) {}
+  document.querySelectorAll('details.acc').forEach(d => {
+    if(st[d.dataset.acc] != null) d.open = st[d.dataset.acc];
+    d.addEventListener('toggle', () => { st[d.dataset.acc] = d.open; try { localStorage.setItem(ACC_KEY, JSON.stringify(st)); } catch(e) {} });
+    d.querySelector('summary').addEventListener('click', e => { if(e.target.closest('button')) e.preventDefault(); });
+  });
+})();
 
 /* ---------- Drawer ---------- */
 const drawer = $('#drawer'), dbody = $('#drawerBody');
