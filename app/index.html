@@ -484,7 +484,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 .who .cline .dot{flex:none;transform:translateY(-1px)}
 /* Raisons de proximité : une ligne à part sous le contact, alignée sur son nom */
 .who .proxrow{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
-.who .pchip{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px}
+.who .pchip{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px}
 .h3sub{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
 .lk{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;padding:8px;border-radius:8px;white-space:nowrap}
 .lk:hover{background:var(--accent-soft)}
@@ -2034,6 +2034,23 @@ let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
 let labelF = 1;
 const LK = 0.06, lblScale = k => Math.min(1, k / LK) * labelF;
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
+/* Texte d’exemple de la barre de recherche : plus court sur téléphone, où il ne tenait pas en entier */
+{ const q = document.getElementById('q'), mq = window.matchMedia('(max-width:760px)'), setPh = () => { q.placeholder = mq.matches ? 'Nom, entreprise, poste…' : 'Rechercher un nom, une entreprise, un poste…'; };
+  setPh(); mq.addEventListener('change', setPh); }
+/* Nom en une ou deux lignes d’environ max caractères, coupé entre deux mots, au plus équilibré ; une ligne trop longue reste tronquée en dernier recours */
+function wrapLabel(nm, max){
+  if(nm.length <= max) return [nm];
+  const w = nm.split(' ');
+  let best = null;
+  for(let i = 1; i < w.length; i++){
+    const a = w.slice(0, i).join(' '), b = w.slice(i).join(' ');
+    const sc = Math.max(a.length, b.length) - (/^[&/(]/.test(b) ? 2 : 0);
+    if(!best || sc < best.sc) best = {sc, a, b};
+  }
+  if(!best) return [nm.length > max * 1.6 ? nm.slice(0, Math.round(max * 1.6) - 1) + '…' : nm];
+  const cut = x => x.length > max * 1.6 ? x.slice(0, Math.round(max * 1.6) - 1).trimEnd() + '…' : x;
+  return [cut(best.a), cut(best.b)];
+}
 /* Curseur « Branches affichées » : nombre de groupes autour de « Moi » ; quand un groupe est ouvert dans la légende,
    il règle le nombre de grappes de ce groupe (openTop), comme « Afficher 10 grappes de plus » */
 let openHubInfo = null, lastHubTotal = 0;
@@ -2174,7 +2191,9 @@ function positionLabels(){
     /* Noms horizontaux sur deux lignes (nom, puis part et nombre) : deux fois moins larges, donc plus grands à l’écran.
        En mode radial, une seule ligne dans l’axe de la branche */
     const two = !labelRadial;
-    el.select('tspan.lblName').attr('dy', two ? (s > 0.3 ? 0 : s < -0.3 ? '-1.15em' : '-0.575em') : 0);
+    const nl = this.__nl || 1, up = nl * 1.15; /* lignes au-dessus de la part : 1 ou 2 lignes de nom */
+    el.select('tspan.lblName').attr('dy', two ? (s > 0.3 ? 0 : s < -0.3 ? `-${up}em` : `-${up / 2}em`) : 0);
+    el.select('tspan.lblName2').attr('x', two ? x : null).attr('dy', two ? '1.15em' : 0).attr('dx', two ? 0 : '0.3em');
     el.select('tspan.lblPct').attr('x', two ? x : null).attr('dy', two ? '1.15em' : 0).attr('dx', two ? 0 : '0.3em');
   });
   if(countSel) countSel.attr('x', d => d.x).attr('y', d => d.y).selectAll('tspan').attr('x', function(){ return this.parentNode.__data__.x; });
@@ -2187,17 +2206,17 @@ function lblGeo(el){
   let m = el.__w13;
   if(!m){
     const K = Math.max(zk, LK), len = sel => { const t = el.querySelector(sel); try { return t && t.getComputedTextLength() * K / labelF || 0; } catch(e) { return 0; } };
-    const a1 = len('tspan.lblName'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
-    m = {w1:a1 + a2 + a3 + 4, w2:Math.max(a1, a2 + a3)};
+    const a1 = len('tspan.lblName:not(.lblName2)'), a1b = len('tspan.lblName2'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
+    m = {w1:a1 + a1b + a2 + a3 + 4, w2:Math.max(a1, a1b, a2 + a3)};
     if(m.w1 > 4 && isFinite(m.w1)) el.__w13 = m; else { const n = (el.textContent || '').length * 7.4; m = {w1:n, w2:n * 0.6}; }
   }
-  return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w:m.w1, w2:m.w2};
+  return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w:m.w1, w2:m.w2, nl:el.__nl || 1};
 }
 /* Boîte d’un nom en pixels d’écran, relative à son ancrage, en mode horizontal ou radial ; f : facteur de taille du nom (lblScale) */
 function lblOffsets(g, radial, f = 1){
   const ox = g.c * 8 * f, oy = g.s * 8 * f, w = (radial ? g.w : g.w2 ?? g.w) * f;
   if(radial){ const ex = ox + g.c * w, ey = oy + g.s * w; return {l:Math.min(ox, ex) - 7 * f, r:Math.max(ox, ex) + 7 * f, t:Math.min(oy, ey) - 7 * f, b:Math.max(oy, ey) + 7 * f}; }
-  const hh = 32 * f, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -w : -w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
+  const hh = (g.nl > 1 ? 48 : 32) * f, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -w : -w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
   return {l:ox + l, r:ox + l + w, t:oy + t, b:oy + t + hh};
 }
 /* Vrai si deux noms horizontaux se chevaucheraient avec ce zoom */
@@ -2693,8 +2712,12 @@ function renderGraph(vis){
     .each(function(d){
       const t = d3.select(this); t.text(null);
       /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
-      const nm = d.others ? `${d.key} (${d.others.length})` : d.key, max = narrowScreen() ? 15 : 40; /* noms sur deux lignes : la place permet le nom complet d’un secteur (« Tourisme, hôtellerie & restauration ») */
-      t.append('tspan').attr('class', 'lblName').text(nm.length > max ? nm.slice(0, max - 1).trimEnd() + '…' : nm);
+      /* Sur téléphone, le nom entier sur deux lignes coupées entre deux mots (« Tourisme, hôtellerie » / « & restauration ») plutôt que tronqué */
+      const nm = d.others ? `${d.key} (${d.others.length})` : d.key;
+      const lines = narrowScreen() ? wrapLabel(nm, 16) : [nm.length > 40 ? nm.slice(0, 39).trimEnd() + '…' : nm];
+      t.append('tspan').attr('class', 'lblName').text(lines[0]);
+      if(lines[1]) t.append('tspan').attr('class', 'lblName lblName2').text(lines[1]);
+      this.__nl = lines.length;
       t.append('tspan').attr('class', 'lblPct').text(pct(d.count, vis.length));
       /* Nombre de contacts à côté du nom, affiché quand le rond est trop petit à l’écran pour qu’on lise le chiffre dedans */
       if(d.type === 'hub') t.append('tspan').attr('class', 'lblN').text(' · ' + d.count.toLocaleString('fr-FR'));

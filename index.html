@@ -110,7 +110,7 @@ p{margin:0}
 .fd i{font-style:normal;display:block}
 .fd.flip i{animation:flip .18s var(--ease)}
 @keyframes flip{0%{transform:rotateX(80deg);opacity:.3}100%{transform:none;opacity:1}}
-.tally span{display:block;font-weight:700;line-height:1.3}
+.tally > div:not(.flap) > span{display:block;font-weight:700;line-height:1.3}
 .tally small{display:block;color:var(--muted);font-size:var(--step-small);margin-top:3px;line-height:1.35}
 
 /* Le fragment vivant : le graphe du réseau de démo, cliquable (data-ui : conventions de l’outil à l’intérieur) */
@@ -554,7 +554,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   .tally{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:12px;row-gap:6px}
   .tally > div:not(.flap){display:contents}
   .tally small{grid-column:1/-1}
-  .tally span{font-size:var(--step-small)}
+  .tally > div:not(.flap) > span{font-size:var(--step-small)}
   .tally small{font-size:12px;margin-top:1px}
   /* Graphe : la liste du secteur choisi garde une hauteur fixe et défile */
   .film > p{font-size:var(--step-small)}
