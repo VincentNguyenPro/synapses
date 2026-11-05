@@ -197,6 +197,7 @@ rep('>Seulement quand tu cliques sur «&nbsp;Envoyer&nbsp;»</td>', '>Only when 
 rep('<a href="#demandes">Ton avis</a>', '<a href="#demandes">Feedback</a>')
 rep('Ton avis fait évoluer Synapses</h2>', 'Your feedback shapes Synapses</h2>')
 rep('Une idée, un bug, une fonction qui te manque&nbsp;: Vincent lit chaque message.</p>', 'An idea, a bug, a missing feature: Vincent reads every message.</p>')
+rep('Product Manager, créateur de Synapses. Je le fais évoluer avec vos retours. <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Mon profil LinkedIn</a>', 'Product Manager, creator of Synapses. I improve it based on your feedback. <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">My LinkedIn profile</a>')
 rep('<li>Tu donnes ton avis, en deux minutes.</li>', '<li>You share your feedback, in two minutes.</li>')
 rep('<li>Vincent le lit et te répond si tu le souhaites.</li>', '<li>Vincent reads it and replies if you’d like.</li>')
 rep('<li>Ce qui en sort est listé ici, à droite.</li>', '<li>What comes out of it is listed here, on the right.</li>')
