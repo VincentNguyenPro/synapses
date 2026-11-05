@@ -1,12 +1,14 @@
 // Rend film.html en MP4 image par image (30 i/s), avec la voix off si elle est fournie.
 // Prérequis : ffmpeg, playwright-core (npm install) et Google Chrome. Le script sert lui-même le dépôt en local.
-// Usage : node render.js 169|11 [voix.m4a] [--en] [--stills 1,12,24]   (--en : textes anglais, fichiers en « -en »)
+// Usage : node render.js 169|11 [voix.m4a] [--en] [--film yc] [--stills 1,12,24]   (--en : textes anglais, fichiers en « -en » ;
+//   --film yc : film-yc.html, fichiers « synapses-yc-… »)
 const { chromium } = require('playwright-core');
 const { spawn } = require('child_process');
 const fs = require('fs'), path = require('path'), http = require('http');
 
 const fmt = process.argv[2] === '11' ? '11' : '169';
-const voice = process.argv.slice(3).find(a => !a.startsWith('--') && !/^[\d.,]+$/.test(a));
+const fi = process.argv.indexOf('--film'), FILM = fi > 0 ? process.argv[fi + 1] : '';
+const voice = process.argv.slice(3).find((a, i, all) => !a.startsWith('--') && !/^[\d.,]+$/.test(a) && all[i - 1] !== '--film');
 const si = process.argv.indexOf('--stills');
 const stills = si > 0 ? process.argv[si + 1].split(',').map(Number) : null;
 const FPS = 30;
@@ -31,20 +33,20 @@ function serve() {
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   const [W, H] = fmt === '11' ? [1080, 1080] : [1920, 1080];
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
-  await page.goto(`http://127.0.0.1:${server.address().port}/video/film.html?f=${fmt}${EN ? '&lang=en' : ''}`, { waitUntil: 'networkidle' });
+  await page.goto(`http://127.0.0.1:${server.address().port}/video/film${FILM ? '-' + FILM : ''}.html?f=${fmt}${EN ? '&lang=en' : ''}`, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.ready);
   await page.evaluate(() => document.fonts.ready);
 
   if (stills) {
     for (const t of stills) {
       await page.evaluate(t => seek(t), t);
-      await page.screenshot({ path: path.join(outDir, `still-${fmt}${SUF}-${t}.jpg`), type: 'jpeg', quality: 85 });
+      await page.screenshot({ path: path.join(outDir, `still-${FILM ? FILM + '-' : ''}${fmt}${SUF}-${t}.jpg`), type: 'jpeg', quality: 85 });
     }
     await browser.close(); server.close(); return;
   }
 
   /* Miniature : la première image (couverture), en PNG pour LinkedIn et comme pochette du MP4 */
-  const name = fmt === '11' ? '1x1' : '16x9';
+  const name = (FILM ? FILM + '-' : '') + (fmt === '11' ? '1x1' : '16x9');
   const thumb = path.join(outDir, `miniature-${name}${SUF}.png`);
   await page.evaluate(() => seek(0.1));
   await page.screenshot({ path: thumb, type: 'png' });

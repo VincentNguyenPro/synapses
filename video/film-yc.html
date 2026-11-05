@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synapses, film de lancement</title>
+<!-- Film de lancement façon YC (inspiré de Voyager) : fond sombre, typographie géante, interface en gros plan, montage rapide.
+     Chaque image est calculée par seek(t) : render.js --film yc l’appelle image par image. Minutage : script-yc.md.
+     Les plans de l’app (clips/) sont filmés par record.js sur le réseau de démo fictif. Ouverte seule, la page se lit en boucle. -->
+<style>
+:root{ --bg:#06081A; --ink:#fff; --muted:#9AA3C7; --o:#2F5BEA; --o2:#8FA8FF; }
+*{box-sizing:border-box;margin:0}
+html,body{background:#000;height:100%;overflow:hidden}
+body{display:grid;place-items:center;font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased;color:var(--ink)}
+#stage{position:relative;overflow:hidden;background:var(--bg);width:1920px;height:1080px;transform-origin:center}
+.scene{position:absolute;inset:0;overflow:hidden}
+.glow{position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none}
+.w{display:inline-block;will-change:transform,opacity,filter}
+.center{display:grid;place-content:center;justify-items:center;text-align:center}
+.giant{text-align:center;font-size:190px;font-weight:300;letter-spacing:-.045em;line-height:1}
+.giant b{font-weight:800}
+.giant .o{color:var(--o2)}
+.brandword{font-weight:900;letter-spacing:-.01em;text-transform:uppercase;line-height:.9}
+
+/* 1. Titre */
+#t-bg{position:absolute;inset:-40px;background:#EEF1F5}
+#t-bg video{position:absolute;left:0;top:0;width:1600px;height:1000px;transform-origin:0 0}
+#t-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,8,26,.55),rgba(6,8,26,.82))}
+#t-title{position:absolute;left:120px;top:330px;font-size:250px}
+#t-lower{position:absolute;left:126px;bottom:120px;font-size:34px;line-height:1.25}
+#t-lower b{display:block;font-weight:700}
+#t-lower span{color:var(--muted);font-weight:500}
+
+/* 2. Mots géants */
+#words .giant{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%)}
+
+/* 3. Mur de contacts */
+#wall-grid{position:absolute;left:50%;top:50%;width:2600px;display:grid;grid-template-columns:repeat(5,1fr);gap:22px;transform-origin:center}
+.cc{display:flex;align-items:center;gap:18px;padding:22px 24px;border-radius:18px;background:#121733;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+.cc i{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 20px/1 inherit;font-style:normal}
+.cc b{display:block;font-size:22px;color:#E8EBF7}
+.cc small{display:block;font-size:17px;color:#7E87AE;margin-top:4px}
+#wall-shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(6,8,26,.5),rgba(6,8,26,.92) 75%)}
+#wall .giant{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);font-weight:700;font-size:170px}
+#wall .q{position:absolute;left:0;right:0;top:calc(50% + 120px);text-align:center;font-size:44px;font-weight:500;color:var(--muted)}
+
+/* 4. Logo */
+#logo .mark{width:230px;height:230px}
+#logo .name{font-size:150px;margin-top:40px}
+#logo .tag{font-size:42px;font-weight:400;color:var(--muted);margin-top:26px;letter-spacing:-.01em}
+.dot{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--o2);box-shadow:0 0 14px var(--o2)}
+
+/* 5. Plans de l’app */
+#card{position:absolute;inset:0}
+#card .num{position:absolute;left:0;right:0;top:330px;text-align:center;font-size:40px;font-weight:700;color:var(--o2);letter-spacing:.2em}
+#card .giant{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);font-size:230px}
+#win{position:absolute;left:140px;top:78px;width:1640px;height:1025px;border-radius:26px;overflow:hidden;background:#EEF1F5;
+  box-shadow:0 40px 140px rgba(47,91,234,.35),0 0 0 1px rgba(255,255,255,.12);transform-origin:50% 100%}
+#win video{position:absolute;left:0;top:0;width:1600px;height:1000px;transform-origin:0 0;opacity:0}
+#cap{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);display:flex;align-items:center;gap:16px;padding:16px 30px 16px 18px;border-radius:999px;
+  background:rgba(10,14,40,.82);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 18px 50px rgba(0,0,0,.35);font-size:34px;font-weight:600;white-space:nowrap}
+#cap i{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--o);font-style:normal;font-weight:800;font-size:24px}
+#fict{position:absolute;right:40px;top:28px;font-size:20px;color:#7E87AE;font-weight:500}
+
+/* 6. Confidentialité */
+#priv .big{font-size:300px;font-weight:200;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+#priv .big b{font-weight:800}
+#priv .sub{font-size:76px;font-weight:300;letter-spacing:-.03em;margin-top:10px}
+#priv .chips{display:flex;gap:18px;margin-top:56px}
+#priv .chips span{border:2px solid rgba(255,255,255,.22);border-radius:999px;padding:.35em 1em;font-size:34px;font-weight:600}
+
+/* 7. Fin */
+#end{background:linear-gradient(180deg,#0B0F2E 0%,#1B1F6B 62%,#3A2C9E 100%)}
+#end .name{font-size:200px}
+#end .url{font-size:40px;font-weight:400;color:#C9D2F5;margin-top:28px;letter-spacing:-.005em}
+#end small{position:absolute;left:0;right:0;bottom:48px;text-align:center;font-size:22px;color:#8E97C4}
+#spark{position:absolute;left:50%;top:78%;width:0;height:0}
+.sp{position:absolute;width:4px;height:4px;margin:-2px;border-radius:50%;background:#fff}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="glow" id="g1" style="width:900px;height:900px;background:#2F5BEA;opacity:.28"></div>
+  <div class="glow" id="g2" style="width:800px;height:800px;background:#6C3BD8;opacity:.22"></div>
+
+  <section class="scene" id="title">
+    <div id="t-bg"><video src="clips/7-entreprises.mp4" muted preload="auto"></video></div>
+    <div id="t-shade"></div>
+    <div id="t-title" class="brandword"></div>
+    <div id="t-lower"><b>Vincent Nguyen</b><span>Créateur de Synapses</span></div>
+  </section>
+
+  <section class="scene" id="words">
+    <div class="giant" id="w1">des centaines <b>de contacts.</b></div>
+    <div class="giant" id="w2">aucune <b class="o">vue d’ensemble.</b></div>
+  </section>
+
+  <section class="scene" id="wall">
+    <div id="wall-grid"></div>
+    <div id="wall-shade"></div>
+    <div class="giant" id="wall-h">Une liste sans fin.</div>
+    <div class="q" id="wall-q">Qui tu connais, et où&nbsp;?</div>
+  </section>
+
+  <section class="scene center" id="logo">
+    <div id="dots"></div>
+    <svg class="mark" viewBox="0 0 120 120" aria-hidden="true">
+      <rect width="120" height="120" rx="28" fill="#2F5BEA"/>
+      <g stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none">
+        <path id="mk-l1" d="M32 32 L60 60" pathLength="1"/><path id="mk-l2" d="M60 60 L88 37" pathLength="1"/><path id="mk-l3" d="M60 60 L55 94" pathLength="1"/>
+      </g>
+      <g fill="#fff"><circle id="mk-c0" cx="60" cy="60" r="15"/><circle id="mk-c1" cx="32" cy="32" r="12"/><circle id="mk-c2" cx="88" cy="37" r="10"/><circle id="mk-c3" cx="55" cy="94" r="10"/></g>
+    </svg>
+    <div class="name brandword" id="lg-name">Synapses</div>
+    <div class="tag" id="lg-tag">Ton réseau LinkedIn, enfin visible.</div>
+  </section>
+
+  <section class="scene" id="prod">
+    <div id="win">
+      <video src="clips/1-import.mp4" muted preload="auto"></video>
+      <video src="clips/2-regrouper.mp4" muted preload="auto"></video>
+      <video src="clips/4-secteur.mp4" muted preload="auto"></video>
+      <video src="clips/8-porte.mp4" muted preload="auto"></video>
+      <video src="clips/7-entreprises.mp4" muted preload="auto"></video>
+    </div>
+    <div id="cap"><i>1</i><span></span></div>
+    <div id="fict">Réseau fictif de démonstration</div>
+    <div id="card"><div class="num"></div><div class="giant"></div></div>
+  </section>
+
+  <section class="scene center" id="priv">
+    <div class="big"><b id="pct">0</b>&nbsp;%</div>
+    <div class="sub" id="priv-sub">dans ton navigateur.</div>
+    <div class="chips"><span>Gratuit</span><span>Sans inscription</span><span>Sans pub</span></div>
+  </section>
+
+  <section class="scene center" id="end">
+    <div id="spark"></div>
+    <div class="name brandword" id="end-name">Synapses</div>
+    <div class="url" id="end-url">vincentnguyenpro.github.io/synapses</div>
+    <small>Outil indépendant, non affilié à LinkedIn.</small>
+  </section>
+</div>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const LANG = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'fr';
+const stage = $('#stage');
+const fitStage = () => { stage.style.transform = `scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`; };
+addEventListener('resize', fitStage); fitStage();
+
+/* ---------- Temps ---------- */
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const out3 = x => 1 - Math.pow(1 - cl(x), 3);
+const out5 = x => 1 - Math.pow(1 - cl(x), 5);
+const inOut = x => { x = cl(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const back = x => { x = cl(x); const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, k) => a + (b - a) * k;
+/* Mot qui arrive flou et monte légèrement, comme dans les films de lancement */
+const blurIn = (el, k, dy = 30) => { const e = out3(k); el.style.opacity = e; el.style.filter = `blur(${(1 - e) * 18}px)`; el.style.transform = `translateY(${(1 - e) * dy}px)`; };
+function letters(el, text){ el.innerHTML = ''; return [...text].map(ch => { const s = document.createElement('span'); s.className = 'w'; s.textContent = ch === ' ' ? ' ' : ch; el.appendChild(s); return s; }); }
+function words(el){
+  const out = [];
+  (function walk(node){ [...node.childNodes].forEach(n => {
+    if(n.nodeType === 3){ const f = document.createDocumentFragment();
+      n.textContent.split(/( )/).forEach(p => { if(p === ' ') f.appendChild(document.createTextNode(' ')); else if(p){ const s = document.createElement('span'); s.className = 'w'; s.textContent = p; f.appendChild(s); out.push(s); } });
+      n.replaceWith(f);
+    } else walk(n); }); })(el);
+  return out;
+}
+const showWords = (ws, k, stagger = .09, dur = .45) => ws.forEach((w, i) => blurIn(w, (k - i * stagger) / dur, 40));
+
+/* ---------- Plans de l’app ----------
+   durée, clip, début dans le clip, vitesse, mot de la carte, légende, caméra [[temps du plan, x, y, zoom], …]
+   x, y : point de l’app (1600 × 1000) au centre du cadre ; zoom 1 = l’app entière dans le cadre. */
+const CARD = 1.0;   // carte titre géante avant chaque plan
+const SHOT_LIST = [
+  [5.6, 0, 1.6, 1.0, 'Dépose.', 'Dépose ton export LinkedIn', [[0, 780, 520, 1.05], [4.6, 780, 560, 1.3]]],
+  [5.6, 1, 1.8, 1.3, 'Regroupe.', 'Par secteur, entreprise, fonction…', [[0, 170, 680, 2.2], [2.6, 170, 680, 2.2], [3.5, 780, 540, 1.1], [4.6, 780, 540, 1.15]]],
+  [5.8, 2, 1.6, 1.2, 'Plonge.', 'Les plus proches de toi d’abord', [[0, 780, 540, 1.05], [1.2, 780, 540, 1.1], [2.4, 1250, 450, 1.45], [4.8, 1300, 470, 1.55]]],
+  [7.0, 3, 2.0, 1.0, 'Trouve la porte.', 'Qui peut t’ouvrir la porte', [[0, 260, 220, 2.2], [3.8, 260, 220, 2.2], [4.7, 1300, 450, 1.5], [6.0, 1320, 470, 1.6]]],
+  [5.4, 4, 3.0, 1.0, 'Vois tout.', 'Où se concentre ton réseau', [[0, 780, 540, 1.35], [4.4, 780, 520, 1.0]]]
+];
+
+/* ---------- Scènes (doivent suivre script-yc.md) ---------- */
+const SEQ = [['title', 3.6], ['words', 4.8], ['wall', 5.2], ['logo', 3.4],
+  ['prod', SHOT_LIST.reduce((a, x) => a + x[0], 0)], ['priv', 5.0], ['end', 6.0]];
+const S = {}; let DURATION = 0;
+SEQ.forEach(([id, d]) => { S[id] = [DURATION, DURATION + d]; DURATION += d; });
+const SHOTS = []; SHOT_LIST.reduce((a, [d, clip, from, rate, word, cap, cam]) => { SHOTS.push({a, b:a + d, clip, from, rate, word, cap, cam}); return a + d; }, S.prod[0]);
+
+/* ---------- Anglais (?lang=en) ---------- */
+if(LANG === 'en'){
+  document.documentElement.lang = 'en';
+  $('#t-lower span').textContent = 'Creator of Synapses';
+  $('#w1').innerHTML = 'hundreds <b>of contacts.</b>'; $('#w2').innerHTML = 'no <b class="o">big picture.</b>';
+  $('#wall-h').textContent = 'An endless list.'; $('#wall-q').textContent = 'Who do you know, and where?';
+  $('#lg-tag').textContent = 'Your LinkedIn network, finally visible.';
+  $('#fict').textContent = 'Fictional demo network';
+  $('#priv-sub').textContent = 'in your browser.';
+  $('#priv .chips').innerHTML = '<span>Free</span><span>No sign-up</span><span>No ads</span>';
+  $('#end-url').textContent = 'vincentnguyenpro.github.io/synapses/en';
+  $('#end small').textContent = 'Independent tool, not affiliated with LinkedIn.';
+  const EN = [['Drop.', 'Drop your LinkedIn export'], ['Group.', 'By industry, company, function…'], ['Dive in.', 'Closest to you first'],
+    ['Find a way in.', 'Who can open the door'], ['See it all.', 'Where your network clusters']];
+  SHOTS.forEach((s, i) => { [s.word, s.cap] = EN[i]; });
+  $$('video').forEach(v => v.setAttribute('src', v.getAttribute('src').replace('clips/', 'clips-en/')));
+}
+
+/* ---------- Préparation ---------- */
+const TL = letters($('#t-title'), 'Synapses');
+const W1 = words($('#w1')), W2 = words($('#w2')), WH = words($('#wall-h')), WL = words($('#lg-tag'));
+const EL = letters($('#end-name'), 'Synapses');
+/* Mur de contacts fictifs */
+(() => {
+  const F = ['Camille','Lucas','Léa','Hugo','Chloé','Nathan','Manon','Thomas','Inès','Julien','Sarah','Antoine','Emma','Maxime','Clara','Nicolas','Yasmine','Paul','Lina','Romain'];
+  const N = ['Martin','Bernard','Dubois','Moreau','Laurent','Simon','Michel','Leroy','Roux','Garnier','Faure','Rousseau','Blanc','Muller','Perrin','Morel','Fournier','Lambert','Robin','Mercier'];
+  const C = ['Capgemini','BNP Paribas','Doctolib','Qonto','Orange','AXA','Engie','Dataiku','Alan','SNCF','Decathlon','Ubisoft'];
+  const P = ['Product Manager','Data Analyst','Head of Product','Software Engineer','Account Executive','Consultant','UX Designer','CTO','Business Developer'];
+  const K = ['#2F5BEA','#12A39A','#D9A21B','#C2417A','#6C4FD8','#3E9B4F','#E2702F','#4A86B5'];
+  let s = 11; const r = a => a[(s = (s * 9301 + 49297) % 233280) % a.length];
+  let h = '';
+  for(let i = 0; i < 90; i++){ const f = r(F), n = r(N); h += `<div class="cc"><i style="background:${r(K)}">${f[0]}${n[0]}</i><div><b>${f} ${n}</b><small>${r(P)} · ${r(C)}</small></div></div>`; }
+  $('#wall-grid').innerHTML = h;
+})();
+/* Points qui convergent vers le logo, étincelles de la fin : positions fixes, tirées une fois */
+let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const DOTS = Array.from({length: 70}, () => { const d = document.createElement('div'); d.className = 'dot'; $('#dots').appendChild(d);
+  const a = rnd() * Math.PI * 2, r = 600 + rnd() * 700; return {d, x: Math.cos(a) * r, y: Math.sin(a) * r * .7, delay: rnd() * .5}; });
+const SPARK = Array.from({length: 160}, () => { const d = document.createElement('div'); d.className = 'sp'; $('#spark').appendChild(d);
+  const a = rnd() * Math.PI * 2, r = Math.pow(rnd(), 2) * 260; return {d, x: Math.cos(a) * r * 1.6, y: Math.sin(a) * r * .5, tw: rnd() * 6, s: .4 + rnd()}; });
+
+/* Caméra sur l’app : le point (x, y) au centre du cadre */
+const WIN = [1640, 1025];
+function camAt(cam, q){
+  let i = 0; while(i < cam.length - 1 && q > cam[i + 1][0]) i++;
+  const A = cam[i], B = cam[Math.min(i + 1, cam.length - 1)];
+  const k = B === A ? 0 : inOut((q - A[0]) / (B[0] - A[0]));
+  return [lerp(A[1], B[1], k), lerp(A[2], B[2], k), lerp(A[3], B[3], q >= B[0] ? 1 : k)];
+}
+function aim(v, [x, y, z]){
+  const s = WIN[0] / 1600 * z;
+  /* Le cadre ne montre jamais de vide autour de l’app */
+  const tx = cl(WIN[0] / 2 - x * s, WIN[0] - 1600 * s, 0), ty = cl(WIN[1] / 2 - y * s, WIN[1] - 1000 * s, 0);
+  v.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+}
+
+/* ---------- Une image ---------- */
+const vids = $$('#win video'), tvid = $('#t-bg video');
+let T = 0;
+const on = id => T >= S[id][0] && T < S[id][1];
+function seekVid(v, ct, waits){
+  ct = cl(ct, 0, (v.duration || 99) - .04);
+  if(Math.abs(v.currentTime - ct) > .001) waits.push(new Promise(res => { const done = () => { v.removeEventListener('seeked', done); res(); }; v.addEventListener('seeked', done); v.currentTime = ct; setTimeout(done, 3000); }));
+}
+async function seek(t){
+  T = t;
+  const waits = [];
+  Object.keys(S).forEach(id => { $('#' + id).style.display = on(id) ? '' : 'none'; });
+  /* Lueurs qui dérivent lentement, sur tout le film */
+  $('#g1').style.transform = `translate(${-200 + Math.sin(t * .23) * 260}px, ${500 + Math.cos(t * .17) * 160}px)`;
+  $('#g2').style.transform = `translate(${1300 + Math.cos(t * .19) * 240}px, ${-200 + Math.sin(t * .21) * 180}px)`;
+
+  if(on('title')){
+    const k = t - S.title[0];
+    seekVid(tvid, 13.5, waits);                     // le réseau entier, toutes les branches
+    tvid.style.transform = `translate(${-120 - k * 20}px, ${-40 - k * 8}px) scale(${1.45 + k * .03})`;
+    $('#t-bg').style.filter = `blur(${lerp(14, 6, out3(k / 1.5))}px)`;
+    TL.forEach((l, i) => { const e = out5((k - .1 - i * .05) / .6); l.style.opacity = e; l.style.transform = `translateY(${(1 - e) * 120}px)`; });
+    blurIn($('#t-lower'), (k - .9) / .6, 16);
+  }
+  if(on('words')){
+    const k = t - S.words[0], cut = 2.4;
+    $('#w1').style.display = k < cut ? '' : 'none'; $('#w2').style.display = k >= cut ? '' : 'none';
+    if(k < cut){ showWords(W1, k - .05); $('#w1').style.transform = `translateY(-50%) scale(${1 + k * .015})`; }
+    else { showWords(W2, k - cut - .05); $('#w2').style.transform = `translateY(-50%) scale(${1 + (k - cut) * .015})`; }
+  }
+  if(on('wall')){
+    const k = t - S.wall[0];
+    $('#wall-grid').style.transform = `translate(-50%, ${-900 - k * 140}px) rotateX(0) rotate(-8deg) scale(${1.05 - k * .01})`;
+    showWords(WH, k - .3, .12);
+    blurIn($('#wall-q'), (k - 2.3) / .5, 20);
+  }
+  if(on('logo')){
+    const k = t - S.logo[0];
+    DOTS.forEach(o => { const e = inOut((k - o.delay) / .8); o.d.style.left = 960 + o.x * (1 - e) + 'px'; o.d.style.top = 400 + o.y * (1 - e) + 'px'; o.d.style.opacity = cl((k - o.delay) * 4) * (1 - cl((k - 1.1) / .2)); });
+    const m = $('#logo .mark'), e = cl(back((k - 1.0) / .5), 0, 2); m.style.transform = `scale(${e})`; m.style.opacity = cl((k - 1.0) * 6);
+    ['#mk-l1', '#mk-l2', '#mk-l3'].forEach((id, i) => { const el = $(id); el.style.strokeDasharray = 1; el.style.strokeDashoffset = 1 - out3((k - 1.2 - i * .1) / .35); });
+    blurIn($('#lg-name'), (k - 1.3) / .5, 30);
+    showWords(WL, k - 1.8, .08);
+  }
+  if(on('prod')){
+    const si = Math.max(0, SHOTS.findIndex(s => t >= s.a && t < s.b)), sh = SHOTS[si], q = t - sh.a;
+    const card = $('#card'), win = $('#win');
+    const inCard = q < CARD;
+    card.style.display = inCard ? '' : 'none';
+    win.style.display = $('#cap').style.display = $('#fict').style.display = inCard ? 'none' : '';
+    if(inCard){
+      $('#card .num').textContent = String(si + 1).padStart(2, '0');
+      const g = $('#card .giant'); if(g.dataset.w !== sh.word){ g.dataset.w = sh.word; g.textContent = sh.word; g._w = words(g); }
+      showWords(g._w, q - .02, .08, .35);
+      g.style.transform = `translateY(-50%) scale(${1 + q * .04})`;
+      blurIn($('#card .num'), q / .3, 10);
+    } else {
+      const u = q - CARD, e = out5(u / .7);
+      /* Le cadre se redresse en arrivant, comme posé devant la caméra */
+      win.style.transform = `perspective(2400px) translateY(${(1 - e) * 220}px) rotateX(${(1 - e) * 18}deg) scale(${lerp(.92, 1, e)})`;
+      vids.forEach((v, i) => {
+        const show = i === sh.clip; v.style.opacity = show ? 1 : 0;
+        if(!show) return;
+        seekVid(v, sh.from + u * sh.rate, waits);
+        aim(v, camAt(sh.cam, u));
+      });
+      $('#cap i').textContent = si + 1; $('#cap span').textContent = sh.cap;
+      const c = out3((u - .35) / .45); $('#cap').style.opacity = c; $('#cap').style.transform = `translate(-50%, ${(1 - c) * 30}px)`;
+      $('#fict').style.opacity = cl((u - .6) / .4) * .9;
+    }
+  }
+  if(on('priv')){
+    const k = t - S.priv[0];
+    $('#pct').textContent = Math.round(100 * inOut((k - .15) / 1.3));
+    blurIn($('#priv .big'), k / .4, 30);
+    blurIn($('#priv-sub'), (k - 1.2) / .5, 24);
+    $$('#priv .chips span').forEach((c, i) => blurIn(c, (k - 2.2 - i * .15) / .45, 20));
+  }
+  if(on('end')){
+    const k = t - S.end[0];
+    EL.forEach((l, i) => { const e = out5((k - .2 - i * .05) / .7); l.style.opacity = e; l.style.filter = `blur(${(1 - e) * 20}px)`; });
+    blurIn($('#end-url'), (k - 1.1) / .6, 16);
+    $('#end small').style.opacity = cl((k - 1.8) / .5);
+    SPARK.forEach(o => { const tw = .35 + .65 * Math.abs(Math.sin(k * 2.2 + o.tw)); o.d.style.transform = `translate(${o.x * (1 + k * .04)}px, ${o.y - k * 6 * o.s}px) scale(${o.s})`; o.d.style.opacity = tw * cl(k / .8); });
+    $('#end').style.opacity = 1 - cl((t - DURATION + .6) / .6);
+  }
+  await Promise.all(waits);
+  if(waits.length) await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+}
+window.seek = seek; window.DURATION = DURATION; window.SIZE = [1920, 1080];
+/* Clips chargés en mémoire : la recherche image par image ne dépend plus du serveur */
+window.ready = (async () => {
+  const cache = {};
+  for(const v of $$('video')){
+    const src = v.getAttribute('src');
+    if(!cache[src]){ let blob; for(let i = 0; i < 4 && !blob; i++){ try { blob = await (await fetch(src)).blob(); } catch(e) { await new Promise(r => setTimeout(r, 500)); } } cache[src] = URL.createObjectURL(blob); }
+    await new Promise(r => { v.addEventListener('canplaythrough', r, {once:true}); v.src = cache[src]; v.load(); });
+  }
+})();
+if(!navigator.webdriver) window.ready.then(() => {
+  let t0 = performance.now(), busy = false;
+  (function loop(){ if(!busy){ busy = true; seek(((performance.now() - t0) / 1000) % DURATION).then(() => busy = false); } requestAnimationFrame(loop); })();
+});
+</script>
+</body>
+</html>

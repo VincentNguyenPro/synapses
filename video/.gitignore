@@ -3,3 +3,6 @@ out/
 clips/
 clips-en/
 .DS_Store
+# Échantillon de la voix de Vincent : jamais commité
+voix-vincent*
+__pycache__/

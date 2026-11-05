@@ -1,8 +1,8 @@
 // Génère la voix off avec ElevenLabs, phrase par phrase, calée sur le minutage de script-voix-off.md.
 // Seul le texte du script part chez ElevenLabs. La clé est lue dans ELEVENLABS_API_KEY, ou dans
 // ~/.config/synapses/elevenlabs.env (ELEVENLABS_API_KEY=…) : jamais dans le dépôt.
-// Usage : node video/voix-ia.js [nom de la voix, « Max » par défaut] [--en]   → video/out/voix-ia.m4a (voix-ia-en.m4a avec --en,
-// lu dans script-voix-off-en.md)
+// Usage : node video/voix-ia.js [nom de la voix, « Max » par défaut] [--en] [--script script-yc.md --out voix-yc.m4a]
+//   → video/out/voix-ia.m4a (voix-ia-en.m4a avec --en, lu dans script-voix-off-en.md)
 const fs = require('fs'), os = require('os'), path = require('path');
 const { execFileSync } = require('child_process');
 
@@ -11,8 +11,10 @@ const ENV = path.join(os.homedir(), '.config', 'synapses', 'elevenlabs.env');
 if (!KEY && fs.existsSync(ENV)) KEY = (fs.readFileSync(ENV, 'utf8').match(/ELEVENLABS_API_KEY=(\S+)/) || [])[1];
 if (!KEY) { console.error(`Clé ElevenLabs introuvable : définis ELEVENLABS_API_KEY ou crée ${ENV}.`); process.exit(1); }
 const EN = process.argv.includes('--en');
-const VOICE_NAME = process.argv.slice(2).find(a => !a.startsWith('--')) || 'Max';
-const OUT = path.join(__dirname, 'out', EN ? 'voix-ia-en.m4a' : 'voix-ia.m4a');
+const opt = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
+const VOICE_NAME = process.argv.slice(2).find((a, i, all) => !a.startsWith('--') && !['--script', '--out'].includes(all[i - 1])) || 'Max';
+const SCRIPT = opt('--script') || (EN ? 'script-voix-off-en.md' : 'script-voix-off.md');
+const OUT = path.join(__dirname, 'out', opt('--out') || (EN ? 'voix-ia-en.m4a' : 'voix-ia.m4a'));
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'synapses-voix-'));
 const API = 'https://api.elevenlabs.io/v1';
 const H = { 'xi-api-key': KEY, 'Content-Type': 'application/json' };
@@ -26,7 +28,7 @@ const MODELS = [
 const TAG = '[enthusiastic] ';
 
 const sec = s => { const [m, r] = s.split(':'); return +m * 60 + parseFloat(r.replace(',', '.')); };
-const rows = fs.readFileSync(path.join(__dirname, EN ? 'script-voix-off-en.md' : 'script-voix-off.md'), 'utf8').split('\n')
+const rows = fs.readFileSync(path.join(__dirname, SCRIPT), 'utf8').split('\n')
   .map(l => l.match(/^\| (\d:\d\d,\d) \| (\d:\d\d,\d) \| [^|]* \| (.*) \|\s*$/))
   .filter(m => m && !m[3].includes('silence'))
   .map(m => ({ a: sec(m[1]), b: sec(m[2]), text: m[3] }));
