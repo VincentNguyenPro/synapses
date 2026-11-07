@@ -59,14 +59,14 @@ rep('Synapses range tes contacts par secteur, entreprise et séniorité pour te 
     'Synapses sorts your contacts by industry, company and seniority to show you who can open a door: a job, a client, a meeting.')
 rep('Gratuit, sans compte. Ton fichier est lu dans ton navigateur et n’est envoyé nulle part.',
     'Free, no account. Your file is read in your browser and never sent anywhere.')
-rep('aria-label="Vidéo de démonstration de Synapses sur un réseau fictif, 1 min 45"', 'aria-label="Synapses demo video on a fictional network, 1 min 45"')
-# Film en anglais (voix, textes, sous-titres) ; les plans de l’app restent en français
-rep('poster="assets/demo/synapses-demo-affiche.webp"', 'poster="assets/demo/synapses-demo-affiche-en.webp"')
-rep('assets/demo/synapses-demo.mp4', 'assets/demo/synapses-demo-en.mp4', 2)
-rep('<track kind="captions" src="assets/demo/synapses-demo.vtt" srclang="fr" label="Français" default>', '<track kind="captions" src="assets/demo/synapses-demo-en.vtt" srclang="en" label="English" default>')
+rep('aria-label="Vidéo de présentation de Synapses sur un réseau fictif, 57 secondes"', 'aria-label="Synapses demo video on a fictional network, 1 min 45"')
+# Film en anglais : l’ancien film de démo (1:45, voix ElevenLabs), tant que le film de lancement n’a pas sa version anglaise
+rep('poster="assets/demo/synapses-lancement-affiche.webp?v=1"', 'poster="assets/demo/synapses-demo-affiche-en.webp"')
+rep('assets/demo/synapses-lancement.mp4?v=1', 'assets/demo/synapses-demo-en.mp4', 2)
+rep('<track kind="captions" src="assets/demo/synapses-lancement.vtt?v=1" srclang="fr" label="Français" default>', '<track kind="captions" src="assets/demo/synapses-demo-en.vtt" srclang="en" label="English" default>')
 rep('Télécharger la vidéo de démonstration', 'Download the demo video')
-rep('aria-label="Lire la vidéo de démonstration, 1 min 45"', 'aria-label="Play the demo video, 1 min 45"')
-rep('<span>Voir la vidéo · 1:45</span>', '<span>Watch the video · 1:45</span>')
+rep('aria-label="Lire la vidéo de présentation, 57 secondes"', 'aria-label="Play the demo video, 1 min 45"')
+rep('<span>Voir la vidéo · 0:57</span>', '<span>Watch the video · 1:45</span>')
 rep('aria-label="0 réseaux"', 'aria-label="0 networks"')
 rep('<span>réseaux LinkedIn déjà visualisés avec Synapses</span><small>Compteur anonyme&nbsp;: +1 à chaque import réussi, au plus une fois par jour et par navigateur.</small>',
     '<span>LinkedIn networks already mapped with Synapses</span><small>Anonymous counter: +1 for each successful import, at most once a day per browser.</small>')
@@ -275,7 +275,7 @@ rep('<p>Le graphe s’adapte à l’écran, et une vue Liste reprend tout en tex
 rep('Ouvre <a class="go" href="app/">la démo</a> ou <a class="alt" href="app/#importer">ton export</a>', 'Open <a class="go" href="app/">the demo</a> or <a class="alt" href="app/#importer">your export</a>')
 rep('<p>La démo tourne sur 150 contacts fictifs. Ton export, lui, reste dans ton navigateur.</p>', '<p>The demo runs on 150 fictional contacts. Your export stays in your browser.</p>')
 rep('<p>Synapses lit ton export LinkedIn dans ton navigateur et en fait une carte de ton réseau.</p>', '<p>Synapses reads your LinkedIn export in your browser and turns it into a map of your network.</p>')
-rep('Outil indépendant, non affilié à LinkedIn.<br>Voix de la vidéo&nbsp;: ElevenLabs.', 'Independent tool, not affiliated with LinkedIn.<br>Video voice: ElevenLabs.')
+rep('Outil indépendant, non affilié à LinkedIn.<br>Vidéo&nbsp;: voix de Vincent générée par IA, musique de Lilliben (Pixabay).', 'Independent tool, not affiliated with LinkedIn.<br>Video voice: ElevenLabs.')
 rep('aria-label="Pied de page"', 'aria-label="Footer"')
 rep('<a href="app/">Ouvrir l’outil</a>', '<a href="app/">Open the tool</a>')
 rep('<p>Conçu et développé par <a', '<p>Designed and built by <a')
