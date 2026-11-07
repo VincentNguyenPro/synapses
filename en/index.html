@@ -684,13 +684,13 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
 
       <div class="hero-media">
       <div class="player rise" style="--i:2" id="video">
-        <video id="film" controls playsinline preload="none" width="1920" height="1080" poster="../assets/demo/synapses-demo-affiche-en.webp" aria-label="Synapses demo video on a fictional network, 1 min 45">
-          <source src="../assets/demo/synapses-demo-en.mp4" type="video/mp4">
-          <track kind="captions" src="../assets/demo/synapses-demo-en.vtt" srclang="en" label="English" default>
-          <a href="../assets/demo/synapses-demo-en.mp4">Download the demo video</a>
+        <video id="film" controls playsinline preload="none" width="1920" height="1080" poster="../assets/demo/synapses-lancement-affiche-en.webp?v=1" aria-label="Synapses launch video on a fictional network, 57 seconds">
+          <source src="../assets/demo/synapses-lancement-en.mp4?v=1" type="video/mp4">
+          <track kind="captions" src="../assets/demo/synapses-lancement-en.vtt?v=1" srclang="en" label="English" default>
+          <a href="../assets/demo/synapses-lancement-en.mp4?v=1">Download the demo video</a>
         </video>
         <video class="teaser" id="teaser" muted loop playsinline preload="none" poster="../assets/demo/synapses-apercu-affiche-en.webp?v=1" aria-hidden="true" tabindex="-1"><source src="../assets/demo/synapses-apercu-en.mp4?v=1" type="video/mp4"></video>
-        <button type="button" class="play" id="play" aria-label="Play the demo video, 1 min 45"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Watch the video · 1:45</span></button>
+        <button type="button" class="play" id="play" aria-label="Play the launch video, 57 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><span>Watch the video · 0:57</span></button>
       </div>
       <!-- Compteur réel (supabase/compteur.sql), affiché seulement si la base répond : jamais de chiffre inventé -->
       <div class="tally" id="tally" hidden aria-live="polite"><div class="flap" data-tally role="img" aria-label="0 networks"></div><div><span>LinkedIn networks already mapped with Synapses</span><small>Anonymous counter: +1 for each successful import, at most once a day per browser.</small></div></div>
@@ -967,7 +967,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
 
 <footer>
   <div class="tiles">
-    <div class="tile say"><p>Synapses reads your LinkedIn export in your browser and turns it into a map of your network.</p><p class="legal">Independent tool, not affiliated with LinkedIn.<br>Video voice: ElevenLabs.</p></div>
+    <div class="tile say"><p>Synapses reads your LinkedIn export in your browser and turns it into a map of your network.</p><p class="legal">Independent tool, not affiliated with LinkedIn.<br>Video: Vincent’s voice, AI-generated; music by Lilliben (Pixabay).</p></div>
     <nav class="tile nav" aria-label="Footer"><ul><li><a href="#situations">Use cases</a></li><li><a href="#demarrer">Get started</a></li><li><a href="#confidentialite">Privacy</a></li><li><a href="#questions">FAQ</a></li><li><a href="#demandes" data-fb>Give feedback</a></li><li><a href="../app/?lang=en">Open the tool</a></li><li><a href="legal/">Legal notice</a></li></ul></nav>
     <div class="tile by"><img src="../assets/vincent.webp" width="104" height="130" alt="Vincent Nguyen" loading="lazy" decoding="async"><div class="bytext"><p>Designed and built by <a href="https://www.linkedin.com/in/vincentnguyenpro/" target="_blank" rel="noopener">Vincent Nguyen</a>,<br>Product Manager, with Claude Code.</p><p class="idee">Inspired by mind mapping, I wanted to see my LinkedIn network at a glance: my circles, who I’m close to, and who to contact for a job, a sales lead or an expert’s opinion.</p><p>The code is public: <a href="https://github.com/VincentNguyenPro/synapses" target="_blank" rel="noopener">GitHub</a>.</p></div></div>
     <div class="tile word" aria-hidden="true"><span class="wmark"><svg viewBox="0 0 20 20" fill="none"><g stroke="#fff" stroke-width="1.6"><path d="M5 5l5 5 5-4M10 10l-1 6"/></g><g fill="#fff"><circle cx="5" cy="5" r="2.4"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="10" cy="10" r="3"/></g></svg></span><span class="wname">Synapses</span></div>
