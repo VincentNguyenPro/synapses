@@ -1,5 +1,7 @@
 # Vidéo de démo Synapses : script de la voix off
 
+> Ancien film de démo (1 min 45), remplacé sur la landing le 7 novembre 2026 par le film de lancement (`script-yc.md`, `film-yc.html`) ; ses fichiers `assets/demo/synapses-demo*` ont été retirés du dépôt (historique git).
+
 Durée totale : 1:48. Ton : posé, direct, tutoiement. Chaque phrase doit tenir dans sa fenêtre ; un léger silence en fin de fenêtre est normal.
 Les trois premières secondes sont l’image de couverture (miniature dans les messageries) : la voix commence à 0:03.
 
