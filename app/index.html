@@ -4055,6 +4055,12 @@ async function handleFiles(fileList){
     }
   } catch(err){ showHelp(L('Le fichier n’a pas pu être lu. Réessaie avec l’archive .zip de LinkedIn ou le fichier Connections.csv.', 'The file couldn’t be read. Try again with the LinkedIn .zip archive or the Connections.csv file.')); return; }
   const prof = profileFrom(texts);
+  /* Lien de ton propre profil : absent de Profile.csv, mais présent dans Invitations.csv (tu es l’auteur des invitations envoyées,
+     le destinataire des invitations reçues). Rempli seulement si tu ne l’as pas déjà saisi */
+  if(sig['invitations.csv'] && !(meProfile.url || '').trim()){
+    const me = parseRows(sig['invitations.csv']).map(r => /^out/i.test(r['Direction'] || '') ? r['inviterProfileUrl'] : r['inviteeProfileUrl']).find(u => /^https?:\/\/(www\.)?linkedin\.com\/in\//i.test(u || ''));
+    if(me) prof.url = me.trim().replace(/^http:\/\//i, 'https://');
+  }
   const hasProf = Object.keys(prof).length > 0;
   if(sig['education.csv']){
     const edu = parseRows(sig['education.csv']);
