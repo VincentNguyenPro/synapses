@@ -184,17 +184,22 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .pastebox:focus{background:var(--surface);border-color:var(--accent);outline:none}
 .ilogo{width:16px;height:16px;border-radius:4px;object-fit:contain;background:#fff;box-shadow:0 0 0 1px var(--line);vertical-align:-3px;margin-right:5px;flex:none}
 .coname{overflow-wrap:anywhere}
-.evfilters{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
-.evseg{display:flex;flex-wrap:wrap;gap:6px}
-.evseg .chip::before{display:none}
-.evtheme{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin:2px 0 0}
-.evtheme select{flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font:inherit;font-size:13.5px}
+.evfilters{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin:12px 0 6px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.evf{display:flex;flex-direction:column;gap:4px;margin:0;min-width:0}
+.evf span{font-size:12px;font-weight:700;color:var(--muted)}
+.evf select{width:100%;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit;font-size:13.5px}
+.evf:first-child,.evf:nth-of-type(2),.evfor{grid-column:1/-1}
+.evfor{margin:-6px 0 0;font-size:12px;color:var(--muted)}
+.evhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.evhead h3{margin-bottom:8px}
 .evlist{list-style:none;margin:0;padding:0}
 .evcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:4px}
 .evcard strong{font-size:15px}
 .evdate{font-size:12.5px;font-weight:700;color:var(--accent)}
 .evmeta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted)}
 .evtag{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink)}
+.evtag.job{background:#FFF4D6;color:#8A5A00}
+.evtag.near{background:var(--accent-soft);color:var(--accent)}
 .evtag.free{background:#E3F6EE;color:#1F7A4D}
 .evthemes{display:flex;flex-wrap:wrap;gap:4px}
 .evthemes span{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 7px}
@@ -1105,7 +1110,9 @@ const pendingInv = () => (!isDemo && proxData && proxData.p) || {o:[], i:[]};
    Liste vérifiée à la main dans data/evenements.json (dates et sources), filtrée dans le navigateur selon ton poste, ton secteur
    et ta ville (fiche Moi). Rien n’est envoyé : un clic ouvre le site de l’organisateur pour t’inscrire. */
 let eventsData = null, eventsP = null;
-const evState = {mode:'', prix:'', lieu:'', theme:'moi'};
+const evState = {mode:'', prix:'', lieu:'pays', theme:'moi'};
+const EV_CITY_KEY = 'synapses-ville-v1';
+let evCity = ''; try { evCity = localStorage.getItem(EV_CITY_KEY) || ''; } catch(e) {}
 function loadEvents(){ if(!eventsP) eventsP = fetch('../data/evenements.json').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => (eventsData = d)).catch(e => { eventsP = null; throw e; }); return eventsP; }
 const COUNTRY = {FR:['france'], PT:['portugal'], FI:['finland', 'finlande'], ES:['spain', 'espagne'], GB:['united kingdom', 'royaume-uni', 'uk', 'england', 'angleterre'], NL:['netherlands', 'pays-bas'], DE:['germany', 'allemagne'], BE:['belgium', 'belgique'], CH:['switzerland', 'suisse'], US:['united states', 'etats-unis']};
 const COUNTRY_NAME = {FR:['France', 'France'], PT:['Portugal', 'Portugal'], FI:['Finlande', 'Finland'], ES:['Espagne', 'Spain'], GB:['Royaume-Uni', 'United Kingdom'], NL:['Pays-Bas', 'Netherlands'], DE:['Allemagne', 'Germany'], BE:['Belgique', 'Belgium'], CH:['Suisse', 'Switzerland'], US:['États-Unis', 'United States']};
@@ -1116,11 +1123,12 @@ function myEventProfile(){
   const p = myProfile(), last = (p.positions || [])[0] || {}, pos = norm(last.t || p.position || p.headline || ''), co = last.c || p.company || '';
   const fn = pos ? classify(FUNCTIONS, pos, '') : '';
   const sector = co ? (builtinSector(nkey(co)) || classify(SECTORS, norm(co), '')) : '';
-  const themes = new Set([fn, sector].filter(Boolean));
-  if(/\b(pmo|projets?|project|programme|portefeuille)\b/.test(pos)) themes.add('Gestion de projet');
+  const job = new Set([fn].filter(Boolean));
+  if(/\b(pmo|projets?|project|programme|portefeuille)\b/.test(pos)) job.add('Gestion de projet');
+  const themes = new Set([...job, sector].filter(Boolean));
   const loc = norm(p.location || ''), country = Object.keys(COUNTRY).find(k => COUNTRY[k].some(n => loc.includes(n))) || (loc ? '' : '');
   const city = (p.location || '').split(',')[0].replace(/^(greater|grand)\s+/i, '').replace(/\s+(metropolitan area|area|region|et périphérie).*$/i, '').trim();
-  return {themes, fn, sector, city, country};
+  return {themes, job, fn, sector, city:evCity || city, country:country || 'FR', profileCity:city};
 }
 const evDate = s => { if(!s) return ''; const [y, m, d] = s.split('-').map(Number); return d ? new Date(y, m - 1, d) : new Date(y, m - 1, 1); };
 function evWhen(e){
@@ -1148,23 +1156,27 @@ async function showEvents(keepScroll){
   const me = myEventProfile(), all = upcomingEvents();
   const themesAll = [...new Set(all.flatMap(e => e.themes))].sort((a, b) => dv(a).localeCompare(dv(b), LOC));
   if(evState.theme === 'moi' && !me.themes.size) evState.theme = '';
-  if(evState.lieu === 'ville' && !me.city) evState.lieu = '';
-  if((evState.lieu === 'pays' || evState.lieu === 'etranger') && !me.country) evState.lieu = '';
+  if(evState.lieu === 'ville' && !me.city) evState.lieu = 'pays';
   const inCity = e => me.city && e.ville && (norm(e.ville).includes(norm(me.city)) || norm(me.city).includes(norm(e.ville)) || (norm(me.city) === 'paris' && /^paris|nanterre|la defense/.test(norm(e.ville))));
   const ok = e => (!evState.mode || (evState.mode === 'presentiel' ? e.mode !== 'en-ligne' : e.mode !== 'presentiel'))
     && (!evState.prix || e.prix === evState.prix)
     && (!evState.lieu || (evState.lieu === 'ville' ? inCity(e) : evState.lieu === 'pays' ? (e.pays === me.country || e.mode === 'en-ligne') : e.pays && e.pays !== me.country))
     && (!evState.theme || (evState.theme === 'moi' ? e.themes.some(t => me.themes.has(t)) : e.themes.includes(evState.theme)));
-  const list = all.filter(ok);
-  const seg = (k, opts) => `<div class="evseg" role="group">${opts.map(([v, lbl]) => `<button class="chip" type="button" data-act="evf" data-k="${k}" data-v="${v}" aria-pressed="${evState[k] === v}">${lbl}</button>`).join('')}</div>`;
+  /* Ordre : lié à ton poste (PMO → gestion de projet…), puis à ton secteur ; ta ville d’abord ; puis la date */
+  /* Le plus précis d’abord : un PMO voit la gestion de projet avant les événements « opérations » en général */
+  const rel = e => e.themes.includes('Gestion de projet') && me.job.has('Gestion de projet') ? 3 : e.themes.some(t => me.job.has(t)) ? 2 : e.themes.some(t => me.themes.has(t)) ? 1 : 0;
+  const list = all.filter(ok).sort((x, y) => rel(y) - rel(x) || (inCity(y) ? 1 : 0) - (inCity(x) ? 1 : 0) || evDate(x.debut) - evDate(y.debut));
+  const countryName = (COUNTRY_NAME[me.country] || [me.country, me.country])[EN ? 1 : 0];
+  const cities = [...new Set([me.city, me.profileCity, ...all.filter(e => e.pays === me.country && e.ville).map(e => e.ville)].filter(Boolean))].sort((a, b) => a.localeCompare(b, LOC));
+  const isDefault = evState.lieu === 'pays' && !evState.mode && !evState.prix && evState.theme === (me.themes.size ? 'moi' : '');
   const where = e => e.mode === 'en-ligne' ? L('En ligne', 'Online') : [EN ? VILLE_EN[e.ville] || e.ville : e.ville, e.pays && e.pays !== me.country ? (COUNTRY_NAME[e.pays] || [e.pays, e.pays])[EN ? 1 : 0] : ''].filter(Boolean).join(', ');
   const price = {gratuit:L('Gratuit', 'Free'), payant:L('Payant', 'Paid'), variable:L('Prix selon le billet', 'Price varies')};
   const card = e => `<li class="evcard"><div class="evdate">${esc(evWhen(e))}</div><strong>${esc(e.nom)}</strong>
-      <div class="evmeta"><span>${esc(where(e))}</span><span class="evtag ${e.prix === 'gratuit' ? 'free' : ''}">${price[e.prix] || ''}</span>${e.mode === 'hybride' ? `<span class="evtag">${L('Présentiel et en ligne', 'In person and online')}</span>` : ''}</div>
+      <div class="evmeta"><span>${esc(where(e))}</span>${me.job.size && rel(e) >= 2 ? `<span class="evtag job">${L('Ton métier', 'Your job')}</span>` : ''}${inCity(e) ? `<span class="evtag near">${L('Près de toi', 'Near you')}</span>` : ''}<span class="evtag ${e.prix === 'gratuit' ? 'free' : ''}">${price[e.prix] || ''}</span>${e.mode === 'hybride' ? `<span class="evtag">${L('Présentiel et en ligne', 'In person and online')}</span>` : ''}</div>
       <div class="evthemes">${e.themes.filter(t => t !== 'Gestion de projet' || me.themes.has(t)).slice(0, 4).map(t => `<span>${esc(t === 'Gestion de projet' ? L('Gestion de projet', 'Project management') : dv(t))}</span>`).join('')}</div>
-      ${e.note ? `<p class="evnote">${esc(EN ? e.note.replace('Plusieurs sessions en anglais (1er, 8 et 9 décembre)', 'Several sessions in English (Dec 1, 8 and 9)').replace('Webinaire en anglais', 'Webinar in English').replace('Badge visiteur gratuit', 'Free visitor badge') : e.note)}</p>` : ''}
+      ${e.note ? `<p class="evnote">${esc(EN ? e.note.replace('Plusieurs sessions en anglais (1er, 8 et 9 décembre)', 'Several sessions in English (Dec 1, 8 and 9)').replace('Webinaire en anglais', 'Webinar in English').replace('Badge visiteur gratuit', 'Free visitor badge').replace('Journée mondiale : webinaires et rencontres organisés par les communautés PMO', 'Worldwide day: webinars and meetups run by PMO communities') : e.note)}</p>` : ''}
       <a class="btn primary sm" href="${esc(e.url)}" target="_blank" rel="noopener">${L('S’inscrire', 'Register')} ${ICON_EXT}</a></li>`;
-  const ag = (eventsData.agendas || []).filter(a => !evState.theme || (evState.theme === 'moi' ? a.themes.some(t => me.themes.has(t)) : a.themes.includes(evState.theme)));
+  const ag = (eventsData.agendas || []).filter(a => !evState.theme || (evState.theme === 'moi' ? a.themes.some(t => me.themes.has(t)) : a.themes.includes(evState.theme))).sort((a, b) => b.themes.some(t => me.job.has(t)) - a.themes.some(t => me.job.has(t)));
   const kw = evState.theme && evState.theme !== 'moi' ? dv(evState.theme) : me.fn ? dv(me.fn) : '';
   const city = me.city || '';
   const more = [
@@ -1173,20 +1185,35 @@ async function showEvents(keepScroll){
     ['Luma', `https://luma.com/${city ? encodeURIComponent(norm(city).replace(/[^a-z]+/g, '-')) : 'discover'}`]
   ];
   openDrawer(`<h2 id="dtitle" tabindex="-1">${L('Événements pour toi', 'Events for you')}</h2>
-    <p class="pos">${me.themes.size ? L(`Choisis selon ton poste${me.city ? ' et ta ville' : ''}. Clique sur « S’inscrire » pour ouvrir le site de l’organisateur.`, `Picked for your job${me.city ? ' and city' : ''}. Click “Register” to open the organizer’s site.`) : L('Renseigne ton poste dans ta fiche (Moi) pour des suggestions plus ciblées.', 'Fill in your job title in your profile (Me) for better-targeted suggestions.')}</p>
+    <p class="pos">${me.themes.size ? L(`Choisis selon ton poste${me.city ? ' et ta ville' : ''}. Clique sur « S’inscrire » pour ouvrir le site de l’organisateur.`, `Picked for your job${me.city ? ' and city' : ''}. Click “Register” to open the organizer’s site.`) : L('Renseigne ton poste dans ta fiche (Moi) pour des suggestions plus ciblées.', 'Fill in your job title in your profile (Me) for better-targeted suggestions.')}</p>
     <div class="evfilters">
-      ${seg('mode', [['', L('Tous formats', 'All formats')], ['presentiel', L('Présentiel', 'In person')], ['en-ligne', L('En ligne', 'Online')]])}
-      ${seg('prix', [['', L('Tous prix', 'Any price')], ['gratuit', L('Gratuit', 'Free')], ['payant', L('Payant', 'Paid')]])}
-      ${seg('lieu', [['', L('Partout', 'Anywhere')], ...(me.city ? [['ville', esc(me.city)]] : []), ...(me.country ? [['pays', L('Mon pays', 'My country')], ['etranger', L('À l’étranger', 'Abroad')]] : [])])}
-      <label class="evtheme">${L('Thème', 'Topic')} <select id="evTheme">${me.themes.size ? `<option value="moi"${evState.theme === 'moi' ? ' selected' : ''}>${L('Pour moi', 'For me')} (${[...me.themes].map(t => t === 'Gestion de projet' ? L('gestion de projet', 'project management') : dv(t)).join(', ')})</option>` : ''}<option value=""${!evState.theme ? ' selected' : ''}>${L('Tous les thèmes', 'All topics')}</option>${themesAll.filter(t => t !== 'Gestion de projet').map(t => `<option value="${esc(t)}"${evState.theme === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
+      <label class="evf"><span>${L('Thème', 'Topic')}</span><select id="evTheme">${me.themes.size ? `<option value="moi"${evState.theme === 'moi' ? ' selected' : ''}>${L('Pour moi', 'For me')}</option>` : ''}<option value=""${!evState.theme ? ' selected' : ''}>${L('Tous les thèmes', 'All topics')}</option>${themesAll.filter(t => t !== 'Gestion de projet').map(t => `<option value="${esc(t)}"${evState.theme === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
+      ${evState.theme === 'moi' && me.themes.size ? `<p class="evfor">${L('Selon ton poste et ton secteur', 'Based on your job and industry')} : ${[...me.themes].map(t => t === 'Gestion de projet' ? L('gestion de projet', 'project management') : dv(t)).join(', ')}</p>` : ''}
+      <label class="evf"><span>${L('Lieu', 'Where')}</span><select id="evLieu">
+        <option value="pays"${evState.lieu === 'pays' ? ' selected' : ''}>${L(`${countryName} et en ligne`, `${countryName} and online`)}</option>
+        <optgroup label="${L('Une ville', 'A city')}">${cities.map(v => `<option value="ville:${esc(v)}"${evState.lieu === 'ville' && norm(v) === norm(me.city) ? ' selected' : ''}>${esc(EN ? VILLE_EN[v] || v : v)}</option>`).join('')}</optgroup>
+        <option value="etranger"${evState.lieu === 'etranger' ? ' selected' : ''}>${L('À l’étranger', 'Abroad')}</option>
+        <option value=""${!evState.lieu ? ' selected' : ''}>${L('Partout', 'Anywhere')}</option>
+      </select></label>
+      <label class="evf"><span>${L('Format', 'Format')}</span><select id="evMode">
+        <option value="">${L('Tous', 'All')}</option><option value="presentiel"${evState.mode === 'presentiel' ? ' selected' : ''}>${L('Présentiel', 'In person')}</option><option value="en-ligne"${evState.mode === 'en-ligne' ? ' selected' : ''}>${L('En ligne', 'Online')}</option>
+      </select></label>
+      <label class="evf"><span>${L('Prix', 'Price')}</span><select id="evPrix">
+        <option value="">${L('Tous', 'All')}</option><option value="gratuit"${evState.prix === 'gratuit' ? ' selected' : ''}>${L('Gratuit', 'Free')}</option><option value="payant"${evState.prix === 'payant' ? ' selected' : ''}>${L('Payant', 'Paid')}</option>
+      </select></label>
     </div>
-    <h3>${list.length ? L(`${list.length} événement${list.length > 1 ? 's' : ''} à venir`, `${list.length} upcoming event${sEN(list.length)}`) : L('Aucun événement avec ces filtres', 'No events with these filters')}</h3>
+    <div class="evhead"><h3>${list.length ? L(`${list.length} événement${list.length > 1 ? 's' : ''} à venir`, `${list.length} upcoming event${sEN(list.length)}`) : L('Aucun événement avec ces filtres', 'No events with these filters')}</h3>${isDefault ? '' : `<button class="linkbtn" type="button" data-act="evreset">${L('Réinitialiser', 'Reset')}</button>`}</div>
     ${list.length ? `<ul class="evlist">${list.map(card).join('')}</ul>` : `<p class="pos">${L('Élargis un filtre, ou cherche plus loin ci-dessous.', 'Widen a filter, or search further below.')}</p>`}
-    ${ag.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3><ul class="evag">${ag.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN ? a.nom.replace(' : meetups produit gratuits (Paris, chaque mois)', ': free product meetups (Paris, monthly)').replace(' : soirées et salons de la finance', ': finance evenings and fairs').replace(' : soirées de recrutement tech', ': tech hiring evenings').replace(' : meetups data et IA', ': data and AI meetups').replace(' : conférences gestion de projet', ': project management talks') : a.nom)} ${ICON_EXT}</a></li>`).join('')}</ul>` : ''}
+    ${ag.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3><ul class="evag">${ag.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN ? a.nom.replace(' : meetups produit gratuits (Paris, chaque mois)', ': free product meetups (Paris, monthly)').replace(' : soirées et salons de la finance', ': finance evenings and fairs').replace(' : soirées de recrutement tech', ': tech hiring evenings').replace(' : meetups data et IA', ': data and AI meetups').replace(' : conférences gestion de projet', ': project management talks').replace(' : conférences et meetups PMO en France', ': PMO conferences and meetups in France').replace(' : événements agiles à Paris', ': agile events in Paris') : a.nom)} ${ICON_EXT}</a></li>`).join('')}</ul>` : ''}
     <h3>${L('Chercher plus', 'Search further')}</h3>
     <p class="evmore">${more.map(([n, u]) => `<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">${n} ${ICON_EXT}</a>`).join('')}</p>
     <p class="hint" style="margin-top:14px">${L(`Liste vérifiée le ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}, dates à confirmer sur le site de l’organisateur. Rien n’est envoyé : seul un clic ouvre le site choisi.`, `List checked on ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}; confirm dates on the organizer’s site. Nothing is sent: only a click opens the chosen site.`)}</p>`);
   $('#evTheme').addEventListener('change', e => { evState.theme = e.target.value; showEvents(true); });
+  $('#evLieu').addEventListener('change', e => { const v = e.target.value;
+    if(v.startsWith('ville:')){ evCity = v.slice(6); evState.lieu = 'ville'; try { localStorage.setItem(EV_CITY_KEY, evCity); } catch(err) {} } else evState.lieu = v;
+    showEvents(true); });
+  $('#evMode').addEventListener('change', e => { evState.mode = e.target.value; showEvents(true); });
+  $('#evPrix').addEventListener('change', e => { evState.prix = e.target.value; showEvents(true); });
   if(keepScroll) drawer.scrollTop = sc;
 }
 function syncRelanceHint(){
@@ -4418,7 +4445,7 @@ document.addEventListener('click', e => {
     else if(a === 'demolink') toast(L('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.', 'Fictional contact. With your export, this link opens their LinkedIn profile.'));
     else if(a === 'relance') showRelance();
     else if(a === 'events') showEvents();
-    else if(a === 'evf'){ evState[act.dataset.k] = act.dataset.v; showEvents(true); }
+    else if(a === 'evreset'){ Object.assign(evState, {mode:'', prix:'', lieu:'pays', theme:'moi'}); showEvents(true); }
     else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
     else if(a === 'cbgo') pickTarget(act.dataset.v);
     else if(a === 'keepforget'){ if(confirm(L('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.', 'Forget your network on this device? It stays shown until the next refresh; you’ll then need to re-import your file.'))) setKeep(false); }

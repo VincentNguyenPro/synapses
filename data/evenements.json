@@ -3,43 +3,591 @@
  "description": "Événements professionnels proposés dans Synapses (fiche « Événements pour toi »). Liste vérifiée à la main : chaque date vient de la source indiquée. Un événement passé disparaît tout seul. themes = fonctions (data/postes.json) et secteurs (data/entreprises.json), en codes français. prix : gratuit, payant ou variable (selon le billet, ou non publié). mode : presentiel, en-ligne ou hybride. confirme = false quand seul le mois est connu (debut au format AAAA-MM).",
  "maj": "2026-11-09",
  "evenements": [
-  {"nom": "Web Summit 2026", "debut": "2026-11-09", "fin": "2026-11-12", "ville": "Lisbonne", "pays": "PT", "mode": "presentiel", "prix": "payant", "themes": ["Direction générale", "Tech", "Produit", "Data", "Marketing", "Sales"], "url": "https://websummit.com", "source": "https://hadea.ec.europa.eu/events/web-summit-2026-2026-11-09_en", "confirme": true},
-  {"nom": "Slush 2026", "debut": "2026-11-18", "fin": "2026-11-19", "ville": "Helsinki", "pays": "FI", "mode": "presentiel", "prix": "payant", "themes": ["Direction générale", "Tech", "Finance", "Finance & investissement"], "url": "https://slush.org", "source": "https://slush.org/", "confirme": true},
-  {"nom": "RDV des Transformations du Droit", "debut": "2026-11-24", "fin": "2026-11-25", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Juridique"], "url": "https://www.transformations-droit.com", "source": "https://www.village-justice.com/articles/edito-rdv-transformations-droit-congres", "confirme": true},
-  {"nom": "Tech.Rocks Summit 2026", "debut": "2026-11-30", "fin": "2026-12-01", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "payant", "themes": ["Tech", "Direction générale"], "url": "https://events.tech.rocks/e/tech-rocks-summit-2026/en", "source": "https://www.blogdumoderateur.com/agenda/tech-rocks-summit-2026/", "confirme": true},
-  {"nom": "Supply Chain Event", "debut": "2026-12-01", "fin": "2026-12-03", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Opérations", "Transport & mobilité"], "url": "https://www.supplychain-event.com", "source": "https://lechommerces.fr/calendrier-des-salons-professionnels-commerce/", "confirme": true},
-  {"nom": "Product School : ateliers en ligne", "debut": "2026-12-01", "fin": "2026-12-09", "ville": "", "pays": "", "mode": "en-ligne", "prix": "gratuit", "themes": ["Produit"], "url": "https://productschool.com/events", "source": "https://productschool.com/events", "confirme": true, "note": "Plusieurs sessions en anglais (1er, 8 et 9 décembre)"},
-  {"nom": "IOFM : tendances 2027 pour la finance", "debut": "2026-12-01", "fin": "2026-12-01", "ville": "", "pays": "", "mode": "en-ligne", "prix": "gratuit", "themes": ["Finance"], "url": "https://www.iofm.com/webinars", "source": "https://www.iofm.com/webinars", "confirme": true, "note": "Webinaire en anglais"},
-  {"nom": "SIMI, salon de l’immobilier d’entreprise", "debut": "2026-12-08", "fin": "2026-12-10", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Immobilier & construction", "Finance & investissement"], "url": "https://www.salonsimi.com", "source": "https://lechommerces.fr/calendrier-des-salons-professionnels-commerce/", "confirme": true},
-  {"nom": "Next Gen Patrimoine", "debut": "2026-12-10", "fin": "2026-12-10", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Finance", "Finance & investissement", "Banque & assurance"], "url": "https://www.nextgenpatrimoine.com", "source": "https://www.nextgenpatrimoine.com/blog/evenements-patrimoine-cgp-family-office", "confirme": true},
-  {"nom": "Snowcamp 2027", "debut": "2027-01-14", "fin": "2027-01-16", "ville": "Grenoble", "pays": "FR", "mode": "presentiel", "prix": "payant", "themes": ["Tech", "Data"], "url": "https://snowcamp.io", "source": "https://snowcamp.io/en/", "confirme": true},
-  {"nom": "Grand Forum du Patrimoine", "debut": "2027-01-18", "fin": "2027-01-18", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Finance", "Finance & investissement", "Banque & assurance"], "url": "https://www.experts-du-patrimoine.fr/evenements-gestion-de-patrimoine/grand-forum-du-patrimoine-2027/", "source": "https://www.experts-du-patrimoine.fr/evenements-gestion-de-patrimoine/grand-forum-du-patrimoine-2027/", "confirme": true},
-  {"nom": "Sommet du droit", "debut": "2027-01-28", "fin": "2027-01-28", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Juridique"], "url": "https://www.village-justice.com/articles/grands-evenements-juridiques-droit", "source": "https://www.village-justice.com/articles/grands-evenements-juridiques-droit", "confirme": true},
-  {"nom": "IPEM", "debut": "2027-02-02", "fin": "2027-02-04", "ville": "Cannes", "pays": "FR", "mode": "presentiel", "prix": "payant", "themes": ["Finance", "Finance & investissement"], "url": "https://www.ipem-market.com", "source": "https://www.nextgenpatrimoine.com/blog/evenements-patrimoine-cgp-family-office", "confirme": true},
-  {"nom": "ProductCon London", "debut": "2027-02-23", "fin": "2027-02-23", "ville": "Londres", "pays": "GB", "mode": "presentiel", "prix": "variable", "themes": ["Produit"], "url": "https://productschool.com/events", "source": "https://productevents.co/guides/best-product-conferences-2027", "confirme": true},
-  {"nom": "Salon international de l’agriculture", "debut": "2027-02-27", "fin": "2027-03-07", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "payant", "themes": ["Agroalimentaire"], "url": "https://www.salon-agriculture.com", "source": "https://lechommerces.fr/calendrier-des-salons-professionnels-commerce/", "confirme": true},
-  {"nom": "MWC Barcelona 2027", "debut": "2027-03-01", "fin": "2027-03-04", "ville": "Barcelone", "pays": "ES", "mode": "presentiel", "prix": "payant", "themes": ["Tech", "Télécom & médias", "Direction générale"], "url": "https://www.mwcbarcelona.com", "source": "https://conventiongrid.com/shows/mwc-barcelona/2027/barcelona/", "confirme": true},
-  {"nom": "DevFest Nantes 2027", "debut": "2027-03-11", "fin": "2027-03-12", "ville": "Nantes", "pays": "FR", "mode": "presentiel", "prix": "payant", "themes": ["Tech", "Data"], "url": "https://devfest.gdgnantes.com", "source": "https://www.agenda-tech.com/events/nous-serons-de-retour-pour-une-edition-sportive-les-11-et-12-mars-2027-2027", "confirme": true},
-  {"nom": "Patrimonia Paris", "debut": "2027-03-16", "fin": "2027-03-16", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Finance", "Finance & investissement", "Banque & assurance"], "url": "https://www.patrimonia-paris.fr", "source": "https://www.agoris.io/salons/patrimonia-paris", "confirme": true},
-  {"nom": "All4Customer Paris", "debut": "2027-03-23", "fin": "2027-03-25", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "gratuit", "themes": ["Marketing", "Sales", "Data", "Retail & conso"], "url": "https://www.all4customer-paris.com", "source": "https://www.abondance.com/agenda/all4customer-paris-2027", "confirme": true, "note": "Badge visiteur gratuit"},
-  {"nom": "Devoxx France 2027", "debut": "2027-04-07", "fin": "2027-04-09", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "payant", "themes": ["Tech", "Data"], "url": "https://www.devoxx.fr", "source": "https://www.devoxx.fr/en", "confirme": true},
-  {"nom": "AWS Summit Paris", "debut": "2027-04", "fin": "", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "gratuit", "themes": ["Tech", "Data", "Tech & logiciel"], "url": "https://aws.amazon.com/events/summits/paris/", "source": "https://www.clocate.com/amazon-web-services-aws-summit-paris/36982/", "confirme": false},
-  {"nom": "GO Entrepreneurs Paris", "debut": "2027-04-28", "fin": "2027-04-29", "ville": "Nanterre", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Direction générale", "Finance", "Marketing", "Sales"], "url": "https://www.salondesentrepreneurs.com", "source": "https://www.agoris.io/en/salons/go-entrepreneurs-paris", "confirme": true},
-  {"nom": "Rencontres du PMI France 2027", "debut": "2027-05", "fin": "", "ville": "Paris La Défense", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Opérations", "Conseil", "Direction générale", "Gestion de projet"], "url": "https://pmi-france.org/conferences/national-bALL", "source": "https://eocen.setec.fr/retour-sur-les-rencontres-du-project-management-institute-pmi-2026/", "confirme": false},
-  {"nom": "SantExpo 2027", "debut": "2027-05-25", "fin": "2027-05-27", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Santé"], "url": "https://www.santexpo.com", "source": "https://www.agoris.io/salons/santexpo-paris", "confirme": true},
-  {"nom": "Money20/20 Europe 2027", "debut": "2027-06-08", "fin": "2027-06-10", "ville": "Amsterdam", "pays": "NL", "mode": "presentiel", "prix": "payant", "themes": ["Finance", "Banque & assurance", "Tech"], "url": "https://www.money2020europe.com", "source": "https://earlyhall.com/conferences/money20-20-europe", "confirme": true},
-  {"nom": "Solutions Ressources Humaines", "debut": "2027-06-09", "fin": "2027-06-10", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["RH"], "url": "https://solutions-ressources-humaines.fr", "source": "https://solutions-ressources-humaines.fr/infos-pratiques/", "confirme": true},
-  {"nom": "VivaTech 2027", "debut": "2027-06-16", "fin": "2027-06-19", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "payant", "themes": ["Direction générale", "Tech", "Produit", "Data", "Marketing", "Sales", "Tech & logiciel"], "url": "https://vivatech.com", "source": "https://executive-moves.com/events/vivatech-2027-set-for-paris-16-to-19-june/", "confirme": true},
-  {"nom": "SIDO Lyon 2027", "debut": "2027-09-15", "fin": "2027-09-16", "ville": "Lyon", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Tech", "Data", "Opérations", "Énergie & industrie"], "url": "https://www.sido-lyon.com", "source": "https://salonsenfrance.fr/salons/sido-lyon", "confirme": true},
-  {"nom": "Big Data & AI Paris 2027", "debut": "2027-09-29", "fin": "2027-09-30", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "variable", "themes": ["Data", "Tech", "Direction générale"], "url": "https://www.bigdataparis.com", "source": "https://www.bigdataparis.com/en-gb.html", "confirme": true},
-  {"nom": "BIG Bpifrance Inno Génération", "debut": "2027-10", "fin": "", "ville": "Paris", "pays": "FR", "mode": "presentiel", "prix": "gratuit", "themes": ["Direction générale", "Finance", "Marketing", "Sales"], "url": "https://big.bpifrance.fr", "source": "https://big.bpifrance.fr/en", "confirme": false}
+  {
+   "nom": "Web Summit 2026",
+   "debut": "2026-11-09",
+   "fin": "2026-11-12",
+   "ville": "Lisbonne",
+   "pays": "PT",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Direction générale",
+    "Tech",
+    "Produit",
+    "Data",
+    "Marketing",
+    "Sales"
+   ],
+   "url": "https://websummit.com",
+   "source": "https://hadea.ec.europa.eu/events/web-summit-2026-2026-11-09_en",
+   "confirme": true
+  },
+  {
+   "nom": "Slush 2026",
+   "debut": "2026-11-18",
+   "fin": "2026-11-19",
+   "ville": "Helsinki",
+   "pays": "FI",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Direction générale",
+    "Tech",
+    "Finance",
+    "Finance & investissement"
+   ],
+   "url": "https://slush.org",
+   "source": "https://slush.org/",
+   "confirme": true
+  },
+  {
+   "nom": "RDV des Transformations du Droit",
+   "debut": "2026-11-24",
+   "fin": "2026-11-25",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Juridique"
+   ],
+   "url": "https://www.transformations-droit.com",
+   "source": "https://www.village-justice.com/articles/edito-rdv-transformations-droit-congres",
+   "confirme": true
+  },
+  {
+   "nom": "Tech.Rocks Summit 2026",
+   "debut": "2026-11-30",
+   "fin": "2026-12-01",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Tech",
+    "Direction générale"
+   ],
+   "url": "https://events.tech.rocks/e/tech-rocks-summit-2026/en",
+   "source": "https://www.blogdumoderateur.com/agenda/tech-rocks-summit-2026/",
+   "confirme": true
+  },
+  {
+   "nom": "Supply Chain Event",
+   "debut": "2026-12-01",
+   "fin": "2026-12-03",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Opérations",
+    "Transport & mobilité"
+   ],
+   "url": "https://www.supplychain-event.com",
+   "source": "https://lechommerces.fr/calendrier-des-salons-professionnels-commerce/",
+   "confirme": true
+  },
+  {
+   "nom": "Product School : ateliers en ligne",
+   "debut": "2026-12-01",
+   "fin": "2026-12-09",
+   "ville": "",
+   "pays": "",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit"
+   ],
+   "url": "https://productschool.com/events",
+   "source": "https://productschool.com/events",
+   "confirme": true,
+   "note": "Plusieurs sessions en anglais (1er, 8 et 9 décembre)"
+  },
+  {
+   "nom": "IOFM : tendances 2027 pour la finance",
+   "debut": "2026-12-01",
+   "fin": "2026-12-01",
+   "ville": "",
+   "pays": "",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Finance"
+   ],
+   "url": "https://www.iofm.com/webinars",
+   "source": "https://www.iofm.com/webinars",
+   "confirme": true,
+   "note": "Webinaire en anglais"
+  },
+  {
+   "nom": "SIMI, salon de l’immobilier d’entreprise",
+   "debut": "2026-12-08",
+   "fin": "2026-12-10",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Immobilier & construction",
+    "Finance & investissement"
+   ],
+   "url": "https://www.salonsimi.com",
+   "source": "https://lechommerces.fr/calendrier-des-salons-professionnels-commerce/",
+   "confirme": true
+  },
+  {
+   "nom": "Next Gen Patrimoine",
+   "debut": "2026-12-10",
+   "fin": "2026-12-10",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Finance",
+    "Finance & investissement",
+    "Banque & assurance"
+   ],
+   "url": "https://www.nextgenpatrimoine.com",
+   "source": "https://www.nextgenpatrimoine.com/blog/evenements-patrimoine-cgp-family-office",
+   "confirme": true
+  },
+  {
+   "nom": "Snowcamp 2027",
+   "debut": "2027-01-14",
+   "fin": "2027-01-16",
+   "ville": "Grenoble",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Tech",
+    "Data"
+   ],
+   "url": "https://snowcamp.io",
+   "source": "https://snowcamp.io/en/",
+   "confirme": true
+  },
+  {
+   "nom": "Grand Forum du Patrimoine",
+   "debut": "2027-01-18",
+   "fin": "2027-01-18",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Finance",
+    "Finance & investissement",
+    "Banque & assurance"
+   ],
+   "url": "https://www.experts-du-patrimoine.fr/evenements-gestion-de-patrimoine/grand-forum-du-patrimoine-2027/",
+   "source": "https://www.experts-du-patrimoine.fr/evenements-gestion-de-patrimoine/grand-forum-du-patrimoine-2027/",
+   "confirme": true
+  },
+  {
+   "nom": "Sommet du droit",
+   "debut": "2027-01-28",
+   "fin": "2027-01-28",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Juridique"
+   ],
+   "url": "https://www.village-justice.com/articles/grands-evenements-juridiques-droit",
+   "source": "https://www.village-justice.com/articles/grands-evenements-juridiques-droit",
+   "confirme": true
+  },
+  {
+   "nom": "IPEM",
+   "debut": "2027-02-02",
+   "fin": "2027-02-04",
+   "ville": "Cannes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Finance",
+    "Finance & investissement"
+   ],
+   "url": "https://www.ipem-market.com",
+   "source": "https://www.nextgenpatrimoine.com/blog/evenements-patrimoine-cgp-family-office",
+   "confirme": true
+  },
+  {
+   "nom": "ProductCon London",
+   "debut": "2027-02-23",
+   "fin": "2027-02-23",
+   "ville": "Londres",
+   "pays": "GB",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Produit"
+   ],
+   "url": "https://productschool.com/events",
+   "source": "https://productevents.co/guides/best-product-conferences-2027",
+   "confirme": true
+  },
+  {
+   "nom": "Salon international de l’agriculture",
+   "debut": "2027-02-27",
+   "fin": "2027-03-07",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Agroalimentaire"
+   ],
+   "url": "https://www.salon-agriculture.com",
+   "source": "https://lechommerces.fr/calendrier-des-salons-professionnels-commerce/",
+   "confirme": true
+  },
+  {
+   "nom": "MWC Barcelona 2027",
+   "debut": "2027-03-01",
+   "fin": "2027-03-04",
+   "ville": "Barcelone",
+   "pays": "ES",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Tech",
+    "Télécom & médias",
+    "Direction générale"
+   ],
+   "url": "https://www.mwcbarcelona.com",
+   "source": "https://conventiongrid.com/shows/mwc-barcelona/2027/barcelona/",
+   "confirme": true
+  },
+  {
+   "nom": "DevFest Nantes 2027",
+   "debut": "2027-03-11",
+   "fin": "2027-03-12",
+   "ville": "Nantes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Tech",
+    "Data"
+   ],
+   "url": "https://devfest.gdgnantes.com",
+   "source": "https://www.agenda-tech.com/events/nous-serons-de-retour-pour-une-edition-sportive-les-11-et-12-mars-2027-2027",
+   "confirme": true
+  },
+  {
+   "nom": "Patrimonia Paris",
+   "debut": "2027-03-16",
+   "fin": "2027-03-16",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Finance",
+    "Finance & investissement",
+    "Banque & assurance"
+   ],
+   "url": "https://www.patrimonia-paris.fr",
+   "source": "https://www.agoris.io/salons/patrimonia-paris",
+   "confirme": true
+  },
+  {
+   "nom": "All4Customer Paris",
+   "debut": "2027-03-23",
+   "fin": "2027-03-25",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Marketing",
+    "Sales",
+    "Data",
+    "Retail & conso"
+   ],
+   "url": "https://www.all4customer-paris.com",
+   "source": "https://www.abondance.com/agenda/all4customer-paris-2027",
+   "confirme": true,
+   "note": "Badge visiteur gratuit"
+  },
+  {
+   "nom": "AWS Summit Paris",
+   "debut": "2027-04",
+   "fin": "",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Tech",
+    "Data",
+    "Tech & logiciel"
+   ],
+   "url": "https://aws.amazon.com/events/summits/paris/",
+   "source": "https://www.clocate.com/amazon-web-services-aws-summit-paris/36982/",
+   "confirme": false
+  },
+  {
+   "nom": "Devoxx France 2027",
+   "debut": "2027-04-07",
+   "fin": "2027-04-09",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Tech",
+    "Data"
+   ],
+   "url": "https://www.devoxx.fr",
+   "source": "https://www.devoxx.fr/en",
+   "confirme": true
+  },
+  {
+   "nom": "GO Entrepreneurs Paris",
+   "debut": "2027-04-28",
+   "fin": "2027-04-29",
+   "ville": "Nanterre",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Direction générale",
+    "Finance",
+    "Marketing",
+    "Sales"
+   ],
+   "url": "https://www.salondesentrepreneurs.com",
+   "source": "https://www.agoris.io/en/salons/go-entrepreneurs-paris",
+   "confirme": true
+  },
+  {
+   "nom": "Rencontres du PMI France 2027",
+   "debut": "2027-05",
+   "fin": "",
+   "ville": "Paris La Défense",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Opérations",
+    "Conseil",
+    "Direction générale",
+    "Gestion de projet"
+   ],
+   "url": "https://pmi-france.org/conferences/national-bALL",
+   "source": "https://eocen.setec.fr/retour-sur-les-rencontres-du-project-management-institute-pmi-2026/",
+   "confirme": false
+  },
+  {
+   "nom": "Journée internationale du PMO",
+   "debut": "2027-05-11",
+   "fin": "2027-05-11",
+   "ville": "",
+   "pays": "",
+   "mode": "en-ligne",
+   "prix": "variable",
+   "themes": [
+    "Gestion de projet",
+    "Opérations"
+   ],
+   "url": "https://internationalpmoday.com",
+   "source": "https://internationalpmoday.com/",
+   "confirme": true,
+   "note": "Journée mondiale : webinaires et rencontres organisés par les communautés PMO"
+  },
+  {
+   "nom": "SantExpo 2027",
+   "debut": "2027-05-25",
+   "fin": "2027-05-27",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Santé"
+   ],
+   "url": "https://www.santexpo.com",
+   "source": "https://www.agoris.io/salons/santexpo-paris",
+   "confirme": true
+  },
+  {
+   "nom": "Money20/20 Europe 2027",
+   "debut": "2027-06-08",
+   "fin": "2027-06-10",
+   "ville": "Amsterdam",
+   "pays": "NL",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Finance",
+    "Banque & assurance",
+    "Tech"
+   ],
+   "url": "https://www.money2020europe.com",
+   "source": "https://earlyhall.com/conferences/money20-20-europe",
+   "confirme": true
+  },
+  {
+   "nom": "Solutions Ressources Humaines",
+   "debut": "2027-06-09",
+   "fin": "2027-06-10",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "RH"
+   ],
+   "url": "https://solutions-ressources-humaines.fr",
+   "source": "https://solutions-ressources-humaines.fr/infos-pratiques/",
+   "confirme": true
+  },
+  {
+   "nom": "VivaTech 2027",
+   "debut": "2027-06-16",
+   "fin": "2027-06-19",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Direction générale",
+    "Tech",
+    "Produit",
+    "Data",
+    "Marketing",
+    "Sales",
+    "Tech & logiciel"
+   ],
+   "url": "https://vivatech.com",
+   "source": "https://executive-moves.com/events/vivatech-2027-set-for-paris-16-to-19-june/",
+   "confirme": true
+  },
+  {
+   "nom": "SIDO Lyon 2027",
+   "debut": "2027-09-15",
+   "fin": "2027-09-16",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Tech",
+    "Data",
+    "Opérations",
+    "Énergie & industrie"
+   ],
+   "url": "https://www.sido-lyon.com",
+   "source": "https://salonsenfrance.fr/salons/sido-lyon",
+   "confirme": true
+  },
+  {
+   "nom": "Big Data & AI Paris 2027",
+   "debut": "2027-09-29",
+   "fin": "2027-09-30",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Data",
+    "Tech",
+    "Direction générale"
+   ],
+   "url": "https://www.bigdataparis.com",
+   "source": "https://www.bigdataparis.com/en-gb.html",
+   "confirme": true
+  },
+  {
+   "nom": "BIG Bpifrance Inno Génération",
+   "debut": "2027-10",
+   "fin": "",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Direction générale",
+    "Finance",
+    "Marketing",
+    "Sales"
+   ],
+   "url": "https://big.bpifrance.fr",
+   "source": "https://big.bpifrance.fr/en",
+   "confirme": false
+  }
  ],
  "agendas": [
-  {"nom": "Thiga : meetups produit gratuits (Paris, chaque mois)", "themes": ["Produit"], "url": "https://www.thiga.co/en/events"},
-  {"nom": "Dogfinance : soirées et salons de la finance", "themes": ["Finance", "Finance & investissement", "Banque & assurance"], "url": "https://dogfinance.com/events"},
-  {"nom": "Tekkit : soirées de recrutement tech", "themes": ["Tech", "Data"], "url": "https://tekkit.io"},
-  {"nom": "datacraft : meetups data et IA", "themes": ["Data"], "url": "https://luma.com/datacraft"},
-  {"nom": "PMI France : conférences gestion de projet", "themes": ["Opérations", "Conseil", "Gestion de projet"], "url": "https://pmi-france.org/conferences/national-bALL"},
-  {"nom": "HR Technologies France", "themes": ["RH"], "url": "https://www.hrtechnologiesfrance.com"}
+  {
+   "nom": "Thiga : meetups produit gratuits (Paris, chaque mois)",
+   "themes": [
+    "Produit"
+   ],
+   "url": "https://www.thiga.co/en/events"
+  },
+  {
+   "nom": "Dogfinance : soirées et salons de la finance",
+   "themes": [
+    "Finance",
+    "Finance & investissement",
+    "Banque & assurance"
+   ],
+   "url": "https://dogfinance.com/events"
+  },
+  {
+   "nom": "Tekkit : soirées de recrutement tech",
+   "themes": [
+    "Tech",
+    "Data"
+   ],
+   "url": "https://tekkit.io"
+  },
+  {
+   "nom": "datacraft : meetups data et IA",
+   "themes": [
+    "Data"
+   ],
+   "url": "https://luma.com/datacraft"
+  },
+  {
+   "nom": "dev.events : conférences et meetups PMO en France",
+   "themes": [
+    "Gestion de projet",
+    "Opérations"
+   ],
+   "url": "https://dev.events/EU/FR/pmo"
+  },
+  {
+   "nom": "dev.events : événements agiles à Paris",
+   "themes": [
+    "Gestion de projet",
+    "Produit",
+    "Tech"
+   ],
+   "url": "https://dev.events/EU/FR/Paris/agile"
+  },
+  {
+   "nom": "PMI France : conférences gestion de projet",
+   "themes": [
+    "Opérations",
+    "Conseil",
+    "Gestion de projet"
+   ],
+   "url": "https://pmi-france.org/conferences/national-bALL"
+  },
+  {
+   "nom": "HR Technologies France",
+   "themes": [
+    "RH"
+   ],
+   "url": "https://www.hrtechnologiesfrance.com"
+  }
  ]
 }
