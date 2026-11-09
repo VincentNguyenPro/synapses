@@ -95,8 +95,8 @@ rep('alt="Un contact sélectionné, entouré de ses collègues de la même entre
 rep('data-t="Des filtres qui se combinent" data-d="Juniors et seniors seulement&nbsp;: le graphe se recompose et se recentre aussitôt."',
     'data-t="Filters that combine" data-d="Juniors and seniors only: the graph rearranges and recenters at once."')
 rep('alt="Le réseau filtré sur les juniors et les seniors"', 'alt="The network filtered on juniors and seniors"')
-rep('data-t="Par entreprise, logos en option" data-d="Chaque entreprise devient un nœud, avec son logo si tu actives l’option. Tu vois où se concentrent tes contacts."',
-    'data-t="By company, logos optional" data-d="Each company becomes a node, with its logo if you turn the option on. You see where your contacts cluster."')
+rep('data-t="Par entreprise, avec les logos" data-d="Chaque entreprise devient un nœud, avec son logo. Tu vois où se concentrent tes contacts."',
+    'data-t="By company, with logos" data-d="Each company becomes a node, with its logo. You see where your contacts cluster."')
 rep('alt="Le réseau regroupé par entreprise, chaque nœud portant le logo de l’entreprise"', 'alt="The network grouped by company, each node showing the company’s logo"')
 rep('data-t="L’aide pour récupérer ton export" data-d="Le panneau d’aide explique où demander l’archive à LinkedIn, et quoi en faire."',
     'data-t="Help to get your export" data-d="The help panel explains where to request the archive from LinkedIn, and what to do with it."')
@@ -207,7 +207,7 @@ rep('class="never">Personne</td>', 'class="never">Nobody</td>')
 rep('class="never">Jamais</td>', 'class="never">Never</td>')
 rep('<td>Le domaine des entreprises, par exemple doctolib.fr</td>', '<td>Company domains, for example doctolib.fr</td>')
 rep('>Brandfetch, pour les logos</td>', '>Brandfetch, for the logos</td>')
-rep('>Quand l’option Logos est cochée (par défaut, décochable dans l’outil)</td>', '>When the Logos option is ticked (by default, can be unticked in the tool)</td>')
+rep('>Quand des logos d’entreprises sont affichés</td>', '>When company logos are shown</td>')
 rep('<a href="legal/">Tout le détail</a></p>', '<a href="legal/">Full details</a></p>')
 rep('<li><a href="legal/">Mentions légales</a></li>', '<li><a href="legal/">Legal notice</a></li>')
 rep('<td>Des noms d’entreprises et intitulés de poste non reconnus</td>', '<td>Company names and job titles that weren’t recognized</td>')

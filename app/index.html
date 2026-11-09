@@ -651,7 +651,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
         <input type="range" id="topN" min="3" max="40" step="1" value="12">
         <p class="hint" id="topNHint" style="margin:6px 0 0">Les plus petits groupes sont réunis dans une branche « Autres ».</p>
       </div>
-      <label class="sharebox" style="margin-top:4px"><input type="checkbox" id="logosOn"> <span><strong>Logos des entreprises</strong><br>Via Brandfetch, qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.</span></label>
+      <p class="hint" style="margin:4px 0 12px">Logos des entreprises via Brandfetch, qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.</p>
       <div class="field" id="fld-ai" hidden style="margin-top:16px">
         <span class="lbl">Classification par IA</span>
         <p class="hint" id="aiHint"></p>
@@ -768,7 +768,7 @@ const STATIC_EN = {
   'Ville':'City', 'Expérience':'Experience', 'Année de connexion':'Year connected', 'à':'to', 'Affichage':'Display', 'Regrouper par':'Group by', 'Colorer par':'Color by',
   'Branches affichées':'Branches shown', 'Les plus petits groupes sont réunis dans une branche « Autres ».':'The smallest groups are merged into an “Others” branch.',
   'Logos des entreprises':'Company logos',
-  'Via Brandfetch, qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.':'Via Brandfetch, which receives the websites of the companies shown, never your contacts’ names.',
+  'Logos des entreprises via Brandfetch, qui reçoit le site web des entreprises affichées, jamais le nom de tes contacts.':'Company logos via Brandfetch, which receives the websites of the companies shown, never your contacts’ names.',
   'Classification par IA':'AI classification', 'Classer avec une IA':'Classify with an AI',
   'Ton fichier est lu dans ton navigateur et n’est envoyé nulle part. Tes réglages restent sur cet appareil. Outil indépendant, non affilié à LinkedIn.':'Your file is read in your browser and never sent anywhere. Your settings stay on this device. Independent tool, not affiliated with LinkedIn.',
   'Aucun contact ne correspond à ces filtres.':'No contacts match these filters.', 'Retire un filtre ou élargis ta recherche.':'Remove a filter or broaden your search.',
@@ -1296,11 +1296,11 @@ const brandColor = name => { let h = 0; for(const ch of name) h = (h * 31 + ch.c
    token : Client ID Brandfetch (public par conception : il figure dans l’adresse de chaque image).
    Sans token, ou si l’option est décochée, les badges monogrammes s’affichent. */
 const LOGO_CONFIG = { urlTemplate:'https://cdn.brandfetch.io/domain/{domain}/w/128/h/128/fallback/404/type/icon?c={token}', token:'1idZzRfYk3Zw3y_iDaq' };
-/* Option « Logos des entreprises » : cochée par défaut (choix de Vincent du 9 novembre 2026 ; décochée du 5 au 9 novembre), décochable dans Affichage.
+/* Logos des entreprises : toujours affichés (choix de Vincent du 9 novembre 2026 : ce n’est plus une option ; décochée par défaut du 5 au 9 novembre).
    Chaque logo affiché envoie le domaine de l’entreprise (et l’adresse IP du visiteur) à Brandfetch, jamais le nom d’un contact ;
    l’utilisateur en est informé à côté de la case et dans « Tes données ». Une marque inconnue renvoie une erreur 404 : le monogramme reste affiché. */
-const LOGOS_KEY = 'synapses-logos-v1';
-let logosOn = true; try { logosOn = localStorage.getItem(LOGOS_KEY) !== '0'; } catch(e) {}
+const logosOn = true;
+try { localStorage.removeItem('synapses-logos-v1'); } catch(e) {} /* ancien choix de l’option, devenu sans objet */
 const nkey = s => norm(s).replace(/['’]/g, ' ').replace(/\s+/g, ' ').trim();
 
 /* ---------- Dictionnaire intégré entreprise → secteur ----------
@@ -2725,7 +2725,7 @@ function drawRings(){
     .attr('transform', d => `rotate(-90 ${d.ax} ${d.ay})`);
 }
 /* Pastille logo de chaque grappe du groupe ouvert, quand on colore par entreprise : posée juste à l’extérieur de la grappe,
-   côté extérieur du cercle (toujours libre), de taille fixe à l’écran. Logo Brandfetch si l’option est cochée et le domaine connu,
+   côté extérieur du cercle (toujours libre), de taille fixe à l’écran. Logo Brandfetch si le domaine est connu,
    sinon l’initiale sur la couleur de la grappe ; pas de pastille pour « autres », ni quand deux pastilles se toucheraient. */
 function drawPins(data){
   const pd = state.colorBy === 'company' && openHubInfo ? data.filter(d => d.hub.key === openHubInfo.key && d.lv !== colorOther) : [];
@@ -3716,7 +3716,7 @@ const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
       <li><b>Closeness</b>: number and dates of messages, recommendations, endorsed skills. Never the text of messages.</li>
       <li><b>Target companies</b>: job applications, saved jobs and followed companies, matched with your network locally.</li>
       <li><b>On this device</b>: profile, tags, views, corrections, and your network without emails if you keep it.</li>
-      <li><b>Only things sent</b>: +1 to an anonymous counter per import, your feedback if you send it and, if you tick “Company logos” in Display, company websites to Brandfetch.</li>
+      <li><b>Only things sent</b>: +1 to an anonymous counter per import, your feedback if you send it, and company websites to Brandfetch for the logos.</li>
       <li><a href="../en/legal/" target="_blank" rel="noopener">Legal notice and privacy</a></li>
     </ul>
     ${shareBox()}
@@ -3727,7 +3727,7 @@ const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
       <li><b>Proximité</b>&nbsp;: nombre et date des messages, recommandations, compétences recommandées. Jamais le texte des messages.</li>
       <li><b>Entreprises cibles</b>&nbsp;: candidatures, offres et entreprises suivies, croisées avec ton réseau sur place.</li>
       <li><b>Sur cet appareil</b>&nbsp;: profil, tags, vues, corrections, et ton réseau sans les emails si tu le gardes.</li>
-      <li><b>Seuls envois</b>&nbsp;: +1 à un compteur anonyme par import, ton avis si tu l’envoies et, si tu coches «&nbsp;Logos des entreprises&nbsp;» dans Affichage, le site des entreprises à Brandfetch.</li>
+      <li><b>Seuls envois</b>&nbsp;: +1 à un compteur anonyme par import, ton avis si tu l’envoies, et le site des entreprises à Brandfetch pour les logos.</li>
       <li><a href="../legal/" target="_blank" rel="noopener">Mentions légales et confidentialité</a></li>
     </ul>
     ${shareBox()}
@@ -4090,15 +4090,6 @@ function stepZoom(f){
 }
 $('#zin').addEventListener('click', () => stepZoom(1.4));
 $('#zout').addEventListener('click', () => stepZoom(1 / 1.4));
-$('#logosOn').checked = logosOn;
-$('#logosOn').addEventListener('change', e => {
-  logosOn = e.target.checked;
-  try { localStorage.setItem(LOGOS_KEY, logosOn ? '1' : '0'); } catch(err) {}
-  render();
-  const sel = state.selected && nodes.find(n => n.id === state.selected);
-  if(sel && sel.type === 'hub') showHub(sel);
-  toast(logosOn ? (state.groupBy === 'company' || state.colorBy === 'company' ? L('Logos activés', 'Logos on') : L('Logos activés : regroupe ou colore par entreprise pour les voir', 'Logos on: group or color by company to see them')) : L('Logos désactivés : monogrammes affichés', 'Logos off: monograms shown'));
-});
 $('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
 $('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
 $('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = Math.min(+e.target.value, OPEN_MAX); render(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
