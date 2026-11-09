@@ -98,7 +98,15 @@ details.acc[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
 details.acc>summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
 details.acc:not([open]){padding-bottom:6px}
 details.acc[open] .accsum{visibility:hidden}
-.qlink{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;margin-top:6px}
+.sic{width:18px;height:18px;flex:none;color:var(--accent)}
+details.acc>summary .sic{margin-right:-2px}
+.qic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
+.qic .sic{width:18px;height:18px}
+.qic-cibles{background:#E8EEFE}.qic-cibles .sic{color:#2F5BEA}
+.qic-relance{background:#FFF1E6}.qic-relance .sic{color:#C25E00}
+.qic-events{background:#E7F6EF}.qic-events .sic{color:#1F7A4D}
+.qtxt{flex:1;min-width:0}
+.qlink{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;margin-top:6px}
 .qlink:hover{border-color:var(--accent);background:var(--accent-soft)}
 .qlink .n{margin-left:auto;font-weight:800;color:var(--accent)}
 .qlink small{display:block;font-weight:400;color:var(--muted);font-size:12px}
@@ -648,7 +656,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
     </div>
     <section class="section" id="mynet" hidden><div id="mynetBody"></div></section>
     <details class="section acc" data-acc="explore" open>
-      <summary><h2>Explorer</h2><span class="accsum" id="sum-explore"></span></summary>
+      <summary><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><h2>Explorer</h2><span class="accsum" id="sum-explore"></span></summary>
       <div class="field">
         <label for="target">Trouver une porte d’entrée</label>
         <p class="hint">Qui peut t’ouvrir une entreprise ou un secteur&nbsp;?</p>
@@ -661,7 +669,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
       <details class="sub"><summary>Aperçu du réseau affiché</summary><div id="summary"></div></details>
     </details>
     <details class="section acc" data-acc="views" id="views" open>
-      <summary><h2>Vues</h2><span class="accsum" id="sum-views"></span></summary>
+      <summary><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><h2>Vues</h2><span class="accsum" id="sum-views"></span></summary>
       <div class="field"><span class="lbl">Prêtes à l’emploi</span><div class="chips" id="presets" role="radiogroup" aria-label="Vues prêtes à l’emploi"></div></div>
       <div class="field"><span class="lbl">Mes vues</span><div id="myViews"></div>
         <form class="row" id="saveView" style="margin-top:8px"><input type="text" id="viewName" maxlength="40" placeholder="Nom de la vue actuelle" aria-label="Nom de la vue à enregistrer"><button class="btn" type="submit">Enregistrer</button></form>
@@ -669,7 +677,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
       </div>
     </details>
     <details class="section acc" data-acc="filters">
-      <summary><h2>Filtres</h2><span class="accsum" id="sum-filters"></span><button class="linkbtn" id="clearAllSide" type="button" data-act="clearall" hidden>Tout effacer</button></summary>
+      <summary><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg><h2>Filtres</h2><span class="accsum" id="sum-filters"></span><button class="linkbtn" id="clearAllSide" type="button" data-act="clearall" hidden>Tout effacer</button></summary>
       <p class="hint">Sans sélection, tous les contacts sont affichés.</p>
       <div class="field"><span class="lbl">Secteur<small>estimé</small></span><div class="chips" id="f-sector"></div></div>
       <div class="field"><span class="lbl">Fonction<small>estimée</small></span><div class="chips" id="f-fn"></div></div>
@@ -688,7 +696,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
       </div>
     </details>
     <details class="section acc" data-acc="display">
-      <summary><h2>Affichage</h2><span class="accsum" id="sum-display"></span></summary>
+      <summary><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><h2>Affichage</h2><span class="accsum" id="sum-display"></span></summary>
       <div class="field"><label for="groupBy">Regrouper par</label><select id="groupBy"></select></div>
       <div class="field"><label for="colorBy">Colorer par</label><select id="colorBy"></select></div>
       <div class="field" id="fld-topn" hidden>
@@ -1111,6 +1119,7 @@ const pendingInv = () => (!isDemo && proxData && proxData.p) || {o:[], i:[]};
    et ta ville (fiche Moi). Rien n’est envoyé : un clic ouvre le site de l’organisateur pour t’inscrire. */
 let eventsData = null, eventsP = null;
 const evState = {mode:'', prix:'', lieu:'pays', theme:'moi'};
+let evLieuInit = false;
 const EV_CITY_KEY = 'synapses-ville-v1';
 let evCity = ''; try { evCity = localStorage.getItem(EV_CITY_KEY) || ''; } catch(e) {}
 function loadEvents(){ if(!eventsP) eventsP = fetch('../data/evenements.json').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => (eventsData = d)).catch(e => { eventsP = null; throw e; }); return eventsP; }
@@ -1147,7 +1156,7 @@ function upcomingEvents(){
 }
 function syncEventsHint(){
   const el = document.getElementById('eventsHint'); if(!el) return;
-  el.innerHTML = `<button class="qlink" type="button" data-act="events"><span>${L('Événements pour toi', 'Events for you')}<small>${L('Salons, conférences et meetups liés à ton métier', 'Trade shows, conferences and meetups for your job')}</small></span><span class="n">›</span></button>`;
+  el.innerHTML = `<button class="qlink" type="button" data-act="events"><span class="qic qic-events" aria-hidden="true"><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span class="qtxt">${L('Événements pour toi', 'Events for you')}<small>${L('Salons, conférences et meetups liés à ton métier', 'Trade shows, conferences and meetups for your job')}</small></span><span class="n">›</span></button>`;
 }
 async function showEvents(keepScroll){
   const sc = keepScroll ? drawer.scrollTop : 0;
@@ -1156,6 +1165,7 @@ async function showEvents(keepScroll){
   const me = myEventProfile(), all = upcomingEvents();
   const themesAll = [...new Set(all.flatMap(e => e.themes))].sort((a, b) => dv(a).localeCompare(dv(b), LOC));
   if(evState.theme === 'moi' && !me.themes.size) evState.theme = '';
+  if(!evLieuInit){ evLieuInit = true; if(evCity) evState.lieu = 'ville'; }
   if(evState.lieu === 'ville' && !me.city) evState.lieu = 'pays';
   const inCity = e => me.city && e.ville && (norm(e.ville).includes(norm(me.city)) || norm(me.city).includes(norm(e.ville)) || (norm(me.city) === 'paris' && /^paris|nanterre|la defense/.test(norm(e.ville))));
   const ok = e => (!evState.mode || (evState.mode === 'presentiel' ? e.mode !== 'en-ligne' : e.mode !== 'presentiel'))
@@ -1190,10 +1200,11 @@ async function showEvents(keepScroll){
       <label class="evf"><span>${L('Thème', 'Topic')}</span><select id="evTheme">${me.themes.size ? `<option value="moi"${evState.theme === 'moi' ? ' selected' : ''}>${L('Pour moi', 'For me')}</option>` : ''}<option value=""${!evState.theme ? ' selected' : ''}>${L('Tous les thèmes', 'All topics')}</option>${themesAll.filter(t => t !== 'Gestion de projet').map(t => `<option value="${esc(t)}"${evState.theme === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
       ${evState.theme === 'moi' && me.themes.size ? `<p class="evfor">${L('Selon ton poste et ton secteur', 'Based on your job and industry')} : ${[...me.themes].map(t => t === 'Gestion de projet' ? L('gestion de projet', 'project management') : dv(t)).join(', ')}</p>` : ''}
       <label class="evf"><span>${L('Lieu', 'Where')}</span><select id="evLieu">
-        <option value="pays"${evState.lieu === 'pays' ? ' selected' : ''}>${L(`${countryName} et en ligne`, `${countryName} and online`)}</option>
-        <optgroup label="${L('Une ville', 'A city')}">${cities.map(v => `<option value="ville:${esc(v)}"${evState.lieu === 'ville' && norm(v) === norm(me.city) ? ' selected' : ''}>${esc(EN ? VILLE_EN[v] || v : v)}</option>`).join('')}</optgroup>
-        <option value="etranger"${evState.lieu === 'etranger' ? ' selected' : ''}>${L('À l’étranger', 'Abroad')}</option>
-        <option value=""${!evState.lieu ? ' selected' : ''}>${L('Partout', 'Anywhere')}</option>
+        ${me.city ? `<option value="ville:${esc(me.city)}"${evState.lieu === 'ville' ? ' selected' : ''}>${L(`Ma ville : ${esc(me.city)}`, `My city: ${esc(VILLE_EN[me.city] || me.city)}`)}</option>` : ''}
+        <option value="pays"${evState.lieu === 'pays' ? ' selected' : ''}>${L(`Mon pays : ${countryName} (et en ligne)`, `My country: ${countryName} (and online)`)}</option>
+        <option value=""${!evState.lieu ? ' selected' : ''}>${L('Le monde entier', 'Worldwide')}</option>
+        <optgroup label="${L('Changer de ville', 'Change city')}">${cities.filter(v => norm(v) !== norm(me.city)).map(v => `<option value="ville:${esc(v)}">${esc(EN ? VILLE_EN[v] || v : v)}</option>`).join('')}</optgroup>
+        <option value="etranger"${evState.lieu === 'etranger' ? ' selected' : ''}>${L('Seulement à l’étranger', 'Abroad only')}</option>
       </select></label>
       <label class="evf"><span>${L('Format', 'Format')}</span><select id="evMode">
         <option value="">${L('Tous', 'All')}</option><option value="presentiel"${evState.mode === 'presentiel' ? ' selected' : ''}>${L('Présentiel', 'In person')}</option><option value="en-ligne"${evState.mode === 'en-ligne' ? ' selected' : ''}>${L('En ligne', 'Online')}</option>
@@ -1220,7 +1231,7 @@ function syncRelanceHint(){
   const el = document.getElementById('relanceHint'); if(!el) return;
   const n = relanceList().length, inv = pendingInv().o.length;
   el.hidden = !n && !inv;
-  if(!el.hidden) el.innerHTML = `<button class="qlink" type="button" data-act="relance"><span>${L('Contacts à relancer', 'Contacts to follow up')}<small>${[n && L(`Sans nouvelles depuis plus d’un an`, 'No news for over a year'), inv && L(`${inv} invitation${inv > 1 ? 's' : ''} sans réponse`, `${inv} unanswered invitation${sEN(inv)}`)].filter(Boolean).join(' · ')}</small></span><span class="n">${n || inv}</span></button>`;
+  if(!el.hidden) el.innerHTML = `<button class="qlink" type="button" data-act="relance"><span class="qic qic-relance" aria-hidden="true"><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></span><span class="qtxt">${L('Contacts à relancer', 'Contacts to follow up')}<small>${[n && L(`Sans nouvelles depuis plus d’un an`, 'No news for over a year'), inv && L(`${inv} invitation${inv > 1 ? 's' : ''} sans réponse`, `${inv} unanswered invitation${sEN(inv)}`)].filter(Boolean).join(' · ')}</small></span><span class="n">${n || inv}</span></button>`;
 }
 function showRelance(){
   select(null); clearFocus(); closePanel();
@@ -1246,7 +1257,7 @@ function syncCibleHint(){
   const el = document.getElementById('cibleHint'); if(!el) return;
   const rows = cibleIndex().filter(r => r.n);
   el.hidden = !rows.length;
-  if(rows.length) el.innerHTML = `<button class="qlink" type="button" data-act="cibles"><span>${L('Tes entreprises cibles', 'Your target companies')}<small>${L('Où tu as postulé ou que tu suis, et où tu connais quelqu’un', 'Where you applied or that you follow, and where you know someone')}</small></span><span class="n">${rows.length}</span></button>`;
+  if(rows.length) el.innerHTML = `<button class="qlink" type="button" data-act="cibles"><span class="qic qic-cibles" aria-hidden="true"><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span><span class="qtxt">${L('Tes entreprises cibles', 'Your target companies')}<small>${L('Où tu as postulé ou que tu suis, et où tu connais quelqu’un', 'Where you applied or that you follow, and where you know someone')}</small></span><span class="n">${rows.length}</span></button>`;
 }
 function showCibles(){
   select(null); clearFocus(); closePanel();
