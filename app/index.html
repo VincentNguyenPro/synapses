@@ -4194,7 +4194,15 @@ function stepZoom(f){
 $('#zin').addEventListener('click', () => stepZoom(1.4));
 $('#zout').addEventListener('click', () => stepZoom(1 / 1.4));
 $('#groupBy').addEventListener('change', e => { state.groupBy = e.target.value; needFit = true; select(null); closeDrawer(); render(); });
-$('#colorBy').addEventListener('change', e => { state.colorBy = e.target.value; setupColor(); syncChips(); render(); });
+$('#colorBy').addEventListener('change', e => {
+  state.colorBy = e.target.value; setupColor(); syncChips(); render();
+  /* Groupe ou contact ouvert : ses grappes ont changé de taille et de place. On rafraîchit sa fiche (répartition) et on
+     recadre dessus ; sans cela le zoom restait sur l’ancienne disposition et le graphe paraissait vide */
+  const sel = state.selected && nodes.find(n => n.id === state.selected);
+  if(sel && sel.type === 'hub') showHub(sel);
+  else if(sel && sel.type === 'c') showContact(sel.c);
+  else if(!drawer.classList.contains('open')) fit();
+});
 $('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = Math.min(+e.target.value, OPEN_MAX); render(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
 $('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } applyFilters(); });
 $('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
