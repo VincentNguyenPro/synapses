@@ -184,6 +184,26 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .pastebox:focus{background:var(--surface);border-color:var(--accent);outline:none}
 .ilogo{width:16px;height:16px;border-radius:4px;object-fit:contain;background:#fff;box-shadow:0 0 0 1px var(--line);vertical-align:-3px;margin-right:5px;flex:none}
 .coname{overflow-wrap:anywhere}
+.evfilters{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
+.evseg{display:flex;flex-wrap:wrap;gap:6px}
+.evseg .chip::before{display:none}
+.evtheme{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin:2px 0 0}
+.evtheme select{flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font:inherit;font-size:13.5px}
+.evlist{list-style:none;margin:0;padding:0}
+.evcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:4px}
+.evcard strong{font-size:15px}
+.evdate{font-size:12.5px;font-weight:700;color:var(--accent)}
+.evmeta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted)}
+.evtag{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink)}
+.evtag.free{background:#E3F6EE;color:#1F7A4D}
+.evthemes{display:flex;flex-wrap:wrap;gap:4px}
+.evthemes span{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 7px}
+.evnote{font-size:12.5px;color:var(--muted);margin:0}
+.evcard .btn{align-self:flex-start;margin-top:4px}
+.evag{margin:0 0 10px;padding-left:18px;font-size:13.5px;line-height:1.7}
+.evmore{display:flex;flex-wrap:wrap;gap:8px}
+.mebr{cursor:pointer}
+.ilogo.medot{width:14px;height:14px;margin:0;vertical-align:middle}
 .dlist{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--muted)}
 .dlist li{margin-bottom:5px}
 .dlist b{color:var(--ink)}
@@ -631,6 +651,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
           <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
         <p class="hint" id="cibleHint" hidden></p>
         <p class="hint" id="relanceHint" hidden></p>
+        <p class="hint" id="eventsHint"></p>
       </div>
       <details class="sub"><summary>Aperçu du réseau affiché</summary><div id="summary"></div></details>
     </details>
@@ -1080,6 +1101,94 @@ function relanceList(){
   return list;
 }
 const pendingInv = () => (!isDemo && proxData && proxData.p) || {o:[], i:[]};
+/* ---------- Événements pour toi (choix de Vincent du 9 novembre 2026) ----------
+   Liste vérifiée à la main dans data/evenements.json (dates et sources), filtrée dans le navigateur selon ton poste, ton secteur
+   et ta ville (fiche Moi). Rien n’est envoyé : un clic ouvre le site de l’organisateur pour t’inscrire. */
+let eventsData = null, eventsP = null;
+const evState = {mode:'', prix:'', lieu:'', theme:'moi'};
+function loadEvents(){ if(!eventsP) eventsP = fetch('../data/evenements.json').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => (eventsData = d)).catch(e => { eventsP = null; throw e; }); return eventsP; }
+const COUNTRY = {FR:['france'], PT:['portugal'], FI:['finland', 'finlande'], ES:['spain', 'espagne'], GB:['united kingdom', 'royaume-uni', 'uk', 'england', 'angleterre'], NL:['netherlands', 'pays-bas'], DE:['germany', 'allemagne'], BE:['belgium', 'belgique'], CH:['switzerland', 'suisse'], US:['united states', 'etats-unis']};
+const COUNTRY_NAME = {FR:['France', 'France'], PT:['Portugal', 'Portugal'], FI:['Finlande', 'Finland'], ES:['Espagne', 'Spain'], GB:['Royaume-Uni', 'United Kingdom'], NL:['Pays-Bas', 'Netherlands'], DE:['Allemagne', 'Germany'], BE:['Belgique', 'Belgium'], CH:['Suisse', 'Switzerland'], US:['États-Unis', 'United States']};
+const VILLE_EN = {'Lisbonne':'Lisbon', 'Londres':'London', 'Barcelone':'Barcelona'};
+/* Ce que Synapses sait de toi pour choisir : fonction et secteur (même classement que tes contacts), ville et pays (Profile.csv) */
+function myEventProfile(){
+  /* Ton dernier poste (Positions.csv) d’abord : le titre du profil (Headline) mélange souvent plusieurs rôles */
+  const p = myProfile(), last = (p.positions || [])[0] || {}, pos = norm(last.t || p.position || p.headline || ''), co = last.c || p.company || '';
+  const fn = pos ? classify(FUNCTIONS, pos, '') : '';
+  const sector = co ? (builtinSector(nkey(co)) || classify(SECTORS, norm(co), '')) : '';
+  const themes = new Set([fn, sector].filter(Boolean));
+  if(/\b(pmo|projets?|project|programme|portefeuille)\b/.test(pos)) themes.add('Gestion de projet');
+  const loc = norm(p.location || ''), country = Object.keys(COUNTRY).find(k => COUNTRY[k].some(n => loc.includes(n))) || (loc ? '' : '');
+  const city = (p.location || '').split(',')[0].replace(/^(greater|grand)\s+/i, '').replace(/\s+(metropolitan area|area|region|et périphérie).*$/i, '').trim();
+  return {themes, fn, sector, city, country};
+}
+const evDate = s => { if(!s) return ''; const [y, m, d] = s.split('-').map(Number); return d ? new Date(y, m - 1, d) : new Date(y, m - 1, 1); };
+function evWhen(e){
+  const a = evDate(e.debut), b = e.fin ? evDate(e.fin) : null;
+  if(!e.confirme || e.debut.length === 7) return a.toLocaleDateString(LOC, {month:'long', year:'numeric'}) + ' · ' + L('dates à confirmer', 'dates to be confirmed');
+  const o = {day:'numeric', month:'short', year:'numeric'};
+  if(!b || +a === +b) return a.toLocaleDateString(LOC, o);
+  if(a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return EN ? `${a.toLocaleDateString(LOC, {month:'short'})} ${a.getDate()} – ${b.getDate()}, ${b.getFullYear()}` : `${a.getDate()} – ${b.toLocaleDateString(LOC, o)}`;
+  return `${a.toLocaleDateString(LOC, {day:'numeric', month:'short'})} – ${b.toLocaleDateString(LOC, o)}`;
+}
+function upcomingEvents(){
+  if(!eventsData) return [];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return (eventsData.evenements || []).filter(e => { const end = e.fin ? evDate(e.fin) : evDate(e.debut); if(!e.fin && e.debut.length === 7) end.setMonth(end.getMonth() + 1, 0); return end >= today; })
+    .sort((x, y) => evDate(x.debut) - evDate(y.debut));
+}
+function syncEventsHint(){
+  const el = document.getElementById('eventsHint'); if(!el) return;
+  el.innerHTML = `<button class="qlink" type="button" data-act="events"><span>${L('Événements pour toi', 'Events for you')}<small>${L('Salons, conférences et meetups liés à ton métier', 'Trade shows, conferences and meetups for your job')}</small></span><span class="n">›</span></button>`;
+}
+async function showEvents(keepScroll){
+  const sc = keepScroll ? drawer.scrollTop : 0;
+  if(!eventsData){ try { await loadEvents(); } catch(e){ toast(L('La liste des événements n’a pas pu être chargée', 'The events list could not be loaded')); return; } }
+  if(!keepScroll){ select(null); clearFocus(); closePanel(); }
+  const me = myEventProfile(), all = upcomingEvents();
+  const themesAll = [...new Set(all.flatMap(e => e.themes))].sort((a, b) => dv(a).localeCompare(dv(b), LOC));
+  if(evState.theme === 'moi' && !me.themes.size) evState.theme = '';
+  if(evState.lieu === 'ville' && !me.city) evState.lieu = '';
+  if((evState.lieu === 'pays' || evState.lieu === 'etranger') && !me.country) evState.lieu = '';
+  const inCity = e => me.city && e.ville && (norm(e.ville).includes(norm(me.city)) || norm(me.city).includes(norm(e.ville)) || (norm(me.city) === 'paris' && /^paris|nanterre|la defense/.test(norm(e.ville))));
+  const ok = e => (!evState.mode || (evState.mode === 'presentiel' ? e.mode !== 'en-ligne' : e.mode !== 'presentiel'))
+    && (!evState.prix || e.prix === evState.prix)
+    && (!evState.lieu || (evState.lieu === 'ville' ? inCity(e) : evState.lieu === 'pays' ? (e.pays === me.country || e.mode === 'en-ligne') : e.pays && e.pays !== me.country))
+    && (!evState.theme || (evState.theme === 'moi' ? e.themes.some(t => me.themes.has(t)) : e.themes.includes(evState.theme)));
+  const list = all.filter(ok);
+  const seg = (k, opts) => `<div class="evseg" role="group">${opts.map(([v, lbl]) => `<button class="chip" type="button" data-act="evf" data-k="${k}" data-v="${v}" aria-pressed="${evState[k] === v}">${lbl}</button>`).join('')}</div>`;
+  const where = e => e.mode === 'en-ligne' ? L('En ligne', 'Online') : [EN ? VILLE_EN[e.ville] || e.ville : e.ville, e.pays && e.pays !== me.country ? (COUNTRY_NAME[e.pays] || [e.pays, e.pays])[EN ? 1 : 0] : ''].filter(Boolean).join(', ');
+  const price = {gratuit:L('Gratuit', 'Free'), payant:L('Payant', 'Paid'), variable:L('Prix selon le billet', 'Price varies')};
+  const card = e => `<li class="evcard"><div class="evdate">${esc(evWhen(e))}</div><strong>${esc(e.nom)}</strong>
+      <div class="evmeta"><span>${esc(where(e))}</span><span class="evtag ${e.prix === 'gratuit' ? 'free' : ''}">${price[e.prix] || ''}</span>${e.mode === 'hybride' ? `<span class="evtag">${L('Présentiel et en ligne', 'In person and online')}</span>` : ''}</div>
+      <div class="evthemes">${e.themes.filter(t => t !== 'Gestion de projet' || me.themes.has(t)).slice(0, 4).map(t => `<span>${esc(t === 'Gestion de projet' ? L('Gestion de projet', 'Project management') : dv(t))}</span>`).join('')}</div>
+      ${e.note ? `<p class="evnote">${esc(EN ? e.note.replace('Plusieurs sessions en anglais (1er, 8 et 9 décembre)', 'Several sessions in English (Dec 1, 8 and 9)').replace('Webinaire en anglais', 'Webinar in English').replace('Badge visiteur gratuit', 'Free visitor badge') : e.note)}</p>` : ''}
+      <a class="btn primary sm" href="${esc(e.url)}" target="_blank" rel="noopener">${L('S’inscrire', 'Register')} ${ICON_EXT}</a></li>`;
+  const ag = (eventsData.agendas || []).filter(a => !evState.theme || (evState.theme === 'moi' ? a.themes.some(t => me.themes.has(t)) : a.themes.includes(evState.theme)));
+  const kw = evState.theme && evState.theme !== 'moi' ? dv(evState.theme) : me.fn ? dv(me.fn) : '';
+  const city = me.city || '';
+  const more = [
+    ['Eventbrite', `https://www.eventbrite.fr/d/${encodeURIComponent((city || 'france').toLowerCase())}/${evState.prix === 'gratuit' ? 'free--' : ''}events/?q=${encodeURIComponent(kw)}`],
+    ['Meetup', `https://www.meetup.com/find/?keywords=${encodeURIComponent(kw)}${city ? '&location=' + encodeURIComponent(city) : ''}${evState.mode === 'en-ligne' ? '&eventType=online' : ''}`],
+    ['Luma', `https://luma.com/${city ? encodeURIComponent(norm(city).replace(/[^a-z]+/g, '-')) : 'discover'}`]
+  ];
+  openDrawer(`<h2 id="dtitle" tabindex="-1">${L('Événements pour toi', 'Events for you')}</h2>
+    <p class="pos">${me.themes.size ? L(`Choisis selon ton poste${me.city ? ' et ta ville' : ''}. Clique sur « S’inscrire » pour ouvrir le site de l’organisateur.`, `Picked for your job${me.city ? ' and city' : ''}. Click “Register” to open the organizer’s site.`) : L('Renseigne ton poste dans ta fiche (Moi) pour des suggestions plus ciblées.', 'Fill in your job title in your profile (Me) for better-targeted suggestions.')}</p>
+    <div class="evfilters">
+      ${seg('mode', [['', L('Tous formats', 'All formats')], ['presentiel', L('Présentiel', 'In person')], ['en-ligne', L('En ligne', 'Online')]])}
+      ${seg('prix', [['', L('Tous prix', 'Any price')], ['gratuit', L('Gratuit', 'Free')], ['payant', L('Payant', 'Paid')]])}
+      ${seg('lieu', [['', L('Partout', 'Anywhere')], ...(me.city ? [['ville', esc(me.city)]] : []), ...(me.country ? [['pays', L('Mon pays', 'My country')], ['etranger', L('À l’étranger', 'Abroad')]] : [])])}
+      <label class="evtheme">${L('Thème', 'Topic')} <select id="evTheme">${me.themes.size ? `<option value="moi"${evState.theme === 'moi' ? ' selected' : ''}>${L('Pour moi', 'For me')} (${[...me.themes].map(t => t === 'Gestion de projet' ? L('gestion de projet', 'project management') : dv(t)).join(', ')})</option>` : ''}<option value=""${!evState.theme ? ' selected' : ''}>${L('Tous les thèmes', 'All topics')}</option>${themesAll.filter(t => t !== 'Gestion de projet').map(t => `<option value="${esc(t)}"${evState.theme === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
+    </div>
+    <h3>${list.length ? L(`${list.length} événement${list.length > 1 ? 's' : ''} à venir`, `${list.length} upcoming event${sEN(list.length)}`) : L('Aucun événement avec ces filtres', 'No events with these filters')}</h3>
+    ${list.length ? `<ul class="evlist">${list.map(card).join('')}</ul>` : `<p class="pos">${L('Élargis un filtre, ou cherche plus loin ci-dessous.', 'Widen a filter, or search further below.')}</p>`}
+    ${ag.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3><ul class="evag">${ag.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN ? a.nom.replace(' : meetups produit gratuits (Paris, chaque mois)', ': free product meetups (Paris, monthly)').replace(' : soirées et salons de la finance', ': finance evenings and fairs').replace(' : soirées de recrutement tech', ': tech hiring evenings').replace(' : meetups data et IA', ': data and AI meetups').replace(' : conférences gestion de projet', ': project management talks') : a.nom)} ${ICON_EXT}</a></li>`).join('')}</ul>` : ''}
+    <h3>${L('Chercher plus', 'Search further')}</h3>
+    <p class="evmore">${more.map(([n, u]) => `<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">${n} ${ICON_EXT}</a>`).join('')}</p>
+    <p class="hint" style="margin-top:14px">${L(`Liste vérifiée le ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}, dates à confirmer sur le site de l’organisateur. Rien n’est envoyé : seul un clic ouvre le site choisi.`, `List checked on ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}; confirm dates on the organizer’s site. Nothing is sent: only a click opens the chosen site.`)}</p>`);
+  $('#evTheme').addEventListener('change', e => { evState.theme = e.target.value; showEvents(true); });
+  if(keepScroll) drawer.scrollTop = sc;
+}
 function syncRelanceHint(){
   const el = document.getElementById('relanceHint'); if(!el) return;
   const n = relanceList().length, inv = pendingInv().o.length;
@@ -3396,7 +3505,7 @@ function updateLegend(vis){
 }
 
 function updatePanel(vis){
-  syncCibleHint(); syncRelanceHint();
+  syncCibleHint(); syncRelanceHint(); syncEventsHint();
   const dated = vis.filter(c => c.date).sort((a, b) => a.date - b.date);
   const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company && !TAIL.includes(coOf(c))), v => v.length, coOf), d => d[1]);
   const last = dated[dated.length - 1];
@@ -3559,13 +3668,14 @@ function rowMatch(row){
 let drawerHover = null;
 document.addEventListener('pointerover', e => {
   if(e.pointerType === 'touch' || state.view !== 'graph') return;
-  const row = e.target.closest && e.target.closest('.drawer .hl[data-hlv], .drawer .hl[data-hle], .drawer .hl[data-hlrest], .drawer .lrow[data-cid]');
+  const row = e.target.closest && e.target.closest('.drawer .hl[data-hlv], .drawer .hl[data-hle], .drawer .hl[data-hlrest], .drawer .lrow[data-cid], .drawer .mebr');
   if(row === drawerHover) return;
   const prev = drawerHover; drawerHover = row;
   if(!row && !prev) return; /* rien à restaurer : on ne touche pas aux autres surbrillances */
   if(state.selected === 'me'){
     /* Fiche « Moi » : la valeur survolée (séniorité…) allume ses contacts dans tout le réseau */
-    if(!row || row.dataset.hlv == null){ clearFocus(); return; }
+    if(row && row.dataset.mek){ const ms = meNodes(row.dataset.mek, row.dataset.mev); focus(new Set(ms.flatMap(n => [n.id, n.hub]))); return; }
+    if(!row || row.dataset.hlv == null){ if(meSel){ const ms = meNodes(meSel.k, meSel.v); focus(new Set(ms.flatMap(n => [n.id, n.hub]))); } else clearFocus(); return; }
     const get = DIMS[state.colorBy].get;
     focus(new Set(nodes.filter(n => n.type === 'c' && get(n.c) === row.dataset.hlv).flatMap(n => [n.id, n.hub])));
     return;
@@ -3766,7 +3876,38 @@ function ymRange(a, b){
   }
   return `${a ? fmt(a) + ' – ' : ''}${end}${dur ? ' · ' + dur : ''}`;
 }
+/* Fiche « Moi » : répartitions par secteur et par entreprise ; une ligne cliquée allume ses contacts et zoome dessus,
+   un second clic revient à tout le réseau (meSel). Le survol (souris) allume sans zoomer */
+let meSel = null;
+const ME_GET = {sector:c => c.sector, company:coOf, entity:entityOf};
+const meNodes = (k, v) => nodes.filter(n => n.type === 'c' && ME_GET[k](n.c) === v);
+function meBreakdown(k, title){
+  const total = contacts.length, cnt = d3.rollup(contacts, v => v.length, ME_GET[k]);
+  const vals = [...cnt.keys()].filter(v => v && (k !== 'company' || !NO_COMPANY_GROUPS.has(v))).sort((a, b) => cnt.get(b) - cnt.get(a) || a.localeCompare(b, LOC));
+  const col = v => (state.colorBy === k && colorDomain.includes(v)) ? colorFn(v) : 'var(--accent)';
+  const top = vals.slice(0, k === 'sector' ? 16 : 10);
+  return `<h3>${title}</h3>
+    <div class="stack" aria-hidden="true">${top.map(v => `<span style="flex:${cnt.get(v)};background:${col(v)}"></span>`).join('')}<span style="flex:${total - d3.sum(top, v => cnt.get(v))};background:var(--line)"></span></div>
+    <div class="legendlist${k === 'company' ? ' withsubs' : ''}">${top.map(v => {
+      const on = meSel && meSel.k === k && meSel.v === v ? ' on' : '';
+      const inner = `${k === 'company' && ilogo(v) ? ilogo(v, 'ilogo medot') : `<span class="dot" style="background:${col(v)}"></span>`}<span>${esc(dv(v))}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), total)}</span>`;
+      /* Société mère avec filiales : un chevron déplie ses entités (« BNP Paribas CIB »…), chacune sélectionnable */
+      const ents = k === 'company' ? d3.rollups(contacts.filter(c => coOf(c) === v), x => x.length, entityOf).filter(([e]) => e && e !== v).sort((a, b) => b[1] - a[1]) : [];
+      if(!ents.length) return `<div class="hl mebr${on}" role="button" tabindex="0" data-mek="${k}" data-mev="${esc(v)}">${inner}</div>`;
+      return `<details><summary class="hl mebr${on}" data-mek="${k}" data-mev="${esc(v)}">${inner}</summary>${ents.map(([e, n]) => `<div class="hl mebr sub${meSel && meSel.k === 'entity' && meSel.v === e ? ' on' : ''}" role="button" tabindex="0" data-mek="entity" data-mev="${esc(e)}"><span>${esc(e)}</span><span class="n">${n}</span><span class="pct">${pct(n, cnt.get(v))}</span></div>`).join('')}</details>`;
+    }).join('')}</div>`;
+}
+function meSelect(k, v){
+  if(meSel && meSel.k === k && meSel.v === v){ meSel = null; clearFocus(); fit(); }
+  else {
+    meSel = {k, v};
+    const ms = meNodes(k, v);
+    if(ms.length){ focus(new Set(ms.flatMap(n => [n.id, n.hub]))); zoomToNodes(ms); }
+  }
+  dbody.querySelectorAll('.mebr').forEach(r => r.classList.toggle('on', !!meSel && r.dataset.mek === meSel.k && r.dataset.mev === meSel.v));
+}
 function showMe(){
+  meSel = null;
   select('me'); clearFocus();
   const p = myProfile(), total = contacts.length;
   const url = /^https:\/\//.test(p.url || '') ? p.url : '';
@@ -3796,9 +3937,11 @@ function showMe(){
       <dt>${L('Contacts tagués', 'Tagged contacts')}</dt><dd>${contacts.filter(c => tagOf(c)).length}</dd>
       ${relanceList().length ? `<dt>${L('À relancer', 'To follow up')}</dt><dd><button class="linkbtn" type="button" data-act="relance">${L(`${relanceList().length} proche${relanceList().length > 1 ? 's' : ''} sans nouvelles`, `${relanceList().length} close contact${sEN(relanceList().length)} gone quiet`)}</button></dd>` : ''}
     </dl>
-    <h3>${L('Répartition par', 'Breakdown by')} ${cdim.label.toLowerCase()}</h3>
+    ${meBreakdown('sector', L('Répartition par secteur', 'Breakdown by industry'))}
+    ${meBreakdown('company', L('Répartition par entreprise', 'Breakdown by company'))}
+    ${state.colorBy !== 'sector' && state.colorBy !== 'company' ? `<h3>${L('Répartition par', 'Breakdown by')} ${cdim.label.toLowerCase()}</h3>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${cc.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
-    <div class="legendlist">${rows.slice(0, 8).map(v => `<div class="hl" data-hlv="${esc(v)}"><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(dv(v))}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>
+    <div class="legendlist">${rows.slice(0, 8).map(v => `<div class="hl" data-hlv="${esc(v)}"><span class="dot" style="background:${colorFn(v)}"></span><span>${esc(dv(v))}</span><span class="n">${cc.get(v)}</span><span class="pct">${pct(cc.get(v), total)}</span></div>`).join('')}</div>` : ''}
     ${isDemo ? `<h3>${L('Mon profil', 'My profile')}</h3>
     <p class="pos">${L('Ceci est un réseau de démonstration. Importe ton export LinkedIn pour voir ton nom et ton poste au centre.', 'This is a demo network. Import your LinkedIn export to see your name and job title in the center.')}</p>
     <button class="btn primary block" type="button" data-act="import" style="margin-top:10px">${L('Importer mon export LinkedIn', 'Import my LinkedIn export')}</button>` : `<h3>${L('Mon profil', 'My profile')}</h3>
@@ -4242,6 +4385,8 @@ $('#closePanel').addEventListener('click', closePanel);
 $('#backdrop').addEventListener('click', closePanel);
 
 document.addEventListener('click', e => {
+  const mb = e.target.closest && e.target.closest('.drawer .mebr');
+  if(mb && state.selected === 'me'){ meSelect(mb.dataset.mek, mb.dataset.mev); return; }
   const act = e.target.closest('[data-act]');
   if(act){
     const a = act.dataset.act;
@@ -4272,6 +4417,8 @@ document.addEventListener('click', e => {
     /* Démo : lien de profil factice (une adresse inventée pourrait être celle d’une vraie personne) */
     else if(a === 'demolink') toast(L('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.', 'Fictional contact. With your export, this link opens their LinkedIn profile.'));
     else if(a === 'relance') showRelance();
+    else if(a === 'events') showEvents();
+    else if(a === 'evf'){ evState[act.dataset.k] = act.dataset.v; showEvents(true); }
     else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
     else if(a === 'cbgo') pickTarget(act.dataset.v);
     else if(a === 'keepforget'){ if(confirm(L('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.', 'Forget your network on this device? It stays shown until the next refresh; you’ll then need to re-import your file.'))) setKeep(false); }
