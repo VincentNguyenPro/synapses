@@ -1296,11 +1296,11 @@ const brandColor = name => { let h = 0; for(const ch of name) h = (h * 31 + ch.c
    token : Client ID Brandfetch (public par conception : il figure dans l’adresse de chaque image).
    Sans token, ou si l’option est décochée, les badges monogrammes s’affichent. */
 const LOGO_CONFIG = { urlTemplate:'https://cdn.brandfetch.io/domain/{domain}/w/128/h/128/fallback/404/type/icon?c={token}', token:'1idZzRfYk3Zw3y_iDaq' };
-/* Option « Logos des entreprises » : décochée par défaut (choix de Vincent du 5 novembre 2026, RGPD : l’IP ne part qu’après un choix), à cocher dans Affichage.
+/* Option « Logos des entreprises » : cochée par défaut (choix de Vincent du 9 novembre 2026 ; décochée du 5 au 9 novembre), décochable dans Affichage.
    Chaque logo affiché envoie le domaine de l’entreprise (et l’adresse IP du visiteur) à Brandfetch, jamais le nom d’un contact ;
    l’utilisateur en est informé à côté de la case et dans « Tes données ». Une marque inconnue renvoie une erreur 404 : le monogramme reste affiché. */
 const LOGOS_KEY = 'synapses-logos-v1';
-let logosOn = false; try { logosOn = localStorage.getItem(LOGOS_KEY) === '1'; } catch(e) {}
+let logosOn = true; try { logosOn = localStorage.getItem(LOGOS_KEY) !== '0'; } catch(e) {}
 const nkey = s => norm(s).replace(/['’]/g, ' ').replace(/\s+/g, ' ').trim();
 
 /* ---------- Dictionnaire intégré entreprise → secteur ----------
