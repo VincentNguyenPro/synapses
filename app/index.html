@@ -196,8 +196,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .evf{display:flex;flex-direction:column;gap:4px;margin:0;min-width:0}
 .evf span{font-size:12px;font-weight:700;color:var(--muted)}
 .evf select{width:100%;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit;font-size:13.5px}
-.evf:first-child,.evf:nth-of-type(2),.evfor{grid-column:1/-1}
-.evfor{margin:-6px 0 0;font-size:12px;color:var(--muted)}
+.evf:nth-of-type(-n+3){grid-column:1/-1}
 .evhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .evhead h3{margin-bottom:8px}
 .evlist{list-style:none;margin:0;padding:0}
@@ -213,10 +212,18 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .evthemes span{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 7px}
 .evnote{font-size:12.5px;color:var(--muted);margin:0}
 .evcard .btn{align-self:flex-start;margin-top:4px}
-.evag{margin:0 0 10px;padding-left:18px;font-size:13.5px;line-height:1.7}
+.evag{margin:2px 0 8px;padding-left:18px;font-size:13.5px;line-height:1.7}
+.evgrp{border-bottom:1px solid var(--line)}
+.evgrp summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13.5px;font-weight:700;list-style:none}
+.evgrp summary::-webkit-details-marker{display:none}
+.evgrp summary::before{content:'›';display:inline-block;width:10px;color:var(--muted);transition:transform .15s}
+.evgrp[open] summary::before{transform:rotate(90deg)}
+.evgrp summary .n{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted)}
 .evmore{display:flex;flex-wrap:wrap;gap:8px}
 .mebr{cursor:pointer}
 .ilogo.medot{width:14px;height:14px;margin:0;vertical-align:middle}
+.ilogo.imono{display:inline-flex;flex:none;align-items:center;justify-content:center;box-sizing:border-box;background:var(--surface-2);color:var(--muted);font-size:7.5px;font-weight:800;letter-spacing:-.02em;line-height:1;font-style:normal}
+.ilogo.medot.imono{font-size:6.5px}
 .dlist{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--muted)}
 .dlist li{margin-bottom:5px}
 .dlist b{color:var(--ink)}
@@ -1118,7 +1125,12 @@ const pendingInv = () => (!isDemo && proxData && proxData.p) || {o:[], i:[]};
    Liste vérifiée à la main dans data/evenements.json (dates et sources), filtrée dans le navigateur selon ton poste, ton secteur
    et ta ville (fiche Moi). Rien n’est envoyé : un clic ouvre le site de l’organisateur pour t’inscrire. */
 let eventsData = null, eventsP = null;
-const evState = {mode:'', prix:'', lieu:'pays', theme:'moi'};
+const evState = {mode:'', prix:'', lieu:'pays', secteur:null, metier:null};
+/* Thèmes d’un événement : métiers (fonctions de data/postes.json + gestion de projet) et secteurs d’activité (data/entreprises.json) ; « Juridique » est les deux */
+const isFnTheme = t => t === 'Gestion de projet' || FUNCTIONS.some(f => f[0] === t);
+const isSecTheme = t => !isFnTheme(t) || SECTORS.some(x => x[0] === t) || NEW_SECTORS.has(t);
+const evLabel = t => t === 'Gestion de projet' ? L('Gestion de projet', 'Project management') : dv(t);
+const EV_TYPES = [['communaute', 'Communautés et salons', 'Communities and trade shows'], ['entreprise', 'Entreprises et cabinets de conseil', 'Companies and consulting firms'], ['association', 'Associations et réseaux professionnels', 'Associations and professional networks'], ['ecole', 'Écoles et universités', 'Schools and universities'], ['formation', 'Formation et emploi', 'Training and jobs'], ['cooperative', 'Coopératives et économie sociale', 'Cooperatives and social economy']];
 let evLieuInit = false;
 const EV_CITY_KEY = 'synapses-ville-v1';
 let evCity = ''; try { evCity = localStorage.getItem(EV_CITY_KEY) || ''; } catch(e) {}
@@ -1163,22 +1175,33 @@ async function showEvents(keepScroll){
   if(!eventsData){ try { await loadEvents(); } catch(e){ toast(L('La liste des événements n’a pas pu être chargée', 'The events list could not be loaded')); return; } }
   if(!keepScroll){ select(null); clearFocus(); closePanel(); }
   const me = myEventProfile(), all = upcomingEvents();
-  const themesAll = [...new Set(all.flatMap(e => e.themes))].sort((a, b) => dv(a).localeCompare(dv(b), LOC));
-  if(evState.theme === 'moi' && !me.themes.size) evState.theme = '';
+  const secAll = [...new Set(all.flatMap(e => e.themes).filter(isSecTheme))].sort((a, b) => dv(a).localeCompare(dv(b), LOC));
+  const fnAll = [...new Set(all.flatMap(e => e.themes).filter(isFnTheme))].sort((a, b) => evLabel(a).localeCompare(evLabel(b), LOC));
+  /* Par défaut : ton métier (sinon ton secteur) ; « Mon métier » / « Mon secteur » disparaissent si Synapses ne les connaît pas */
+  const defMetier = me.job.size ? 'moi' : '', defSecteur = me.job.size || !me.sector ? '' : 'moi';
+  if(evState.metier === null) evState.metier = defMetier;
+  if(evState.secteur === null) evState.secteur = defSecteur;
+  if(evState.metier === 'moi' && !me.job.size) evState.metier = '';
+  if(evState.secteur === 'moi' && !me.sector) evState.secteur = '';
+  const okMetier = th => { const f = th.filter(isFnTheme); return !evState.metier || (evState.metier === 'moi' ? f.some(t => me.job.has(t)) : f.includes(evState.metier)); };
+  const okSecteur = th => { const x = th.filter(isSecTheme); return !evState.secteur || x.includes(evState.secteur === 'moi' ? me.sector : evState.secteur); };
   if(!evLieuInit){ evLieuInit = true; if(evCity) evState.lieu = 'ville'; }
   if(evState.lieu === 'ville' && !me.city) evState.lieu = 'pays';
   const inCity = e => me.city && e.ville && (norm(e.ville).includes(norm(me.city)) || norm(me.city).includes(norm(e.ville)) || (norm(me.city) === 'paris' && /^paris|nanterre|la defense/.test(norm(e.ville))));
   const ok = e => (!evState.mode || (evState.mode === 'presentiel' ? e.mode !== 'en-ligne' : e.mode !== 'presentiel'))
     && (!evState.prix || e.prix === evState.prix)
     && (!evState.lieu || (evState.lieu === 'ville' ? inCity(e) : evState.lieu === 'pays' ? (e.pays === me.country || e.mode === 'en-ligne') : e.pays && e.pays !== me.country))
-    && (!evState.theme || (evState.theme === 'moi' ? e.themes.some(t => me.themes.has(t)) : e.themes.includes(evState.theme)));
+    && okMetier(e.themes) && okSecteur(e.themes);
   /* Ordre : lié à ton poste (PMO → gestion de projet…), puis à ton secteur ; ta ville d’abord ; puis la date */
   /* Le plus précis d’abord : un PMO voit la gestion de projet avant les événements « opérations » en général */
   const rel = e => e.themes.includes('Gestion de projet') && me.job.has('Gestion de projet') ? 3 : e.themes.some(t => me.job.has(t)) ? 2 : e.themes.some(t => me.themes.has(t)) ? 1 : 0;
-  const list = all.filter(ok).sort((x, y) => rel(y) - rel(x) || (inCity(y) ? 1 : 0) - (inCity(x) ? 1 : 0) || evDate(x.debut) - evDate(y.debut));
+  let list = all.filter(ok);
+  /* Rien pour ton métier avec les réglages de départ : on montre tout plutôt qu’une liste vide */
+  if(!list.length && evState.metier === 'moi' && evState.metier === defMetier && evState.secteur === defSecteur){ evState.metier = ''; list = all.filter(ok); }
+  list.sort((x, y) => rel(y) - rel(x) || (inCity(y) ? 1 : 0) - (inCity(x) ? 1 : 0) || evDate(x.debut) - evDate(y.debut));
   const countryName = (COUNTRY_NAME[me.country] || [me.country, me.country])[EN ? 1 : 0];
   const cities = [...new Set([me.city, me.profileCity, ...all.filter(e => e.pays === me.country && e.ville).map(e => e.ville)].filter(Boolean))].sort((a, b) => a.localeCompare(b, LOC));
-  const isDefault = evState.lieu === 'pays' && !evState.mode && !evState.prix && evState.theme === (me.themes.size ? 'moi' : '');
+  const isDefault = evState.lieu === 'pays' && !evState.mode && !evState.prix && evState.metier === defMetier && evState.secteur === defSecteur;
   const where = e => e.mode === 'en-ligne' ? L('En ligne', 'Online') : [EN ? VILLE_EN[e.ville] || e.ville : e.ville, e.pays && e.pays !== me.country ? (COUNTRY_NAME[e.pays] || [e.pays, e.pays])[EN ? 1 : 0] : ''].filter(Boolean).join(', ');
   const price = {gratuit:L('Gratuit', 'Free'), payant:L('Payant', 'Paid'), variable:L('Prix selon le billet', 'Price varies')};
   const card = e => `<li class="evcard"><div class="evdate">${esc(evWhen(e))}</div><strong>${esc(e.nom)}</strong>
@@ -1186,8 +1209,12 @@ async function showEvents(keepScroll){
       <div class="evthemes">${e.themes.filter(t => t !== 'Gestion de projet' || me.themes.has(t)).slice(0, 4).map(t => `<span>${esc(t === 'Gestion de projet' ? L('Gestion de projet', 'Project management') : dv(t))}</span>`).join('')}</div>
       ${e.note ? `<p class="evnote">${esc(EN ? e.note.replace('Plusieurs sessions en anglais (1er, 8 et 9 décembre)', 'Several sessions in English (Dec 1, 8 and 9)').replace('Webinaire en anglais', 'Webinar in English').replace('Badge visiteur gratuit', 'Free visitor badge').replace('Journée mondiale : webinaires et rencontres organisés par les communautés PMO', 'Worldwide day: webinars and meetups run by PMO communities') : e.note)}</p>` : ''}
       <a class="btn primary sm" href="${esc(e.url)}" target="_blank" rel="noopener">${L('S’inscrire', 'Register')} ${ICON_EXT}</a></li>`;
-  const ag = (eventsData.agendas || []).filter(a => !evState.theme || (evState.theme === 'moi' ? a.themes.some(t => me.themes.has(t)) : a.themes.includes(evState.theme))).sort((a, b) => b.themes.some(t => me.job.has(t)) - a.themes.some(t => me.job.has(t)));
-  const kw = evState.theme && evState.theme !== 'moi' ? dv(evState.theme) : me.fn ? dv(me.fn) : '';
+  /* Agendas : un agenda sans thème (école, coopérative…) vaut pour tous ; ceux de ton métier d’abord */
+  const ag = (eventsData.agendas || []).filter(a => !a.themes.length || (okMetier(a.themes) && okSecteur(a.themes)))
+    .sort((a, b) => b.themes.some(t => me.job.has(t)) - a.themes.some(t => me.job.has(t)) || b.themes.length - a.themes.length);
+  const agGroups = EV_TYPES.map(([k, fr, en]) => [k, L(fr, en), ag.filter(a => (a.type || 'communaute') === k)]).filter(g => g[2].length);
+  const kwT = evState.metier && evState.metier !== 'moi' ? evState.metier : evState.secteur && evState.secteur !== 'moi' ? evState.secteur : '';
+  const kw = kwT ? evLabel(kwT) : me.job.has('Gestion de projet') ? L('gestion de projet', 'project management') : me.fn ? dv(me.fn) : '';
   const city = me.city || '';
   const more = [
     ['Eventbrite', `https://www.eventbrite.fr/d/${encodeURIComponent((city || 'france').toLowerCase())}/${evState.prix === 'gratuit' ? 'free--' : ''}events/?q=${encodeURIComponent(kw)}`],
@@ -1197,8 +1224,8 @@ async function showEvents(keepScroll){
   openDrawer(`<h2 id="dtitle" tabindex="-1">${L('Événements pour toi', 'Events for you')}</h2>
     <p class="pos">${me.themes.size ? L(`Choisis selon ton poste${me.city ? ' et ta ville' : ''}. Clique sur « S’inscrire » pour ouvrir le site de l’organisateur.`, `Picked for your job${me.city ? ' and city' : ''}. Click “Register” to open the organizer’s site.`) : L('Renseigne ton poste dans ta fiche (Moi) pour des suggestions plus ciblées.', 'Fill in your job title in your profile (Me) for better-targeted suggestions.')}</p>
     <div class="evfilters">
-      <label class="evf"><span>${L('Thème', 'Topic')}</span><select id="evTheme">${me.themes.size ? `<option value="moi"${evState.theme === 'moi' ? ' selected' : ''}>${L('Pour moi', 'For me')}</option>` : ''}<option value=""${!evState.theme ? ' selected' : ''}>${L('Tous les thèmes', 'All topics')}</option>${themesAll.filter(t => t !== 'Gestion de projet').map(t => `<option value="${esc(t)}"${evState.theme === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
-      ${evState.theme === 'moi' && me.themes.size ? `<p class="evfor">${L('Selon ton poste et ton secteur', 'Based on your job and industry')} : ${[...me.themes].map(t => t === 'Gestion de projet' ? L('gestion de projet', 'project management') : dv(t)).join(', ')}</p>` : ''}
+      <label class="evf"><span>${L('Métier', 'Job')}</span><select id="evMetier">${me.job.size ? `<option value="moi"${evState.metier === 'moi' ? ' selected' : ''}>${L('Mon métier', 'My job')} (${esc([...me.job].map(evLabel).join(', '))})</option>` : ''}<option value=""${!evState.metier ? ' selected' : ''}>${L('Tous les métiers', 'All jobs')}</option>${fnAll.map(t => `<option value="${esc(t)}"${evState.metier === t ? ' selected' : ''}>${esc(evLabel(t))}</option>`).join('')}</select></label>
+      <label class="evf"><span>${L('Secteur d’activité', 'Industry')}</span><select id="evSecteur">${me.sector ? `<option value="moi"${evState.secteur === 'moi' ? ' selected' : ''}>${L('Mon secteur', 'My industry')} (${esc(dv(me.sector))})</option>` : ''}<option value=""${!evState.secteur ? ' selected' : ''}>${L('Tous les secteurs', 'All industries')}</option>${secAll.map(t => `<option value="${esc(t)}"${evState.secteur === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
       <label class="evf"><span>${L('Lieu', 'Where')}</span><select id="evLieu">
         ${me.city ? `<option value="ville:${esc(me.city)}"${evState.lieu === 'ville' ? ' selected' : ''}>${L(`Ma ville : ${esc(me.city)}`, `My city: ${esc(VILLE_EN[me.city] || me.city)}`)}</option>` : ''}
         <option value="pays"${evState.lieu === 'pays' ? ' selected' : ''}>${L(`Mon pays : ${countryName} (et en ligne)`, `My country: ${countryName} (and online)`)}</option>
@@ -1215,11 +1242,12 @@ async function showEvents(keepScroll){
     </div>
     <div class="evhead"><h3>${list.length ? L(`${list.length} événement${list.length > 1 ? 's' : ''} à venir`, `${list.length} upcoming event${sEN(list.length)}`) : L('Aucun événement avec ces filtres', 'No events with these filters')}</h3>${isDefault ? '' : `<button class="linkbtn" type="button" data-act="evreset">${L('Réinitialiser', 'Reset')}</button>`}</div>
     ${list.length ? `<ul class="evlist">${list.map(card).join('')}</ul>` : `<p class="pos">${L('Élargis un filtre, ou cherche plus loin ci-dessous.', 'Widen a filter, or search further below.')}</p>`}
-    ${ag.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3><ul class="evag">${ag.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN ? a.nom.replace(' : meetups produit gratuits (Paris, chaque mois)', ': free product meetups (Paris, monthly)').replace(' : soirées et salons de la finance', ': finance evenings and fairs').replace(' : soirées de recrutement tech', ': tech hiring evenings').replace(' : meetups data et IA', ': data and AI meetups').replace(' : conférences gestion de projet', ': project management talks').replace(' : conférences et meetups PMO en France', ': PMO conferences and meetups in France').replace(' : événements agiles à Paris', ': agile events in Paris') : a.nom)} ${ICON_EXT}</a></li>`).join('')}</ul>` : ''}
+    ${agGroups.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3>${agGroups.map(([k, name, items], i) => `<details class="evgrp"${i === 0 || items.some(a => a.themes.some(t => me.job.has(t))) ? ' open' : ''}><summary>${esc(name)}<span class="n">${items.length}</span></summary><ul class="evag">${items.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN && a.en || a.nom)} ${ICON_EXT}</a></li>`).join('')}</ul></details>`).join('')}` : ''}
     <h3>${L('Chercher plus', 'Search further')}</h3>
     <p class="evmore">${more.map(([n, u]) => `<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">${n} ${ICON_EXT}</a>`).join('')}</p>
     <p class="hint" style="margin-top:14px">${L(`Liste vérifiée le ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}, dates à confirmer sur le site de l’organisateur. Rien n’est envoyé : seul un clic ouvre le site choisi.`, `List checked on ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}; confirm dates on the organizer’s site. Nothing is sent: only a click opens the chosen site.`)}</p>`);
-  $('#evTheme').addEventListener('change', e => { evState.theme = e.target.value; showEvents(true); });
+  $('#evMetier').addEventListener('change', e => { evState.metier = e.target.value; showEvents(true); });
+  $('#evSecteur').addEventListener('change', e => { evState.secteur = e.target.value; showEvents(true); });
   $('#evLieu').addEventListener('change', e => { const v = e.target.value;
     if(v.startsWith('ville:')){ evCity = v.slice(6); evState.lieu = 'ville'; try { localStorage.setItem(EV_CITY_KEY, evCity); } catch(err) {} } else evState.lieu = v;
     showEvents(true); });
@@ -1628,7 +1656,12 @@ function domainOf(name){
 }
 const logoFails = new Set();
 /* Petit logo en ligne (fiche contact, listes, suggestions) : seulement si le domaine est vérifié ; chargé quand il devient visible */
-function ilogo(name, cls = 'ilogo'){ const u = name ? logoUrl(name) : ''; return u ? `<img class="${cls}" src="${esc(u)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''; }
+/* Petit logo d’entreprise ; sans logo (domaine inconnu ou absent chez Brandfetch) : pastille avec le sigle (« Département de l’Essonne » → DE) */
+function ilogo(name, cls = 'ilogo'){
+  if(!name) return '';
+  const u = logoUrl(name), a = esc(mono(name));
+  return u ? `<img class="${cls}" src="${esc(u)}" alt="" loading="lazy" decoding="async" data-abbr="${a}" onerror="const m=document.createElement('i');m.className=this.className+' imono';m.textContent=this.dataset.abbr;m.setAttribute('aria-hidden','true');this.replaceWith(m)">` : `<i class="${cls} imono" aria-hidden="true">${a}</i>`;
+}
 function logoUrl(name){
   if(!logosOn || !LOGO_CONFIG.urlTemplate || !LOGO_CONFIG.token) return '';
   const dom = domainOf(name);
@@ -4456,7 +4489,7 @@ document.addEventListener('click', e => {
     else if(a === 'demolink') toast(L('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.', 'Fictional contact. With your export, this link opens their LinkedIn profile.'));
     else if(a === 'relance') showRelance();
     else if(a === 'events') showEvents();
-    else if(a === 'evreset'){ Object.assign(evState, {mode:'', prix:'', lieu:'pays', theme:'moi'}); showEvents(true); }
+    else if(a === 'evreset'){ Object.assign(evState, {mode:'', prix:'', lieu:'pays', secteur:null, metier:null}); showEvents(true); }
     else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
     else if(a === 'cbgo') pickTarget(act.dataset.v);
     else if(a === 'keepforget'){ if(confirm(L('Oublier ton réseau sur cet appareil ? Il restera affiché jusqu’au prochain rafraîchissement ; il faudra ensuite réimporter ton fichier.', 'Forget your network on this device? It stays shown until the next refresh; you’ll then need to re-import your file.'))) setKeep(false); }

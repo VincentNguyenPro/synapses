@@ -526,14 +526,18 @@
  ],
  "agendas": [
   {
+   "type": "communaute",
    "nom": "Thiga : meetups produit gratuits (Paris, chaque mois)",
+   "en": "Thiga: free product meetups (Paris, monthly)",
    "themes": [
     "Produit"
    ],
    "url": "https://www.thiga.co/en/events"
   },
   {
+   "type": "communaute",
    "nom": "Dogfinance : soirées et salons de la finance",
+   "en": "Dogfinance: finance evenings and fairs",
    "themes": [
     "Finance",
     "Finance & investissement",
@@ -542,7 +546,9 @@
    "url": "https://dogfinance.com/events"
   },
   {
+   "type": "communaute",
    "nom": "Tekkit : soirées de recrutement tech",
+   "en": "Tekkit: tech hiring evenings",
    "themes": [
     "Tech",
     "Data"
@@ -550,14 +556,18 @@
    "url": "https://tekkit.io"
   },
   {
+   "type": "communaute",
    "nom": "datacraft : meetups data et IA",
+   "en": "datacraft: data and AI meetups",
    "themes": [
     "Data"
    ],
    "url": "https://luma.com/datacraft"
   },
   {
+   "type": "communaute",
    "nom": "dev.events : conférences et meetups PMO en France",
+   "en": "dev.events: PMO conferences and meetups in France",
    "themes": [
     "Gestion de projet",
     "Opérations"
@@ -565,7 +575,9 @@
    "url": "https://dev.events/EU/FR/pmo"
   },
   {
+   "type": "communaute",
    "nom": "dev.events : événements agiles à Paris",
+   "en": "dev.events: agile events in Paris",
    "themes": [
     "Gestion de projet",
     "Produit",
@@ -574,7 +586,155 @@
    "url": "https://dev.events/EU/FR/Paris/agile"
   },
   {
+   "type": "communaute",
+   "nom": "HR Technologies France : salon RH et digital",
+   "en": "HR Technologies France: HR tech trade show",
+   "themes": [
+    "RH"
+   ],
+   "url": "https://www.hrtechnologiesfrance.com"
+  },
+  {
+   "type": "communaute",
+   "nom": "Maddyness : agenda des startups et de l’innovation",
+   "en": "Maddyness: startup and innovation calendar",
+   "themes": [
+    "Direction générale",
+    "Marketing",
+    "Tech",
+    "Tech & logiciel"
+   ],
+   "url": "https://www.maddyness.com/agenda/"
+  },
+  {
+   "type": "ecole",
+   "nom": "HEC Paris : conférences et événements",
+   "en": "HEC Paris: talks and events",
+   "themes": [],
+   "url": "https://www.hec.edu/fr/evenements"
+  },
+  {
+   "type": "ecole",
+   "nom": "ESSEC : événements",
+   "en": "ESSEC: events",
+   "themes": [],
+   "url": "https://www.essec.edu/fr/evenements/"
+  },
+  {
+   "type": "ecole",
+   "nom": "ESCP Business School : événements",
+   "en": "ESCP Business School: events",
+   "themes": [],
+   "url": "https://www.escp.eu/fr/events"
+  },
+  {
+   "type": "ecole",
+   "nom": "EDHEC : événements",
+   "en": "EDHEC: events",
+   "themes": [],
+   "url": "https://www.edhec.edu/fr/newsroom/agenda"
+  },
+  {
+   "type": "ecole",
+   "nom": "Sciences Po : événements",
+   "en": "Sciences Po: events",
+   "themes": [],
+   "url": "https://www.sciencespo.fr/fr/evenements/"
+  },
+  {
+   "type": "ecole",
+   "nom": "Sorbonne Université : événements",
+   "en": "Sorbonne University: events",
+   "themes": [],
+   "url": "https://www.sorbonne-universite.fr/evenements"
+  },
+  {
+   "type": "ecole",
+   "nom": "Université Paris-Saclay : événements",
+   "en": "Paris-Saclay University: events",
+   "themes": [],
+   "url": "https://www.universite-paris-saclay.fr/evenements"
+  },
+  {
+   "type": "ecole",
+   "nom": "AX, anciens de Polytechnique : agenda",
+   "en": "AX, Polytechnique alumni: calendar",
+   "themes": [],
+   "url": "https://ax.polytechnique.org/fr/agenda"
+  },
+  {
+   "type": "ecole",
+   "nom": "CentraleSupélec Alumni : agenda",
+   "en": "CentraleSupélec Alumni: calendar",
+   "themes": [],
+   "url": "https://association.centralesupelec-alumni.com/fr/agenda"
+  },
+  {
+   "type": "ecole",
+   "nom": "HEC Alumni : agenda",
+   "en": "HEC Alumni: calendar",
+   "themes": [],
+   "url": "https://www.hecalumni.fr/fr/agenda"
+  },
+  {
+   "type": "ecole",
+   "nom": "ESSEC Alumni : agenda",
+   "en": "ESSEC Alumni: calendar",
+   "themes": [],
+   "url": "https://www.essecalumni.com/fr/agenda"
+  },
+  {
+   "type": "formation",
+   "nom": "Cnam : agenda (conférences, portes ouvertes)",
+   "en": "Cnam: calendar (talks, open days)",
+   "themes": [],
+   "url": "https://www.cnam.fr/agenda"
+  },
+  {
+   "type": "formation",
+   "nom": "Le Wagon : ateliers, webinaires et portes ouvertes",
+   "en": "Le Wagon: workshops, webinars and open days",
+   "themes": [
+    "Tech",
+    "Data",
+    "Produit"
+   ],
+   "url": "https://www.lewagon.com/fr/events"
+  },
+  {
+   "type": "formation",
+   "nom": "AFNOR : conférences qualité, normes et RSE",
+   "en": "AFNOR: quality, standards and CSR talks",
+   "themes": [
+    "Opérations",
+    "Gestion de projet"
+   ],
+   "url": "https://www.afnor.org/evenements/"
+  },
+  {
+   "type": "formation",
+   "nom": "France Travail : salons et job datings près de chez toi",
+   "en": "France Travail: job fairs and job datings near you",
+   "themes": [],
+   "url": "https://mesevenementsemploi.francetravail.fr"
+  },
+  {
+   "type": "association",
+   "nom": "France FinTech : clubs métier, rencontres et soirées",
+   "en": "France FinTech: working groups, meetups and evenings",
+   "themes": [
+    "Finance",
+    "Tech",
+    "Juridique",
+    "Finance & investissement",
+    "Banque & assurance"
+   ],
+   "url": "https://francefintech.org/evenements/"
+  },
+  {
+   "type": "association",
    "nom": "PMI France : conférences gestion de projet",
+   "en": "PMI France: project management talks",
    "themes": [
     "Opérations",
     "Conseil",
@@ -583,11 +743,168 @@
    "url": "https://pmi-france.org/conferences/national-bALL"
   },
   {
-   "nom": "HR Technologies France",
+   "type": "association",
+   "nom": "DFCG : rencontres des directeurs financiers",
+   "en": "DFCG: finance directors’ meetups",
    "themes": [
-    "RH"
+    "Finance"
    ],
-   "url": "https://www.hrtechnologiesfrance.com"
+   "url": "https://www.dfcg.fr/evenements/"
+  },
+  {
+   "type": "association",
+   "nom": "France Digitale : agenda des startups",
+   "en": "France Digitale: startup calendar",
+   "themes": [
+    "Direction générale",
+    "Tech",
+    "Tech & logiciel",
+    "Finance & investissement"
+   ],
+   "url": "https://francedigitale.org/agenda"
+  },
+  {
+   "type": "association",
+   "nom": "La French Tech : événements",
+   "en": "La French Tech: events",
+   "themes": [
+    "Direction générale",
+    "Tech",
+    "Tech & logiciel"
+   ],
+   "url": "https://lafrenchtech.gouv.fr/fr/evenements/"
+  },
+  {
+   "type": "association",
+   "nom": "CCI Paris Île-de-France : rencontres d’entreprises",
+   "en": "CCI Paris Île-de-France: business meetups",
+   "themes": [
+    "Direction générale",
+    "Sales",
+    "Finance"
+   ],
+   "url": "https://www.entreprises.cci-paris-idf.fr/evenements"
+  },
+  {
+   "type": "cooperative",
+   "nom": "ESS France : agenda de l’économie sociale et solidaire",
+   "en": "ESS France: social and solidarity economy calendar",
+   "themes": [],
+   "url": "https://www.ess-france.org/agenda"
+  },
+  {
+   "type": "cooperative",
+   "nom": "Mouvement Impact France : événements",
+   "en": "Mouvement Impact France: events",
+   "themes": [],
+   "url": "https://www.impactfrance.eco/agenda"
+  },
+  {
+   "type": "cooperative",
+   "nom": "Alliance coopérative internationale : événements",
+   "en": "International Cooperative Alliance: events",
+   "themes": [],
+   "url": "https://ica.coop/fr/evenements"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Wavestone : conférences, webinaires et ateliers",
+   "en": "Wavestone: talks, webinars and workshops",
+   "themes": [
+    "Conseil",
+    "Direction générale",
+    "Tech",
+    "Gestion de projet"
+   ],
+   "url": "https://www.wavestone.com/fr/nos-expertises/evenements/"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Capgemini : événements",
+   "en": "Capgemini: events",
+   "themes": [
+    "Conseil",
+    "Tech",
+    "Data"
+   ],
+   "url": "https://www.capgemini.com/fr-fr/actualites/evenements/"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Deloitte : événements et webinars",
+   "en": "Deloitte: events and webinars",
+   "themes": [
+    "Conseil",
+    "Finance",
+    "Juridique",
+    "Direction générale"
+   ],
+   "url": "https://www.deloitte.com/fr/fr/what-we-do/events.html"
+  },
+  {
+   "type": "entreprise",
+   "nom": "KPMG : webinars et conférences",
+   "en": "KPMG: webinars and talks",
+   "themes": [
+    "Conseil",
+    "Finance",
+    "Juridique"
+   ],
+   "url": "https://kpmg.com/fr/fr/event.html"
+  },
+  {
+   "type": "entreprise",
+   "nom": "EY : webcasts de ses experts",
+   "en": "EY: expert webcasts",
+   "themes": [
+    "Conseil",
+    "Finance",
+    "Direction générale"
+   ],
+   "url": "https://www.ey.com/fr_fr/media/webcasts"
+  },
+  {
+   "type": "entreprise",
+   "nom": "OCTO Technology : conférences et meetups",
+   "en": "OCTO Technology: talks and meetups",
+   "themes": [
+    "Tech",
+    "Produit",
+    "Data",
+    "Conseil"
+   ],
+   "url": "https://www.octo.com/evenements"
+  },
+  {
+   "type": "entreprise",
+   "nom": "AWS : événements et webinaires cloud",
+   "en": "AWS: cloud events and webinars",
+   "themes": [
+    "Tech",
+    "Data"
+   ],
+   "url": "https://aws.amazon.com/fr/events/"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Google Cloud : webinaires",
+   "en": "Google Cloud: webinars",
+   "themes": [
+    "Tech",
+    "Data"
+   ],
+   "url": "https://cloudonair.withgoogle.com/"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Salesforce : événements en France",
+   "en": "Salesforce: events in France",
+   "themes": [
+    "Sales",
+    "Marketing"
+   ],
+   "url": "https://www.salesforce.com/fr/events/"
   }
- ]
+ ],
+ "description_agendas": "type : communaute, ecole, formation, association, cooperative, entreprise ; themes vide = tous métiers et secteurs ; en = nom anglais. URL vérifiées le 9 novembre 2026."
 }
