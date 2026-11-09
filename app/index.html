@@ -182,6 +182,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .steps li{margin-bottom:4px}
 .pastebox{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font:inherit;font-size:14px;resize:vertical}
 .pastebox:focus{background:var(--surface);border-color:var(--accent);outline:none}
+.ilogo{width:16px;height:16px;border-radius:4px;object-fit:contain;background:#fff;box-shadow:0 0 0 1px var(--line);vertical-align:-3px;margin-right:5px;flex:none}
+.coname{overflow-wrap:anywhere}
 .dlist{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--muted)}
 .dlist li{margin-bottom:5px}
 .dlist b{color:var(--ink)}
@@ -1478,6 +1480,8 @@ function domainOf(name){
   return '';
 }
 const logoFails = new Set();
+/* Petit logo en ligne (fiche contact, listes, suggestions) : seulement si le domaine est vérifié ; chargé quand il devient visible */
+function ilogo(name, cls = 'ilogo'){ const u = name ? logoUrl(name) : ''; return u ? `<img class="${cls}" src="${esc(u)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''; }
 function logoUrl(name){
   if(!logosOn || !LOGO_CONFIG.urlTemplate || !LOGO_CONFIG.token) return '';
   const dom = domainOf(name);
@@ -3416,7 +3420,7 @@ function personRow(o){
   /* Tout s’affiche en entier (retours à la ligne, jamais de « … ») : nom, poste, valeur de « Colorer par », raisons de proximité */
   const byCo = state.colorBy === 'company', val = DIMS[state.colorBy].get(o);
   const valTxt = byCo && o.company && o.company !== val ? `${dv(val)} · ${o.company}` : dv(val);
-  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(dv(t))}</span>` : ''}</strong><span>${esc(o.position || L('Poste non renseigné', 'No job title'))}${!byCo && o.company ? ', ' + esc(o.company) : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="${EN ? `Open ${esc(o.name)}’s LinkedIn profile` : `Ouvrir le profil LinkedIn de ${esc(o.name)}`}">LinkedIn ${ICON_EXT}</a>` : isDemo ? `<button class="lk" type="button" data-act="demolink" aria-label="${EN ? `${esc(o.name)}’s LinkedIn profile (fictional contact)` : `Profil LinkedIn de ${esc(o.name)} (contact fictif)`}">LinkedIn ${ICON_EXT}</button>` : ''}</li>`;
+  return `<li><button class="lrow" type="button" data-cid="${o.id}">${avatar(o)}<span class="who"><strong>${esc(o.name)}${t ? ` <span class="tagpill">${esc(dv(t))}</span>` : ''}</strong><span>${esc(o.position || L('Poste non renseigné', 'No job title'))}${!byCo && o.company ? `, <span class="coname">${ilogo(o.company)}${esc(o.company)}</span>` : ''}</span><span class="cline"><span class="dot" style="background:${colorOf(o)}"></span>${esc(valTxt)}</span>${proxOf(o).short.length ? `<span class="proxrow" title="${esc(proxOf(o).why.join(', '))}">${proxOf(o).short.map(x => `<span class="pchip">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>${url ? `<a class="lk" href="${esc(url)}" target="_blank" rel="noopener" aria-label="${EN ? `Open ${esc(o.name)}’s LinkedIn profile` : `Ouvrir le profil LinkedIn de ${esc(o.name)}`}">LinkedIn ${ICON_EXT}</a>` : isDemo ? `<button class="lk" type="button" data-act="demolink" aria-label="${EN ? `${esc(o.name)}’s LinkedIn profile (fictional contact)` : `Profil LinkedIn de ${esc(o.name)} (contact fictif)`}">LinkedIn ${ICON_EXT}</button>` : ''}</li>`;
 }
 function peopleList(items, title, limit, keepOrder){
   if(!items.length) return '';
@@ -3509,7 +3513,7 @@ function showContact(c){
     : state.view === 'graph' ? `<p class="hlnote"><span class="hldot" aria-hidden="true"></span><span>En surbrillance dans le graphe : ${esc(firstName)}${visCo ? ` et ${visCo === 1 ? 'son collègue' : `ses ${visCo} collègues`} de ${esc(coOf(c))}${visCo === 1 ? ', placé à côté de son point' : ', en cercle autour de son point'}` : ''}. Les autres sont atténués, pas filtrés.${keyHtml}</span></p>` : '';
   openDrawer(`
     <div class="dhead">${avatar(c, true)}
-      <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || L('Poste non renseigné', 'No job title'))}${c.company ? L(' chez ', ' at ') + esc(c.company) : ''}</p></div></div>
+      <div><h2 id="dtitle" tabindex="-1">${esc(c.name)}</h2><p class="pos">${esc(c.position || L('Poste non renseigné', 'No job title'))}${c.company ? L(' chez ', ' at ') + `<span class="coname">${ilogo(c.company)}${esc(c.company)}</span>` : ''}</p></div></div>
     ${hlNote}
     ${url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener">${L('Voir le profil LinkedIn', 'View LinkedIn profile')} ${ICON_EXT}</a>`
           : isDemo ? `<button class="btn primary block" type="button" data-act="demolink">${L('Voir le profil LinkedIn', 'View LinkedIn profile')} ${ICON_EXT}</button>`
@@ -3909,7 +3913,7 @@ function targetPredictions(recent = tgRecent){
   return sections;
 }
 const TG_TYPE_EN = {Entreprise:'Company', 'Entité':'Entity', Secteur:'Industry', 'École':'School', Contact:'Contact', Recherche:'Search'};
-const tgLi = (e, i, pre = 'tgo') => `<li role="option" id="${pre}${i}" data-tgv="${esc(e.t || e.v)}"${e.cid != null ? ` data-tgc="${e.cid}"` : ''}><span>${esc(e.t || e.v)}</span><span class="tgmeta"${e.sub ? ` title="${esc(e.sub)}"` : ''}>${esc(e.sub || (EN ? TG_TYPE_EN[e.type] || e.type : e.type))}${e.n !== '' && e.n != null ? ' · ' + e.n : ''}</span></li>`;
+const tgLi = (e, i, pre = 'tgo') => `<li role="option" id="${pre}${i}" data-tgv="${esc(e.t || e.v)}"${e.cid != null ? ` data-tgc="${e.cid}"` : ''}><span>${e.type === 'Entreprise' || e.type === 'Entité' ? ilogo(e.v) : ''}${esc(e.t || e.v)}</span><span class="tgmeta"${e.sub ? ` title="${esc(e.sub)}"` : ''}>${esc(e.sub || (EN ? TG_TYPE_EN[e.type] || e.type : e.type))}${e.n !== '' && e.n != null ? ' · ' + e.n : ''}</span></li>`;
 function renderTargetSug(){
   const box = $('#targetSug'), q = $('#target').value;
   tgSel = -1;
