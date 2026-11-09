@@ -1,6 +1,6 @@
 {
  "version": 1,
- "description": "Événements professionnels proposés dans Synapses (fiche « Événements pour toi »). Liste vérifiée à la main : chaque date vient de la source indiquée. Un événement passé disparaît tout seul. themes = fonctions (data/postes.json) et secteurs (data/entreprises.json), en codes français. prix : gratuit, payant ou variable (selon le billet, ou non publié). mode : presentiel, en-ligne ou hybride. confirme = false quand seul le mois est connu (debut au format AAAA-MM).",
+ "description": "Événements professionnels proposés dans Synapses (fiche « Événements pour toi »). Liste vérifiée à la main : chaque date vient de la source indiquée. Un événement passé disparaît tout seul. themes = fonctions (data/postes.json) et secteurs (data/entreprises.json), en codes français. prix : gratuit, payant ou variable (selon le billet, ou non publié). mode : presentiel, en-ligne ou hybride. confirme = false quand seul le mois est connu (debut au format AAAA-MM). note_en = note en anglais.",
  "maj": "2026-11-09",
  "evenements": [
   {
@@ -22,6 +22,96 @@
    "url": "https://websummit.com",
    "source": "https://hadea.ec.europa.eu/events/web-summit-2026-2026-11-09_en",
    "confirme": true
+  },
+  {
+   "nom": "TPC : construire un Brand System piloté par l’IA",
+   "debut": "2026-11-10",
+   "fin": "2026-11-10",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Marketing"
+   ],
+   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/317157958/",
+   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/317157958/",
+   "confirme": true,
+   "note": "Webinaire de The Product Crew, 12 h",
+   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
+  },
+  {
+   "nom": "TPC : l’IA en prod au service de la santé",
+   "debut": "2026-11-12",
+   "fin": "2026-11-12",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Tech",
+    "Data",
+    "Santé"
+   ],
+   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/317187575/",
+   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/317187575/",
+   "confirme": true,
+   "note": "Webinaire de The Product Crew, 12 h",
+   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
+  },
+  {
+   "nom": "Designing AI products people trust",
+   "debut": "2026-11-12",
+   "fin": "2026-11-12",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Direction générale"
+   ],
+   "url": "https://luma.com/01vwvdjr",
+   "source": "https://luma.com/01vwvdjr",
+   "confirme": true,
+   "note": "Station F, 18 h ; complet, liste d’attente",
+   "note_en": "Station F, 6 pm; full, waiting list"
+  },
+  {
+   "nom": "Le Wagon Nantes : GenUI avec Flutter, des écrans générés par l’IA",
+   "debut": "2026-11-12",
+   "fin": "2026-11-12",
+   "ville": "Nantes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Tech",
+    "Produit"
+   ],
+   "url": "https://www.lewagon.com/fr/events/gen-ui-avec-flutter-generation-d-ecran-par-ia-njkqfP",
+   "source": "https://www.lewagon.com/fr/events/gen-ui-avec-flutter-generation-d-ecran-par-ia-njkqfP",
+   "confirme": true,
+   "note": "Places limitées, sur réservation",
+   "note_en": "Limited seats, booking required"
+  },
+  {
+   "nom": "TPC : faire de l’IA un levier de rentabilité",
+   "debut": "2026-11-17",
+   "fin": "2026-11-17",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Tech",
+    "Direction générale"
+   ],
+   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/317269180/",
+   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/317269180/",
+   "confirme": true,
+   "note": "Webinaire de The Product Crew, 12 h",
+   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
   },
   {
    "nom": "Slush 2026",
@@ -55,6 +145,58 @@
    "url": "https://www.transformations-droit.com",
    "source": "https://www.village-justice.com/articles/edito-rdv-transformations-droit-congres",
    "confirme": true
+  },
+  {
+   "nom": "Red Hat Summit : Connect Paris (avec Devoteam)",
+   "debut": "2026-11-24",
+   "fin": "2026-11-24",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Tech"
+   ],
+   "url": "https://www.devoteam.com/fr/event/red-hat-summit-connect-paris-2026/",
+   "source": "https://www.devoteam.com/fr/event/red-hat-summit-connect-paris-2026/",
+   "confirme": true
+  },
+  {
+   "nom": "TPC : l’impact réel de l’IA sur les équipes tech",
+   "debut": "2026-11-25",
+   "fin": "2026-11-25",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Tech",
+    "Data",
+    "RH"
+   ],
+   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/317354468/",
+   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/317354468/",
+   "confirme": true,
+   "note": "Webinaire de The Product Crew, 12 h",
+   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
+  },
+  {
+   "nom": "Thiga Augmented : workshop AI-Native SDLC",
+   "debut": "2026-11-26",
+   "fin": "2026-11-26",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Tech"
+   ],
+   "url": "https://luma.com/augmented-aflo",
+   "source": "https://luma.com/augmented-aflo",
+   "confirme": true,
+   "note": "Chez Thiga, 18 h 30 ; inscription validée par l’organisateur",
+   "note_en": "At Thiga, 6:30 pm; registration approved by the organizer"
   },
   {
    "nom": "Tech.Rocks Summit 2026",
@@ -137,6 +279,24 @@
    "confirme": true
   },
   {
+   "nom": "Data + AI World Tour Paris (avec Devoteam)",
+   "debut": "2026-12-08",
+   "fin": "2026-12-08",
+   "ville": "Nanterre",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Data",
+    "Tech"
+   ],
+   "url": "https://www.devoteam.com/fr/event/data-ai-world-tour-paris-2026/",
+   "source": "https://www.devoteam.com/fr/event/data-ai-world-tour-paris-2026/",
+   "confirme": true,
+   "note": "Paris La Défense Arena",
+   "note_en": "Paris La Défense Arena"
+  },
+  {
    "nom": "Next Gen Patrimoine",
    "debut": "2026-12-10",
    "fin": "2026-12-10",
@@ -152,6 +312,22 @@
    "url": "https://www.nextgenpatrimoine.com",
    "source": "https://www.nextgenpatrimoine.com/blog/evenements-patrimoine-cgp-family-office",
    "confirme": true
+  },
+  {
+   "nom": "TPC : le PM n’est plus expert produit, il est expert métier",
+   "debut": "2027-01-05",
+   "fin": "2027-01-05",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit"
+   ],
+   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/316366813/",
+   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/316366813/",
+   "confirme": true,
+   "note": "Webinaire de The Product Crew, 12 h",
+   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
   },
   {
    "nom": "Snowcamp 2027",
@@ -526,13 +702,13 @@
  ],
  "agendas": [
   {
-   "type": "communaute",
-   "nom": "Thiga : meetups produit gratuits (Paris, chaque mois)",
-   "en": "Thiga: free product meetups (Paris, monthly)",
+   "type": "entreprise",
+   "nom": "Thiga Augmented : ateliers et meetups produit (Paris)",
+   "en": "Thiga Augmented: product workshops and meetups (Paris)",
    "themes": [
     "Produit"
    ],
-   "url": "https://www.thiga.co/en/events"
+   "url": "https://luma.com/augmented-thiga"
   },
   {
    "type": "communaute",
@@ -605,6 +781,26 @@
     "Tech & logiciel"
    ],
    "url": "https://www.maddyness.com/agenda/"
+  },
+  {
+   "type": "communaute",
+   "nom": "The Product Crew (TPC) : webinaires produit, tech et IA",
+   "en": "The Product Crew (TPC): product, tech and AI webinars",
+   "themes": [
+    "Produit",
+    "Tech",
+    "Data"
+   ],
+   "url": "https://www.meetup.com/fr-fr/theproductcrew/events/"
+  },
+  {
+   "type": "communaute",
+   "nom": "ProductTank Paris : meetups produit",
+   "en": "ProductTank Paris: product meetups",
+   "themes": [
+    "Produit"
+   ],
+   "url": "https://www.meetup.com/producttank-paris/events/"
   },
   {
    "type": "ecole",
@@ -904,6 +1100,39 @@
     "Marketing"
    ],
    "url": "https://www.salesforce.com/fr/events/"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Product Club by IKXO : rencontres de managers produit",
+   "en": "Product Club by IKXO: product leaders’ meetups",
+   "themes": [
+    "Produit",
+    "Direction générale"
+   ],
+   "url": "https://www.productclub.fr/evenements-a-venir"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Converteo : événements et webinaires data, IA et marketing",
+   "en": "Converteo: data, AI and marketing events and webinars",
+   "themes": [
+    "Data",
+    "Marketing",
+    "Produit",
+    "Conseil"
+   ],
+   "url": "https://converteo.com/ressources/?a=1&type[]=evenement&type[]=webinar"
+  },
+  {
+   "type": "entreprise",
+   "nom": "Devoteam : événements tech, data et cloud",
+   "en": "Devoteam: tech, data and cloud events",
+   "themes": [
+    "Tech",
+    "Data",
+    "Conseil"
+   ],
+   "url": "https://www.devoteam.com/fr/event/"
   }
  ],
  "description_agendas": "type : communaute, ecole, formation, association, cooperative, entreprise ; themes vide = tous métiers et secteurs ; en = nom anglais. URL vérifiées le 9 novembre 2026."
