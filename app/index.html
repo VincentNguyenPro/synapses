@@ -177,6 +177,11 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .edu strong{display:block;font-size:14px}
 .edutxt span{display:block;font-size:13px;color:var(--ink)}
 .edu small{display:block;font-size:12.5px;color:var(--muted)}
+.edumates{display:inline-block;margin-top:4px;font-size:12.5px}
+.steps{margin:0 0 12px;padding-left:20px;font-size:13.5px;line-height:1.5}
+.steps li{margin-bottom:4px}
+.pastebox{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font:inherit;font-size:14px;resize:vertical}
+.pastebox:focus{background:var(--surface);border-color:var(--accent);outline:none}
 .dlist{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--muted)}
 .dlist li{margin-bottom:5px}
 .dlist b{color:var(--ink)}
@@ -3727,7 +3732,7 @@ const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
       <li><b>Emails</b> of your contacts: shown, never stored or sent.</li>
       <li><b>Closeness</b>: number and dates of messages, recommendations, endorsed skills. Never the text of messages.</li>
       <li><b>Target companies</b>: job applications, saved jobs and followed companies, matched with your network locally.</li>
-      <li><b>On this device</b>: profile, tags, views, corrections, and your network without emails if you keep it.</li>
+      <li><b>On this device</b>: profile, tags, schools you link to contacts, views, corrections, and your network without emails if you keep it.</li>
       <li><b>Only things sent</b>: +1 to an anonymous counter per import, your feedback if you send it, and company websites to Brandfetch for the logos.</li>
       <li><a href="../en/legal/" target="_blank" rel="noopener">Legal notice and privacy</a></li>
     </ul>
@@ -3738,7 +3743,7 @@ const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
       <li><b>Emails</b> de tes contacts&nbsp;: affichés, jamais enregistrés ni envoyés.</li>
       <li><b>Proximité</b>&nbsp;: nombre et date des messages, recommandations, compétences recommandées. Jamais le texte des messages.</li>
       <li><b>Entreprises cibles</b>&nbsp;: candidatures, offres et entreprises suivies, croisées avec ton réseau sur place.</li>
-      <li><b>Sur cet appareil</b>&nbsp;: profil, tags, vues, corrections, et ton réseau sans les emails si tu le gardes.</li>
+      <li><b>Sur cet appareil</b>&nbsp;: profil, tags, écoles associées à tes contacts, vues, corrections, et ton réseau sans les emails si tu le gardes.</li>
       <li><b>Seuls envois</b>&nbsp;: +1 à un compteur anonyme par import, ton avis si tu l’envoies, et le site des entreprises à Brandfetch pour les logos.</li>
       <li><a href="../legal/" target="_blank" rel="noopener">Mentions légales et confidentialité</a></li>
     </ul>
@@ -3801,7 +3806,7 @@ function showMe(){
       ${(p.positions || []).length ? `<ul class="edu">${p.positions.map(e => { const u = e.c ? logoUrl(e.c) : ''; return `<li><span class="edulogo" aria-hidden="true"><b>${esc(mono(e.c || e.t))}</b>${u ? `<img src="${esc(u)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()">` : ''}</span><span class="edutxt"><strong>${esc(e.t || e.c)}</strong>${e.t && e.c ? `<span>${esc(e.c)}</span>` : ''}${e.a || e.b ? `<small>${esc(ymRange(e.a, e.b))}</small>` : ''}</span></li>`; }).join('')}</ul>`
         : `<p class="hint" style="margin:0 0 12px">${L('Ton parcours apparaît ici quand tu importes l’archive complète de LinkedIn (fichier Positions.csv).', 'Your work history shows here when you import LinkedIn’s full archive (Positions.csv file).')}</p>`}
       <span class="lbl">${L('Formation', 'Education')}</span>
-      ${(p.education || []).length ? `<ul class="edu">${p.education.map(e => { const u = logoUrl(e.s); return `<li><span class="edulogo" aria-hidden="true"><b>${esc(mono(e.s))}</b>${u ? `<img src="${esc(u)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()">` : ''}</span><span class="edutxt"><strong>${esc(e.s)}</strong>${e.d || e.f ? `<span>${esc([e.d, e.f].filter(Boolean).join(' · '))}</span>` : ''}${e.a || e.b ? `<small>${esc(e.a && e.b && e.a !== e.b ? `${e.a} – ${e.b}` : (e.b || e.a))}</small>` : ''}</span></li>`; }).join('')}</ul>`
+      ${(p.education || []).length ? `<ul class="edu">${p.education.map(e => { const u = logoUrl(e.s); return `<li><span class="edulogo" aria-hidden="true"><b>${esc(mono(e.s))}</b>${u ? `<img src="${esc(u)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()">` : ''}</span><span class="edutxt"><strong>${esc(e.s)}</strong>${e.d || e.f ? `<span>${esc([e.d, e.f].filter(Boolean).join(' · '))}</span>` : ''}${e.a || e.b ? `<small>${esc(e.a && e.b && e.a !== e.b ? `${e.a} – ${e.b}` : (e.b || e.a))}</small>` : ''}${(n => `<button class="linkbtn edumates" type="button" data-act="schoolpaste" data-s="${esc(e.s)}">${n ? L(`${n} contact${n > 1 ? 's' : ''} de cette école`, `${n} contact${sEN(n)} from this school`) : L('Retrouver mes contacts de cette école', 'Find my contacts from this school')}</button>`)(contacts.filter(c => c.school === e.s).length)}</span></li>`; }).join('')}</ul>`
         : `<p class="hint" style="margin:0 0 12px">${L('Ton historique de formation apparaît ici quand tu importes l’archive complète de LinkedIn (fichier Education.csv).', 'Your education history shows here when you import LinkedIn’s full archive (Education.csv file).')}</p>`}
       <label for="me-url">${L('Lien de ton profil LinkedIn', 'Your LinkedIn profile link')}</label><input id="me-url" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/…" value="${esc(p.url || '')}">
       <button class="btn primary block" type="button" data-act="saveme">${L('Enregistrer mon profil', 'Save my profile')}</button>
@@ -3991,8 +3996,54 @@ let toastT;
 function toast(msg, quiet){ if(quiet){ $('#toast').classList.remove('on'); const l = $('#srlive'); l.textContent = ''; setTimeout(() => { l.textContent = msg; }, 50); return; } const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200); }
 
 /* ---------- Load ---------- */
+/* ---------- Écoles de tes contacts (choix de Vincent du 9 novembre 2026) ----------
+   L’export ne donne pas la formation de tes contacts. Tu colles la liste des personnes que LinkedIn affiche sur la page
+   « Anciens élèves » de ton école (filtrée sur tes relations) : les contacts reconnus par leur nom reçoivent cette école
+   (c.school), ce qui donne le filtre et le regroupement « Formation », la proximité « Même école » et la liste « Même formation ».
+   Gardé sur cet appareil seulement (synapses-ecoles-v1), effacé avec « Effacer mes données », jamais envoyé. */
+const SCHOOLS_KEY = 'synapses-ecoles-v1';
+let schoolStore = {};
+try { schoolStore = JSON.parse(localStorage.getItem(SCHOOLS_KEY) || '{}') || {}; } catch(e) { schoolStore = {}; }
+function applySchools(list){ list.forEach(c => { if(!c.schoolGiven){ if(c.schoolGiven === undefined) c.schoolGiven = !!c.school; if(!c.schoolGiven) c.school = schoolStore[tagKey(c)] || ''; } }); }
+/* Contacts dont le nom complet figure dans le texte collé (mots entiers, accents et casse ignorés) */
+function matchPasted(text){
+  const hay = ' ' + norm(text).replace(/[^a-z0-9]+/g, ' ') + ' ';
+  return contacts.filter(c => { const n = norm(c.name || '').replace(/[^a-z0-9]+/g, ' ').trim(); return n.includes(' ') && n.length >= 5 && hay.includes(' ' + n + ' '); });
+}
+const alumniUrl = school => 'https://www.linkedin.com/search/results/people/?network=%5B%22F%22%5D&keywords=' + encodeURIComponent(school);
+function showSchoolPaste(school){
+  select(null); clearFocus();
+  const already = contacts.filter(c => !c.schoolGiven && c.school === school).length;
+  openDrawer(`<h2 id="dtitle" tabindex="-1">${esc(school)}</h2>
+    <p class="pos">${L('Retrouve tes contacts passés par cette école&nbsp;: LinkedIn les liste, Synapses les reconnaît par leur nom.', 'Find your contacts who went to this school: LinkedIn lists them, Synapses recognizes them by name.')}</p>
+    <ol class="steps">
+      <li><a href="${esc(alumniUrl(school))}" target="_blank" rel="noopener">${L('Ouvre la recherche LinkedIn', 'Open the LinkedIn search')} ${ICON_EXT}</a> ${L('(tes relations liées à cette école)', '(your connections linked to this school)')}</li>
+      <li>${L('Sélectionne toute la page (⌘ A ou Ctrl A) et copie-la', 'Select the whole page (⌘ A or Ctrl A) and copy it')}</li>
+      <li>${L('Colle-la ici, page après page si besoin', 'Paste it here, page after page if needed')}</li>
+    </ol>
+    <textarea id="schoolPaste" class="pastebox" rows="6" placeholder="${L('Colle ici le texte de la page LinkedIn', 'Paste the LinkedIn page text here')}"></textarea>
+    <p class="pos" id="schoolFound" aria-live="polite">${already ? L(`${already} contact${already > 1 ? 's' : ''} déjà associé${already > 1 ? 's' : ''} à cette école.`, `${already} contact${sEN(already)} already linked to this school.`) : ''}</p>
+    <ul class="people" id="schoolList"></ul>
+    <button class="btn primary block" type="button" id="schoolApply" data-act="schoolapply" data-s="${esc(school)}" disabled>${L('Associer à cette école', 'Link to this school')}</button>
+    ${already ? `<button class="linkbtn" type="button" data-act="schoolclear" data-s="${esc(school)}" style="margin-top:12px">${L('Retirer cette école de tous mes contacts', 'Remove this school from all my contacts')}</button>` : ''}
+    <p class="hint" style="margin-top:14px">${L('Le texte collé est lu dans ce navigateur et oublié aussitôt&nbsp;: seule l’école de chaque contact reconnu reste sur cet appareil.', 'The pasted text is read in this browser and forgotten right away: only each recognized contact’s school stays on this device.')}</p>`);
+  const ta = $('#schoolPaste');
+  ta.addEventListener('input', () => {
+    const m = matchPasted(ta.value); schoolPending = m;
+    $('#schoolFound').textContent = ta.value.trim() ? L(`${m.length} contact${m.length > 1 ? 's' : ''} reconnu${m.length > 1 ? 's' : ''}`, `${m.length} contact${sEN(m.length)} recognized`) : '';
+    $('#schoolList').innerHTML = m.slice(0, 30).map(personRow).join('') + (m.length > 30 ? `<p class="more">${L(`et ${m.length - 30} autres`, `and ${m.length - 30} more`)}</p>` : '');
+    $('#schoolApply').disabled = !m.length;
+  });
+}
+let schoolPending = [];
+function setSchools(list, school){
+  list.forEach(c => { if(c.schoolGiven) return; const k = tagKey(c); if(school) schoolStore[k] = school; else delete schoolStore[k]; c.school = school || ''; });
+  try { localStorage.setItem(SCHOOLS_KEY, JSON.stringify(schoolStore)); } catch(e) {}
+  proxCache = new Map(); tgItems = null; setupControls(); render();
+}
 function load(list, demo){
   contacts = list; isDemo = demo;
+  if(!demo) applySchools(list);
   assignGroups(list); proxCache = new Map(); tgItems = null;
   /* Démo : quelques échanges fictifs, pour montrer le classement par proximité */
   if(demo){ setProx(null); cibleData = null; list.forEach(c => { const h = (c.id * 2654435761) % 1000; c.demoMsgs = h < 160 ? 1 + h % 37 : 0; c.demoReco = h % 61 === 0; }); }
@@ -4190,6 +4241,9 @@ document.addEventListener('click', e => {
     else if(a === 'clearall') clearAll();
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
+    else if(a === 'schoolpaste') showSchoolPaste(act.dataset.s);
+    else if(a === 'schoolapply'){ const s = act.dataset.s, n = schoolPending.length; setSchools(schoolPending, s); schoolPending = []; toast(L(`${n} contact${n > 1 ? 's' : ''} associé${n > 1 ? 's' : ''} à ${s}`, `${n} contact${sEN(n)} linked to ${s}`)); showMe(); }
+    else if(a === 'schoolclear'){ const s = act.dataset.s; setSchools(contacts.filter(c => c.school === s), ''); toast(L(`École retirée : ${s}`, `School removed: ${s}`)); showMe(); }
     else if(a === 'shareview') shareView();
     else if(a === 'lgmore' || a === 'lgless'){ openTop = a === 'lgmore' ? Math.min(openTop + 10, OPEN_MAX) : LEGEND_TOP; render(); }
     else if(a === 'lgsub'){
