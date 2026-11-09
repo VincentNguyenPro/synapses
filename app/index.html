@@ -166,11 +166,16 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .colllbl{font-weight:700;fill:var(--ink);text-anchor:middle;dominant-baseline:hanging;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;pointer-events:none}
 @media (prefers-reduced-motion: reduce){.chip.frow .fbar{transition:none}}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
-.edu{list-style:none;margin:0 0 14px;padding:0 0 0 14px;border-left:2px solid var(--line)}
-.edu li{position:relative;padding:0 0 12px}
-.edu li::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--surface)}
+.edu{list-style:none;margin:0 0 14px;padding:0}
+.edu li{display:flex;gap:12px;align-items:flex-start;padding:0 0 12px}
+.edulogo{position:relative;flex:none;width:36px;height:36px;border-radius:50%;background:var(--surface-2);box-shadow:0 0 0 1px var(--line);display:grid;place-items:center;overflow:hidden}
+.edulogo b{font-size:11px;font-weight:800;color:var(--muted)}
+.edulogo img{position:absolute;inset:3px;width:30px;height:30px;object-fit:contain;background:#fff;border-radius:50%}
+.edulogo.has{background:#fff}
+.edulogo.has b{visibility:hidden}
+.edutxt{min-width:0}
 .edu strong{display:block;font-size:14px}
-.edu span{display:block;font-size:13px;color:var(--ink)}
+.edutxt span{display:block;font-size:13px;color:var(--ink)}
 .edu small{display:block;font-size:12.5px;color:var(--muted)}
 .dlist{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--muted)}
 .dlist li{margin-bottom:5px}
@@ -3779,13 +3784,13 @@ function showMe(){
       <label for="me-name">${L('Nom', 'Name')}</label><input id="me-name" type="text" autocomplete="name" value="${esc(p.name || '')}">
       <label for="me-pos">${L('Poste', 'Job title')}</label><input id="me-pos" type="text" autocomplete="organization-title" value="${esc(p.position || '')}">
       <label for="me-co">${L('Entreprise', 'Company')}</label><input id="me-co" type="text" autocomplete="organization" value="${esc(p.company || '')}">
+      <span class="lbl">${L('Formation', 'Education')}</span>
+      ${(p.education || []).length ? `<ul class="edu">${p.education.map(e => { const u = logoUrl(e.s); return `<li><span class="edulogo" aria-hidden="true"><b>${esc(mono(e.s))}</b>${u ? `<img src="${esc(u)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()">` : ''}</span><span class="edutxt"><strong>${esc(e.s)}</strong>${e.d || e.f ? `<span>${esc([e.d, e.f].filter(Boolean).join(' · '))}</span>` : ''}${e.a || e.b ? `<small>${esc(e.a && e.b && e.a !== e.b ? `${e.a} – ${e.b}` : (e.b || e.a))}</small>` : ''}</span></li>`; }).join('')}</ul>`
+        : `<p class="hint" style="margin:0 0 12px">${L('Ton historique de formation apparaît ici quand tu importes l’archive complète de LinkedIn (fichier Education.csv).', 'Your education history shows here when you import LinkedIn’s full archive (Education.csv file).')}</p>`}
       <label for="me-url">${L('Lien de ton profil LinkedIn', 'Your LinkedIn profile link')}</label><input id="me-url" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/…" value="${esc(p.url || '')}">
       <button class="btn primary block" type="button" data-act="saveme">${L('Enregistrer mon profil', 'Save my profile')}</button>
       <p class="hint" style="margin-top:10px">${L('Ces informations restent sur cet appareil.', 'This information stays on this device.')}</p>
-    </div>
-    <h3>${L('Formation', 'Education')}</h3>
-    ${(p.education || []).length ? `<ul class="edu">${p.education.map(e => `<li><strong>${esc(e.s)}</strong>${e.d || e.f ? `<span>${esc([e.d, e.f].filter(Boolean).join(L(' · ', ' · ')))}</span>` : ''}${e.a || e.b ? `<small>${esc(e.a && e.b && e.a !== e.b ? `${e.a} – ${e.b}` : (e.b || e.a))}</small>` : ''}</li>`).join('')}</ul>`
-      : `<p class="pos">${L('Ton historique de formation apparaît ici quand tu importes l’archive complète de LinkedIn (fichier Education.csv).', 'Your education history shows here when you import LinkedIn’s full archive (Education.csv file).')}</p>`}`}
+    </div>`}
     ${WIPE_BLOCK()}`);
   dbody.querySelectorAll('.meform input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') saveMe(); }));
   /* Fiche « Moi » : tout le réseau, cadré dans la place laissée par la fiche (pas de zoom sur le rond « Moi ») */
