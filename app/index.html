@@ -3745,6 +3745,18 @@ const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
     ${shareBox()}
     <button class="btn block" type="button" data-act="wipe" style="margin-top:10px">Effacer mes données de ce navigateur</button>`;
 
+/* « janv. 2020 – aujourd’hui · 6 ans 2 mois » ; « 2018 – 2019 » quand le mois manque */
+function ymRange(a, b){
+  const fmt = v => { if(!v) return ''; const [y, m] = v.split('-').map(Number); return m ? new Date(y, m - 1, 15).toLocaleDateString(LOC, {month:'short', year:'numeric'}) : String(y); };
+  const end = b ? fmt(b) : L('aujourd’hui', 'present');
+  let dur = '';
+  if(a && a.includes('-')){
+    const [y1, m1] = a.split('-').map(Number), now = new Date(), [y2, m2] = b && b.includes('-') ? b.split('-').map(Number) : b ? [Number(b), 12] : [now.getFullYear(), now.getMonth() + 1];
+    const n = (y2 - y1) * 12 + (m2 - m1) + 1, yy = Math.floor(n / 12), mm = n % 12;
+    if(n > 0) dur = [yy && L(`${yy} an${yy > 1 ? 's' : ''}`, `${yy} yr${yy > 1 ? 's' : ''}`), mm && L(`${mm} mois`, `${mm} mo${mm > 1 ? 's' : ''}`)].filter(Boolean).join(' ');
+  }
+  return `${a ? fmt(a) + ' – ' : ''}${end}${dur ? ' · ' + dur : ''}`;
+}
 function showMe(){
   select('me'); clearFocus();
   const p = myProfile(), total = contacts.length;
@@ -3785,6 +3797,9 @@ function showMe(){
       <label for="me-name">${L('Nom', 'Name')}</label><input id="me-name" type="text" autocomplete="name" value="${esc(p.name || '')}">
       <label for="me-pos">${L('Poste', 'Job title')}</label><input id="me-pos" type="text" autocomplete="organization-title" value="${esc(p.position || '')}">
       <label for="me-co">${L('Entreprise', 'Company')}</label><input id="me-co" type="text" autocomplete="organization" value="${esc(p.company || '')}">
+      <span class="lbl">${L('Expérience', 'Experience')}</span>
+      ${(p.positions || []).length ? `<ul class="edu">${p.positions.map(e => { const u = e.c ? logoUrl(e.c) : ''; return `<li><span class="edulogo" aria-hidden="true"><b>${esc(mono(e.c || e.t))}</b>${u ? `<img src="${esc(u)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()">` : ''}</span><span class="edutxt"><strong>${esc(e.t || e.c)}</strong>${e.t && e.c ? `<span>${esc(e.c)}</span>` : ''}${e.a || e.b ? `<small>${esc(ymRange(e.a, e.b))}</small>` : ''}</span></li>`; }).join('')}</ul>`
+        : `<p class="hint" style="margin:0 0 12px">${L('Ton parcours apparaît ici quand tu importes l’archive complète de LinkedIn (fichier Positions.csv).', 'Your work history shows here when you import LinkedIn’s full archive (Positions.csv file).')}</p>`}
       <span class="lbl">${L('Formation', 'Education')}</span>
       ${(p.education || []).length ? `<ul class="edu">${p.education.map(e => { const u = logoUrl(e.s); return `<li><span class="edulogo" aria-hidden="true"><b>${esc(mono(e.s))}</b>${u ? `<img src="${esc(u)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()">` : ''}</span><span class="edutxt"><strong>${esc(e.s)}</strong>${e.d || e.f ? `<span>${esc([e.d, e.f].filter(Boolean).join(' · '))}</span>` : ''}${e.a || e.b ? `<small>${esc(e.a && e.b && e.a !== e.b ? `${e.a} – ${e.b}` : (e.b || e.a))}</small>` : ''}</span></li>`; }).join('')}</ul>`
         : `<p class="hint" style="margin:0 0 12px">${L('Ton historique de formation apparaît ici quand tu importes l’archive complète de LinkedIn (fichier Education.csv).', 'Your education history shows here when you import LinkedIn’s full archive (Education.csv file).')}</p>`}
@@ -4012,6 +4027,11 @@ function profileFrom(texts){
     /* Seul un poste sans date de fin est un poste actuel ; sinon on garde le titre du profil (Headline) */
     const cur = rows.find(r => !(r['Finished On'] || '').trim());
     out.companies = [...new Set(rows.map(r => (r['Company Name'] || '').trim()).filter(Boolean))];
+    /* Historique des postes (ton propre profil) : entreprise, intitulé, début et fin (« 2026-01 », vide = en cours).
+       Le lieu n’est pas repris : LinkedIn l’écrit parfois dans une autre langue ou un autre alphabet */
+    const ym = v => { const m = (v || '').trim().match(/^(?:([A-Za-z]{3})[a-z]*\s+)?(\d{4})$/); if(!m) return ''; const mo = m[1] ? 'janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(m[1].toLowerCase()) / 3 + 1 : 0; return m[2] + (mo >= 1 ? '-' + String(mo).padStart(2, '0') : ''); };
+    out.positions = rows.map(r => ({c:(r['Company Name'] || '').trim(), t:(r['Title'] || '').trim(), a:ym(r['Started On']), b:ym(r['Finished On'])}))
+      .filter(p => p.c || p.t).sort((x, y) => (y.b || '9999').localeCompare(x.b || '9999') || (y.a || '').localeCompare(x.a || ''));
     if(cur){
       if((cur['Title'] || '').trim()) out.position = cur['Title'].trim();
       if((cur['Company Name'] || '').trim()) out.company = cur['Company Name'].trim();
