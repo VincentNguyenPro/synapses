@@ -1691,7 +1691,7 @@ let colorLevel = c => DIMS[state.colorBy].get(c);
 /* Grappes par groupe : quand « Colorer par » a trop de valeurs (entreprise…) et diffère du regroupement, chaque groupe garde
    une grappe pour chacune de ses HUB_MAX valeurs principales (au moins 2 contacts), les autres vont dans « Autres ».
    levelMap (id du contact → grappe) est recalculé à chaque dessin du graphe. */
-const HUB_MAX = 8, LEGEND_TOP = 15, OPEN_MAX = 40; /* OPEN_MAX : au-delà, un seul cercle devient immense et les petites grappes illisibles */
+const HUB_MAX = 8, LEGEND_TOP = 15, OPEN_MAX = Infinity; /* OPEN_MAX : plus de limite (choix de Vincent du 10 novembre 2026) : le curseur va jusqu’à toutes les valeurs du groupe ouvert */
 let openTop = LEGEND_TOP; /* nombre de valeurs (et de grappes) du groupe ouvert dans la légende ; « Afficher 10 grappes de plus » l’augmente */
 let levelMap = new Map(), colorAssign = new Map();
 const levelOf = c => levelMap.get(c.id) ?? colorLevel(c);
@@ -2461,7 +2461,7 @@ function syncTopN(total){
     f.hidden = tot < 2; r.min = 1; r.max = Math.max(2, Math.min(tot, OPEN_MAX)); r.value = n;
     lbl.textContent = EN ? `Clusters of ${dv(openHubInfo.key)}` : `Grappes ${/^[aeiouyhàâéèêëîïôöûüœ]/i.test(openHubInfo.key) ? 'd’' : 'de '}${openHubInfo.key}`;
     document.getElementById('topNVal').textContent = n >= tot ? L(`toutes (${tot})`, `all (${tot})`) : L(`${n} sur ${tot}`, `${n} of ${tot}`);
-    hint.textContent = EN ? `One cluster per ${DIMS[state.colorBy].label.toLowerCase()}, the largest at 12 o’clock, up to ${OPEN_MAX}; the rest in “others”.` : `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, la plus grosse à midi, jusqu’à ${OPEN_MAX} ; le reste dans « autres ».`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+    hint.textContent = EN ? `One cluster per ${DIMS[state.colorBy].label.toLowerCase()}, the largest at 12 o’clock; the rest in “others”.` : `Une grappe par ${DIMS[state.colorBy].label.toLowerCase()}, la plus grosse à midi ; le reste dans « autres ».`.replace(/ ([;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
     return;
   }
   f.hidden = total <= 6;
@@ -3306,6 +3306,16 @@ function clearSelection(){
 }
 
 /* Zoom animé sur le nœud sélectionné, centré dans la zone laissée libre par la fiche */
+/* Nombre de grappes du groupe ouvert changé : le cercle grandit ou rétrécit, on recadre sur le groupe (sauf valeur ou contact regardés) */
+let reframeT = 0;
+function reframeOpenHub(){
+  clearTimeout(reframeT);
+  reframeT = setTimeout(() => {
+    if(!openHubInfo || legendHL || (state.selected && !/^h:/.test(state.selected))) return;
+    const h = nodes.find(n => n.type === 'hub' && n.key === openHubInfo.key);
+    if(h) zoomToNode(h);
+  }, 120);
+}
 function zoomToNode(n){
   if(!n || state.view !== 'graph') return;
   const mobile = window.matchMedia('(max-width:760px)').matches;
@@ -3355,7 +3365,9 @@ function zoomToNode(n){
     return {L, R, T, B};
   };
   /* On dézoome jusqu’à ce que tout tienne dans la zone libre (sans s’arrêter avant) */
-  for(let i = 0; i < 40 && k > 0.15; i++){ const e = ext(k); if(e.R - e.L <= visW - 2 * M && e.B - e.T <= visH - 2 * M) break; k = Math.max(0.15, k * 0.88); }
+  /* Groupe ouvert avec des centaines de grappes : on peut dézoomer bien plus loin pour tout voir */
+  const kMin = n.type === 'hub' ? 0.02 : 0.15;
+  for(let i = 0; i < 80 && k > kMin; i++){ const e = ext(k); if(e.R - e.L <= visW - 2 * M && e.B - e.T <= visH - 2 * M) break; k = Math.max(kMin, k * 0.88); }
   const e = ext(k);
   let tx = vb.x + visW / 2 - k * x, ty = vb.y + visH / 2 - k * y;
   if(tx + e.L < vb.x + M) tx = vb.x + M - e.L; if(tx + e.R > vb.x + visW - M) tx = vb.x + visW - M - e.R;
@@ -3397,7 +3409,10 @@ function blobClick(e, d){
   if(d.lv === colorOther || e.currentTarget.classList.contains('dim')){ clearSelection(); return; }
   legendHL = legendHL && legendHL.kind === 'v' && legendHL.v === d.lv && legendHL.g === d.hub.key ? null : {kind:'v', v:d.lv, g:d.hub.key};
   updateLegend(contacts.filter(pass));
-  if(legendHL) applyLegendHL(!state.selected); else restoreLegendFocus();
+  /* Zoom sur l’entreprise aussi quand la fiche du groupe est ouverte (seule la fiche d’un contact garde le cadrage) ; second clic : retour au groupe */
+  const hubSel = /^h:/.test(state.selected || ''), hub = hubSel && nodes.find(n => n.id === state.selected);
+  if(legendHL) applyLegendHL(!state.selected || hubSel);
+  else { restoreLegendFocus(); if(hub) zoomToNode(hub); }
 }
 /* Survol d’une grappe : le nom de sa valeur (entreprise…) et son nombre de contacts dans le groupe */
 function showBlobTip(e, d){
@@ -4417,7 +4432,7 @@ $('#colorBy').addEventListener('change', e => {
   else if(sel && sel.type === 'c') showContact(sel.c);
   else if(!drawer.classList.contains('open')) fit();
 });
-$('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = Math.min(+e.target.value, OPEN_MAX); render(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
+$('#topN').addEventListener('input', e => { if(openHubInfo){ openTop = Math.min(+e.target.value, OPEN_MAX); render(); reframeOpenHub(); return; } state.topN = +e.target.value; select(null); closeDrawer(); render(); });
 $('#yMin').addEventListener('change', e => { state.yMin = +e.target.value; if(state.yMin > state.yMax){ state.yMax = state.yMin; syncYears(); } applyFilters(); });
 $('#yMax').addEventListener('change', e => { state.yMax = +e.target.value; if(state.yMax < state.yMin){ state.yMin = state.yMax; syncYears(); } applyFilters(); });
 let qt; $('#q').addEventListener('input', e => { renderQSug(); clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); applyFilters(); }, 180); });
@@ -4473,7 +4488,7 @@ document.addEventListener('click', e => {
     else if(a === 'schoolapply'){ const s = act.dataset.s, n = schoolPending.length; setSchools(schoolPending, s); schoolPending = []; toast(L(`${n} contact${n > 1 ? 's' : ''} associé${n > 1 ? 's' : ''} à ${s}`, `${n} contact${sEN(n)} linked to ${s}`)); showMe(); }
     else if(a === 'schoolclear'){ const s = act.dataset.s; setSchools(contacts.filter(c => c.school === s), ''); toast(L(`École retirée : ${s}`, `School removed: ${s}`)); showMe(); }
     else if(a === 'shareview') shareView();
-    else if(a === 'lgmore' || a === 'lgless'){ openTop = a === 'lgmore' ? Math.min(openTop + 10, OPEN_MAX) : LEGEND_TOP; render(); }
+    else if(a === 'lgmore' || a === 'lgless'){ openTop = a === 'lgmore' ? Math.min(openTop + 10, OPEN_MAX) : LEGEND_TOP; render(); reframeOpenHub(); }
     else if(a === 'lgsub'){
       const v = act.dataset.v, open = !legendOpen.has(v);
       if(v.startsWith('g:')) openTop = LEGEND_TOP;
