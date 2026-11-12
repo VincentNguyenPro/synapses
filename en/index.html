@@ -898,7 +898,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
           <tr><td>Company domains, for example doctolib.fr</td><td data-l="Sent to">Brandfetch, for the logos</td><td data-l="When">When company logos are shown</td></tr>
           <tr><td>Company names and job titles that weren’t recognized</td><td data-l="Sent to">The AI you choose, with your own key</td><td data-l="When">Only if you run the AI classification</td></tr>
           <tr><td>Your classification corrections</td><td data-l="Sent to">Synapses’ shared dictionary</td><td data-l="When">Only if you tick “Share my corrections”</td></tr>
-          <tr><td>Your feedback: message, rating, email if you want a reply</td><td data-l="Sent to">Vincent, through Synapses’ Supabase database</td><td data-l="When">Only when you click “Send”</td></tr>
+          <tr><td>Your feedback: message, rating, email if you want a reply</td><td data-l="Sent to">Vincent, through Synapses’ Supabase database and by email (Gmail)</td><td data-l="When">Only when you click “Send”</td></tr>
           <tr><td>+1 on the counter of mapped networks</td><td data-l="Sent to">An anonymous counter</td><td data-l="When">After an import, at most once a day</td></tr>
         </tbody>
       </table>
@@ -962,7 +962,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
     <p class="cnt" id="fbcnt" aria-live="polite">0 / 2000</p>
     <label class="want"><input type="checkbox" id="fbwant"> I’d like a reply by email</label>
     <input type="email" id="fbemail" maxlength="200" placeholder="you@email.com" aria-label="Your email" autocomplete="email" hidden>
-    <p class="privacy">Sent to Vincent (Supabase database, in Europe): your message, your rating and your email if you give it. Don’t include your contacts’ names or details.</p>
+    <p class="privacy">Sent to Vincent (Supabase database in Europe, copy in his Gmail inbox): your message, your rating and your email if you give it. Don’t include your contacts’ names or details.</p>
     <p class="err" id="fberr" role="alert" hidden></p>
     <button class="btn" type="submit" id="fbsend">Send</button>
   </form>

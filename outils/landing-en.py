@@ -221,7 +221,7 @@ rep('>Un compteur anonyme</td>', '>An anonymous counter</td>')
 rep('>Après un import, au plus une fois par jour</td>', '>After an import, at most once a day</td>')
 
 rep('<td>Ton avis&nbsp;: message, note, email si tu veux une réponse</td>', '<td>Your feedback: message, rating, email if you want a reply</td>')
-rep('>Vincent, par la base Supabase de Synapses</td>', '>Vincent, through Synapses’ Supabase database</td>')
+rep('>Vincent, par la base Supabase de Synapses et par email (Gmail)</td>', '>Vincent, through Synapses’ Supabase database and by email (Gmail)</td>')
 rep('>Seulement quand tu cliques sur «&nbsp;Envoyer&nbsp;»</td>', '>Only when you click “Send”</td>')
 
 # ---------- Ton avis ----------
@@ -243,8 +243,8 @@ rep('for="fbmsg">Ton message</label>', 'for="fbmsg">Your message</label>')
 rep('placeholder="Une idée, un bug, une fonction qui te manque…"', 'placeholder="An idea, a bug, a feature you’re missing…"')
 rep('<input type="checkbox" id="fbwant"> Je veux une réponse par email</label>', '<input type="checkbox" id="fbwant"> I’d like a reply by email</label>')
 rep('placeholder="ton@email.fr" aria-label="Ton email"', 'placeholder="you@email.com" aria-label="Your email"')
-rep('Envoyé à Vincent (base Supabase, en Europe)&nbsp;: ton message, ta note et ton email si tu le donnes. N’écris pas les noms ou coordonnées de tes contacts.',
-    'Sent to Vincent (Supabase database, in Europe): your message, your rating and your email if you give it. Don’t include your contacts’ names or details.')
+rep('Envoyé à Vincent (base Supabase en Europe, copie dans sa boîte Gmail)&nbsp;: ton message, ta note et ton email si tu le donnes. N’écris pas les noms ou coordonnées de tes contacts.',
+    'Sent to Vincent (Supabase database in Europe, copy in his Gmail inbox): your message, your rating and your email if you give it. Don’t include your contacts’ names or details.')
 rep('id="fbsend">Envoyer</button>', 'id="fbsend">Send</button>')
 rep("    short: 'Écris quelques mots avant d’envoyer.',\n    mail: 'Vérifie ton email, ou décoche la case.',\n    fail: 'L’envoi n’a pas abouti. Réessaie dans un instant.',\n    sending: 'Envoi…', send: 'Envoyer',\n    thanks: 'Merci&nbsp;!',\n    thanksReply: 'Ton avis est bien arrivé. Vincent te répondra à l’adresse indiquée.',\n    thanksPlain: 'Ton avis est bien arrivé. Vincent le lira et s’en servira pour les prochaines versions.',\n    close: 'Fermer'",
     "    short: 'Write a few words before sending.',\n    mail: 'Check your email, or untick the box.',\n    fail: 'Sending didn’t work. Try again in a moment.',\n    sending: 'Sending…', send: 'Send',\n    thanks: 'Thank you!',\n    thanksReply: 'Your feedback arrived. Vincent will reply to the address you gave.',\n    thanksPlain: 'Your feedback arrived. Vincent will read it and use it for the next versions.',\n    close: 'Close'")
