@@ -105,6 +105,24 @@ details.acc>summary .sic{margin-right:-2px}
 .qic-cibles{background:#E8EEFE}.qic-cibles .sic{color:#2F5BEA}
 .qic-relance{background:#FFF1E6}.qic-relance .sic{color:#C25E00}
 .qic-events{background:#E7F6EF}.qic-events .sic{color:#1F7A4D}
+.qic-offre{background:#F3ECFD}.qic-offre .sic{color:#7A3FD1}
+/* Une offre d’emploi : formulaire, raisons et message d’approche sous chaque contact */
+.ofform{display:grid;gap:10px;margin:12px 0 14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.ofform input,.ofform textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit;font-size:13.5px;color:var(--ink)}
+.ofpaste summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--accent)}
+.ofpaste[open]{display:grid;gap:8px}.ofpaste textarea{margin-top:6px;resize:vertical}.ofpaste .btn{justify-self:start}
+.people li.ofli{flex-wrap:wrap}
+.ofwhy{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:0 6px 8px 48px;font-size:12px;color:var(--muted)}
+.ofwhy .linkbtn{font-size:12.5px}
+.ofrole{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.ofr-manager{background:#F3ECFD;color:#7A3FD1}.ofr-rh{background:#FFF1E6;color:#A34E00}
+.ofmsg{flex-basis:100%;display:grid;gap:8px;padding:0 6px 12px 48px}
+.ofmsg textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit;font-size:13px;line-height:1.45;color:var(--ink);resize:vertical}
+.ofmsgbar{display:flex;gap:10px;align-items:center;justify-content:flex-end}
+.ofmsg .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.ofmsg .seg button{border:0;background:var(--surface);padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}
+.ofmsg .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+@media (max-width:760px){.ofwhy,.ofmsg{padding-left:6px}.ofform input,.ofform textarea,.ofform select{font-size:16px}}
 .qtxt{flex:1;min-width:0}
 .qlink{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;margin-top:6px}
 .qlink:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -669,6 +687,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
         <p class="hint">Qui peut t’ouvrir une entreprise ou un secteur&nbsp;?</p>
         <div class="row tgwrap"><span class="tgghost" id="targetGhost" aria-hidden="true"></span><input type="search" id="target" placeholder="Ex. Doctolib, Santé" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="targetSug"><button class="btn" id="targetBtn" type="button">Chercher</button>
           <ul class="tgsug" id="targetSug" role="listbox" hidden></ul></div>
+        <p class="hint" id="offreHint"></p>
         <p class="hint" id="cibleHint" hidden></p>
         <p class="hint" id="relanceHint" hidden></p>
         <p class="hint" id="eventsHint"></p>
@@ -1056,18 +1075,21 @@ function ciblesFrom(sig){
   Object.entries(sig).forEach(([f, text]) => {
     if(!isCibleFile(f)) return;
     const rows = parseRows(text);
-    if(f === 'job applications.csv') rows.forEach(r => out.push({n:r['Company Name'], k:'a', t:(r['Job Title'] || '').replace(/\s+/g, ' ').trim(), d:liMonth(r['Application Date'])}));
+    /* Intitulé et lien de l’offre (jamais l’email, le téléphone ni les réponses) : servent à « Une offre d’emploi ? » */
+    const job = r => ({t:(r['Job Title'] || '').replace(/\s+/g, ' ').trim(), u:/^https?:\/\/(www\.)?linkedin\.com\/jobs\//.test(r['Job Url'] || '') ? r['Job Url'].trim() : ''});
+    if(f === 'job applications.csv') rows.forEach(r => out.push({n:r['Company Name'], k:'a', ...job(r), d:liMonth(r['Application Date'])}));
     else if(f === 'company follows.csv') rows.forEach(r => out.push({n:r['Organization'], k:'f', d:liMonth(r['Followed On'])}));
     else if(f === 'job seeker preferences.csv') rows.forEach(r => (r['Dream Companies'] || '').split(/\s*[|;]\s*/).forEach(n => out.push({n, k:'d', d:''})));
-    else rows.forEach(r => out.push({n:r['Company Name'], k:'s', d:liMonth(r['Saved Date'])}));
+    else rows.forEach(r => out.push({n:r['Company Name'], k:'s', ...job(r), d:liMonth(r['Saved Date'])}));
   });
   const list = out.map(x => ({...x, n:(x.n || '').trim()})).filter(x => x.n && !NOT_A_COMPANY.test(nkey(x.n)));
   return list.length ? list : null;
 }
 /* Une ligne par entreprise : rattachée au groupe ou à l’entreprise du réseau (même nom à l’accent près, groupe connu, début de nom) */
-function cibleIndex(){
-  if(!cibleData || isDemo) return [];
-  if(cibleCache && cibleCache.c === contacts && cibleCache.d === cibleData) return cibleCache.rows;
+let coResCache = null;
+/* Nom d’entreprise quelconque → entreprise (groupe) du réseau : groupe connu, même nom à l’accent près, début de nom ; '' sinon */
+function companyResolver(){
+  if(coResCache && coResCache.c === contacts) return coResCache.f;
   const by = new Map(), count = d3.rollup(contacts, v => v.length, coOf);
   const addK = (name, g) => { const k = compactKey(name || ''); if(k && !by.has(k)) by.set(k, g); };
   contacts.forEach(c => { const g = coOf(c); if(g && !NO_COMPANY_GROUPS.has(g)){ addK(g, g); addK(entityOf(c), g); addK(c.company, g); } });
@@ -1083,6 +1105,13 @@ function cibleIndex(){
     }
     return grp || '';
   };
+  coResCache = {c:contacts, f:resolve, count};
+  return resolve;
+}
+function cibleIndex(){
+  if(!cibleData || isDemo) return [];
+  if(cibleCache && cibleCache.c === contacts && cibleCache.d === cibleData) return cibleCache.rows;
+  const resolve = companyResolver(), count = coResCache.count;
   const rows = new Map();
   cibleData.forEach(x => {
     const g = resolve(x.n), key = g ? 'g|' + g : 'n|' + compactKey(x.n);
@@ -1253,6 +1282,145 @@ async function showEvents(keepScroll){
     showEvents(true); });
   $('#evMode').addEventListener('change', e => { evState.mode = e.target.value; showEvents(true); });
   $('#evPrix').addEventListener('change', e => { evState.prix = e.target.value; showEvents(true); });
+  if(keepScroll) drawer.scrollTop = sc;
+}
+/* ---------- Une offre d’emploi : qui contacter ? (choix de Vincent du 13 novembre 2026) ----------
+   Tu choisis une offre enregistrée ou une candidature (export), ou tu colles le texte de l’offre : Synapses en tire l’entreprise
+   et l’intitulé, puis classe tes contacts de cette entreprise par rôle (futur manager possible, même métier, recrutement, autres),
+   les plus proches d’abord, avec un message d’approche à copier. Tout reste dans ce navigateur ; le texte collé n’est pas gardé. */
+let offre = {co:'', t:'', vous:true, open:null};
+const OF_STOP = new Set('de des du la le les et en au aux a pour par sur avec un une d l h f hf fh cdi cdd stage alternance internship intern freelance senior junior confirme confirmee lead head chief manager responsable charge chargee of the and for in at to'.split(' '));
+/* Intitulé sans les mentions d’annonce : « (H/F) », « - CDI », « F/H », « – Stage » */
+const cleanJobTitle = t => (t || '').replace(/\s*[([]?\b(h\s*\/\s*f\s*\/\s*x|m\s*\/\s*[fw]\s*\/\s*[dx]|h\s*\/\s*f|f\s*\/\s*h|m\s*\/\s*f|f\s*\/\s*m)\b[)\]]?/gi, '').replace(/\s*[-–|·,]\s*(cdi|cdd|stage|alternance|internship|full[- ]time|temps plein)\b.*$/i, '').replace(/\s*[-–|·,(]\s*$/, '').replace(/\s+/g, ' ').trim();
+const ofWords = t => norm(t || '').split(/[^a-z0-9+#]+/).filter(w => w.length > 1 && !OF_STOP.has(w));
+/* Offres de l’export avec un intitulé : candidatures puis offres enregistrées, les plus récentes d’abord */
+function myOffers(){
+  if(!cibleData || isDemo) return [];
+  const seen = new Set();
+  return cibleData.filter(x => (x.k === 'a' || x.k === 's') && x.t)
+    .sort((a, b) => (a.k === 'a') !== (b.k === 'a') ? (a.k === 'a' ? -1 : 1) : (b.d || '').localeCompare(a.d || ''))
+    .filter(x => { const k = compactKey(x.n) + '|' + norm(x.t); if(seen.has(k)) return false; seen.add(k); return true; });
+}
+/* Lecture du texte collé : un lien d’offre enregistrée, sinon l’entreprise du réseau citée le plus tôt et l’intitulé (ligne qui ressemble à un poste) */
+function readOffer(text){
+  const out = {co:'', t:''}, raw = (text || '').trim(); if(!raw) return out;
+  const id = (raw.match(/linkedin\.com\/jobs\/view\/(?:[^\s/]*?-)?(\d{6,})/) || [])[1] || (raw.match(/currentJobId=(\d{6,})/) || [])[1];
+  if(id){ const hit = myOffers().find(x => (x.u || '').includes(id)); if(hit) return {co:hit.n, t:hit.t}; }
+  const lines = raw.split(/\n+/).map(l => l.replace(/\s+/g, ' ').trim()).filter(l => l && !/^https?:/.test(l));
+  /* Entreprise : un nom du réseau (groupe, entité, nom saisi) présent mot pour mot ; le plus tôt dans le texte, puis le plus long */
+  const txt = ' ' + norm(raw).replace(/[^a-z0-9&]+/g, ' ') + ' ', names = new Set();
+  contacts.forEach(c => [coOf(c), entityOf(c), c.company].forEach(n => { if(n && !NO_COMPANY_GROUPS.has(coOf(c))) names.add(n); }));
+  (cibleData || []).forEach(x => names.add(x.n));
+  let best = null;
+  names.forEach(n => {
+    const k = norm(n).replace(/[^a-z0-9&]+/g, ' ').trim(); if(k.length < 3 || PREFIX_STOP.has(k)) return;
+    const at = txt.indexOf(' ' + k + ' '); if(at < 0) return;
+    if(!best || at < best.at || (at === best.at && k.length > best.k.length)) best = {n, at, k};
+  });
+  if(best) out.co = best.n;
+  /* Intitulé : la première ligne courte qui ressemble à un poste (fonction ou séniorité reconnue), sinon la première ligne courte */
+  const looksJob = l => l.length <= 90 && !/[.!?]$/.test(l) && (classify(FUNCTIONS, norm(l), '') || /\b(h\/f|f\/h|m\/f|stage|alternan|cdi|cdd)\b/i.test(l)) && !(best && norm(l) === norm(best.n));
+  out.t = cleanJobTitle(lines.find(looksJob) || lines.find(l => l.length <= 70 && !(best && norm(l) === norm(best.n))) || '');
+  return out;
+}
+const OF_ROLES = [
+  ['manager', 'Ton futur manager, peut-être', 'Your future manager, maybe', 'Même métier, plus senior que le poste : peut parler de l’équipe et des attentes.', 'Same field, more senior than the role: can tell you about the team and expectations.'],
+  ['pair', 'Même métier', 'Same field', 'Fait un travail proche du poste : le quotidien, l’équipe, la culture.', 'Does similar work: day-to-day, team, culture.'],
+  ['rh', 'Recrutement et RH', 'Recruiting and HR', 'Peut transmettre ton CV ou te dire où en est le recrutement.', 'Can pass on your CV or tell you where hiring stands.'],
+  ['autre', 'Tes autres contacts dans l’entreprise', 'Your other contacts there', 'Connaissent l’entreprise et peuvent te présenter à la bonne personne.', 'Know the company and can introduce you to the right person.']
+];
+const coCount = n => { const g = companyResolver()(n); return g ? coResCache.count.get(g) || 0 : 0; };
+function offerRank(co, title){
+  const fn = classify(FUNCTIONS, norm(title), ''), sen = seniorityOf(norm(title)), si = SEN_ORDER.indexOf(sen === 'Non renseignée' ? 'Confirmé' : sen);
+  const words = new Set(ofWords(title)), mi = SEN_ORDER.indexOf('Manager');
+  const g = co ? companyResolver()(co) : '';
+  const at = g ? contacts.filter(c => coOf(c) === g) : [];
+  const ranked = at.map(c => {
+    const ci = SEN_ORDER.indexOf(c.seniority), same = fn && c.fn === fn;
+    const role = same && ci > si && ci >= mi && ci < SEN_ORDER.length - 1 ? 'manager' : same ? 'pair' : c.fn === 'RH' ? 'rh' : 'autre';
+    const team = ofWords(c.position).filter(w => words.has(w)).length;
+    const why = [];
+    if(team) why.push(L('Intitulé proche du poste', 'Title close to the job'));
+    proxOf(c).why.slice(0, 2).forEach(w => why.push(w));
+    const score = {manager:12, pair:10, rh:9, autre:0}[role] + Math.min(2, team) * 4 + proxOf(c).score + (role === 'autre' && ci >= mi ? 2 : 0);
+    return {c, role, score, why};
+  }).sort((a, b) => b.score - a.score || a.c.name.localeCompare(b.c.name, 'fr'));
+  /* Personne dans l’entreprise : ceux du même métier dans le même secteur, puis du même métier, les plus proches d’abord */
+  let near = [];
+  if(!at.length){
+    const sector = co ? (builtinSector(nkey(co)) || classify(SECTORS, norm(co), '')) : '';
+    near = contacts.filter(c => fn && c.fn === fn && !NO_COMPANY_GROUPS.has(coOf(c)))
+      .map(c => ({c, s:(sector && c.sector === sector ? 10 : 0) + proxOf(c).score + (SEN_ORDER.indexOf(c.seniority) >= mi ? 2 : 0)}))
+      .sort((a, b) => b.s - a.s).slice(0, 15).map(x => x.c);
+    return {g, fn, sen, ranked, near, sector};
+  }
+  return {g, fn, sen, ranked, near};
+}
+/* Message d’approche à copier : adapté au rôle, au vouvoiement ou au tutoiement ; rien n’est envoyé */
+function offerMessage(c, role){
+  const me = (myProfile().name || '').split(' ')[0], co = offre.co, t = offre.t || L('ce poste', 'this role'), first = c.first || c.name.split(' ')[0], v = offre.vous;
+  if(EN) return [`Hi ${first},`, '',
+    `I’m interested in the ${t} role at ${dv(co)}. ` + ({manager:'As you work in this area, I’d love to hear how the team works and what matters most for this role.', pair:'As you do similar work there, I’d love to hear what the job and the team are really like.', rh:'Would you be the right person to pass on my application, or could you point me to them?', autre:'Could you tell me a little about the company, or point me to the right person in the team?'}[role]),
+    role === 'rh' ? 'I’d be happy to send you my CV.' : 'Would you have 15 minutes for a quick chat in the coming days? I can also send you my CV if useful.',
+    '', 'Thanks a lot,', me].join('\n').trim();
+  return [`Bonjour ${first},`, '',
+    `Je m’intéresse au poste de ${t} chez ${co}. ` + ({manager:v ? 'Comme vous travaillez dans ce domaine, j’aimerais beaucoup comprendre comment fonctionne l’équipe et ce qui compte le plus pour ce poste.' : 'Comme tu travailles dans ce domaine, j’aimerais beaucoup comprendre comment fonctionne l’équipe et ce qui compte le plus pour ce poste.',
+      pair:v ? 'Comme vous faites un travail proche là-bas, votre regard sur le quotidien du poste et sur l’équipe m’aiderait beaucoup.' : 'Comme tu fais un travail proche là-bas, ton regard sur le quotidien du poste et sur l’équipe m’aiderait beaucoup.',
+      rh:v ? 'Seriez-vous la bonne personne pour transmettre ma candidature, ou pourriez-vous m’orienter ?' : 'Serais-tu la bonne personne pour transmettre ma candidature, ou pourrais-tu m’orienter ?',
+      autre:v ? 'Pourriez-vous me parler un peu de l’entreprise, ou m’orienter vers la bonne personne dans l’équipe ?' : 'Pourrais-tu me parler un peu de l’entreprise, ou m’orienter vers la bonne personne dans l’équipe ?'}[role]),
+    role === 'rh' ? (v ? 'Je serais ravi de vous envoyer mon CV.' : 'Je serais ravi de t’envoyer mon CV.') : (v ? 'Auriez-vous 15 minutes pour échanger dans les prochains jours ? Je peux aussi vous envoyer mon CV si c’est utile.' : 'Aurais-tu 15 minutes pour échanger dans les prochains jours ? Je peux aussi t’envoyer mon CV si c’est utile.'),
+    '', 'Merci beaucoup,', me].join('\n').trim();
+}
+function syncOffreHint(){
+  const el = document.getElementById('offreHint'); if(!el) return;
+  const n = myOffers().length;
+  el.innerHTML = `<button class="qlink" type="button" data-act="offre"><span class="qic qic-offre" aria-hidden="true"><svg class="sic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg></span><span class="qtxt">${L('Une offre d’emploi ?', 'A job offer?')}<small>${L('Qui contacter pour en savoir plus et transmettre ton CV', 'Who to contact to learn more and pass on your CV')}</small></span><span class="n">${n || '›'}</span></button>`;
+}
+function offerRow(x){
+  const c = x.c, open = offre.open === c.id;
+  const role = {manager:L('Futur manager possible', 'Possible future manager'), pair:L('Même métier', 'Same field'), rh:L('Recrutement', 'Recruiting')}[x.role];
+  return personRow(c).replace('<li>', '<li class="ofli">').replace('</li>', `<div class="ofwhy">${role ? `<b class="ofrole ofr-${x.role}">${role}</b>` : ''}${x.why.length ? `<span>${esc(x.why.join(' · '))}</span>` : ''}<button class="linkbtn" type="button" data-act="ofmsg" data-cid="${c.id}" data-role="${x.role}" aria-expanded="${open}">${open ? L('Masquer le message', 'Hide message') : L('Message d’approche', 'Outreach message')}</button></div>${open ? `<div class="ofmsg"><textarea id="ofText" rows="9" aria-label="${L('Message d’approche, modifiable', 'Outreach message, editable')}">${esc(offerMessage(c, x.role))}</textarea><div class="ofmsgbar">${EN ? '' : `<span class="seg" role="group" aria-label="Vouvoiement ou tutoiement"><button type="button" data-act="ofvous" data-v="1" aria-pressed="${offre.vous}">Vous</button><button type="button" data-act="ofvous" data-v="0" aria-pressed="${!offre.vous}">Tu</button></span>`}<button class="btn" type="button" data-act="ofcopy">${L('Copier', 'Copy')}</button></div><p class="hint">${L('Copie le message, puis envoie-le depuis LinkedIn. Synapses n’envoie rien.', 'Copy the message, then send it from LinkedIn. Synapses sends nothing.')}</p></div>` : ''}</li>`);
+}
+function showOffre(keepScroll){
+  const sc = keepScroll ? drawer.scrollTop : 0;
+  if(!keepScroll){ select(null); clearFocus(); closePanel(); }
+  const offers = myOffers(), res = offre.co ? offerRank(offre.co, offre.t) : null;
+  const opts = offers.slice(0, 80).map((x, i) => `<option value="${i}"${compactKey(x.n) === compactKey(offre.co) && norm(cleanJobTitle(x.t)) === norm(offre.t) ? ' selected' : ''}>${esc(cleanJobTitle(x.t))} · ${esc(x.n)}${x.d ? ' · ' + esc(monthFr(x.d)) : ''} · ${(n => n ? L(`${n} contact${n > 1 ? 's' : ''}`, `${n} contact${sEN(n)}`) : L('aucun contact', 'no contacts'))(coCount(x.n))}</option>`).join('');
+  const groups = res ? OF_ROLES.map(([k, fr, en, dfr, den]) => [k, L(fr, en), L(dfr, den), res.ranked.filter(x => x.role === k)]).filter(g => g[3].length) : [];
+  const top = res ? res.ranked.slice(0, 3) : [], topIds = new Set(top.map(x => x.c.id));
+  const coName = res && res.g ? dv(res.g) : offre.co;
+  let body = '';
+  if(res && res.ranked.length){
+    body = `<p class="pos">${L(`${res.ranked.length} contact${res.ranked.length > 1 ? 's' : ''} chez ${esc(coName)}`, `${res.ranked.length} contact${sEN(res.ranked.length)} at ${esc(coName)}`)}${res.fn ? L(` · poste classé en ${esc(dv(res.fn))}, ${esc(dv(res.sen === 'Non renseignée' ? 'Confirmé' : res.sen))}`, ` · role read as ${esc(dv(res.fn))}, ${esc(dv(res.sen === 'Non renseignée' ? 'Confirmé' : res.sen))}`) : ''}.</p>
+      <h3>${L('Par qui commencer', 'Who to start with')}</h3><ul class="people">${top.map(offerRow).join('')}</ul>
+      ${groups.map(([k, title, desc, arr]) => { const rest = arr.filter(x => !topIds.has(x.c.id)); return rest.length ? `<h3>${esc(title)} <small class="h3sub">${arr.length}</small></h3><p class="hint">${esc(desc)}</p><ul class="people">${rest.slice(0, 20).map(offerRow).join('')}</ul>${rest.length > 20 ? `<p class="more">${L(`et ${rest.length - 20} autres`, `and ${rest.length - 20} more`)}</p>` : ''}` : ''; }).join('')}`;
+  } else if(res){
+    const nearList = res.near.map(c => ({c, role:'autre', why:proxOf(c).why.slice(0, 2)}));
+    body = `<p class="pos">${L(`Aucun contact chez ${esc(offre.co)}.`, `No contacts at ${esc(offre.co)}.`)} ${nearList.length ? L(`Voici ceux de ton réseau qui font le même métier${res.sector ? ', d’abord dans le même secteur' : ''} : ils connaissent le poste et peut-être quelqu’un là-bas.`, `Here are people in your network doing the same job${res.sector ? ', same industry first' : ''}: they know the role and may know someone there.`) : L('Essaie un autre nom d’entreprise (le nom du groupe, sans « SAS »).', 'Try another company name (the group name).')}</p>
+      ${nearList.length ? `<ul class="people">${nearList.map(offerRow).join('')}</ul>` : ''}`;
+  }
+  openDrawer(`<h2 id="dtitle" tabindex="-1">${L('Une offre d’emploi : qui contacter ?', 'A job offer: who to contact?')}</h2>
+    <p class="pos">${L('Trouve dans ton réseau les personnes qui peuvent te parler du poste et de l’équipe, et transmettre ton CV.', 'Find people in your network who can tell you about the role and the team, and pass on your CV.')}</p>
+    <form id="ofForm" class="ofform">
+      ${offers.length ? `<label class="evf"><span>${L('Tes candidatures et offres enregistrées', 'Your applications and saved jobs')}</span><select id="ofPick"><option value="">${L('Choisir une offre…', 'Pick a job…')}</option>${opts}</select></label>` : ''}
+      <details class="ofpaste"${offers.length ? '' : ' open'}><summary>${L('Coller le texte ou le lien de l’offre', 'Paste the job text or link')}</summary>
+        <textarea id="ofPaste" rows="5" placeholder="${L('Colle ici le texte de l’annonce (ou son lien LinkedIn s’il est dans tes offres enregistrées)', 'Paste the job ad here (or its LinkedIn link if it is in your saved jobs)')}"></textarea>
+        <button class="btn" type="button" data-act="ofread">${L('Lire l’offre', 'Read the offer')}</button></details>
+      <label class="evf"><span>${L('Entreprise', 'Company')}</span><input id="ofCo" type="text" value="${esc(offre.co)}" autocomplete="off" list="ofCoList" placeholder="${L('Ex. Doctolib', 'E.g. Doctolib')}"></label>
+      <datalist id="ofCoList">${[...new Set(contacts.map(coOf).filter(g => g && !NO_COMPANY_GROUPS.has(g)))].sort((a, b) => a.localeCompare(b, 'fr')).slice(0, 3000).map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+      <label class="evf"><span>${L('Intitulé du poste', 'Job title')}</span><input id="ofTitle" type="text" value="${esc(offre.t)}" autocomplete="off" placeholder="${L('Ex. Product Manager', 'E.g. Product Manager')}"></label>
+      <button class="btn primary block" type="submit">${L('Trouver qui contacter', 'Find who to contact')}</button>
+    </form>
+    ${body}
+    <p class="hint" style="margin-top:14px">${L('Calculé dans ce navigateur. Le texte collé n’est ni gardé ni envoyé.', 'Computed in this browser. Pasted text is neither kept nor sent.')}</p>`);
+  if(res && state.view === 'graph'){
+    const ids = new Set((res.ranked.length ? res.ranked.map(x => x.c) : res.near).map(c => 'c:' + c.id));
+    nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
+    if(ids.size) focus(ids);
+  }
+  $('#ofForm').addEventListener('submit', e => { e.preventDefault(); offre.co = $('#ofCo').value.trim(); offre.t = cleanJobTitle($('#ofTitle').value); offre.open = null; if(!offre.co){ $('#ofCo').focus(); return; } showOffre(true); });
+  const pick = $('#ofPick');
+  if(pick) pick.addEventListener('change', () => { const x = offers[+pick.value]; if(!x) return; offre.co = x.n; offre.t = cleanJobTitle(x.t); offre.open = null; showOffre(true); });
   if(keepScroll) drawer.scrollTop = sc;
 }
 function syncRelanceHint(){
@@ -3591,7 +3759,7 @@ function updateLegend(vis){
 }
 
 function updatePanel(vis){
-  syncCibleHint(); syncRelanceHint(); syncEventsHint();
+  syncOffreHint(); syncCibleHint(); syncRelanceHint(); syncEventsHint();
   const dated = vis.filter(c => c.date).sort((a, b) => a.date - b.date);
   const topCo = d3.greatest(d3.rollup(vis.filter(c => c.company && !TAIL.includes(coOf(c))), v => v.length, coOf), d => d[1]);
   const last = dated[dated.length - 1];
@@ -4500,6 +4668,11 @@ document.addEventListener('click', e => {
     }
     else if(a === 'keepyes') setKeep(true);
     else if(a === 'cibles') showCibles();
+    else if(a === 'offre') showOffre();
+    else if(a === 'ofread'){ const r = readOffer($('#ofPaste').value); if(!r.co && !r.t){ toast(L('Colle d’abord le texte de l’offre', 'Paste the job text first')); return; } offre.co = r.co || $('#ofCo').value.trim(); offre.t = r.t || $('#ofTitle').value.trim(); offre.open = null; if(offre.co) showOffre(true); else { $('#ofTitle').value = offre.t; $('#ofCo').focus(); toast(L('Entreprise non reconnue : écris son nom', 'Company not recognised: type its name')); } }
+    else if(a === 'ofmsg'){ const id = +act.dataset.cid; offre.open = offre.open === id ? null : id; showOffre(true); }
+    else if(a === 'ofvous'){ offre.vous = act.dataset.v === '1'; showOffre(true); }
+    else if(a === 'ofcopy'){ const t = $('#ofText'), ok = () => toast(L('Message copié', 'Message copied')); (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(ok, () => { t.select(); document.execCommand('copy'); ok(); }); }
     /* Démo : lien de profil factice (une adresse inventée pourrait être celle d’une vraie personne) */
     else if(a === 'demolink') toast(L('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.', 'Fictional contact. With your export, this link opens their LinkedIn profile.'));
     else if(a === 'relance') showRelance();
