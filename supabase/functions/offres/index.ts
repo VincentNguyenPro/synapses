@@ -48,7 +48,8 @@ async function adzuna(q: string, lieu: string, exp: number, sal: number): Promis
 // même offre si l’intitulé est précis (4 mots ou plus) ; un intitulé court (« Product Manager ») doit aussi avoir la même entreprise.
 // On garde la version la plus utile : vraie entreprise plutôt qu’intermédiaire, puis avec salaire, puis la plus récente.
 const RELAIS = /talents? handicap|forum|job-?room|jobteaser|hellowork|indeed|jooble|adzuna|meteojob|jobijoba|cadremploi|monster|glassdoor|jobted|talent\.com|france travail|pole emploi/;
-const words = (s: string) => norm(s).replace(/[^a-z0-9]+/g, ' ').trim();
+// Intitulé comparé sans « H/F », « F/H », « (M/F/D) »… : « Chef de projet PMO F/H » = « Chef de projet PMO »
+const words = (s: string) => norm(s).replace(/\b([hfm])\s*\/\s*([hfmw])(\s*\/\s*[xd])?\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
 function dedupe(list: Offre[]): Offre[] {
   const score = (o: Offre) => (RELAIS.test(norm(o.n)) || !o.n ? 0 : 4) + (o.sal ? 2 : 0) + (o.desc.length > 200 ? 1 : 0);
   const days = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 864e5;
