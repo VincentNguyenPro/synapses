@@ -43,6 +43,27 @@ async function adzuna(q: string, lieu: string, exp: number, sal: number): Promis
   }));
 }
 
+// Doublons : Adzuna reçoit souvent la même annonce de plusieurs sources, sous un autre nom d’entreprise (forum de recrutement,
+// site relais, autre entité du groupe : « KPMG SA » / « KPMG France »). Même intitulé publié à moins de 15 jours d’écart =
+// même offre si l’intitulé est précis (4 mots ou plus) ; un intitulé court (« Product Manager ») doit aussi avoir la même entreprise.
+// On garde la version la plus utile : vraie entreprise plutôt qu’intermédiaire, puis avec salaire, puis la plus récente.
+const RELAIS = /talents? handicap|forum|job-?room|jobteaser|hellowork|indeed|jooble|adzuna|meteojob|jobijoba|cadremploi|monster|glassdoor|jobted|talent\.com|france travail|pole emploi/;
+const words = (s: string) => norm(s).replace(/[^a-z0-9]+/g, ' ').trim();
+function dedupe(list: Offre[]): Offre[] {
+  const score = (o: Offre) => (RELAIS.test(norm(o.n)) || !o.n ? 0 : 4) + (o.sal ? 2 : 0) + (o.desc.length > 200 ? 1 : 0);
+  const days = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 864e5;
+  const out: Offre[] = [];
+  for (const o of list) {
+    if (!o.t) continue;
+    const t = words(o.t), precis = t.split(' ').length >= 4, co = words(o.n).split(' ')[0];
+    const i = out.findIndex((x) => words(x.t) === t && !(days(x.d, o.d) > 15) && (precis || words(x.n).split(' ')[0] === co));
+    if (i < 0) { out.push(o); continue; }
+    const best = score(o) > score(out[i]) ? o : out[i], other = best === o ? out[i] : o;
+    out[i] = { ...best, sal: best.sal || other.sal, contrat: best.contrat || other.contrat, d: best.d > other.d ? best.d : other.d };
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin') || '';
   const cors = { 'Access-Control-Allow-Origin': ORIGINS.includes(origin) ? origin : ORIGINS[0], 'Access-Control-Allow-Headers': 'apikey, authorization, content-type, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS', Vary: 'Origin' };
@@ -56,8 +77,6 @@ Deno.serve(async (req) => {
   if (q.length < 2) return json({ offres: [], sources: {} });
   let list: Offre[] = [], etat = env('ADZUNA_APP_ID') ? 'ok' : 'off';
   try { list = await adzuna(q, lieu, exp, sal); } catch { etat = 'erreur'; }
-  const seen = new Set<string>();
-  const offres = list.filter((o) => { const k = norm(o.t) + '|' + norm(o.n); if (!o.t || seen.has(k)) return false; seen.add(k); return true; })
-    .sort((a, b) => b.d.localeCompare(a.d)).slice(0, 40);
+  const offres = dedupe(list).sort((a, b) => b.d.localeCompare(a.d)).slice(0, 40);
   return json({ offres, sources: { Adzuna: etat } });
 });
