@@ -45,7 +45,7 @@ async function adzuna(q: string, lieu: string, exp: number, sal: number): Promis
   }));
 }
 
-// Doublons : Adzuna reçoit souvent la même annonce de plusieurs sources, sous un autre nom d’entreprise (forum de recrutement,
+// Doublons (y compris entre Adzuna et Jooble) : Adzuna reçoit souvent la même annonce de plusieurs sources, sous un autre nom d’entreprise (forum de recrutement,
 // site relais, autre entité du groupe : « KPMG SA » / « KPMG France »). Même intitulé publié à moins de 15 jours d’écart =
 // même offre si l’intitulé est précis (4 mots ou plus) ; un intitulé court (« Product Manager ») doit aussi avoir la même entreprise.
 // On garde la version la plus utile : vraie entreprise plutôt qu’intermédiaire, puis avec salaire, puis la plus récente.
@@ -59,7 +59,8 @@ function dedupe(list: Offre[]): Offre[] {
   for (const o of list) {
     if (!o.t) continue;
     const t = words(o.t), precis = t.split(' ').length >= 4, co = words(o.n).split(' ')[0];
-    const i = out.findIndex((x) => words(x.t) === t && !(days(x.d, o.d) > 15) && (precis || words(x.n).split(' ')[0] === co));
+    // Même entreprise : même offre jusqu’à 60 jours d’écart (republiée ailleurs plus tard) ; sinon 15 jours et intitulé précis
+    const i = out.findIndex((x) => words(x.t) === t && (words(x.n).split(' ')[0] === co ? !(days(x.d, o.d) > 60) : precis && !(days(x.d, o.d) > 15)));
     if (i < 0) { out.push(o); continue; }
     const best = score(o) > score(out[i]) ? o : out[i], other = best === o ? out[i] : o;
     const src = [...new Set([...best.src.split(', '), ...other.src.split(', ')])].join(', ');
