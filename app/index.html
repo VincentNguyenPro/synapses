@@ -1320,6 +1320,9 @@ const jobSite = u => { if(!/^https?:\/\//.test(u || '')) return ''; const h = ((
 const OF_STOP = new Set('de des du la le les et en au aux a pour par sur avec un une d l h f hf fh cdi cdd stage alternance internship intern freelance senior junior confirme confirmee lead head chief manager responsable charge chargee of the and for in at to'.split(' '));
 /* Intitulé sans les mentions d’annonce : « (H/F) », « - CDI », « F/H », « – Stage » */
 const cleanJobTitle = t => (t || '').replace(/\s+\b(h f|f h|m f|f m)( x)?\b/gi, '').replace(/\s*[([]?\b(h\s*\/\s*f\s*\/\s*x|m\s*\/\s*[fw]\s*\/\s*[dx]|h\s*\/\s*f|f\s*\/\s*h|m\s*\/\s*f|f\s*\/\s*m)\b[)\]]?/gi, '').replace(/\s*[-–|·,]\s*(cdi|cdd|stage|alternance|internship|full[- ]time|temps plein)\b.*$/i, '').replace(/\s*[-–|·,(]\s*$/, '').replace(/\s+/g, ' ').trim();
+/* Intitulé d’annonce trop long (« Product Owner / PMO SI confirmé – secteur ferroviaire et transport - Industrie - Le Plessis Robinson ») :
+   on garde la première partie si elle ressemble à un poste, pour le message d’approche et l’étape 3 */
+const shortJobTitle = t => { t = cleanJobTitle(t); if(t.length <= 60) return t; const head = t.split(/\s+[-–|·]\s+/)[0].trim(); return head.split(' ').length >= 2 && (classify(FUNCTIONS, norm(head), '') || head.split(' ').length >= 3) ? head : t; };
 const ofWords = t => norm(t || '').split(/[^a-z0-9+#]+/).filter(w => w.length > 1 && !OF_STOP.has(w));
 /* Offres de l’export avec un intitulé : candidatures puis offres enregistrées, les plus récentes d’abord */
 function myOffers(){
@@ -1495,7 +1498,7 @@ async function searchOffers(){
   showOffre(true);
   const el = document.getElementById('ofFound'); if(el) el.scrollIntoView({block:'start', behavior:reduceMotion ? 'auto' : 'smooth'});
 }
-const isKept = o => myAdded().some(x => compactKey(x.n) === compactKey(o.n) && norm(x.t) === norm(cleanJobTitle(o.t)));
+const isKept = o => myAdded().some(x => compactKey(x.n) === compactKey(o.n) && norm(x.t) === norm(shortJobTitle(o.t)));
 function offerStep1(){
   const c = offerCrit(), f = offre.found, sug = offerSuggest(), pl = placeSuggest();
   const chip = (act, v, on) => `<button class="ofchip" type="button" data-act="${act}" data-v="${esc(v)}" aria-pressed="${on}">${esc(v)}</button>`;
@@ -4851,8 +4854,8 @@ document.addEventListener('click', e => {
       if(r.link){ $('#ofUrl').value = r.u; note.hidden = false; note.textContent = L(`Lien gardé${jobSite(r.u) ? ' (' + jobSite(r.u) + ')' : ''}. Synapses n’ouvre pas les sites d’emploi (rien ne sort de ton navigateur) : écris l’entreprise et l’intitulé ci-dessous, ou colle ici tout le texte de l’annonce (Cmd + A, puis copier).`, `Link kept${jobSite(r.u) ? ' (' + jobSite(r.u) + ')' : ''}. Synapses doesn’t open job sites (nothing leaves your browser): type the company and job title below, or paste the full ad text here (Cmd + A, then copy).`); $('#ofCo').value = ''; $('#ofTitle').value = ''; $('#ofCo').focus(); return; }
       if(!r.co && !r.t){ note.hidden = false; note.textContent = L('Colle d’abord le texte de l’offre.', 'Paste the job text first.'); return; } offre.co = r.co || $('#ofCo').value.trim(); offre.t = r.t || $('#ofTitle').value.trim(); offre.u = r.u || $('#ofUrl').value.trim(); offre.boss = r.boss || ''; offre.desc = r.desc || ''; offre.open = null; if(offre.co){ if(offre.t && !r.li) keepOffer({n:offre.co, t:offre.t, u:offre.u}); showOffre(true); } else { $('#ofTitle').value = offre.t; $('#ofCo').focus(); toast(L('Entreprise non reconnue : écris son nom', 'Company not recognised: type its name')); } }
     else if(a === 'ofq' || a === 'oflieu'){ const c = offerCrit(); c.q = $('#ofQ').value.trim(); c.lieu = $('#ofLieu').value.trim(); c.exp = +$('#ofExp').value; c.sal = $('#ofSal').value.trim(); c[a === 'ofq' ? 'q' : 'lieu'] = act.dataset.v; showOffre(true); }
-    else if(a === 'ofkeep'){ const o = offre.found && offre.found.list[+act.dataset.i]; if(o){ keepOffer({n:o.n || o.src, t:cleanJobTitle(o.t), u:o.u}); toast(L('Offre gardée dans tes offres', 'Job kept in your jobs')); showOffre(true); } }
-    else if(a === 'ofwho'){ const o = offre.found && offre.found.list[+act.dataset.i]; if(o){ offre.co = o.n; offre.t = cleanJobTitle(o.t); offre.u = o.u || ''; offre.desc = o.desc || ''; offre.boss = offerBoss(o.desc || ''); offre.open = null; showOffre(true); const el = document.getElementById('ofStep3'); if(el) el.scrollIntoView({block:'start', behavior:reduceMotion ? 'auto' : 'smooth'}); } }
+    else if(a === 'ofkeep'){ const o = offre.found && offre.found.list[+act.dataset.i]; if(o){ keepOffer({n:o.n || o.src, t:shortJobTitle(o.t), u:o.u}); toast(L('Offre gardée dans tes offres', 'Job kept in your jobs')); showOffre(true); } }
+    else if(a === 'ofwho'){ const o = offre.found && offre.found.list[+act.dataset.i]; if(o){ offre.co = o.n; offre.t = shortJobTitle(o.t); offre.u = o.u || ''; offre.desc = o.desc || ''; offre.boss = offerBoss(o.desc || ''); offre.open = null; showOffre(true); const el = document.getElementById('ofStep3'); if(el) el.scrollIntoView({block:'start', behavior:reduceMotion ? 'auto' : 'smooth'}); } }
     else if(a === 'ofcopylink'){ const u = act.dataset.u, ok = () => toast(L('Lien de l’annonce copié', 'Job ad link copied')); (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(ok, () => { $('#ofUrl').select(); document.execCommand('copy'); ok(); }); }
     else if(a === 'ofdel'){ const k = compactKey(offre.co) + '|' + norm(offre.t); try { localStorage.setItem(OF_KEY, JSON.stringify(myAdded().filter(x => compactKey(x.n) + '|' + norm(x.t) !== k))); } catch(e) {} offre = {...offre, co:'', t:'', u:'', open:null}; toast(L('Offre retirée de tes offres', 'Job removed from your jobs')); showOffre(true); }
     else if(a === 'ofmsg'){ const id = +act.dataset.cid; offre.open = offre.open === id ? null : id; showOffre(true); }

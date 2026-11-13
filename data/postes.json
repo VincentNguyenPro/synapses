@@ -4,7 +4,7 @@
  "fonctions": [
   {
    "fonction": "Direction générale",
-   "motif": "\\b(ceo|founder|co-?founder|fondat\\w*|co-?fondat\\w*|president\\w*|directeur general|directrice generale|managing director|general manager|associe\\w*|owner)\\b"
+   "motif": "\\b(ceo|founder|co-?founder|fondat\\w*|co-?fondat\\w*|president\\w*|directeur general|directrice generale|managing director|general manager|associe\\w*|co-?owner|^owner|(?!(?:product|process|service|data|domain|budget|risk|control|application|solution|platform|system|content|account|feature|technical|tech)\\b)[a-z]+ owner)\\b"
   },
   {
    "fonction": "Produit",
