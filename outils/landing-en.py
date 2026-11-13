@@ -214,7 +214,7 @@ rep('<td>Des noms d’entreprises et intitulés de poste non reconnus</td>', '<t
 rep('>L’IA que tu choisis, avec ta propre clé</td>', '>The AI you choose, with your own key</td>')
 rep('>Seulement si tu lances le classement par IA</td>', '>Only if you run the AI classification</td>')
 rep('<td>Tes critères de recherche d’offres&nbsp;: poste, lieu, expérience, salaire</td>', '<td>Your job search criteria: title, location, experience, salary</td>')
-rep('>Adzuna, par le serveur de Synapses</td>', '>Adzuna, through Synapses’ server</td>')
+rep('>Adzuna et Jooble, par le serveur de Synapses</td>', '>Adzuna and Jooble, through Synapses’ server</td>')
 rep('>Seulement quand tu cliques sur «&nbsp;Chercher des offres&nbsp;»</td>', '>Only when you click “Search jobs”</td>')
 rep('<td>Tes corrections de classement</td>', '<td>Your classification corrections</td>')
 rep('>Le dictionnaire partagé de Synapses</td>', '>Synapses’ shared dictionary</td>')

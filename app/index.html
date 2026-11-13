@@ -1453,7 +1453,7 @@ function offerMessage(c, role){
 }
 /* ---------- Étape 1 : trouver des offres adaptées à ton profil (choix de Vincent du 13 novembre 2026) ----------
    Critères pré-remplis depuis l’export (postes visés, lieux, alertes LinkedIn, années d’expérience) ; le salaire, tu le saisis.
-   Liste dans Synapses : fonction Supabase « offres » (supabase/functions/offres) qui interroge Adzuna avec ces
+   Liste dans Synapses : fonction Supabase « offres » (supabase/functions/offres) qui interroge Adzuna et Jooble avec ces
    seuls critères, au clic sur « Chercher des offres ». LinkedIn, Indeed, Hellowork, Welcome to the Jungle : recherches pré-remplies. */
 const SB_FN = 'https://afvmshbacxaznhmlgkzc.supabase.co/functions/v1/offres';
 function myExpYears(){
@@ -1517,9 +1517,9 @@ function offerStep1(){
       </div>
       ${pl.length > 1 ? `<div class="ofchips">${pl.map(v => chip('oflieu', v, norm(v) === norm(c.lieu))).join('')}</div>` : ''}
       <button class="btn primary block" type="submit">${L('Chercher des offres', 'Search jobs')}</button>
-      <p class="hint" style="margin:0">${L('Seuls ces critères partent vers Adzuna, par le serveur de Synapses. Jamais tes contacts.', 'Only these criteria go to Adzuna, through Synapses’ server. Never your contacts.')}</p>
+      <p class="hint" style="margin:0">${L('Seuls ces critères partent vers Adzuna et Jooble, par le serveur de Synapses. Jamais tes contacts.', 'Only these criteria go to Adzuna and Jooble, through Synapses’ server. Never your contacts.')}</p>
     </form>
-    ${f ? `<div id="ofFound">${f.loading ? `<p class="pos">${L('Recherche en cours…', 'Searching…')}</p>` : f.err || srcOff ? `<p class="ofnote">${L('La liste d’offres n’est pas disponible pour le moment. Utilise les recherches ci-dessous.', 'The job list isn’t available right now. Use the searches below.')}</p>` : f.list.length ? `<p class="pos">${L(`${f.list.length} offre${f.list.length > 1 ? 's' : ''}, les plus récentes d’abord. Garde celles qui t’intéressent.`, `${f.list.length} job${sEN(f.list.length)}, newest first. Keep the ones you like.`)}</p><ul class="ofjobs">${f.list.map(job).join('')}</ul><p class="hint ofattr">${L('Offres fournies par', 'Jobs by')} <a href="https://www.adzuna.fr" target="_blank" rel="noopener">Adzuna</a></p>` : `<p class="pos">${L('Aucune offre pour ces critères. Élargis le lieu ou le poste, ou essaie les sites ci-dessous.', 'No jobs for these criteria. Widen the location or the job, or try the sites below.')}</p>`}</div>` : ''}
+    ${f ? `<div id="ofFound">${f.loading ? `<p class="pos">${L('Recherche en cours…', 'Searching…')}</p>` : f.err || srcOff ? `<p class="ofnote">${L('La liste d’offres n’est pas disponible pour le moment. Utilise les recherches ci-dessous.', 'The job list isn’t available right now. Use the searches below.')}</p>` : f.list.length ? `<p class="pos">${L(`${f.list.length} offre${f.list.length > 1 ? 's' : ''}, les plus récentes d’abord. Garde celles qui t’intéressent.`, `${f.list.length} job${sEN(f.list.length)}, newest first. Keep the ones you like.`)}</p><ul class="ofjobs">${f.list.map(job).join('')}</ul><p class="hint ofattr">${L('Offres fournies par', 'Jobs by')} ${[['Adzuna', 'https://www.adzuna.fr'], ['Jooble', 'https://fr.jooble.org']].filter(([n]) => f.sources[n] === 'ok').map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(L(' et ', ' and '))}</p>` : `<p class="pos">${L('Aucune offre pour ces critères. Élargis le lieu ou le poste, ou essaie les sites ci-dessous.', 'No jobs for these criteria. Widen the location or the job, or try the sites below.')}</p>`}</div>` : ''}
     <p class="ofsites"><span>${L('Chercher aussi sur', 'Also search on')}</span>${jobSearchLinks(c).map(([n, u]) => `<a class="ofsite" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ${ICON_EXT}</a>`).join('')}</p>
     <p class="hint">${L('Une offre trouvée sur un site : copie son lien et son texte, puis ajoute-la à l’étape 2.', 'Found a job on a site? Copy its link and text, then add it in step 2.')}</p></section>`;
 }
@@ -4274,7 +4274,7 @@ const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
       <li><b>Closeness</b>: number and dates of messages, recommendations, endorsed skills. Never the text of messages.</li>
       <li><b>Target companies</b>: job applications, saved jobs and followed companies, matched with your network locally.</li>
       <li><b>On this device</b>: profile, tags, schools you link to contacts, views, corrections, job offers you add, and your network without emails if you keep it.</li>
-      <li><b>Only things sent</b>: +1 to an anonymous counter per import, your feedback if you send it, your job search criteria (title, location, experience, salary) to Adzuna when you search jobs, and company websites to Brandfetch for the logos.</li>
+      <li><b>Only things sent</b>: +1 to an anonymous counter per import, your feedback if you send it, your job search criteria (title, location, experience, salary) to Adzuna and Jooble when you search jobs, and company websites to Brandfetch for the logos.</li>
       <li><a href="../en/legal/" target="_blank" rel="noopener">Legal notice and privacy</a></li>
     </ul>
     ${shareBox()}
@@ -4285,7 +4285,7 @@ const WIPE_BLOCK = () => EN ? `<h3>Your data</h3>
       <li><b>Proximité</b>&nbsp;: nombre et date des messages, recommandations, compétences recommandées. Jamais le texte des messages.</li>
       <li><b>Entreprises cibles</b>&nbsp;: candidatures, offres et entreprises suivies, croisées avec ton réseau sur place.</li>
       <li><b>Sur cet appareil</b>&nbsp;: profil, tags, écoles associées à tes contacts, vues, corrections, offres d’emploi ajoutées, et ton réseau sans les emails si tu le gardes.</li>
-      <li><b>Seuls envois</b>&nbsp;: +1 à un compteur anonyme par import, ton avis si tu l’envoies, tes critères de recherche d’offres (poste, lieu, expérience, salaire) à Adzuna quand tu cherches des offres, et le site des entreprises à Brandfetch pour les logos.</li>
+      <li><b>Seuls envois</b>&nbsp;: +1 à un compteur anonyme par import, ton avis si tu l’envoies, tes critères de recherche d’offres (poste, lieu, expérience, salaire) à Adzuna et Jooble quand tu cherches des offres, et le site des entreprises à Brandfetch pour les logos.</li>
       <li><a href="../legal/" target="_blank" rel="noopener">Mentions légales et confidentialité</a></li>
     </ul>
     ${shareBox()}
