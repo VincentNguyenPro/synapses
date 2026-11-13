@@ -1441,7 +1441,7 @@ function showOffre(keepScroll){
         <textarea id="ofPaste" rows="5" placeholder="${L('Colle ici tout le texte de l’annonce (Hellowork, Indeed, Apec…), ou le lien d’une offre LinkedIn enregistrée ou de Welcome to the Jungle', 'Paste the full job ad text here (Indeed, Hellowork…), or the link of a saved LinkedIn job or a Welcome to the Jungle job')}"></textarea>
         <p class="hint ofnote" id="ofNote" role="status" hidden></p>
         <button class="btn" type="button" data-act="ofread">${L('Lire l’offre', 'Read the offer')}</button></details>
-      <label class="evf"><span>${L('Entreprise', 'Company')}</span><input id="ofCo" type="text" value="${esc(offre.co)}" autocomplete="off" list="ofCoList" placeholder="${L('Ex. Doctolib', 'E.g. Doctolib')}"></label>
+      <label class="evf"><span>${L('Entreprise', 'Company')}</span><input id="ofCo" type="text" value="${esc(offre.co)}" autocomplete="off" placeholder="${L('Ex. Doctolib', 'E.g. Doctolib')}"></label>
       <datalist id="ofCoList">${[...new Set(contacts.map(coOf).filter(g => g && !NO_COMPANY_GROUPS.has(g)))].sort((a, b) => a.localeCompare(b, 'fr')).slice(0, 3000).map(g => `<option value="${esc(g)}">`).join('')}</datalist>
       <label class="evf"><span>${L('Intitulé du poste', 'Job title')}</span><input id="ofTitle" type="text" value="${esc(offre.t)}" autocomplete="off" placeholder="${L('Ex. Product Manager', 'E.g. Product Manager')}"></label>
       <label class="evf"><span>${L('Lien de l’annonce (facultatif)', 'Job ad link (optional)')}</span><input id="ofUrl" type="url" value="${esc(curU)}" autocomplete="off" placeholder="https://"></label>
@@ -1456,6 +1456,9 @@ function showOffre(keepScroll){
     if(ids.size) focus(ids);
   }
   $('#ofForm').addEventListener('submit', e => { e.preventDefault(); offre.co = $('#ofCo').value.trim(); offre.t = cleanJobTitle($('#ofTitle').value); const u = $('#ofUrl').value.trim(); offre.u = /^https?:\/\/\S+$/.test(u) ? u : ''; offre.open = null; if(!offre.co){ $('#ofCo').focus(); return; } if(offre.t) keepOffer({n:offre.co, t:offre.t, u:offre.u}); showOffre(true); });
+  /* Suggestions d’entreprises du réseau seulement après 2 lettres : sinon le navigateur déroule toute la liste dès le clic */
+  const coIn = $('#ofCo'), syncCoList = () => coIn.value.trim().length >= 2 ? coIn.setAttribute('list', 'ofCoList') : coIn.removeAttribute('list');
+  coIn.addEventListener('input', syncCoList);
   const pick = $('#ofPick');
   if(pick) pick.addEventListener('change', () => { const x = all[+pick.value]; if(!x) return; offre.co = x.n; offre.t = cleanJobTitle(x.t); offre.u = x.u || ''; offre.open = null; showOffre(true); });
   syncOffreHint();
