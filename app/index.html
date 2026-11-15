@@ -1468,8 +1468,11 @@ function offerCrit(){
   return offre.crit = {q, lieu, exp:myExpYears(), sal:''};
 }
 /* Alertes LinkedIn qui ne sont qu’un nom d’entreprise (« CHANEL ») : pas un poste */
-const offerSuggest = () => { const jp = myProfile().jobPrefs || {}, last = (myProfile().positions || [])[0] || {}, coName = v => !classify(FUNCTIONS, norm(v), '') && (!!companyResolver()(v) || (cibleData || []).some(x => compactKey(x.n) === compactKey(v))); return [...new Set([...(jp.titles || []), ...(jp.alerts || []).filter(v => !coName(v)), cleanJobTitle(last.t || '')].filter(Boolean))].slice(0, 8); };
-const placeSuggest = () => { const p = myProfile(), jp = p.jobPrefs || {}; return [...new Set([...(jp.locations || []), (p.location || '').split(',')[0].trim()].filter(Boolean))].slice(0, 6); };
+/* Suggestions sans quasi-doublons : « Responsable produit » = « Responsable de produit » (petits mots et ordre ignorés), la première écriture gardée */
+const looseKey = v => norm(v).split(/[^a-z0-9+#]+/).filter(w => w && !/^(de|du|des|d|la|le|les|l|en|et|a|au|aux|of|the|and)$/.test(w)).sort().join(' ');
+const uniqLoose = list => { const seen = new Set(); return list.filter(v => { const k = looseKey(v); if(!k || seen.has(k)) return false; seen.add(k); return true; }); };
+const offerSuggest = () => { const jp = myProfile().jobPrefs || {}, last = (myProfile().positions || [])[0] || {}, coName = v => !classify(FUNCTIONS, norm(v), '') && (!!companyResolver()(v) || (cibleData || []).some(x => compactKey(x.n) === compactKey(v))); return uniqLoose([...(jp.titles || []), ...(jp.alerts || []).filter(v => !coName(v)), cleanJobTitle(last.t || '')].filter(Boolean)).slice(0, 8); };
+const placeSuggest = () => { const p = myProfile(), jp = p.jobPrefs || {}; return uniqLoose([...(jp.locations || []), (p.location || '').split(',')[0].trim()].filter(Boolean)).slice(0, 6); };
 /* Recherches pré-remplies : poste, lieu et, quand le site le permet, niveau d’expérience */
 function jobSearchLinks(c){
   const q = encodeURIComponent(c.q || ''), l = encodeURIComponent(c.lieu || ''), e = +c.exp || 0;
