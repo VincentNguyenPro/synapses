@@ -26,7 +26,7 @@ const CONTRAT: Record<string, string> = { permanent: 'CDI', contract: 'CDD / mis
 async function adzuna(q: string, lieu: string, exp: number, sal: number): Promise<Offre[]> {
   if (!env('ADZUNA_APP_ID') || !env('ADZUNA_APP_KEY')) return [];
   const pays = SUISSE.test(norm(lieu)) ? 'ch' : 'fr';
-  const p = new URLSearchParams({ app_id: env('ADZUNA_APP_ID'), app_key: env('ADZUNA_APP_KEY'), what: q, results_per_page: '40', sort_by: 'date', 'content-type': 'application/json' });
+  const p = new URLSearchParams({ app_id: env('ADZUNA_APP_ID'), app_key: env('ADZUNA_APP_KEY'), what: q, results_per_page: '50', sort_by: 'date', 'content-type': 'application/json' });
   // Expérience : Adzuna n’a pas de filtre ; un profil expérimenté écarte les stages et alternances
   if (exp >= 3) p.set('what_exclude', 'stage stagiaire alternance alternant apprenti internship');
   // « Île-de-France et périphérie », « Genève et périphérie » : on garde le nom du lieu
@@ -77,7 +77,7 @@ async function jooble(q: string, lieu: string, exp: number, sal: number): Promis
   const pays = SUISSE.test(norm(lieu)) ? 'ch' : 'fr', cle = env(pays === 'ch' ? 'JOOBLE_KEY_CH' : 'JOOBLE_KEY');
   if (!cle) return [];
   const where = lieu.replace(/\s+et\s+p[ée]riph[ée]rie$/i, '').trim();
-  const body: Record<string, unknown> = { keywords: q, page: '1', ResultOnPage: '40' };
+  const body: Record<string, unknown> = { keywords: q, page: '1', ResultOnPage: '50' };
   body.location = where && !/^(france|suisse|switzerland)$/i.test(where) ? where : (pays === 'ch' ? 'Suisse' : 'France');
   if (sal > 0) body.salary = Math.round(sal * 1000);
   const r = await fetch(`https://${pays}.jooble.org/api/${cle}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -85,13 +85,24 @@ async function jooble(q: string, lieu: string, exp: number, sal: number): Promis
   const j = await r.json();
   const stage = /\b(stage|stagiaire|alternance|alternant|apprenti|internship)\b/;
   // Jooble renvoie parfois des offres sans rapport : on garde celles dont l’intitulé reprend au moins un mot du poste cherché
-  const mots = words(q).split(' ').filter((w) => w.length > 2 && !/^(les|des|une|pour|and|the|chef|senior|junior)$/.test(w));
-  const pertinent = (t: string) => !mots.length || mots.some((w) => words(t).split(' ').some((x) => x === w || (w.length > 4 && x.startsWith(w.slice(0, -1)))));
-  return (j.jobs || []).filter((o: any) => !(exp >= 3 && stage.test(norm(o.title || ''))) && pertinent(stripTags(o.title || ''))).map((o: any) => ({
+  return (j.jobs || []).filter((o: any) => !(exp >= 3 && stage.test(norm(o.title || '')))).map((o: any) => ({
     src: 'Jooble', t: clip(stripTags(o.title), 140), n: clip(o.company || '', 80), lieu: clip(o.location || '', 80),
     sal: /[£$]/.test(o.salary || '') ? '' : clip(o.salary || '', 60), d: (o.updated || '').slice(0, 10), contrat: clip(o.type || '', 40),
     u: /^https?:\/\//.test(o.link || '') ? o.link : '', desc: clip(stripTags(o.snippet || ''), 4000),
   }));
+}
+
+// Pertinence (Adzuna et Jooble) : l’intitulé doit reprendre au moins un mot propre au poste cherché, ou son équivalent
+// français/anglais (« produit » = « product »). Les mots génériques (responsable, manager, chef, directeur…) ne suffisent pas :
+// « Responsable produit » écarte « Responsable Projets Marketing ». Si le poste n’a que des mots génériques, rien n’est écarté.
+const GENERIQUES = new Set('les des une pour avec sur dans and the for with chef cheffe senior junior confirme confirmee responsable manager managers management directeur directrice director head lead charge chargee officer specialist specialiste expert consultant consultante assistant assistante h f cdi cdd'.split(' '));
+const EQUIV: string[][] = [['produit', 'product', 'produits', 'products'], ['projet', 'project', 'projets', 'projects', 'pmo', 'programme', 'program'], ['portefeuille', 'portfolio'], ['donnee', 'donnees', 'data'], ['finance', 'financier', 'financial', 'finances'], ['achat', 'achats', 'procurement', 'purchasing', 'acheteur', 'buyer'], ['ressources', 'rh', 'hr', 'people', 'talent'], ['commercial', 'sales', 'vente', 'ventes', 'business'], ['marketing', 'marketeur'], ['strategie', 'strategy', 'strategique', 'strategic'], ['transformation', 'change'], ['developpeur', 'developer', 'developpement', 'development', 'software'], ['controleur', 'controller', 'controle', 'control'], ['qualite', 'quality'], ['juridique', 'legal', 'juriste', 'lawyer']];
+const racine = (w: string) => w.length > 5 ? w.slice(0, -1) : w;
+function pertinence(q: string) {
+  const mots = words(q).split(' ').filter((w) => (w.length > 2 || /^(rh|hr|it|ui|ux|bi|qa|ia|ai|ml|bi)$/.test(w)) && !GENERIQUES.has(w));
+  if (!mots.length) return () => true;
+  const voulus = mots.map((w) => new Set([w, ...(EQUIV.find((g) => g.includes(w)) || [])]));
+  return (t: string) => { const tw = words(t).split(' '); return voulus.some((g) => tw.some((x) => g.has(x) || [...g].some((w) => w.length > 4 && x.startsWith(racine(w))))); };
 }
 
 Deno.serve(async (req) => {
@@ -110,7 +121,8 @@ Deno.serve(async (req) => {
     Adzuna: az.status === 'rejected' ? 'erreur ' + String((az as PromiseRejectedResult).reason?.message || '').replace(/\D+/g, '') : env('ADZUNA_APP_ID') ? 'ok' : 'off',
     Jooble: jb.status === 'rejected' ? 'erreur ' + String((jb as PromiseRejectedResult).reason?.message || '').replace(/\D+/g, '') : env('JOOBLE_KEY') ? 'ok' : 'off',
   };
-  const list = [...(az.status === 'fulfilled' ? az.value : []), ...(jb.status === 'fulfilled' ? jb.value : [])];
+  const ok = pertinence(q);
+  const list = [...(az.status === 'fulfilled' ? az.value : []), ...(jb.status === 'fulfilled' ? jb.value : [])].filter((o) => ok(o.t));
   const offres = dedupe(list).sort((a, b) => b.d.localeCompare(a.d)).slice(0, 60);
   return json({ offres, sources });
 });
