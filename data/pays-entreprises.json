@@ -1,6 +1,6 @@
 {
  "version": 1,
- "description": "Pays du siège de chaque entreprise, par domaine officiel (clés de data/domaines.json), pour « Regrouper par Pays ». Ordre dans l’outil : pays collé depuis LinkedIn > pays écrit à la fin du nom de l’entité (« KPMG France ») > siège ci-dessous > extension du domaine (« .fr » → France). Une entreprise absente reste « Non renseigné » : ne jamais deviner. Siège opérationnel quand il diffère du siège légal (Airbus → France).",
+ "description": "Pays du siège de chaque entreprise, par domaine officiel (clés de data/domaines.json), pour « Regrouper par Pays ». Ordre dans l’outil : pays collé depuis LinkedIn > pays écrit à la fin du nom de l’entité (« KPMG France ») > siège ci-dessous > extension du domaine (« .fr » → France). Une entreprise absente reste « Non renseigné » : ne jamais deviner. Toujours le siège opérationnel (direction effective), pas le siège légal : Airbus → France, Medtronic → États-Unis, Euronext → France.",
  "extensions": {
   "fr": "France",
   "paris": "France",
@@ -185,7 +185,7 @@
   "eurofiber.com": "Pays-Bas",
   "eurofins.com": "Luxembourg",
   "eurogroupconsulting.com": "France",
-  "euronext.com": "Pays-Bas",
+  "euronext.com": "France",
   "europ-assistance.com": "France",
   "europcar.com": "France",
   "eviden.com": "France",
@@ -291,7 +291,7 @@
   "mbda-systems.com": "France",
   "mcdonalds.fr": "États-Unis",
   "mckinsey.com": "États-Unis",
-  "medtronic.com": "Irlande",
+  "medtronic.com": "États-Unis",
   "mercedes-benz.fr": "Allemagne",
   "mersen.com": "France",
   "meta.com": "États-Unis",
@@ -416,7 +416,7 @@
   "talan.com": "France",
   "tarkett.com": "France",
   "technipenergies.com": "France",
-  "technipfmc.com": "Royaume-Uni",
+  "technipfmc.com": "États-Unis",
   "tesla.com": "États-Unis",
   "tessi.eu": "France",
   "thalesgroup.com": "France",
@@ -456,7 +456,7 @@
   "worldbank.org": "États-Unis",
   "worldline.com": "France",
   "wpp.com": "Royaume-Uni",
-  "wtwco.com": "Irlande",
+  "wtwco.com": "Royaume-Uni",
   "xerox.com": "États-Unis",
   "ysl.com": "France"
  }
