@@ -843,7 +843,7 @@ const VALUE_EN = new Map(Object.entries({
   'Belgique':'Belgium', 'Suisse':'Switzerland', 'Royaume-Uni':'United Kingdom', 'Allemagne':'Germany', 'Espagne':'Spain', 'Italie':'Italy', 'Pays-Bas':'Netherlands',
   'Irlande':'Ireland', 'Suède':'Sweden', 'Danemark':'Denmark', 'Pologne':'Poland', 'États-Unis':'United States', 'Maroc':'Morocco', 'Tunisie':'Tunisia', 'Algérie':'Algeria',
   'Sénégal':'Senegal', 'Côte d’Ivoire':'Ivory Coast', 'Émirats arabes unis':'United Arab Emirates', 'Singapour':'Singapore', 'Inde':'India', 'Chine':'China', 'Japon':'Japan',
-  'Brésil':'Brazil', 'Australie':'Australia'
+  'Brésil':'Brazil', 'Australie':'Australia', 'Finlande':'Finland', 'Corée du Sud':'South Korea', 'Israël':'Israel'
 }));
 const dv = v => EN && VALUE_EN.has(v) ? VALUE_EN.get(v) : v;
 /* Texte tapé en anglais → code interne (« Healthcare » → « Santé ») */
@@ -942,7 +942,8 @@ const COUNTRY_ALIASES = {
   'etats-unis':'États-Unis', 'united states':'États-Unis', 'usa':'États-Unis', 'canada':'Canada', 'maroc':'Maroc', 'morocco':'Maroc', 'tunisie':'Tunisie', 'tunisia':'Tunisie',
   'algerie':'Algérie', 'algeria':'Algérie', 'senegal':'Sénégal', "cote d'ivoire":'Côte d’Ivoire', 'cote d’ivoire':'Côte d’Ivoire', 'ivory coast':'Côte d’Ivoire',
   'emirats arabes unis':'Émirats arabes unis', 'united arab emirates':'Émirats arabes unis', 'singapour':'Singapour', 'singapore':'Singapour',
-  'inde':'Inde', 'india':'Inde', 'chine':'Chine', 'china':'Chine', 'japon':'Japon', 'japan':'Japon', 'bresil':'Brésil', 'brazil':'Brésil', 'australie':'Australie', 'australia':'Australie'
+  'inde':'Inde', 'india':'Inde', 'chine':'Chine', 'china':'Chine', 'japon':'Japon', 'japan':'Japon', 'bresil':'Brésil', 'brazil':'Brésil', 'australie':'Australie', 'australia':'Australie',
+  'finlande':'Finlande', 'finland':'Finlande', 'coree du sud':'Corée du Sud', 'south korea':'Corée du Sud', 'israel':'Israël', 'qatar':'Qatar'
 };
 const CITY_COUNTRY = {
   'paris':'France', 'lyon':'France', 'lille':'France', 'nantes':'France', 'bordeaux':'France', 'marseille':'France', 'toulouse':'France', 'nice':'France',
@@ -1857,10 +1858,12 @@ let ALIASES = new Map();
 async function loadDictionary(){
   const get = async f => { const r = await fetch(f); if(!r.ok) throw new Error(f + ' : ' + r.status); return r.json(); };
   /* Les trois fichiers partent en même temps (les domaines attendaient les deux autres) */
-  const domP = get('../data/domaines.json');
+  const domP = get('../data/domaines.json'), paysP = get('../data/pays-entreprises.json').catch(() => ({}));
   const [co, po] = await Promise.all([get('../data/entreprises.json'), get('../data/postes.json')]);
   /* Domaines des logos : facultatif, sans eux les monogrammes s’affichent */
-  domP.then(d => { COMPANY_DOMAINS.clear(); for(const [n, dom] of Object.entries(d.domaines || {})) COMPANY_DOMAINS.set(nkey(n), dom); if(contacts.length && state.groupBy === 'company') render(); }).catch(() => {});
+  domP.then(async d => { COMPANY_DOMAINS.clear(); for(const [n, dom] of Object.entries(d.domaines || {})) COMPANY_DOMAINS.set(nkey(n), dom);
+    const pe = await paysP; HQ_COUNTRY = new Map(Object.entries(pe.sieges || {})); TLD_COUNTRY = new Map(Object.entries(pe.extensions || {}));
+    if(contacts.length){ fillCompanyCountries(contacts); setupControls(); render(); } }).catch(() => {});
   SECTORS = co.mots_cles.map(m => [m.secteur, new RegExp(m.motif)]);
   BUILTIN.clear();
   for(const [sec, names] of Object.entries(co.secteurs)) names.forEach(n => { const k = nkey(n); if(k && !BUILTIN.has(k)) BUILTIN.set(k, sec); });
@@ -2087,7 +2090,7 @@ function setupControls(){
   if(!dims.includes(state.groupBy)) state.groupBy = 'sector';
   if(!dims.includes(state.colorBy)) state.colorBy = 'seniority';
   const opts = dims.map(k => `<option value="${k}">${DIMS[k].label}</option>`).join('');
-  $('#groupBy').innerHTML = opts + (!isDemo && contacts.length ? `<option value="@pays">${dims.includes('country') ? L('Indiquer d’autres pays…', 'Set more countries…') : L('Pays… (à indiquer)', 'Country… (to set)')}</option>` : ''); $('#colorBy').innerHTML = opts;
+  $('#groupBy').innerHTML = opts + (!isDemo && contacts.length ? `<option value="@pays">${dims.includes('country') ? L('Corriger les pays par LinkedIn…', 'Fix countries from LinkedIn…') : L('Pays… (à indiquer)', 'Country… (to set)')}</option>` : ''); $('#colorBy').innerHTML = opts;
   $('#groupBy').value = state.groupBy; $('#colorBy').value = state.colorBy;
   allYears = [...new Set(contacts.map(c => c.year).filter(Boolean))].sort((a, b) => a - b);
   $('#yearField').hidden = !allYears.length;
@@ -4070,7 +4073,7 @@ function showContact(c){
       ${proxOf(c).why.length ? `<dt>${L('Ton lien', 'Your connection')}</dt><dd class="proxdd">${proxOf(c).why.map(esc).join('<br>')}</dd>` : ''}
       <dt>${L('Connecté le', 'Connected on')}</dt><dd>${fmtDate(c.date)}</dd>
       ${c.location ? `<dt>${L('Ville', 'City')}</dt><dd>${esc(c.location)}</dd>` : ''}
-      ${c.country ? `<dt>${L('Pays', 'Country')}</dt><dd>${esc(dv(c.country))}</dd>` : ''}
+      ${c.country ? `<dt>${L('Pays', 'Country')}</dt><dd>${esc(dv(c.country))}${c.countrySrc === 'entreprise' ? ` <small class="muted">${L('(siège de l’entreprise)', '(company headquarters)')}</small>` : ''}</dd>` : ''}
       ${c.email ? `<dt>Email</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>` : ''}
       ${c.school ? `<dt>${L('Formation', 'Education')}</dt><dd>${esc(c.school)}</dd>` : ''}
       ${c.exp ? `<dt>${L('Expérience', 'Experience')}</dt><dd>${esc(dv(c.exp))}</dd>` : ''}
@@ -4390,7 +4393,7 @@ function showMe(){
       ${(p.education || []).length ? `<ul class="edu">${p.education.map(e => { const u = logoUrl(e.s); return `<li><span class="edulogo" aria-hidden="true"><b>${esc(mono(e.s))}</b>${u ? `<img src="${esc(u)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()">` : ''}</span><span class="edutxt"><strong>${esc(e.s)}</strong>${e.d || e.f ? `<span>${esc([e.d, e.f].filter(Boolean).join(' · '))}</span>` : ''}${e.a || e.b ? `<small>${esc(e.a && e.b && e.a !== e.b ? `${e.a} – ${e.b}` : (e.b || e.a))}</small>` : ''}${(n => `<button class="linkbtn edumates" type="button" data-act="schoolpaste" data-s="${esc(e.s)}">${n ? L(`${n} contact${n > 1 ? 's' : ''} de cette école`, `${n} contact${sEN(n)} from this school`) : L('Retrouver mes contacts de cette école', 'Find my contacts from this school')}</button>`)(contacts.filter(c => c.school === e.s).length)}</span></li>`; }).join('')}</ul>`
         : `<p class="hint" style="margin:0 0 12px">${L('Ton historique de formation apparaît ici quand tu importes l’archive complète de LinkedIn (fichier Education.csv).', 'Your education history shows here when you import LinkedIn’s full archive (Education.csv file).')}</p>`}
       <span class="lbl">${L('Pays de tes contacts', 'Your contacts’ countries')}</span>
-      ${(n => `<button class="linkbtn edumates" type="button" data-act="payspaste" style="margin:0 0 12px">${n ? L(`${n} contact${n > 1 ? 's' : ''} avec un pays · en ajouter`, `${n} contact${sEN(n)} with a country · add more`) : L('Indiquer le pays de mes contacts', 'Set my contacts’ countries')}</button>`)(contacts.filter(c => c.country).length)}
+      ${(n => `<button class="linkbtn edumates" type="button" data-act="payspaste" style="margin:0 0 12px">${n ? L(`${n} contact${n > 1 ? 's' : ''} avec un pays · en ajouter`, `${n} contact${sEN(n)} with a country · add more`) : L('Indiquer le pays de mes contacts', 'Set my contacts’ countries')}</button>`)(contacts.filter(c => c.countrySrc === 'colle').length)}
       <label for="me-url">${L('Lien de ton profil LinkedIn', 'Your LinkedIn profile link')}</label><input id="me-url" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/…" value="${esc(p.url || '')}">
       <button class="btn primary block" type="button" data-act="saveme">${L('Enregistrer mon profil', 'Save my profile')}</button>
       <p class="hint" style="margin-top:10px">${L('Ces informations restent sur cet appareil.', 'This information stays on this device.')}</p>
@@ -4633,7 +4636,7 @@ function setSchools(list, school){
 const PAYS_KEY = 'synapses-pays-v1';
 let paysStore = {};
 try { paysStore = JSON.parse(localStorage.getItem(PAYS_KEY) || '{}') || {}; } catch(e) { paysStore = {}; }
-function applyCountries(list){ list.forEach(c => { if(c.countryGiven === undefined) c.countryGiven = !!c.country; if(!c.countryGiven) c.country = paysStore[tagKey(c)] || ''; }); }
+function applyCountries(list){ list.forEach(c => { if(c.countryGiven === undefined) c.countryGiven = !!c.country; if(!c.countryGiven){ c.country = paysStore[tagKey(c)] || ''; c.countrySrc = c.country ? 'colle' : ''; } }); }
 const countryCode = v => { const t = (v || '').trim().replace(/\s+/g, ' '); return COUNTRY_ALIASES[norm(t)] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : ''); };
 const connectionsUrl = 'https://www.linkedin.com/search/results/people/?network=%5B%22F%22%5D';
 let paysPending = [];
@@ -4641,7 +4644,7 @@ function showCountryPaste(pays){
   select(null); clearFocus();
   const me = splitLoc(myProfile().location || '').country || '';
   pays = pays || me;
-  const counts = d3.rollups(contacts.filter(c => !c.countryGiven && c.country), v => v.length, c => c.country).sort((a, b) => b[1] - a[1]);
+  const counts = d3.rollups(contacts.filter(c => c.countrySrc === 'colle'), v => v.length, c => c.country).sort((a, b) => b[1] - a[1]);
   const names = [...new Set(Object.values(COUNTRY_ALIASES))].map(dv).sort((a, b) => a.localeCompare(b, LOC));
   openDrawer(`<h2 id="dtitle" tabindex="-1">${L('Pays de tes contacts', 'Your contacts’ countries')}</h2>
     <p class="pos">${L('L’export LinkedIn ne donne pas le lieu de tes contacts. LinkedIn les liste par pays, Synapses les reconnaît par leur nom.', 'LinkedIn’s export doesn’t include your contacts’ location. LinkedIn lists them by country, Synapses recognizes them by name.')}</p>
@@ -4670,16 +4673,32 @@ function showCountryPaste(pays){
   ta.addEventListener('input', sync); inp.addEventListener('input', sync);
 }
 function setCountries(list, pays){
-  const first = !contacts.some(c => c.country);
-  list.forEach(c => { if(c.countryGiven) return; const k = tagKey(c); if(pays) paysStore[k] = pays; else delete paysStore[k]; c.country = pays || ''; });
+  const first = !contacts.some(c => c.countrySrc === 'colle');
+  list.forEach(c => { if(c.countryGiven) return; const k = tagKey(c); if(pays){ paysStore[k] = pays; c.country = pays; c.countrySrc = 'colle'; } else { delete paysStore[k]; c.countrySrc = ''; c.country = companyCountry(c); if(c.country) c.countrySrc = 'entreprise'; } });
   try { localStorage.setItem(PAYS_KEY, JSON.stringify(paysStore)); } catch(e) {}
   if(first && pays) state.groupBy = 'country';
   proxCache = new Map(); tgItems = null; needFit = true; setupControls(); render();
 }
+/* Pays de l’entreprise (choix de Vincent du 18 novembre 2026 : pays du siège) : pays écrit à la fin du nom de l’entité
+   (« KPMG France », « Constructel Belgium SA »), sinon siège de data/pays-entreprises.json par domaine officiel, sinon extension
+   du domaine (.fr → France). Jamais deviné : entreprise inconnue = « Non renseigné ». Le pays collé depuis LinkedIn passe avant. */
+let HQ_COUNTRY = new Map(), TLD_COUNTRY = new Map();
+const NAME_COUNTRY = new Map(Object.entries({...COUNTRY_ALIASES, schweiz:'Suisse', espana:'Espagne', italia:'Italie', deutschland:'Allemagne', nederland:'Pays-Bas', polska:'Pologne', monaco:'Monaco'}).map(([k, v]) => [k.replace(/[^a-z0-9]+/g, ' ').trim(), v]));
+function companyCountry(c){
+  if(!c.company || c.sector === NO_SECTOR) return '';
+  const w = norm(c.company).replace(/[^a-z0-9]+/g, ' ').trim().replace(/( (sa|sas|sasu|sarl|se|sca|gmbh|ltd|limited|inc|ag|spa|bv|nv|llc|plc|srl|group|groupe))+$/, '').split(' ');
+  for(let n = Math.min(3, w.length - 1); n >= 1; n--){ const p = NAME_COUNTRY.get(w.slice(-n).join(' ')); if(p) return p; }
+  const dom = domainOf(c.company) || (c.group ? domainOf(c.group) : '');
+  if(!dom) return '';
+  return HQ_COUNTRY.get(dom) || TLD_COUNTRY.get(dom.split('.').pop()) || '';
+}
+function fillCompanyCountries(list){
+  list.forEach(c => { if(c.countrySrc === 'colle' || c.countryGiven) return; const p = companyCountry(c); c.country = p; c.countrySrc = p ? 'entreprise' : ''; });
+}
 function load(list, demo){
   contacts = list; isDemo = demo;
   if(!demo){ applySchools(list); applyCountries(list); }
-  assignGroups(list); proxCache = new Map(); tgItems = null;
+  assignGroups(list); fillCompanyCountries(list); proxCache = new Map(); tgItems = null;
   /* Démo : quelques échanges fictifs, pour montrer le classement par proximité */
   if(demo){ setProx(null); cibleData = null; list.forEach(c => { const h = (c.id * 2654435761) % 1000; c.demoMsgs = h < 160 ? 1 + h % 37 : 0; c.demoReco = h % 61 === 0; }); }
   if(!demo){ applyAI(list); refreshShared(); }
@@ -4897,7 +4916,7 @@ document.addEventListener('click', e => {
     else if(a === 'schoolpaste') showSchoolPaste(act.dataset.s);
     else if(a === 'payspaste') showCountryPaste();
     else if(a === 'paysapply'){ const p = countryCode($('#paysIn').value), n = paysPending.length; if(!p) return; setCountries(paysPending, p); paysPending = []; toast(L(`${n} contact${n > 1 ? 's' : ''} associé${n > 1 ? 's' : ''} à ${dv(p)}`, `${n} contact${sEN(n)} linked to ${dv(p)}`)); showCountryPaste(p); }
-    else if(a === 'paysclear'){ const p = act.dataset.s; setCountries(contacts.filter(c => c.country === p), ''); toast(L(`Pays retiré : ${dv(p)}`, `Country removed: ${dv(p)}`)); showCountryPaste(); }
+    else if(a === 'paysclear'){ const p = act.dataset.s; setCountries(contacts.filter(c => c.countrySrc === 'colle' && c.country === p), ''); toast(L(`Pays retiré : ${dv(p)}`, `Country removed: ${dv(p)}`)); showCountryPaste(); }
     else if(a === 'schoolapply'){ const s = act.dataset.s, n = schoolPending.length; setSchools(schoolPending, s); schoolPending = []; toast(L(`${n} contact${n > 1 ? 's' : ''} associé${n > 1 ? 's' : ''} à ${s}`, `${n} contact${sEN(n)} linked to ${s}`)); showMe(); }
     else if(a === 'schoolclear'){ const s = act.dataset.s; setSchools(contacts.filter(c => c.school === s), ''); toast(L(`École retirée : ${s}`, `School removed: ${s}`)); showMe(); }
     else if(a === 'shareview') shareView();
