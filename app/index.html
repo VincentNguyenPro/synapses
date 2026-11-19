@@ -1801,7 +1801,7 @@ function setTag(c, t){
 /* ---------- Dimensions ---------- */
 const DIMS = {
   sector:   {label:L('Secteur', 'Industry'), get:c => c.sector},
-  company:  {label:L('Entreprise', 'Company'), get:c => c.group || c.company || 'Sans entreprise', minHub:2, other:'Autres entreprises'},
+  company:  {label:L('Entreprise', 'Company'), get:c => c.group || c.company || 'Non communiqué' /* champ vide = « Non communiqué », un seul rond (choix de Vincent du 19 novembre 2026) */, minHub:2, other:'Autres entreprises'},
   fn:       {label:L('Fonction', 'Function'), get:c => c.fn},
   seniority:{label:L('Séniorité', 'Seniority'), get:c => c.seniority, order:SEN_ORDER},
   year:     {label:L('Année de connexion', 'Year connected'), get:c => c.year ? String(c.year) : 'Inconnue'},
