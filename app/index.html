@@ -844,7 +844,7 @@ const VALUE_EN = new Map(Object.entries({
   'Belgique':'Belgium', 'Suisse':'Switzerland', 'Royaume-Uni':'United Kingdom', 'Allemagne':'Germany', 'Espagne':'Spain', 'Italie':'Italy', 'Pays-Bas':'Netherlands',
   'Irlande':'Ireland', 'Suède':'Sweden', 'Danemark':'Denmark', 'Pologne':'Poland', 'États-Unis':'United States', 'Maroc':'Morocco', 'Tunisie':'Tunisia', 'Algérie':'Algeria',
   'Sénégal':'Senegal', 'Côte d’Ivoire':'Ivory Coast', 'Émirats arabes unis':'United Arab Emirates', 'Singapour':'Singapore', 'Inde':'India', 'Chine':'China', 'Japon':'Japan',
-  'Brésil':'Brazil', 'Australie':'Australia', 'Finlande':'Finland', 'Corée du Sud':'South Korea', 'Israël':'Israel', 'Autriche':'Austria', 'Norvège':'Norway', 'Mexique':'Mexico', 'Argentine':'Argentina', 'Estonie':'Estonia', 'Liban':'Lebanon', 'Arabie saoudite':'Saudi Arabia', 'Thaïlande':'Thailand', 'Cameroun':'Cameroon', 'Bénin':'Benin', 'Macédoine du Nord':'North Macedonia', 'Maurice':'Mauritius', 'Koweït':'Kuwait'
+  'Brésil':'Brazil', 'Australie':'Australia', 'Finlande':'Finland', 'Corée du Sud':'South Korea', 'Israël':'Israel', 'Autriche':'Austria', 'Norvège':'Norway', 'Mexique':'Mexico', 'Argentine':'Argentina', 'Estonie':'Estonia', 'Liban':'Lebanon', 'Arabie saoudite':'Saudi Arabia', 'Thaïlande':'Thailand', 'Cameroun':'Cameroon', 'Bénin':'Benin', 'Macédoine du Nord':'North Macedonia', 'Maurice':'Mauritius', 'Koweït':'Kuwait', 'Madagascar':'Madagascar'
 }));
 const dv = v => EN && VALUE_EN.has(v) ? VALUE_EN.get(v) : v;
 /* Texte tapé en anglais → code interne (« Healthcare » → « Santé ») */
@@ -945,7 +945,7 @@ const COUNTRY_ALIASES = {
   'emirats arabes unis':'Émirats arabes unis', 'united arab emirates':'Émirats arabes unis', 'singapour':'Singapour', 'singapore':'Singapour',
   'inde':'Inde', 'india':'Inde', 'chine':'Chine', 'china':'Chine', 'japon':'Japon', 'japan':'Japon', 'bresil':'Brésil', 'brazil':'Brésil', 'australie':'Australie', 'australia':'Australie',
   'finlande':'Finlande', 'finland':'Finlande', 'coree du sud':'Corée du Sud', 'south korea':'Corée du Sud', 'israel':'Israël', 'qatar':'Qatar',
-  'autriche':'Autriche', 'austria':'Autriche', 'norvege':'Norvège', 'norway':'Norvège', 'mexique':'Mexique', 'mexico':'Mexique', 'argentine':'Argentine', 'argentina':'Argentine', 'estonie':'Estonie', 'estonia':'Estonie', 'liban':'Liban', 'lebanon':'Liban', 'arabie saoudite':'Arabie saoudite', 'saudi arabia':'Arabie saoudite', 'thailande':'Thaïlande', 'thailand':'Thaïlande', 'togo':'Togo', 'monaco':'Monaco', 'cameroun':'Cameroun', 'cameroon':'Cameroun', 'benin':'Bénin', 'kenya':'Kenya', 'nigeria':'Nigeria', 'hong kong':'Hong Kong', 'macedoine du nord':'Macédoine du Nord', 'north macedonia':'Macédoine du Nord', 'maurice':'Maurice', 'mauritius':'Maurice', 'koweit':'Koweït', 'kuwait':'Koweït'
+  'autriche':'Autriche', 'austria':'Autriche', 'norvege':'Norvège', 'norway':'Norvège', 'mexique':'Mexique', 'mexico':'Mexique', 'argentine':'Argentine', 'argentina':'Argentine', 'estonie':'Estonie', 'estonia':'Estonie', 'liban':'Liban', 'lebanon':'Liban', 'arabie saoudite':'Arabie saoudite', 'saudi arabia':'Arabie saoudite', 'thailande':'Thaïlande', 'thailand':'Thaïlande', 'togo':'Togo', 'monaco':'Monaco', 'cameroun':'Cameroun', 'cameroon':'Cameroun', 'benin':'Bénin', 'kenya':'Kenya', 'nigeria':'Nigeria', 'hong kong':'Hong Kong', 'macedoine du nord':'Macédoine du Nord', 'north macedonia':'Macédoine du Nord', 'maurice':'Maurice', 'mauritius':'Maurice', 'koweit':'Koweït', 'kuwait':'Koweït', 'madagascar':'Madagascar'
 };
 /* Drapeaux des pays (choix de Vincent du 19 novembre 2026) : émoji tiré du code ISO, rien n’est chargé d’un autre site.
    Sous Windows, les drapeaux émoji s’affichent en deux lettres (FR) : lisible quand même. */
@@ -953,7 +953,7 @@ const COUNTRY_ISO = {'France':'FR', 'Suisse':'CH', 'Belgique':'BE', 'Luxembourg'
   'Irlande':'IE', 'Suède':'SE', 'Danemark':'DK', 'Pologne':'PL', 'États-Unis':'US', 'Canada':'CA', 'Maroc':'MA', 'Tunisie':'TN', 'Algérie':'DZ', 'Sénégal':'SN', 'Côte d’Ivoire':'CI',
   'Émirats arabes unis':'AE', 'Singapour':'SG', 'Inde':'IN', 'Chine':'CN', 'Japon':'JP', 'Brésil':'BR', 'Australie':'AU', 'Finlande':'FI', 'Corée du Sud':'KR', 'Israël':'IL', 'Qatar':'QA',
   'Autriche':'AT', 'Norvège':'NO', 'Mexique':'MX', 'Argentine':'AR', 'Estonie':'EE', 'Liban':'LB', 'Arabie saoudite':'SA', 'Thaïlande':'TH', 'Togo':'TG', 'Monaco':'MC', 'Cameroun':'CM',
-  'Bénin':'BJ', 'Kenya':'KE', 'Nigeria':'NG', 'Hong Kong':'HK', 'Macédoine du Nord':'MK', 'Maurice':'MU', 'Koweït':'KW'};
+  'Bénin':'BJ', 'Kenya':'KE', 'Nigeria':'NG', 'Hong Kong':'HK', 'Macédoine du Nord':'MK', 'Maurice':'MU', 'Koweït':'KW', 'Madagascar':'MG'};
 const flagEmoji = v => { const c = COUNTRY_ISO[v]; return c ? String.fromCodePoint(...[...c].map(x => 0x1F1A5 + x.charCodeAt(0))) : ''; };
 /* Drapeau devant un nom de pays, seulement quand la dimension affichée est « Pays » */
 const flagEm = () => narrowScreen() ? 1 : 1.3;
