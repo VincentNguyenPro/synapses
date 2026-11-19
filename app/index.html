@@ -4699,15 +4699,23 @@ function setCountries(list, pays){
   if(first && pays) state.groupBy = 'country';
   proxCache = new Map(); tgItems = null; needFit = true; setupControls(); render();
 }
-/* Pays de l’entreprise (choix de Vincent du 18 novembre 2026 : pays du siège) : pays écrit à la fin du nom de l’entité
-   (« KPMG France », « Constructel Belgium SA »), sinon siège de data/pays-entreprises.json par domaine officiel, sinon extension
+/* Pays de l’entreprise (choix de Vincent du 18 novembre 2026 : pays du siège) : pays écrit dans le nom de l’entité
+   (« KPMG France », « Toshiba Tec France Imaging Systems »), sinon siège de data/pays-entreprises.json par domaine officiel, sinon extension
    du domaine (.fr → France). Jamais deviné : entreprise inconnue = « Non renseigné ». Le pays collé depuis LinkedIn passe avant. */
 let HQ_COUNTRY = new Map(), TLD_COUNTRY = new Map();
 const NAME_COUNTRY = new Map(Object.entries({...COUNTRY_ALIASES, schweiz:'Suisse', espana:'Espagne', italia:'Italie', deutschland:'Allemagne', nederland:'Pays-Bas', polska:'Pologne', monaco:'Monaco'}).map(([k, v]) => [k.replace(/[^a-z0-9]+/g, ' ').trim(), v]));
 function companyCountry(c){
   if(!c.company || c.sector === NO_SECTOR) return '';
   const w = norm(c.company).replace(/[^a-z0-9]+/g, ' ').trim().replace(/( (sa|sas|sasu|sarl|se|sca|gmbh|ltd|limited|inc|ag|spa|bv|nv|llc|plc|srl|group|groupe))+$/, '').split(' ');
-  for(let n = Math.min(3, w.length - 1); n >= 1; n--){ const p = NAME_COUNTRY.get(w.slice(-n).join(' ')); if(p) return p; }
+  /* Pays écrit n’importe où dans le nom (« Toshiba Tec France Imaging Systems » → France, choix de Vincent du 19 novembre 2026) ;
+     s’il y en a plusieurs, le dernier ; jamais le premier mot seul (« Canada Goose », « Japan Tobacco » restent à leur siège) ;
+     « Maurice », aussi un prénom, compte seulement en fin de nom */
+  let found = '';
+  for(let i = 1; i < w.length; i++) for(let n = Math.min(3, w.length - i); n >= 1; n--){
+    const g = w.slice(i, i + n).join(' '), p = NAME_COUNTRY.get(g);
+    if(p && !(g === 'maurice' && i + n < w.length)){ found = p; i += n - 1; break; }
+  }
+  if(found) return found;
   const dom = domainOf(c.company) || (c.group ? domainOf(c.group) : '');
   if(!dom) return '';
   return HQ_COUNTRY.get(dom) || TLD_COUNTRY.get(dom.split('.').pop()) || '';
