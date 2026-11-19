@@ -452,6 +452,7 @@ button.lg:hover{background:var(--surface-2)}
 @media (prefers-reduced-motion: reduce){.lg .fbar{transition:none}.legendbox{transition:none}}
 .lg.off:hover{opacity:.8}
 .lg:focus-visible{outline:2px solid var(--accent)}
+.flag{font-size:1.2em;line-height:1}
 .lgl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgwrap{display:flex;flex-wrap:wrap;align-items:flex-start}
 .lgg .lgchev{flex:none;width:22px;height:14px;position:relative;margin-left:-8px}
@@ -946,6 +947,17 @@ const COUNTRY_ALIASES = {
   'finlande':'Finlande', 'finland':'Finlande', 'coree du sud':'Corée du Sud', 'south korea':'Corée du Sud', 'israel':'Israël', 'qatar':'Qatar',
   'autriche':'Autriche', 'austria':'Autriche', 'norvege':'Norvège', 'norway':'Norvège', 'mexique':'Mexique', 'mexico':'Mexique', 'argentine':'Argentine', 'argentina':'Argentine', 'estonie':'Estonie', 'estonia':'Estonie', 'liban':'Liban', 'lebanon':'Liban', 'arabie saoudite':'Arabie saoudite', 'saudi arabia':'Arabie saoudite', 'thailande':'Thaïlande', 'thailand':'Thaïlande', 'togo':'Togo', 'monaco':'Monaco', 'cameroun':'Cameroun', 'cameroon':'Cameroun', 'benin':'Bénin', 'kenya':'Kenya', 'nigeria':'Nigeria', 'hong kong':'Hong Kong', 'macedoine du nord':'Macédoine du Nord', 'north macedonia':'Macédoine du Nord', 'maurice':'Maurice', 'mauritius':'Maurice', 'koweit':'Koweït', 'kuwait':'Koweït'
 };
+/* Drapeaux des pays (choix de Vincent du 19 novembre 2026) : émoji tiré du code ISO, rien n’est chargé d’un autre site.
+   Sous Windows, les drapeaux émoji s’affichent en deux lettres (FR) : lisible quand même. */
+const COUNTRY_ISO = {'France':'FR', 'Suisse':'CH', 'Belgique':'BE', 'Luxembourg':'LU', 'Royaume-Uni':'GB', 'Allemagne':'DE', 'Espagne':'ES', 'Italie':'IT', 'Portugal':'PT', 'Pays-Bas':'NL',
+  'Irlande':'IE', 'Suède':'SE', 'Danemark':'DK', 'Pologne':'PL', 'États-Unis':'US', 'Canada':'CA', 'Maroc':'MA', 'Tunisie':'TN', 'Algérie':'DZ', 'Sénégal':'SN', 'Côte d’Ivoire':'CI',
+  'Émirats arabes unis':'AE', 'Singapour':'SG', 'Inde':'IN', 'Chine':'CN', 'Japon':'JP', 'Brésil':'BR', 'Australie':'AU', 'Finlande':'FI', 'Corée du Sud':'KR', 'Israël':'IL', 'Qatar':'QA',
+  'Autriche':'AT', 'Norvège':'NO', 'Mexique':'MX', 'Argentine':'AR', 'Estonie':'EE', 'Liban':'LB', 'Arabie saoudite':'SA', 'Thaïlande':'TH', 'Togo':'TG', 'Monaco':'MC', 'Cameroun':'CM',
+  'Bénin':'BJ', 'Kenya':'KE', 'Nigeria':'NG', 'Hong Kong':'HK', 'Macédoine du Nord':'MK', 'Maurice':'MU', 'Koweït':'KW'};
+const flagEmoji = v => { const c = COUNTRY_ISO[v]; return c ? String.fromCodePoint(...[...c].map(x => 0x1F1A5 + x.charCodeAt(0))) : ''; };
+/* Drapeau devant un nom de pays, seulement quand la dimension affichée est « Pays » */
+const flagEm = () => narrowScreen() ? 1 : 1.3;
+const fl = (v, dim) => dim === 'country' && COUNTRY_ISO[v] ? `<span class="flag" aria-hidden="true">${flagEmoji(v)}</span> ` : '';
 const CITY_COUNTRY = {
   'paris':'France', 'lyon':'France', 'lille':'France', 'nantes':'France', 'bordeaux':'France', 'marseille':'France', 'toulouse':'France', 'nice':'France',
   'rennes':'France', 'strasbourg':'France', 'montpellier':'France', 'grenoble':'France', 'la defense':'France', 'londres':'Royaume-Uni', 'london':'Royaume-Uni',
@@ -2081,7 +2093,7 @@ function buildChips(k, id){
   const foot = sel ? `<div class="chipfoot"><span>${L(`${sel} sélectionné${sel > 1 ? 's' : ''}, touche une valeur pour l’ajouter ou la retirer`, `${sel} selected, tap a value to add or remove it`)}</span><button class="linkbtn" type="button" data-cleark="${k}">${L('Effacer', 'Clear')}</button></div>` : '';
   const maxC = d3.max([...counts.values()]) || 1;
   el.innerHTML = domainFor(k, contacts).map(v =>
-    `<button class="chip frow" type="button" aria-pressed="${state.include[k].has(v)}" data-k="${k}" data-v="${esc(v)}"><span class="fbar" style="width:calc((100% - 20px) * ${Math.max(0.02, counts.get(v) / maxC).toFixed(3)})${k === state.colorBy ? `;background:${colorFn(v)}` : ''}"></span>${k === state.colorBy ? `<span class="dot" style="background:${colorFn(v)}"></span>` : ''}<span class="flbl">${esc(dv(v))}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), contacts.length)}</span></button>`).join('') + foot;
+    `<button class="chip frow" type="button" aria-pressed="${state.include[k].has(v)}" data-k="${k}" data-v="${esc(v)}"><span class="fbar" style="width:calc((100% - 20px) * ${Math.max(0.02, counts.get(v) / maxC).toFixed(3)})${k === state.colorBy ? `;background:${colorFn(v)}` : ''}"></span>${k === state.colorBy ? `<span class="dot" style="background:${colorFn(v)}"></span>` : ''}<span class="flbl">${fl(v, k)}${esc(dv(v))}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), contacts.length)}</span></button>`).join('') + foot;
 }
 const syncChips = () => FILTERS.forEach(([k, id]) => buildChips(k, id));
 function syncYears(){ if(allYears.length){ $('#yMin').value = state.yMin; $('#yMax').value = state.yMax; } }
@@ -2954,7 +2966,12 @@ function positionLabels(){
        En mode radial, une seule ligne dans l’axe de la branche */
     const two = !labelRadial;
     const nl = this.__nl || 1, up = nl * 1.15; /* lignes au-dessus de la part : 1 ou 2 lignes de nom */
-    el.select('tspan.lblName').attr('dy', two ? (s > 0.3 ? 0 : s < -0.3 ? `-${up}em` : `-${up / 2}em`) : 0);
+    /* Le décalage vertical va sur le premier morceau du nom : le drapeau s’il y en a un, sinon le nom */
+    const dy0 = two ? (s > 0.3 ? 0 : s < -0.3 ? `-${up}em` : `-${up / 2}em`) : 0, hasFlag = !el.select('tspan.lblFlag').empty();
+    /* Drapeau plus grand que le nom : son « em » aussi, d’où la division */
+    const fe = flagEm();
+    el.select('tspan.lblFlag').attr('dy', two ? (s > 0.3 ? 0 : s < -0.3 ? `-${up / fe}em` : `-${up / 2 / fe}em`) : 0);
+    el.select('tspan.lblName').attr('dy', hasFlag ? 0 : dy0);
     el.select('tspan.lblName2').attr('x', two ? x : null).attr('dy', two ? '1.15em' : 0).attr('dx', two ? 0 : '0.3em');
     el.select('tspan.lblPct').attr('x', two ? x : null).attr('dy', two ? '1.15em' : 0).attr('dx', two ? 0 : '0.3em');
   });
@@ -2973,7 +2990,7 @@ function lblGeo(el){
     const ck = el.textContent + '|' + (el.__nl || 1) + '|' + (el.__small ? 1 : 0), hit = LBL_W.get(ck);
     if(hit) m = hit;
     else {
-      const a1 = len('tspan.lblName:not(.lblName2)'), a1b = len('tspan.lblName2'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
+      const a1 = len('tspan.lblName:not(.lblName2)') + len('tspan.lblFlag'), a1b = len('tspan.lblName2'), a2 = len('tspan.lblPct'), a3 = len('tspan.lblN');
       m = {w1:a1 + a1b + a2 + a3 + 4, w2:Math.max(a1, a1b, a2 + a3)};
       if(m.w1 > 4 && isFinite(m.w1)){ if(LBL_W.size > 2000) LBL_W.clear(); LBL_W.set(ck, m); }
     }
@@ -3488,8 +3505,10 @@ function renderGraph(vis){
       const t = d3.select(this); t.text(null);
       /* Sur téléphone, noms plus courts pour laisser de la place au graphe (nom complet dans la fiche et les filtres) */
       /* Sur téléphone, le nom entier sur deux lignes coupées entre deux mots (« Tourisme, hôtellerie » / « & restauration ») plutôt que tronqué */
-      const nm = d.others ? `${dv(d.key)} (${d.others.length})` : dv(d.key);
+      const nm = d.others ? `${dv(d.key)} (${d.others.length})` : dv(d.key), flag = !d.others && state.groupBy === 'country' ? flagEmoji(d.key) : '';
       const lines = narrowScreen() ? wrapLabel(nm, 16) : [nm.length > 40 ? nm.slice(0, 39).trimEnd() + '…' : nm];
+      /* Drapeau un peu plus grand que le nom, sauf sur téléphone où la place manque */
+      if(flag) t.append('tspan').attr('class', 'lblFlag').style('font-size', `${flagEm()}em`).text(flag + '\u2009');
       t.append('tspan').attr('class', 'lblName').text(lines[0]);
       if(lines[1]) t.append('tspan').attr('class', 'lblName lblName2').text(lines[1]);
       this.__nl = lines.length;
@@ -3879,7 +3898,7 @@ function legendTree(vis){
   const rows = hubs.slice(0, max).map(h => {
     /* Ouvert au clic, ou d’office quand le filtre porte sur des valeurs de ce groupe (ex. une entreprise filtrée) */
     const k = 'g:' + h.key, ms = members.get(h.id), open = legendOpen.has(k) || (sel.size > 0 && ms.some(c => sel.has(cdim.get(c))));
-    const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${EN ? `${open ? 'Collapse' : 'Show'} the breakdown of ${esc(dv(h.key))}` : `${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}`}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${esc(dv(h.key))}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
+    const head = `<button type="button" class="lg lgg" data-act="lgsub" data-v="${esc(k)}" aria-expanded="${open}" title="${EN ? `${open ? 'Collapse' : 'Show'} the breakdown of ${esc(dv(h.key))}` : `${open ? 'Replier' : 'Voir'} la répartition de ${esc(h.key)}`}"><span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, h.count / maxG).toFixed(3)});background:var(--accent)"></span><span class="lgl">${fl(h.key, state.groupBy)}${esc(dv(h.key))}</span><span class="n">${h.count}</span><span class="pct">${pct(h.count, vis.length)}</span><span class="lgchev" aria-hidden="true"></span></button>`;
     if(!open) return `<li>${head}</li>`;
     const cnt = d3.rollup(ms, v => v.length, cdim.get), here = new Set(ms.map(levelOf));
     const vals = sortDesc([...cnt.keys()], cnt, true), top = vals.slice(0, openTop), rest = d3.sum(vals.slice(openTop), v => cnt.get(v));
@@ -3890,7 +3909,7 @@ function legendTree(vis){
     const dot = v => here.has(v) || !levelMap.size ? colorFn(v) : GREY;
     return `<li data-lggrp="${esc(h.key)}">${head}<ul class="lgvals">${top.map(v => {
       const lu = state.colorBy === 'company' && levelMap.size ? logoUrl(v) : '';
-      const inner = `<span class="dot${state.colorBy === 'company' && levelMap.size ? ' ldot' : ''}" style="background:${dot(v)};--c:${dot(v)}">${lu ? `<img class="lgimg" src="${esc(lu)}" alt="" data-dom="${esc(domainOf(v))}">` : ''}</span><span class="lgl">${esc(dv(v))}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
+      const inner = `<span class="dot${state.colorBy === 'company' && levelMap.size ? ' ldot' : ''}" style="background:${dot(v)};--c:${dot(v)}">${lu ? `<img class="lgimg" src="${esc(lu)}" alt="" data-dom="${esc(domainOf(v))}">` : ''}</span><span class="lgl">${fl(v, state.colorBy)}${esc(dv(v))}</span><span class="n">${cnt.get(v)}</span><span class="pct">${pct(cnt.get(v), ms.length)}</span>`;
       const on = !!legendHL && legendHL.kind === 'v' && legendHL.v === v && (!legendHL.g || legendHL.g === h.key);
       const btn = `<button type="button" class="lgv" data-lghlv="${esc(v)}" aria-pressed="${on || sel.has(v)}" title="${EN ? `Show ${esc(dv(v))}’s contacts in the graph` : `Voir les contacts de ${esc(v)} dans le graphe`}">${inner}</button>`;
       /* Groupe d’entreprises : un chevron déplie ses filiales */
@@ -3931,7 +3950,7 @@ function updateLegend(vis){
   const max = legendAll ? 999 : 8;
   const maxL = d3.max(shown, v => counts.get(v)) || 1;
   $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${EN ? `${state.groupBy !== state.colorBy ? 'Color and clusters' : 'Color'}: ${cdim.label.toLowerCase()}` : `${state.groupBy !== state.colorBy ? 'Couleur et grappes' : 'Couleur'}&nbsp;: ${cdim.label.toLowerCase()}`}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${state.groupBy !== state.colorBy ? `<p class="more" style="margin:0 6px 6px">${L('Une grappe par valeur autour de chaque groupe : la plus petite à midi, puis de plus en plus grosses dans le sens horaire', 'One cluster per value around each group: the smallest at 12 o’clock, then larger and larger clockwise')}</p>` : ''}<ul>${shown.slice(0, max).map(v => {
-    const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${dotOf(v)}"></span><span class="dot" style="background:${dotOf(v)}"></span><span class="lgl">${esc(dv(v))}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
+    const inner = `<span class="fbar" style="width:calc((100% - 12px) * ${Math.max(0.02, counts.get(v) / maxL).toFixed(3)});background:${dotOf(v)}"></span><span class="dot" style="background:${dotOf(v)}"></span><span class="lgl">${fl(v, state.colorBy)}${esc(dv(v))}</span><span class="n">${counts.get(v)}</span><span class="pct">${pct(counts.get(v), base.length)}</span>`;
     const row = canFilter && v !== colorOther ? `<button type="button" class="lg${sel.size && !sel.has(v) ? ' off' : ''}" data-k="${state.colorBy}" data-v="${esc(v)}" aria-pressed="${state.include[state.colorBy].has(v)}" title="${EN ? `Add or remove ${esc(dv(v))} from the filter` : `Ajouter ou retirer ${esc(v)} du filtre`}">${inner}</button>` : `<span class="lg">${inner}</span>`;
     /* Groupe qui réunit plusieurs entités : un chevron déplie ses filiales */
     const subs = state.colorBy === 'company' ? entitiesOf(base.filter(c => coOf(c) === v)) : [];
@@ -4074,7 +4093,7 @@ function showContact(c){
       ${proxOf(c).why.length ? `<dt>${L('Ton lien', 'Your connection')}</dt><dd class="proxdd">${proxOf(c).why.map(esc).join('<br>')}</dd>` : ''}
       <dt>${L('Connecté le', 'Connected on')}</dt><dd>${fmtDate(c.date)}</dd>
       ${c.location ? `<dt>${L('Ville', 'City')}</dt><dd>${esc(c.location)}</dd>` : ''}
-      ${c.country ? `<dt>${L('Pays', 'Country')}</dt><dd>${esc(dv(c.country))}${c.countrySrc === 'entreprise' ? ` <small class="muted">${L('(siège de l’entreprise)', '(company headquarters)')}</small>` : ''}</dd>` : ''}
+      ${c.country ? `<dt>${L('Pays', 'Country')}</dt><dd>${fl(c.country, 'country')}${esc(dv(c.country))}${c.countrySrc === 'entreprise' ? ` <small class="muted">${L('(siège de l’entreprise)', '(company headquarters)')}</small>` : ''}</dd>` : ''}
       ${c.email ? `<dt>Email</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>` : ''}
       ${c.school ? `<dt>${L('Formation', 'Education')}</dt><dd>${esc(c.school)}</dd>` : ''}
       ${c.exp ? `<dt>${L('Expérience', 'Experience')}</dt><dd>${esc(dv(c.exp))}</dd>` : ''}
@@ -4180,7 +4199,7 @@ function showHub(h){
   const canFilter = isFilterDim(state.groupBy) && h.key !== (DIMS[state.groupBy].other || 'Autres');
   openDrawer(`
     ${state.groupBy === 'company' && h.key !== DIMS.company.other ? `<span class="logo-badge" style="background:${brandColor(h.key)}" aria-hidden="true"><span class="mtext">${esc(mono(h.key))}</span>${logoUrl(h.key) ? `<img class="logo-img" src="${esc(logoUrl(h.key))}" alt="" hidden>` : ''}</span>` : ''}
-    <h2 id="dtitle" tabindex="-1">${esc(dv(h.key))}</h2>
+    <h2 id="dtitle" tabindex="-1">${fl(h.key, state.groupBy)}${esc(dv(h.key))}</h2>
     <p class="pos">${L(`${members.length} contact${members.length > 1 ? 's' : ''} dans ce groupe, soit ${pct(members.length, contacts.length)} de ton réseau`, `${members.length} contact${sEN(members.length)} in this group, ${pct(members.length, contacts.length)} of your network`)}</p>
     ${canFilter ? `<button class="btn block" type="button" data-only="${state.groupBy}" data-v="${esc(h.key)}" style="margin-top:12px">${L('N’afficher que ce groupe', 'Show only this group')}</button>` : ''}
     ${h.others ? `<p class="pos" style="margin-top:6px">${L(`Cette branche réunit ${h.others.length} groupes plus petits.`, `This branch merges ${h.others.length} smaller groups.`)}</p>
@@ -4191,7 +4210,7 @@ function showHub(h){
     <p class="hint" style="margin:0 0 10px">${L('Touche une ligne pour voir ces contacts dans le graphe.', 'Tap a row to see these contacts in the graph.')}</p>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${counts.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
     <div class="legendlist${state.colorBy === 'company' ? ' withsubs' : ''}">${top20.map(v => {
-      const row = `<span class="dot" style="background:${dotR(v)}"></span><span>${esc(dv(v))}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span>`;
+      const row = `<span class="dot" style="background:${dotR(v)}"></span><span>${fl(v, state.colorBy)}${esc(dv(v))}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span>`;
       const subs = state.colorBy === 'company' ? entitiesOf(members.filter(c => coOf(c) === v)) : [];
       return subs.length > 1 ? `<details class="subs"><summary class="hl" data-hlv="${esc(v)}">${row}</summary>${subRows(subs, members.length)}</details>` : `<div class="hl" role="button" tabindex="0" data-hlv="${esc(v)}">${row}</div>`;
     }).join('')}${rest > 0 ? `<div class="hl" role="button" tabindex="0" data-hlrest="1"><span class="dot" style="background:${GREY}"></span><span>${EN ? `${realRows.length - 20} other${sEN(realRows.length - 20)}` : `${realRows.length - 20} autre${realRows.length - 20 > 1 ? 's' : ''} ${esc(cdim.label.toLowerCase())}${realRows.length - 20 > 1 ? 's' : ''}`}</span><span class="n">${rest}</span><span class="pct">${pct(rest, members.length)}</span></div>` : ''}</div>
@@ -4662,7 +4681,7 @@ function showCountryPaste(pays){
     <p class="pos" id="paysFound" aria-live="polite"></p>
     <ul class="people" id="paysListPeople"></ul>
     <button class="btn primary block" type="button" id="paysApply" data-act="paysapply" disabled>${L('Associer à ce pays', 'Link to this country')}</button>
-    ${counts.length ? `<span class="lbl" style="margin-top:16px">${L('Déjà indiqués', 'Already set')}</span><ul class="paysdone">${counts.map(([k, n]) => `<li><span>${esc(dv(k))} · ${n}</span><button class="linkbtn" type="button" data-act="paysclear" data-s="${esc(k)}">${L('Retirer', 'Remove')}</button></li>`).join('')}</ul>` : ''}
+    ${counts.length ? `<span class="lbl" style="margin-top:16px">${L('Déjà indiqués', 'Already set')}</span><ul class="paysdone">${counts.map(([k, n]) => `<li><span>${fl(k, 'country')}${esc(dv(k))} · ${n}</span><button class="linkbtn" type="button" data-act="paysclear" data-s="${esc(k)}">${L('Retirer', 'Remove')}</button></li>`).join('')}</ul>` : ''}
     <p class="hint" style="margin-top:14px">${L('Le texte collé est lu dans ce navigateur et oublié aussitôt&nbsp;: seul le pays de chaque contact reconnu reste sur cet appareil.', 'The pasted text is read in this browser and forgotten right away: only each recognized contact’s country stays on this device.')}</p>`);
   const ta = $('#paysPaste'), inp = $('#paysIn');
   const sync = () => {
