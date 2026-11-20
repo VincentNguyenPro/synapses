@@ -1875,7 +1875,7 @@ async function loadDictionary(){
   const [co, po] = await Promise.all([get('../data/entreprises.json'), get('../data/postes.json')]);
   /* Domaines des logos : facultatif, sans eux les monogrammes s’affichent */
   domP.then(async d => { COMPANY_DOMAINS.clear(); for(const [n, dom] of Object.entries(d.domaines || {})) COMPANY_DOMAINS.set(nkey(n), dom);
-    const pe = await paysP; HQ_COUNTRY = new Map(Object.entries(pe.sieges || {})); TLD_COUNTRY = new Map(Object.entries(pe.extensions || {}));
+    const pe = await paysP; HQ_COUNTRY = new Map(Object.entries(pe.sieges || {})); TLD_COUNTRY = new Map(Object.entries(pe.extensions || {})); NAME_HQ = new Map(Object.entries(pe.noms || {}));
     if(contacts.length){ fillCompanyCountries(contacts); setupControls(); render(); } }).catch(() => {});
   SECTORS = co.mots_cles.map(m => [m.secteur, new RegExp(m.motif)]);
   BUILTIN.clear();
@@ -4703,6 +4703,9 @@ function setCountries(list, pays){
    (« KPMG France », « Toshiba Tec France Imaging Systems »), sinon siège de data/pays-entreprises.json par domaine officiel, sinon extension
    du domaine (.fr → France). Jamais deviné : entreprise inconnue = « Non renseigné ». Le pays collé depuis LinkedIn passe avant. */
 let HQ_COUNTRY = new Map(), TLD_COUNTRY = new Map();
+/* Pays par nom exact (pays-entreprises.json › noms, choix de Vincent du 20 novembre 2026) : entreprises sans site trouvé,
+   inscrites sous ce nom exact, et une seule, à l’Annuaire des entreprises de l’État (recherche-entreprises.api.gouv.fr) → France */
+let NAME_HQ = new Map();
 const NAME_COUNTRY = new Map(Object.entries({...COUNTRY_ALIASES, schweiz:'Suisse', espana:'Espagne', italia:'Italie', deutschland:'Allemagne', nederland:'Pays-Bas', polska:'Pologne', monaco:'Monaco'}).map(([k, v]) => [k.replace(/[^a-z0-9]+/g, ' ').trim(), v]));
 function companyCountry(c){
   if(!c.company || c.sector === NO_SECTOR) return '';
@@ -4717,8 +4720,7 @@ function companyCountry(c){
   }
   if(found) return found;
   const dom = domainOf(c.company) || (c.group ? domainOf(c.group) : '');
-  if(!dom) return '';
-  return HQ_COUNTRY.get(dom) || TLD_COUNTRY.get(dom.split('.').pop()) || '';
+  return (dom && (HQ_COUNTRY.get(dom) || TLD_COUNTRY.get(dom.split('.').pop()))) || NAME_HQ.get(nkey(c.company)) || '';
 }
 function fillCompanyCountries(list){
   list.forEach(c => { if(c.countrySrc === 'colle' || c.countryGiven) return; const p = companyCountry(c); c.country = p; c.countrySrc = p ? 'entreprise' : ''; });
