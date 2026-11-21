@@ -3146,8 +3146,12 @@
    "motif": "^clariane\\b|^korian\\b"
   },
   {
+   "nom": "Freelance.com",
+   "motif": "^freelance\\.com\\b"
+  },
+  {
    "nom": "Indépendant",
-   "motif": "\\b(independant\\w*|independent (consultant|contractor|advisor|professional)\\w*|^independent\\b|freelance\\w*|free[- ]lance\\w*|frelance\\w*|freelancer\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*|business entrepreneur|entrepreneur individuel|entreprise individuelle|a (mon|son) compte|kendi isim|projet personnel)\\b|عمل خاص| ei$|^siren \\d"
+   "motif": "\\b(independant\\w*|independent (consultant|contractor|advisor|professional)\\w*|^independent\\b|freelance(?!\\.com\\b)\\w*|free[- ]lance\\w*|frelance\\w*|freelancer\\w*|self[- ]?employed|auto[- ]?entrepreneur\\w*|micro[- ]?entrepreneur\\w*|business entrepreneur|entrepreneur individuel|entreprise individuelle|a (mon|son) compte|kendi isim|projet personnel)\\b|عمل خاص| ei$|^siren \\d"
   },
   {
    "nom": "Non communiqué",

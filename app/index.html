@@ -1999,7 +1999,7 @@ function builtinSector(k){
 }
 /* Domaines officiels des entreprises (data/domaines.json, chargé par loadDictionary) */
 const COMPANY_DOMAINS = new Map();
-const NOT_A_COMPANY = /\b(independant\w*|freelance\w*|self[- ]?employed|auto[- ]?entrepreneur\w*|confidenti\w*|prive|private|stealth|en recherche|open to work|^retraite\w*|retired|etudiant\w*|student|top secret|none|aucune?)\b|^[^a-z0-9]*$/;
+const NOT_A_COMPANY = /\b(independant\w*|freelance(?!\.com\b)\w*|self[- ]?employed|auto[- ]?entrepreneur\w*|confidenti\w*|prive|private|stealth|en recherche|open to work|^retraite\w*|retired|etudiant\w*|student|top secret|none|aucune?)\b|^[^a-z0-9]*$/;
 /* Domaine officiel d’une entreprise, pour son logo. Aucun domaine n’est deviné : « laposte.com » n’est pas La Poste,
    et un mauvais logo est pire qu’un monogramme. Variantes reconnues : « Groupe X », « X Groupe », « X (sigle) », « A - B », début de nom. */
 function domainOf(name){
