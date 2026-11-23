@@ -652,6 +652,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   body.drawer-open #bar .demo{display:none}
   .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
   .drawer.tall{max-height:90%}
+  .ofchip{font-size:14px;padding:8px 12px}
   .list{padding:8px 12px 96px}
 }
 </style>
@@ -803,6 +804,8 @@ const norm = s => (s ?? '').toString().toLowerCase().normalize('NFD').replace(/[
 const esc = s => (s ?? '').toString().replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = window.matchMedia('(pointer: coarse)').matches;
+/* Copier tout le texte d’une page : au doigt sur téléphone, Cmd sur Mac, Ctrl ailleurs */
+const copyAllHow = () => coarse ? L('appui long › Tout sélectionner, puis Copier', 'long press › Select All, then Copy') : `${/Mac/.test(navigator.platform || navigator.userAgent) ? 'Cmd' : 'Ctrl'} + A, ${L('puis copier', 'then copy')}`;
 /* Teinte des groupes : color-mix seulement si le navigateur le gère, sinon couleur de fond simple (jamais de noir par défaut) */
 const CM_OK = !!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red 50%, white)'));
 const ICON_EXT = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:15px;height:15px"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
@@ -1523,11 +1526,13 @@ async function searchOffers(){
   const el = document.getElementById('ofFound'); if(el) el.scrollIntoView({block:'start', behavior:reduceMotion ? 'auto' : 'smooth'});
 }
 const isKept = o => myAdded().some(x => compactKey(x.n) === compactKey(o.n) && norm(x.t) === norm(shortJobTitle(o.t)));
+/* Type de contrat renvoyé en français par la fonction offres (et par Jooble) : traduit à l’affichage */
+const contratEN = c => (c || '').replace(/CDD \/ mission/gi, 'Contract').replace(/\bCDI\b/g, 'Permanent').replace(/\bCDD\b/g, 'Fixed-term').replace(/temps plein/gi, 'full-time').replace(/temps partiel/gi, 'part-time').replace(/\bstage\b/gi, 'internship').replace(/\balternance\b/gi, 'work-study');
 function offerStep1(){
   const c = offerCrit(), f = offre.found, sug = offerSuggest(), pl = placeSuggest();
   const chip = (act, v, on) => `<button class="ofchip" type="button" data-act="${act}" data-v="${esc(v)}" aria-pressed="${on}">${esc(v)}</button>`;
   const ago = d => { const n = Math.round((Date.now() - new Date(d)) / 864e5); return !d || isNaN(n) ? '' : n <= 0 ? L('aujourd’hui', 'today') : n === 1 ? L('hier', 'yesterday') : n < 31 ? L(`il y a ${n} jours`, `${n} days ago`) : monthFr(d.slice(0, 7)); };
-  const job = (o, i) => `<li class="ofjob"><div class="ofjt"><b>${esc(o.t)}</b><span>${esc([o.n, o.lieu].filter(Boolean).join(' · '))}</span><small>${esc([o.sal, o.contrat, ago(o.d), o.src].filter(Boolean).join(' · '))}</small></div>
+  const job = (o, i) => `<li class="ofjob"><div class="ofjt"><b>${esc(o.t)}</b><span>${esc([o.n, o.lieu].filter(Boolean).join(' · '))}</span><small>${esc([o.sal, EN ? contratEN(o.contrat) : o.contrat, ago(o.d), o.src].filter(Boolean).join(' · '))}</small></div>
     <div class="ofjb">${isKept(o) ? `<span class="ofkept">${L('Gardée', 'Kept')} ✓</span>` : `<button class="btn" type="button" data-act="ofkeep" data-i="${i}">${L('Garder', 'Keep')}</button>`}<button class="btn primary" type="button" data-act="ofwho" data-i="${i}">${L('Qui contacter ?', 'Who to contact?')}</button>${/^https?:\/\//.test(o.u) ? `<a class="lk" href="${esc(o.u)}" target="_blank" rel="noopener">${L('Annonce', 'Ad')} ${ICON_EXT}</a>` : ''}</div></li>`;
   const srcOff = f && !f.err && Object.values(f.sources).every(v => v !== 'ok');
   return `<section class="ofstep"><h3><span class="ofnum">1</span>${L('Trouver des offres pour toi', 'Find jobs for you')}</h3>
@@ -1591,7 +1596,7 @@ function showOffre(keepScroll){
       ${all.length ? `<label class="evf"><span>${L('Tes offres', 'Your jobs')} <small class="ofcount">${(n => n > all.length ? L(`${all.length} sur ${n}\u00a0: candidatures et offres récentes`, `${all.length} of ${n}: applications and recent jobs`) : L(`${n}\u00a0: LinkedIn et autres sites`, `${n}: LinkedIn and other sites`))(added.length + offers.length)}</small></span><select id="ofPick"><option value="">${L('Choisir une offre…', 'Pick a job…')}</option>${opts}</select></label>
       ${cur || curU ? `<p class="ofcur">${curU ? `<a href="${esc(curU)}" target="_blank" rel="noopener">${L('Ouvrir l’annonce', 'Open the job ad')}${jobSite(curU) ? ' (' + esc(jobSite(curU)) + ')' : ''} ${ICON_EXT}</a><button class="linkbtn" type="button" data-act="ofcopylink" data-u="${esc(curU)}">${L('Copier le lien', 'Copy link')}</button>` : ''}${cur && cur.k === 'm' ? `<button class="linkbtn" type="button" data-act="ofdel">${L('Retirer de mes offres', 'Remove from my jobs')}</button>` : ''}</p>` : ''}` : ''}
       <details class="ofpaste"${all.length ? '' : ' open'}><summary>${L('Ajouter une offre d’un autre site (Hellowork, Welcome to the Jungle, Indeed…)', 'Add a job from another site (Indeed, Welcome to the Jungle…)')}</summary>
-        <p class="hint" style="margin:6px 0 0">${L('Sur la page de l’annonce : Cmd + A (tout sélectionner), Cmd + C, puis colle ici avec le lien. Synapses lit l’entreprise, le poste, à qui il est rattaché et les mots de l’équipe.', 'On the job page: Cmd + A (select all), Cmd + C, then paste here with the link. Synapses reads the company, the role, who it reports to and the team’s keywords.')}</p>
+        <p class="hint" style="margin:6px 0 0">${L(`Sur la page de l’annonce, copie tout le texte (${copyAllHow()}) et colle-le ici avec le lien. Synapses lit l’entreprise, le poste, à qui il est rattaché et les mots de l’équipe.`, `On the job page, copy all the text (${copyAllHow()}) and paste it here with the link. Synapses reads the company, the role, who it reports to and the team’s keywords.`)}</p>
         <textarea id="ofPaste" rows="5" placeholder="${L('Colle ici le lien et tout le texte de l’annonce', 'Paste the link and the full job ad text here')}"></textarea>
         <p class="hint ofnote" id="ofNote" role="status" hidden></p>
         <button class="btn" type="button" data-act="ofread">${L('Lire l’offre', 'Read the offer')}</button></details>
@@ -4990,7 +4995,7 @@ document.addEventListener('click', e => {
     else if(a === 'cibles') showCibles();
     else if(a === 'offre') showOffre();
     else if(a === 'ofread'){ const r = readOffer($('#ofPaste').value), note = $('#ofNote');
-      if(r.link){ $('#ofUrl').value = r.u; note.hidden = false; note.textContent = L(`Lien gardé${jobSite(r.u) ? ' (' + jobSite(r.u) + ')' : ''}. Synapses n’ouvre pas les sites d’emploi (rien ne sort de ton navigateur) : écris l’entreprise et l’intitulé ci-dessous, ou colle ici tout le texte de l’annonce (Cmd + A, puis copier).`, `Link kept${jobSite(r.u) ? ' (' + jobSite(r.u) + ')' : ''}. Synapses doesn’t open job sites (nothing leaves your browser): type the company and job title below, or paste the full ad text here (Cmd + A, then copy).`); $('#ofCo').value = ''; $('#ofTitle').value = ''; $('#ofCo').focus(); return; }
+      if(r.link){ $('#ofUrl').value = r.u; note.hidden = false; note.textContent = L(`Lien gardé${jobSite(r.u) ? ' (' + jobSite(r.u) + ')' : ''}. Synapses n’ouvre pas les sites d’emploi (rien ne sort de ton navigateur) : écris l’entreprise et l’intitulé ci-dessous, ou colle ici tout le texte de l’annonce (${copyAllHow()}).`, `Link kept${jobSite(r.u) ? ' (' + jobSite(r.u) + ')' : ''}. Synapses doesn’t open job sites (nothing leaves your browser): type the company and job title below, or paste the full ad text here (${copyAllHow()}).`); $('#ofCo').value = ''; $('#ofTitle').value = ''; $('#ofCo').focus(); return; }
       if(!r.co && !r.t){ note.hidden = false; note.textContent = L('Colle d’abord le texte de l’offre.', 'Paste the job text first.'); return; } offre.co = r.co || $('#ofCo').value.trim(); offre.t = r.t || $('#ofTitle').value.trim(); offre.u = r.u || $('#ofUrl').value.trim(); offre.boss = r.boss || ''; offre.desc = r.desc || ''; offre.open = null; if(offre.co){ if(offre.t && !r.li) keepOffer({n:offre.co, t:offre.t, u:offre.u}); showOffre(true); } else { $('#ofTitle').value = offre.t; $('#ofCo').focus(); toast(L('Entreprise non reconnue : écris son nom', 'Company not recognised: type its name')); } }
     else if(a === 'ofq' || a === 'oflieu'){ const c = offerCrit(); c.q = $('#ofQ').value.trim(); c.lieu = $('#ofLieu').value.trim(); c.exp = +$('#ofExp').value; c.sal = $('#ofSal').value.trim(); c[a === 'ofq' ? 'q' : 'lieu'] = act.dataset.v; showOffre(true); }
     else if(a === 'ofkeep'){ const o = offre.found && offre.found.list[+act.dataset.i]; if(o){ keepOffer({n:o.n || o.src, t:shortJobTitle(o.t), u:o.u}); toast(L('Offre gardée dans tes offres', 'Job kept in your jobs')); showOffre(true); } }
