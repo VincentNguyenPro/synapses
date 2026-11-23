@@ -4626,8 +4626,18 @@ function applySchools(list){ list.forEach(c => { if(!c.schoolGiven){ if(c.school
 function matchPasted(text){
   /* Les lignes « relations en commun » citent d’autres contacts que la personne affichée : ignorées */
   text = (text || '').split('\n').filter(l => !/en commun|mutual connection|relations? communes?/i.test(l)).join('\n');
-  const hay = ' ' + norm(text).replace(/[^a-z0-9]+/g, ' ') + ' ';
-  return contacts.filter(c => { const n = norm(c.name || '').replace(/[^a-z0-9]+/g, ' ').trim(); return n.includes(' ') && n.length >= 5 && hay.includes(' ' + n + ' '); });
+  const words = s => norm(s || '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const hay = ' ' + words(text) + ' ';
+  const hits = contacts.filter(c => { const n = words(c.name); return n.includes(' ') && n.length >= 5 && hay.includes(' ' + n + ' '); });
+  const byName = d3.group(hits, c => words(c.name));
+  /* Homonymes (même nom, profils différents, choix de Vincent du 23 novembre 2026) : seuls restent ceux dont le poste ou
+     l’entreprise est écrit juste après leur nom sur la page collée ; aucun s’ils ne sont pas départagés, plutôt qu’un pays faux */
+  return hits.filter(c => {
+    if(byName.get(words(c.name)).length < 2) return true;
+    const n = ' ' + words(c.name) + ' ', pos = words(c.position), co = words(c.company), near = [];
+    for(let i = hay.indexOf(n); i >= 0; i = hay.indexOf(n, i + 1)) near.push(hay.slice(i, i + 400));
+    return near.some(z => (pos.length >= 3 && z.includes(' ' + pos + ' ')) || (co.length >= 3 && z.includes(' ' + co + ' ')));
+  });
 }
 const alumniUrl = school => 'https://www.linkedin.com/search/results/people/?network=%5B%22F%22%5D&keywords=' + encodeURIComponent(school);
 function showSchoolPaste(school){
