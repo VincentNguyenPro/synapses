@@ -4202,6 +4202,8 @@ function showHub(h){
     <h2 id="dtitle" tabindex="-1">${fl(h.key, state.groupBy)}${esc(dv(h.key))}</h2>
     <p class="pos">${L(`${members.length} contact${members.length > 1 ? 's' : ''} dans ce groupe, soit ${pct(members.length, contacts.length)} de ton réseau`, `${members.length} contact${sEN(members.length)} in this group, ${pct(members.length, contacts.length)} of your network`)}</p>
     ${canFilter ? `<button class="btn block" type="button" data-only="${state.groupBy}" data-v="${esc(h.key)}" style="margin-top:12px">${L('N’afficher que ce groupe', 'Show only this group')}</button>` : ''}
+    ${state.groupBy === 'country' && h.key === 'Non renseigné' && !isDemo ? `<p class="pos" style="margin-top:14px">${L('Synapses ne trouve pas le pays de leur entreprise. LinkedIn connaît leur vrai pays : indique-le en quelques copier-coller.', 'Synapses can’t find their company’s country. LinkedIn knows where they actually are: add it with a few copy-pastes.')}</p>
+      <button class="btn primary block" type="button" data-act="payspaste" style="margin-top:8px">${L('Indiquer leur pays depuis LinkedIn', 'Add their country from LinkedIn')}</button>` : ''}
     ${h.others ? `<p class="pos" style="margin-top:6px">${L(`Cette branche réunit ${h.others.length} groupes plus petits.`, `This branch merges ${h.others.length} smaller groups.`)}</p>
       <button class="btn primary block" type="button" data-act="showall" style="margin-top:10px">${L('Afficher toutes les branches', 'Show all branches')}</button>
       <h3>${L('Groupes réunis ici', 'Groups merged here')}</h3>
