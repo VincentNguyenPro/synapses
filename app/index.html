@@ -1559,6 +1559,7 @@ function showOffre(keepScroll){
   if(!keepScroll){ select(null); clearFocus(); closePanel(); }
   const offers = myOffers(), res = offre.co ? offerRank(offre.co, offre.t, {boss:offre.boss, desc:offre.desc}) : null;
   /* Une seule liste : offres ajoutées par toi (autres sites), puis candidatures et offres enregistrées sur LinkedIn */
+  /* Au plus 80 offres de l’export (candidatures d’abord, puis les offres enregistrées les plus récentes) : le libellé dit combien sont listées sur le total */
   const added = myAdded(), all = [...added.map(x => ({...x, k:'m'})), ...offers.slice(0, 80)];
   const isCur = x => compactKey(x.n) === compactKey(offre.co) && norm(cleanJobTitle(x.t)) === norm(offre.t);
   const opt = (x, i) => `<option value="${i}"${isCur(x) ? ' selected' : ''}>${esc(cleanJobTitle(x.t))} · ${esc(x.n)}${x.k === 'm' && jobSite(x.u) ? ' · ' + esc(jobSite(x.u)) : ''}${x.d ? ' · ' + esc(monthFr(x.d)) : ''} · ${(n => n ? L(`${n} contact${n > 1 ? 's' : ''}`, `${n} contact${sEN(n)}`) : L('aucun contact', 'no contacts'))(coCount(x.n))}</option>`;
@@ -1584,7 +1585,7 @@ function showOffre(keepScroll){
     ${offerStep1()}
     <section class="ofstep"><h3><span class="ofnum">2</span>${L('Choisir une offre', 'Pick a job')}</h3>
     <form id="ofForm" class="ofform">
-      ${all.length ? `<label class="evf"><span>${L('Tes offres', 'Your jobs')} <small class="ofcount">${L(`${all.length}\u00a0: LinkedIn et autres sites`, `${all.length}: LinkedIn and other sites`)}</small></span><select id="ofPick"><option value="">${L('Choisir une offre…', 'Pick a job…')}</option>${opts}</select></label>
+      ${all.length ? `<label class="evf"><span>${L('Tes offres', 'Your jobs')} <small class="ofcount">${(n => n > all.length ? L(`${all.length} sur ${n}\u00a0: candidatures et offres récentes`, `${all.length} of ${n}: applications and recent jobs`) : L(`${n}\u00a0: LinkedIn et autres sites`, `${n}: LinkedIn and other sites`))(added.length + offers.length)}</small></span><select id="ofPick"><option value="">${L('Choisir une offre…', 'Pick a job…')}</option>${opts}</select></label>
       ${cur || curU ? `<p class="ofcur">${curU ? `<a href="${esc(curU)}" target="_blank" rel="noopener">${L('Ouvrir l’annonce', 'Open the job ad')}${jobSite(curU) ? ' (' + esc(jobSite(curU)) + ')' : ''} ${ICON_EXT}</a><button class="linkbtn" type="button" data-act="ofcopylink" data-u="${esc(curU)}">${L('Copier le lien', 'Copy link')}</button>` : ''}${cur && cur.k === 'm' ? `<button class="linkbtn" type="button" data-act="ofdel">${L('Retirer de mes offres', 'Remove from my jobs')}</button>` : ''}</p>` : ''}` : ''}
       <details class="ofpaste"${all.length ? '' : ' open'}><summary>${L('Ajouter une offre d’un autre site (Hellowork, Welcome to the Jungle, Indeed…)', 'Add a job from another site (Indeed, Welcome to the Jungle…)')}</summary>
         <p class="hint" style="margin:6px 0 0">${L('Sur la page de l’annonce : Cmd + A (tout sélectionner), Cmd + C, puis colle ici avec le lien. Synapses lit l’entreprise, le poste, à qui il est rattaché et les mots de l’équipe.', 'On the job page: Cmd + A (select all), Cmd + C, then paste here with the link. Synapses reads the company, the role, who it reports to and the team’s keywords.')}</p>
