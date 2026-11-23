@@ -653,6 +653,8 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
   .drawer.tall{max-height:90%}
   .ofchip{font-size:14px;padding:8px 12px}
+  /* Entreprises cibles : les filtres sur une ligne qui défile, pour laisser voir la liste */
+  .cbchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-20px;padding-right:20px}.cbchips .chip{flex:none}
   .list{padding:8px 12px 96px}
 }
 </style>
@@ -804,6 +806,8 @@ const norm = s => (s ?? '').toString().toLowerCase().normalize('NFD').replace(/[
 const esc = s => (s ?? '').toString().replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = window.matchMedia('(pointer: coarse)').matches;
+/* Consignes : « Touche » sur écran tactile, « Clique » à la souris (les bulles de survol restent en « Clique ») */
+const TAP = coarse ? {T:'Touche', t:'touche-la', E:'Tap', e:'tap'} : {T:'Clique sur', t:'clique dessus', E:'Click', e:'click'};
 /* Copier tout le texte d’une page : au doigt sur téléphone, Cmd sur Mac, Ctrl ailleurs */
 const copyAllHow = () => coarse ? L('appui long › Tout sélectionner, puis Copier', 'long press › Select All, then Copy') : `${/Mac/.test(navigator.platform || navigator.userAgent) ? 'Cmd' : 'Ctrl'} + A, ${L('puis copier', 'then copy')}`;
 /* Teinte des groupes : color-mix seulement si le navigateur le gère, sinon couleur de fond simple (jamais de noir par défaut) */
@@ -1286,7 +1290,7 @@ async function showEvents(keepScroll){
     ['Luma', `https://luma.com/${city ? encodeURIComponent(norm(city).replace(/[^a-z]+/g, '-')) : 'discover'}`]
   ];
   openDrawer(`<h2 id="dtitle" tabindex="-1">${L('Événements pour toi', 'Events for you')}</h2>
-    <p class="pos">${me.themes.size ? L(`Choisis selon ton poste${me.city ? ' et ta ville' : ''}. Clique sur « S’inscrire » pour ouvrir le site de l’organisateur.`, `Picked for your job${me.city ? ' and city' : ''}. Click “Register” to open the organizer’s site.`) : L('Renseigne ton poste dans ta fiche (Moi) pour des suggestions plus ciblées.', 'Fill in your job title in your profile (Me) for better-targeted suggestions.')}</p>
+    <p class="pos">${me.themes.size ? L(`Choisis selon ton poste${me.city ? ' et ta ville' : ''}. ${TAP.T} « S’inscrire » pour ouvrir le site de l’organisateur.`, `Picked for your job${me.city ? ' and city' : ''}. ${TAP.E} “Register” to open the organizer’s site.`) : L('Renseigne ton poste dans ta fiche (Moi) pour des suggestions plus ciblées.', 'Fill in your job title in your profile (Me) for better-targeted suggestions.')}</p>
     <div class="evfilters">
       <label class="evf"><span>${L('Métier', 'Job')}</span><select id="evMetier">${me.job.size ? `<option value="moi"${evState.metier === 'moi' ? ' selected' : ''}>${L('Mon métier', 'My job')} (${esc([...me.job].map(evLabel).join(', '))})</option>` : ''}<option value=""${!evState.metier ? ' selected' : ''}>${L('Tous les métiers', 'All jobs')}</option>${fnAll.map(t => `<option value="${esc(t)}"${evState.metier === t ? ' selected' : ''}>${esc(evLabel(t))}</option>`).join('')}</select></label>
       <label class="evf"><span>${L('Secteur d’activité', 'Industry')}</span><select id="evSecteur">${me.sector ? `<option value="moi"${evState.secteur === 'moi' ? ' selected' : ''}>${L('Mon secteur', 'My industry')} (${esc(dv(me.sector))})</option>` : ''}<option value=""${!evState.secteur ? ' selected' : ''}>${L('Tous les secteurs', 'All industries')}</option>${secAll.map(t => `<option value="${esc(t)}"${evState.secteur === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
@@ -1667,16 +1671,16 @@ function showCibles(){
   const logo = v => { const u = logoUrl(v); return `<span class="cblogo" aria-hidden="true">${u ? `<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${esc((v.match(/[A-Za-zÀ-ÿ0-9]/) || ['?'])[0].toUpperCase())}</span>`; };
   const row = r => `<li><button class="cbrow" type="button" data-act="cbgo" data-v="${esc(r.v)}">${logo(r.v)}<span class="cbtxt"><b>${esc(r.v)}</b><small>${esc(cibleMeta(r))}</small></span><span class="n">${r.n}<small>contact${EN ? sEN(r.n) : r.n > 1 ? 's' : ''}</small></span></button></li>`;
   openDrawer(EN ? `<h2 id="dtitle" tabindex="-1">Your target companies</h2>
-    <p class="pos">Where you applied, saved a job or that you follow, and how many of your contacts work there. Tap a company to see who can open the door.</p>
+    <p class="pos">Where you applied, saved a job or that you follow, and how many of your contacts work there. ${TAP.E} a company to see who can open the door.</p>
     <div class="cbchips" role="group" aria-label="Filter target companies">${chip('', 'All', all.length)}${Object.keys(CIBLE_KIND).filter(cnt).map(k => chip(k, CIBLE_KIND[k].pl, cnt(k))).join('')}</div>
     ${withC.length ? `<h3>${withC.length} where you know someone</h3><ul class="cbl">${withC.map(row).join('')}</ul>` : '<p class="pos">None of your contacts work there yet.</p>'}
     ${without.length ? `<h3>${without.length} with no contact in your network</h3><p class="pos">${without.slice(0, 25).map(r => esc(r.v)).join(', ')}${without.length > 25 ? `, and ${without.length - 25} more` : ''}.</p>` : ''}
     <p class="hint" style="margin-top:14px">Read in this browser, nothing is sent. Kept on this device only with your network, if you choose to keep it.</p>` : `<h2 id="dtitle" tabindex="-1">Tes entreprises cibles</h2>
-    <p class="pos">Où tu as postulé, enregistré une offre ou que tu suis, et combien de tes contacts y travaillent. Touche une entreprise pour voir qui peut t’en ouvrir la porte.</p>
+    <p class="pos">Où tu as postulé, enregistré une offre ou que tu suis, et combien de tes contacts y travaillent. ${TAP.T} une entreprise pour voir qui peut t’en ouvrir la porte.</p>
     <div class="cbchips" role="group" aria-label="Filtrer les entreprises cibles">${chip('', 'Toutes', all.length)}${Object.keys(CIBLE_KIND).filter(cnt).map(k => chip(k, CIBLE_KIND[k].pl, cnt(k))).join('')}</div>
     ${withC.length ? `<h3>${withC.length} où tu connais quelqu’un</h3><ul class="cbl">${withC.map(row).join('')}</ul>` : '<p class="pos">Aucun de tes contacts n’y travaille pour l’instant.</p>'}
     ${without.length ? `<h3>${without.length} sans contact dans ton réseau</h3><p class="pos">${without.slice(0, 25).map(r => esc(r.v)).join(', ')}${without.length > 25 ? `, et ${without.length - 25} autres` : ''}.</p>` : ''}
-    <p class="hint" style="margin-top:14px">Lu dans ce navigateur, rien n’est envoyé. Gardé sur cet appareil seulement avec ton réseau, si tu choisis de le garder.</p>`);
+    <p class="hint" style="margin-top:14px">Lu dans ce navigateur, rien n’est envoyé. Gardé sur cet appareil seulement avec ton réseau, si tu choisis de le garder.</p>`, true);
 }
 
 /* ---------- Réseau gardé sur cet appareil ----------
@@ -3939,7 +3943,7 @@ function legendTree(vis){
     }
   }
   const crumbHtml = crumbs.length ? `<nav class="lgcrumbs" aria-label="${L('Niveau affiché', 'Level shown')}">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<button type="button" class="linkbtn" data-lgup="${c.lvl}" data-v="${esc(c.label)}">${esc(dv(c.label))}</button>` : `<strong aria-current="true">${esc(dv(c.label))}</strong>`).join('<span aria-hidden="true"> › </span>')}</nav>` : '';
-  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">${EN ? `Tap ${/^[aeiou]/i.test(plural) ? 'an' : 'a'} ${esc(plural)} to zoom in, then a value to see its contacts.` : `Touche un ${esc(plural)} pour zoomer dessus, puis une valeur pour voir ses contacts.`}</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? L('Réduire la liste', 'Show less') : (hubs.length === 9 ? L('Voir l’autre', 'Show the other one') : L(`Voir les ${hubs.length - 8} autres`, `Show ${hubs.length - 8} more`))}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">${L('Tout afficher', 'Show all')}</button></p>` : ''}</div>`;
+  $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">${EN ? `${TAP.E} ${/^[aeiou]/i.test(plural) ? 'an' : 'a'} ${esc(plural)} to zoom in, then a value to see its contacts.` : `${TAP.T} un ${esc(plural)} pour zoomer dessus, puis une valeur pour voir ses contacts.`}</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? L('Réduire la liste', 'Show less') : (hubs.length === 9 ? L('Voir l’autre', 'Show the other one') : L(`Voir les ${hubs.length - 8} autres`, `Show ${hubs.length - 8} more`))}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">${L('Tout afficher', 'Show all')}</button></p>` : ''}</div>`;
   addPaysNote(vis);
   $('#legend').hidden = !vis.length;
 }
@@ -3995,7 +3999,7 @@ function updatePanel(vis){
   $('#timeline').innerHTML = allYears.length > 1 ? `<div class="timeline">${allYears.map(y => { const n = yc.get(y) || 0;
       return `<button class="tl${y < state.yMin || y > state.yMax ? ' off' : ''}" type="button" data-year="${y}" title="${L(`${y} : ${n} connexion${n > 1 ? 's' : ''}`, `${y}: ${n} connection${sEN(n)}`)}" aria-label="${y}, ${n} ${L('connexions', 'connections')}" style="height:${Math.max(4, n / ymax * 100)}%"></button>`; }).join('')}</div>
     <div class="tlAxis"><span>${allYears[0]}</span><span>${allYears[allYears.length - 1]}</span></div>
-    <p class="hint" style="margin:6px 0 0">${L('Touche une année pour l’isoler, touche-la de nouveau pour tout revoir.', 'Tap a year to isolate it, tap it again to see everything.')}</p>` : '';
+    <p class="hint" style="margin:6px 0 0">${L(`${TAP.T} une année pour l’isoler, ${TAP.t} de nouveau pour tout revoir.`, `${TAP.E} a year to isolate it, ${TAP.e} it again to see everything.`)}</p>` : '';
 }
 
 function personRow(o){
@@ -4060,7 +4064,7 @@ const ACC_KEY = 'synapses-panneau-v1';
 
 /* ---------- Drawer ---------- */
 const drawer = $('#drawer'), dbody = $('#drawerBody');
-/* tall : sur téléphone, la fiche monte presque jusqu’en haut (événements, offres d’emploi : on lit surtout la fiche) */
+/* tall : sur téléphone, la fiche monte presque jusqu’en haut (événements, offres d’emploi, entreprises cibles : on lit surtout la fiche) */
 function openDrawer(html, tall){
   dbody.innerHTML = html; drawer.classList.toggle('tall', !!tall);
   canvas.classList.add('has-drawer'); document.body.classList.add('drawer-open');
@@ -4228,7 +4232,7 @@ function showHub(h){
       <h3>${L('Groupes réunis ici', 'Groups merged here')}</h3>
       <ul class="people">${h.others.map(([k, n]) => `<li><button class="lrow" type="button" ${isFilterDim(state.groupBy) ? `data-only="${state.groupBy}" data-v="${esc(k)}"` : ''} title="${L('N’afficher que ce groupe', 'Show only this group')}"><span class="who"><strong>${esc(dv(k))}</strong><span>${n} contact${EN ? sEN(n) : n > 1 ? 's' : ''}</span></span></button></li>`).join('')}</ul>` : ''}
     <h3>${L('Répartition par', 'Breakdown by')} ${cdim.label.toLowerCase()}</h3>
-    <p class="hint" style="margin:0 0 10px">${L('Touche une ligne pour voir ces contacts dans le graphe.', 'Tap a row to see these contacts in the graph.')}</p>
+    <p class="hint" style="margin:0 0 10px">${L(`${TAP.T} une ligne pour voir ces contacts dans le graphe.`, `${TAP.E} a row to see these contacts in the graph.`)}</p>
     <div class="stack" aria-hidden="true">${rows.map(v => `<span style="flex:${counts.get(v)};background:${colorFn(v)}"></span>`).join('')}</div>
     <div class="legendlist${state.colorBy === 'company' ? ' withsubs' : ''}">${top20.map(v => {
       const row = `<span class="dot" style="background:${dotR(v)}"></span><span>${fl(v, state.colorBy)}${esc(dv(v))}</span><span class="n">${real.get(v)}</span><span class="pct">${pct(real.get(v), members.length)}</span>`;
