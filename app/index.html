@@ -3931,6 +3931,7 @@ function legendTree(vis){
   }
   const crumbHtml = crumbs.length ? `<nav class="lgcrumbs" aria-label="${L('Niveau affiché', 'Level shown')}">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<button type="button" class="linkbtn" data-lgup="${c.lvl}" data-v="${esc(c.label)}">${esc(dv(c.label))}</button>` : `<strong aria-current="true">${esc(dv(c.label))}</strong>`).join('<span aria-hidden="true"> › </span>')}</nav>` : '';
   $('#legend').innerHTML = `<button class="lgtoggle" type="button" data-act="legend" aria-expanded="${!legendCollapsed}"><span>${esc(gdim.label)} › ${esc(cdim.label.toLowerCase())}</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg></button><div class="lgbody"${legendCollapsed ? ' hidden' : ''}>${crumbHtml}<p class="more" style="margin:0 6px 6px">${EN ? `Tap ${/^[aeiou]/i.test(plural) ? 'an' : 'a'} ${esc(plural)} to zoom in, then a value to see its contacts.` : `Touche un ${esc(plural)} pour zoomer dessus, puis une valeur pour voir ses contacts.`}</p><ul>${rows}</ul>${hubs.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? L('Réduire la liste', 'Show less') : (hubs.length === 9 ? L('Voir l’autre', 'Show the other one') : L(`Voir les ${hubs.length - 8} autres`, `Show ${hubs.length - 8} more`))}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">${L('Tout afficher', 'Show all')}</button></p>` : ''}</div>`;
+  addPaysNote(vis);
   $('#legend').hidden = !vis.length;
 }
 function updateLegend(vis){
@@ -3958,7 +3959,15 @@ function updateLegend(vis){
     const open = legendOpen.has(v);
     return `<li class="lgwrap">${row}<button type="button" class="lgx" data-act="lgsub" data-v="${esc(v)}" aria-expanded="${open}" aria-label="${EN ? `${open ? 'Collapse' : 'Expand'} ${esc(dv(v))}’s entities` : `${open ? 'Replier' : 'Déplier'} les entités de ${esc(v)}`}"></button>${open ? `<ul class="lgsubs">${subs.map(([k, n]) => subLi(k, n)).join('')}</ul>` : ''}</li>`;
   }).join('')}</ul>${shown.length > 8 ? `<p class="more"><button class="linkbtn" type="button" data-act="legendall">${legendAll ? L('Réduire la liste', 'Show less') : (shown.length === 9 ? L('Voir l’autre', 'Show the other one') : L(`Voir les ${shown.length - 8} autres`, `Show ${shown.length - 8} more`))}</button></p>` : ''}${sel.size ? `<p class="more"><button class="linkbtn" type="button" data-cleark="${state.colorBy}">${L('Tout afficher', 'Show all')}</button></p>` : ''}<p class="more" style="margin:8px 6px 0">${L('Jauge et teinte d’un groupe : sa part des contacts affichés', 'A group’s gauge and shade: its share of the contacts shown')}</p></div>`;
+  addPaysNote(vis);
   $('#legend').hidden = !base.length;
+}
+/* Légende par pays (choix de Vincent du 23 novembre 2026) : sous la liste, nombre de contacts sans pays et lien vers le collage depuis LinkedIn (hors démo) */
+function addPaysNote(vis){
+  if(isDemo || (state.groupBy !== 'country' && state.colorBy !== 'country')) return;
+  const n = vis.filter(c => !c.country).length, body = $('#legend .lgbody');
+  if(!n || !body) return;
+  body.insertAdjacentHTML('beforeend', `<p class="more lgpays"><button class="linkbtn" type="button" data-act="payspaste">${L(`${n} contact${n > 1 ? 's' : ''} sans pays&nbsp;: indique-le depuis LinkedIn`, `${n} contact${sEN(n)} without a country: add it from LinkedIn`)}</button></p>`);
 }
 
 function updatePanel(vis){
