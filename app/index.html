@@ -1603,7 +1603,7 @@ function showOffre(keepScroll){
       <p class="hint" style="margin:0">${L('Une offre d’un autre site est gardée dans «\u00a0Tes offres\u00a0», sur cet appareil seulement.', 'A job from another site is kept in “Your jobs”, on this device only.')}</p>
     </form></section>
     ${body ? `<section class="ofstep" id="ofStep3"><h3><span class="ofnum">3</span>${L('Qui contacter', 'Who to contact')}${offre.t ? ` <small class="h3sub">${esc(offre.t)}${offre.co ? ' · ' + esc(offre.co) : ''}</small>` : ''}</h3>${body}</section>` : ''}
-    <p class="hint" style="margin-top:14px">${L('Calculé dans ce navigateur. Le texte collé n’est ni gardé ni envoyé.', 'Computed in this browser. Pasted text is neither kept nor sent.')}</p>`);
+    <p class="hint" style="margin-top:14px">${L('Calculé dans ce navigateur. Le texte collé n’est ni gardé ni envoyé.', 'Computed in this browser. Pasted text is neither kept nor sent.')}</p>`, true);
   if(res && state.view === 'graph'){
     const ids = new Set((res.ranked.length ? res.ranked.map(x => x.c) : res.near).map(c => 'c:' + c.id));
     nodes.forEach(n => { if(n.type === 'c' && ids.has(n.id)) ids.add(n.hub); });
@@ -4055,7 +4055,7 @@ const ACC_KEY = 'synapses-panneau-v1';
 
 /* ---------- Drawer ---------- */
 const drawer = $('#drawer'), dbody = $('#drawerBody');
-/* tall : sur téléphone, la fiche monte presque jusqu’en haut (événements : rien à voir dans le graphe) */
+/* tall : sur téléphone, la fiche monte presque jusqu’en haut (événements, offres d’emploi : on lit surtout la fiche) */
 function openDrawer(html, tall){
   dbody.innerHTML = html; drawer.classList.toggle('tall', !!tall);
   canvas.classList.add('has-drawer'); document.body.classList.add('drawer-open');
