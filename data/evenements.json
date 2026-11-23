@@ -1,136 +1,8 @@
 {
  "version": 1,
- "description": "Événements professionnels proposés dans Synapses (fiche « Événements pour toi »). Liste vérifiée à la main : chaque date vient de la source indiquée. Un événement passé disparaît tout seul. themes = fonctions (data/postes.json) et secteurs (data/entreprises.json), en codes français. prix : gratuit, payant ou variable (selon le billet, ou non publié). mode : presentiel, en-ligne ou hybride. confirme = false quand seul le mois est connu (debut au format AAAA-MM). note_en = note en anglais.",
- "maj": "2026-11-09",
+ "description": "Événements professionnels proposés dans Synapses (fiche « Événements pour toi »). Liste vérifiée à la main : chaque date vient de la source indiquée. Un événement passé disparaît tout seul. themes = fonctions (data/postes.json) et secteurs (data/entreprises.json), en codes français. prix : gratuit, payant ou variable (selon le billet, ou non publié). mode : presentiel, en-ligne ou hybride. confirme = false quand seul le mois est connu (debut au format AAAA-MM). note_en = note en anglais. pres = villes proches (badge « Près de toi » quand la commune n’est pas celle du profil).",
+ "maj": "2026-11-23",
  "evenements": [
-  {
-   "nom": "Web Summit 2026",
-   "debut": "2026-11-09",
-   "fin": "2026-11-12",
-   "ville": "Lisbonne",
-   "pays": "PT",
-   "mode": "presentiel",
-   "prix": "payant",
-   "themes": [
-    "Direction générale",
-    "Tech",
-    "Produit",
-    "Data",
-    "Marketing",
-    "Sales"
-   ],
-   "url": "https://websummit.com",
-   "source": "https://hadea.ec.europa.eu/events/web-summit-2026-2026-11-09_en",
-   "confirme": true
-  },
-  {
-   "nom": "TPC : construire un Brand System piloté par l’IA",
-   "debut": "2026-11-10",
-   "fin": "2026-11-10",
-   "pays": "FR",
-   "mode": "en-ligne",
-   "prix": "gratuit",
-   "themes": [
-    "Produit",
-    "Marketing"
-   ],
-   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/317157958/",
-   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/317157958/",
-   "confirme": true,
-   "note": "Webinaire de The Product Crew, 12 h",
-   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
-  },
-  {
-   "nom": "TPC : l’IA en prod au service de la santé",
-   "debut": "2026-11-12",
-   "fin": "2026-11-12",
-   "pays": "FR",
-   "mode": "en-ligne",
-   "prix": "gratuit",
-   "themes": [
-    "Produit",
-    "Tech",
-    "Data",
-    "Santé"
-   ],
-   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/317187575/",
-   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/317187575/",
-   "confirme": true,
-   "note": "Webinaire de The Product Crew, 12 h",
-   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
-  },
-  {
-   "nom": "Designing AI products people trust",
-   "debut": "2026-11-12",
-   "fin": "2026-11-12",
-   "ville": "Paris",
-   "pays": "FR",
-   "mode": "presentiel",
-   "prix": "gratuit",
-   "themes": [
-    "Produit",
-    "Direction générale"
-   ],
-   "url": "https://luma.com/01vwvdjr",
-   "source": "https://luma.com/01vwvdjr",
-   "confirme": true,
-   "note": "Station F, 18 h ; complet, liste d’attente",
-   "note_en": "Station F, 6 pm; full, waiting list"
-  },
-  {
-   "nom": "Le Wagon Nantes : GenUI avec Flutter, des écrans générés par l’IA",
-   "debut": "2026-11-12",
-   "fin": "2026-11-12",
-   "ville": "Nantes",
-   "pays": "FR",
-   "mode": "presentiel",
-   "prix": "variable",
-   "themes": [
-    "Tech",
-    "Produit"
-   ],
-   "url": "https://www.lewagon.com/fr/events/gen-ui-avec-flutter-generation-d-ecran-par-ia-njkqfP",
-   "source": "https://www.lewagon.com/fr/events/gen-ui-avec-flutter-generation-d-ecran-par-ia-njkqfP",
-   "confirme": true,
-   "note": "Places limitées, sur réservation",
-   "note_en": "Limited seats, booking required"
-  },
-  {
-   "nom": "TPC : faire de l’IA un levier de rentabilité",
-   "debut": "2026-11-17",
-   "fin": "2026-11-17",
-   "pays": "FR",
-   "mode": "en-ligne",
-   "prix": "gratuit",
-   "themes": [
-    "Produit",
-    "Tech",
-    "Direction générale"
-   ],
-   "url": "https://www.meetup.com/fr-FR/theproductcrew/events/317269180/",
-   "source": "https://www.meetup.com/fr-FR/theproductcrew/events/317269180/",
-   "confirme": true,
-   "note": "Webinaire de The Product Crew, 12 h",
-   "note_en": "The Product Crew webinar, 12 pm (Paris time)"
-  },
-  {
-   "nom": "Slush 2026",
-   "debut": "2026-11-18",
-   "fin": "2026-11-19",
-   "ville": "Helsinki",
-   "pays": "FI",
-   "mode": "presentiel",
-   "prix": "payant",
-   "themes": [
-    "Direction générale",
-    "Tech",
-    "Finance",
-    "Finance & investissement"
-   ],
-   "url": "https://slush.org",
-   "source": "https://slush.org/",
-   "confirme": true
-  },
   {
    "nom": "RDV des Transformations du Droit",
    "debut": "2026-11-24",
@@ -138,7 +10,7 @@
    "ville": "Paris",
    "pays": "FR",
    "mode": "presentiel",
-   "prix": "variable",
+   "prix": "gratuit",
    "themes": [
     "Juridique"
    ],
@@ -162,6 +34,25 @@
    "confirme": true
   },
   {
+   "nom": "Salon des maires et des collectivités locales",
+   "debut": "2026-11-24",
+   "fin": "2026-11-26",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Secteur public & éducation",
+    "Direction générale",
+    "Opérations"
+   ],
+   "url": "https://www.salondesmaires.com/",
+   "source": "https://www.salondesmaires.com/",
+   "confirme": true,
+   "note": "Paris Expo Porte de Versailles, pavillon 7",
+   "note_en": "Paris Expo Porte de Versailles, hall 7"
+  },
+  {
    "nom": "TPC : l’impact réel de l’IA sur les équipes tech",
    "debut": "2026-11-25",
    "fin": "2026-11-25",
@@ -181,22 +72,23 @@
    "note_en": "The Product Crew webinar, 12 pm (Paris time)"
   },
   {
-   "nom": "Thiga Augmented : workshop AI-Native SDLC",
+   "nom": "TPC : Transfo IA @ Treezor, séparer la hype de la réalité",
    "debut": "2026-11-26",
    "fin": "2026-11-26",
-   "ville": "Paris",
+   "ville": "",
    "pays": "FR",
-   "mode": "presentiel",
+   "mode": "en-ligne",
    "prix": "gratuit",
    "themes": [
+    "Tech",
     "Produit",
-    "Tech"
+    "Banque & assurance"
    ],
-   "url": "https://luma.com/augmented-aflo",
-   "source": "https://luma.com/augmented-aflo",
+   "url": "https://www.meetup.com/theproductcrew/events/317393787/",
+   "source": "https://www.meetup.com/theproductcrew/events/317393787/",
    "confirme": true,
-   "note": "Chez Thiga, 18 h 30 ; inscription validée par l’organisateur",
-   "note_en": "At Thiga, 6:30 pm; registration approved by the organizer"
+   "note": "12 h – 13 h, en ligne, en français",
+   "note_en": "12–1 pm (Paris), online, in French"
   },
   {
    "nom": "Tech.Rocks Summit 2026",
@@ -217,7 +109,7 @@
   {
    "nom": "Supply Chain Event",
    "debut": "2026-12-01",
-   "fin": "2026-12-03",
+   "fin": "2026-12-02",
    "ville": "Paris",
    "pays": "FR",
    "mode": "presentiel",
@@ -233,7 +125,7 @@
   {
    "nom": "Product School : ateliers en ligne",
    "debut": "2026-12-01",
-   "fin": "2026-12-09",
+   "fin": "2026-12-17",
    "ville": "",
    "pays": "",
    "mode": "en-ligne",
@@ -244,7 +136,8 @@
    "url": "https://productschool.com/events",
    "source": "https://productschool.com/events",
    "confirme": true,
-   "note": "Plusieurs sessions en anglais (1er, 8 et 9 décembre)"
+   "note": "Plusieurs sessions en anglais jusqu’au 17 décembre, certaines réservées aux membres",
+   "note_en": "Several sessions in English until December 17, some for members only"
   },
   {
    "nom": "IOFM : tendances 2027 pour la finance",
@@ -261,6 +154,189 @@
    "source": "https://www.iofm.com/webinars",
    "confirme": true,
    "note": "Webinaire en anglais"
+  },
+  {
+   "nom": "TPC : Transfo IA, poser le cadre, lâcher les dogmes",
+   "debut": "2026-12-01",
+   "fin": "2026-12-01",
+   "ville": "",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Tech",
+    "Direction générale"
+   ],
+   "url": "https://www.meetup.com/theproductcrew/events/317466348/",
+   "source": "https://www.meetup.com/theproductcrew/events/317466348/",
+   "confirme": true,
+   "note": "12 h – 13 h, en ligne, en français",
+   "note_en": "12–1 pm (Paris), online, in French"
+  },
+  {
+   "nom": "PMI France Lyon : la Fresque de l’éco-conception",
+   "debut": "2026-12-01",
+   "fin": "2026-12-01",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Gestion de projet",
+    "Produit"
+   ],
+   "url": "https://pmi-france.org/conferences/pole-lyon-la-fresque-de-l-eco-conception-repenser-ses-projets-autrement-c34253",
+   "source": "https://pmi-france.org/conferences/pole-lyon-la-fresque-de-l-eco-conception-repenser-ses-projets-autrement-c34253",
+   "confirme": true,
+   "note": "18 h 15, IRIIG (Lyon 7e) ; gratuit pour les membres, 10 € sinon",
+   "note_en": "6:15 pm, IRIIG (Lyon 7th); free for members, €10 otherwise"
+  },
+  {
+   "nom": "Lyon Data Science : table ronde Data & IA, projets et retours terrain",
+   "debut": "2026-12-01",
+   "fin": "2026-12-01",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Data",
+    "Tech"
+   ],
+   "url": "https://www.meetup.com/lyondatascience/events/316566050/",
+   "source": "https://www.meetup.com/lyondatascience/events/316566050/",
+   "confirme": true,
+   "note": "18 h 30 – 20 h 30, TUBÀ (Part-Dieu) ; 30 places, liste d’attente",
+   "note_en": "6:30–8:30 pm, TUBÀ (Part-Dieu); 30 seats, waitlist"
+  },
+  {
+   "nom": "Aeromart Toulouse",
+   "debut": "2026-12-01",
+   "fin": "2026-12-03",
+   "ville": "Toulouse",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Transport & mobilité",
+    "Énergie & industrie",
+    "Opérations"
+   ],
+   "url": "https://www.aeromart-toulouse.com/",
+   "source": "https://www.aeromart-toulouse.com/",
+   "confirme": true,
+   "note": "Rendez-vous d’affaires de la sous-traitance aéronautique et spatiale, au MEETT",
+   "note_en": "Aerospace supply chain business meetings, at MEETT"
+  },
+  {
+   "nom": "Agile Nantes : la chocolaterie agile, financez les meilleures idées",
+   "debut": "2026-12-02",
+   "fin": "2026-12-02",
+   "ville": "Nantes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Gestion de projet",
+    "Produit"
+   ],
+   "url": "https://www.meetup.com/agile-nantes-sessions-mensuelles/events/316815304/",
+   "source": "https://www.meetup.com/agile-nantes-sessions-mensuelles/events/316815304/",
+   "confirme": true,
+   "note": "19 h – 20 h 30, Maison des Haubans ; atelier ludique",
+   "note_en": "7–8:30 pm, Maison des Haubans; hands-on game workshop"
+  },
+  {
+   "nom": "Educatech Expo",
+   "debut": "2026-12-02",
+   "fin": "2026-12-04",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Enseignement & recherche",
+    "Secteur public & éducation"
+   ],
+   "url": "https://www.educatech-expo.com/",
+   "source": "https://www.educatech-expo.com/",
+   "confirme": true,
+   "note": "Salon de l’innovation éducative, badge gratuit",
+   "note_en": "Education innovation show, free badge"
+  },
+  {
+   "nom": "ProductTank Paris : relier la pensée produit et la delivery",
+   "debut": "2026-12-03",
+   "fin": "2026-12-03",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Tech",
+    "Gestion de projet"
+   ],
+   "url": "https://www.meetup.com/producttank-paris/events/317373619/",
+   "source": "https://www.meetup.com/producttank-paris/events/317373619/",
+   "confirme": true,
+   "note": "18 h 30 – 21 h, Paris 8e ; édition internationale, en anglais et en français",
+   "note_en": "6:30–9 pm, Paris 8th; international edition, in English and French"
+  },
+  {
+   "nom": "Thiga Augmented : réconcilier Canvas et Code",
+   "debut": "2026-12-03",
+   "fin": "2026-12-03",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "Tech"
+   ],
+   "url": "https://luma.com/augmented-5uep",
+   "source": "https://luma.com/augmented-5uep",
+   "confirme": true,
+   "note": "18 h 30, chez Thiga (Paris 9e) ; inscription soumise à validation",
+   "note_en": "6:30 pm, at Thiga (Paris 9th); registration subject to approval"
+  },
+  {
+   "nom": "Forum Ouvert Agile Rennes 2026",
+   "debut": "2026-12-04",
+   "fin": "2026-12-04",
+   "ville": "Rennes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Gestion de projet",
+    "Conseil"
+   ],
+   "url": "https://www.billetweb.fr/open-forum-agile-rennes-2026",
+   "source": "https://www.meetup.com/agile-rennes/events/316963038/",
+   "confirme": true,
+   "note": "9 h – 18 h, Le Poool (French Tech Rennes) ; 20 € (30 € tarif entreprise), petit-déjeuner compris",
+   "note_en": "9 am–6 pm, Le Poool (French Tech Rennes); €20 (€30 company rate), breakfast included"
+  },
+  {
+   "nom": "Forum des 10 ans de Lyon Data Science",
+   "debut": "2026-12-05",
+   "fin": "2026-12-06",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Data",
+    "Tech"
+   ],
+   "url": "https://www.meetup.com/lyondatascience/events/317058087/",
+   "source": "https://www.meetup.com/lyondatascience/events/317058087/",
+   "confirme": true,
+   "note": "Sam. 10 h au dim. 17 h, Epitech Lyon (7e) ; 200 places",
+   "note_en": "Sat 10 am to Sun 5 pm, Epitech Lyon (7th); 200 seats"
   },
   {
    "nom": "SIMI, salon de l’immobilier d’entreprise",
@@ -294,7 +370,107 @@
    "source": "https://www.devoteam.com/fr/event/data-ai-world-tour-paris-2026/",
    "confirme": true,
    "note": "Paris La Défense Arena",
-   "note_en": "Paris La Défense Arena"
+   "note_en": "Paris La Défense Arena",
+   "pres": [
+    "Paris"
+   ]
+  },
+  {
+   "nom": "PMI France La Défense : manager les projets dans l’incertitude et la complexité",
+   "debut": "2026-12-08",
+   "fin": "2026-12-08",
+   "ville": "Neuilly-sur-Seine",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Gestion de projet",
+    "Conseil"
+   ],
+   "url": "https://pmi-france.org/conferences/pole-paris-la-defense-manager-les-projets-dans-l-incertitude-et-la-complexite-c34290",
+   "source": "https://pmi-france.org/conferences/pole-paris-la-defense-manager-les-projets-dans-l-incertitude-et-la-complexite-c34290",
+   "confirme": true,
+   "note": "18 h 30, chez Scalian ; conférence-atelier ; 15 € (membres 10 €)",
+   "note_en": "6:30 pm, at Scalian; talk and workshop; €15 (members €10)",
+   "pres": [
+    "Paris"
+   ]
+  },
+  {
+   "nom": "PMI France Côte d’Azur : atelier IA de PMI appliquée au management de projet",
+   "debut": "2026-12-08",
+   "fin": "2026-12-08",
+   "ville": "Valbonne",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Gestion de projet",
+    "Data"
+   ],
+   "url": "https://pmi-france.org/conferences/lyon-lab-infinity-du-pmbok-r-a-l-experimentation-ia-copie-c34243",
+   "source": "https://pmi-france.org/conferences/lyon-lab-infinity-du-pmbok-r-a-l-experimentation-ia-copie-c34243",
+   "confirme": true,
+   "note": "Accueil 17 h 45, SKEMA Sophia Antipolis ; gratuit pour les membres, 20 € sinon",
+   "note_en": "Doors 5:45 pm, SKEMA Sophia Antipolis; free for members, €20 otherwise",
+   "pres": [
+    "Nice",
+    "Antibes",
+    "Sophia Antipolis"
+   ]
+  },
+  {
+   "nom": "Agile Toulouse : Bière Agile, agilité et IA",
+   "debut": "2026-12-08",
+   "fin": "2026-12-08",
+   "ville": "Toulouse",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Gestion de projet",
+    "Tech"
+   ],
+   "url": "https://www.meetup.com/agile-toulouse/events/317511306/",
+   "source": "https://www.meetup.com/agile-toulouse/events/317511306/",
+   "confirme": true,
+   "note": "18 h 30 – 20 h 30, dans un bar du centre ; 16 places, liste d’attente",
+   "note_en": "6:30–8:30 pm, in a city-centre bar; 16 seats, waitlist"
+  },
+  {
+   "nom": "Software Craftsmanship Lille : tous architectes à l’heure de l’IA ?",
+   "debut": "2026-12-08",
+   "fin": "2026-12-08",
+   "ville": "Lille",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Tech"
+   ],
+   "url": "https://www.meetup.com/software-craftsmanship-lille/events/316936209/",
+   "source": "https://www.meetup.com/software-craftsmanship-lille/events/316936209/",
+   "confirme": true,
+   "note": "18 h 45 – 20 h 45, Village by CA Nord de France",
+   "note_en": "6:45–8:45 pm, Village by CA Nord de France"
+  },
+  {
+   "nom": "WeTalk : l’IA à l’heure du déj, faire monter une équipe produit en compétence",
+   "debut": "2026-12-09",
+   "fin": "2026-12-09",
+   "ville": "",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Produit",
+    "RH"
+   ],
+   "url": "https://www.meetup.com/wetalk/events/317513190/",
+   "source": "https://www.meetup.com/wetalk/events/317513190/",
+   "confirme": true,
+   "note": "12 h 30 – 13 h 30, en ligne, en français",
+   "note_en": "12:30–1:30 pm (Paris), online, in French"
   },
   {
    "nom": "Next Gen Patrimoine",
@@ -314,6 +490,101 @@
    "confirme": true
   },
   {
+   "nom": "Generative AI Rennes #13 : RH, l’IA est déjà dans vos équipes",
+   "debut": "2026-12-10",
+   "fin": "2026-12-10",
+   "ville": "Cesson-Sévigné",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Data",
+    "RH"
+   ],
+   "url": "https://www.meetup.com/generative-ai-rennes/events/317480786/",
+   "source": "https://www.meetup.com/generative-ai-rennes/events/317480786/",
+   "confirme": true,
+   "note": "18 h 30 – 21 h 30, Le Poool à Viasilva (près de Rennes)",
+   "note_en": "6:30–9:30 pm, Le Poool at Viasilva (near Rennes)",
+   "pres": [
+    "Rennes"
+   ]
+  },
+  {
+   "nom": "Les Meetups de l’IA : Marseille #3",
+   "debut": "2026-12-10",
+   "fin": "2026-12-10",
+   "ville": "Marseille",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Data",
+    "Tech"
+   ],
+   "url": "https://www.meetup.com/les-meetups-de-l-ia/events/316849742/",
+   "source": "https://www.meetup.com/les-meetups-de-l-ia/events/316849742/",
+   "confirme": true,
+   "note": "18 h 30 – 20 h 30, Marseille 6e ; discussion libre, sans conférence",
+   "note_en": "6:30–8:30 pm, Marseille 6th; open discussion, no talks"
+  },
+  {
+   "nom": "PMI France Yvelines : webinaire « PMO sans filtre », de la gouvernance à la valeur",
+   "debut": "2026-12-15",
+   "fin": "2026-12-15",
+   "ville": "",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "payant",
+   "themes": [
+    "Gestion de projet",
+    "Opérations"
+   ],
+   "url": "https://pmi-france.org/conferences/pole-yvelines-webinaire-pmo-sans-filtre-de-la-gouvernance-a-la-creation-de-valeur-15-12-2026-a-18h30-c34281",
+   "source": "https://pmi-france.org/conferences/pole-yvelines-webinaire-pmo-sans-filtre-de-la-gouvernance-a-la-creation-de-valeur-15-12-2026-a-18h30-c34281",
+   "confirme": true,
+   "note": "18 h 30 – 19 h 30, en ligne ; 15 € (membres 10 €, étudiants 5 €)",
+   "note_en": "6:30–7:30 pm (Paris), online; €15 (members €10, students €5)"
+  },
+  {
+   "nom": "PMI France Rouen : l’IA dans nos pratiques de projet",
+   "debut": "2026-12-16",
+   "fin": "2026-12-16",
+   "ville": "Saint-Étienne-du-Rouvray",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Gestion de projet",
+    "Data"
+   ],
+   "url": "https://pmi-france.org/conferences/rouen-l-ia-dans-nos-pratiques-c34270",
+   "source": "https://pmi-france.org/conferences/rouen-l-ia-dans-nos-pratiques-c34270",
+   "confirme": true,
+   "note": "18 h, campus CESI de Rouen ; gratuit pour les membres, 10 € sinon",
+   "note_en": "6 pm, CESI Rouen campus; free for members, €10 otherwise",
+   "pres": [
+    "Rouen"
+   ]
+  },
+  {
+   "nom": "PMI France Tours : afterwork Guide PMBOK 8e édition",
+   "debut": "2026-12-16",
+   "fin": "2026-12-16",
+   "ville": "Tours",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Gestion de projet"
+   ],
+   "url": "https://pmi-france.org/conferences/tours-afterwork-pmbok-r-guide-8eme-edition-16-decembre-2026-c34277",
+   "source": "https://pmi-france.org/conferences/tours-afterwork-pmbok-r-guide-8eme-edition-16-decembre-2026-c34277",
+   "confirme": true,
+   "note": "18 h 30, dans un bar place du Grand Marché ; premiers pas vers la certification PMI",
+   "note_en": "6:30 pm, in a bar on Place du Grand Marché; first steps to PMI certification"
+  },
+  {
    "nom": "TPC : le PM n’est plus expert produit, il est expert métier",
    "debut": "2027-01-05",
    "fin": "2027-01-05",
@@ -330,6 +601,24 @@
    "note_en": "The Product Crew webinar, 12 pm (Paris time)"
   },
   {
+   "nom": "PMI France Paris Centre : webinaire « l’IA, la partie prenante invisible »",
+   "debut": "2027-01-12",
+   "fin": "2027-01-12",
+   "ville": "",
+   "pays": "FR",
+   "mode": "en-ligne",
+   "prix": "variable",
+   "themes": [
+    "Gestion de projet",
+    "Data"
+   ],
+   "url": "https://pmi-france.org/conferences/pole-paris-centre-webinaire-l-ia-la-partie-prenante-invisible-12-janvier-2027-18h30-c34263",
+   "source": "https://pmi-france.org/conferences/pole-paris-centre-webinaire-l-ia-la-partie-prenante-invisible-12-janvier-2027-18h30-c34263",
+   "confirme": true,
+   "note": "18 h 30, en ligne, 1 h ; gratuit pour les membres, 15 € sinon",
+   "note_en": "6:30 pm (Paris), online, 1 h; free for members, €15 otherwise"
+  },
+  {
    "nom": "Snowcamp 2027",
    "debut": "2027-01-14",
    "fin": "2027-01-16",
@@ -344,6 +633,24 @@
    "url": "https://snowcamp.io",
    "source": "https://snowcamp.io/en/",
    "confirme": true
+  },
+  {
+   "nom": "Voxel51 : meetup MCP, agents et skills",
+   "debut": "2027-01-14",
+   "fin": "2027-01-14",
+   "ville": "",
+   "pays": "",
+   "mode": "en-ligne",
+   "prix": "gratuit",
+   "themes": [
+    "Data",
+    "Tech"
+   ],
+   "url": "https://www.meetup.com/paris-ai-machine-learning-and-computer-vision-meetup/events/317403939/",
+   "source": "https://www.meetup.com/paris-ai-machine-learning-and-computer-vision-meetup/events/317403939/",
+   "confirme": true,
+   "note": "18 h – 20 h (heure de Paris), en ligne, en anglais",
+   "note_en": "6–8 pm (Paris), online, in English"
   },
   {
    "nom": "Grand Forum du Patrimoine",
@@ -363,6 +670,95 @@
    "confirme": true
   },
   {
+   "nom": "Test Forward 2027 : la qualité logicielle à l’ère de l’IA",
+   "debut": "2027-01-19",
+   "fin": "2027-01-19",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Tech",
+    "Produit"
+   ],
+   "url": "https://thunders.ai/events/test-forward-2027",
+   "source": "https://thunders.ai/events/test-forward-2027",
+   "confirme": true,
+   "note": "14 h – 20 h, Station F ; en anglais et en français ; places limitées, liste d’attente",
+   "note_en": "2–8 pm, Station F; in English and French; limited seats, waitlist"
+  },
+  {
+   "nom": "Hyvolution Paris",
+   "debut": "2027-01-19",
+   "fin": "2027-01-21",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Énergie & industrie",
+    "Transport & mobilité"
+   ],
+   "url": "https://www.hyvolution.com/",
+   "source": "https://www.hyvolution.com/",
+   "confirme": true,
+   "note": "Salon de l’hydrogène",
+   "note_en": "Hydrogen show"
+  },
+  {
+   "nom": "Learning Technologies France",
+   "debut": "2027-01-20",
+   "fin": "2027-01-21",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "RH",
+    "Enseignement & recherche"
+   ],
+   "url": "https://www.learningtechnologiesfrance.com/",
+   "source": "https://www.learningtechnologiesfrance.com/",
+   "confirme": true,
+   "note": "Formation et digital learning, inscription gratuite",
+   "note_en": "Corporate learning show, free registration"
+  },
+  {
+   "nom": "Sirha Lyon",
+   "debut": "2027-01-21",
+   "fin": "2027-01-25",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Tourisme, hôtellerie & restauration",
+    "Agroalimentaire"
+   ],
+   "url": "https://www.sirha-lyon.com/",
+   "source": "https://www.sirha-lyon.com/",
+   "confirme": true,
+   "note": "Restauration et hôtellerie, à Eurexpo",
+   "note_en": "Food service and hospitality, at Eurexpo"
+  },
+  {
+   "nom": "Agile Playground #75",
+   "debut": "2027-01-27",
+   "fin": "2027-01-27",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Gestion de projet"
+   ],
+   "url": "https://www.meetup.com/cara-lyon/events/317207497/",
+   "source": "https://www.meetup.com/cara-lyon/events/317207497/",
+   "confirme": true,
+   "note": "18 h 30 – 21 h 30, Lyon Part-Dieu ; l’agilité par le jeu ; 25 places",
+   "note_en": "6:30–9:30 pm, Lyon Part-Dieu; agile concepts through games; 25 seats"
+  },
+  {
    "nom": "Sommet du droit",
    "debut": "2027-01-28",
    "fin": "2027-01-28",
@@ -376,6 +772,23 @@
    "url": "https://www.village-justice.com/articles/grands-evenements-juridiques-droit",
    "source": "https://www.village-justice.com/articles/grands-evenements-juridiques-droit",
    "confirme": true
+  },
+  {
+   "nom": "Product Meetup SXB #25 : atelier",
+   "debut": "2027-01-28",
+   "fin": "2027-01-28",
+   "ville": "Strasbourg",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Produit"
+   ],
+   "url": "https://www.meetup.com/product-meetup-sxb/events/316992537/",
+   "source": "https://www.meetup.com/product-meetup-sxb/events/316992537/",
+   "confirme": true,
+   "note": "19 h 30 – 22 h 30, Digital Village Strasbourg ; pour PM, PO, designers et fondateurs",
+   "note_en": "7:30–10:30 pm, Digital Village Strasbourg; for PMs, POs, designers and founders"
   },
   {
    "nom": "IPEM",
@@ -394,18 +807,74 @@
    "confirme": true
   },
   {
+   "nom": "Paris Packaging Week",
+   "debut": "2027-02-03",
+   "fin": "2027-02-04",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Retail & conso",
+    "Marketing",
+    "Opérations"
+   ],
+   "url": "https://www.parispackagingweek.com/",
+   "source": "https://www.parispackagingweek.com/",
+   "confirme": true,
+   "note": "Emballage (luxe, beauté, boissons), entrée gratuite",
+   "note_en": "Packaging (luxury, beauty, drinks), free entry"
+  },
+  {
+   "nom": "Rencontres AMRAE",
+   "debut": "2027-02-03",
+   "fin": "2027-02-05",
+   "ville": "Deauville",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Banque & assurance",
+    "Finance",
+    "Juridique"
+   ],
+   "url": "https://www.amrae-rencontres.fr/",
+   "source": "https://www.amrae-rencontres.fr/",
+   "confirme": true,
+   "note": "Risques et assurance des entreprises",
+   "note_en": "Corporate risk management and insurance"
+  },
+  {
+   "nom": "Sirha Méditerranée",
+   "debut": "2027-02-14",
+   "fin": "2027-02-16",
+   "ville": "Marseille",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Tourisme, hôtellerie & restauration",
+    "Agroalimentaire"
+   ],
+   "url": "https://www.sirha-mediterranee.com/",
+   "source": "https://www.sirha-mediterranee.com/",
+   "confirme": true,
+   "note": "Restauration et hôtellerie, au parc Chanot",
+   "note_en": "Food service and hospitality, at Parc Chanot"
+  },
+  {
    "nom": "ProductCon London",
    "debut": "2027-02-23",
    "fin": "2027-02-23",
    "ville": "Londres",
    "pays": "GB",
-   "mode": "presentiel",
+   "mode": "hybride",
    "prix": "variable",
    "themes": [
     "Produit"
    ],
-   "url": "https://productschool.com/events",
-   "source": "https://productevents.co/guides/best-product-conferences-2027",
+   "url": "https://productschool.com/productcon/london-2027",
+   "source": "https://productschool.com/productcon/london-2027",
    "confirme": true
   },
   {
@@ -441,6 +910,62 @@
    "confirme": true
   },
   {
+   "nom": "MedInTechs",
+   "debut": "2027-03-03",
+   "fin": "2027-03-04",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Santé",
+    "Tech"
+   ],
+   "url": "https://www.medintechs.com/",
+   "source": "https://www.medintechs.com/",
+   "confirme": true,
+   "note": "Innovation en santé",
+   "note_en": "Healthcare innovation"
+  },
+  {
+   "nom": "InCyber Forum",
+   "debut": "2027-03-09",
+   "fin": "2027-03-11",
+   "ville": "Lille",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Tech",
+    "Secteur public & éducation",
+    "Juridique"
+   ],
+   "url": "https://www.incyber.org/",
+   "source": "https://www.incyber.org/",
+   "confirme": true,
+   "note": "Cybersécurité et confiance numérique",
+   "note_en": "Cybersecurity and digital trust"
+  },
+  {
+   "nom": "CFIA Rennes",
+   "debut": "2027-03-09",
+   "fin": "2027-03-11",
+   "ville": "Rennes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Agroalimentaire",
+    "Énergie & industrie",
+    "Opérations"
+   ],
+   "url": "https://www.rennes.cfiaexpo.com/",
+   "source": "https://www.rennes.cfiaexpo.com/",
+   "confirme": true,
+   "note": "Équipements et procédés de l’industrie agroalimentaire, badge gratuit",
+   "note_en": "Food industry equipment and processes, free badge"
+  },
+  {
    "nom": "DevFest Nantes 2027",
    "debut": "2027-03-11",
    "fin": "2027-03-12",
@@ -455,6 +980,43 @@
    "url": "https://devfest.gdgnantes.com",
    "source": "https://www.agenda-tech.com/events/nous-serons-de-retour-pour-une-edition-sportive-les-11-et-12-mars-2027-2027",
    "confirme": true
+  },
+  {
+   "nom": "Franchise Expo Paris",
+   "debut": "2027-03-13",
+   "fin": "2027-03-15",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Retail & conso",
+    "Direction générale",
+    "Sales"
+   ],
+   "url": "https://www.franchiseparis.com/",
+   "source": "https://www.franchiseparis.com/",
+   "confirme": true,
+   "note": "Salon de la franchise",
+   "note_en": "Franchising show"
+  },
+  {
+   "nom": "Global Industrie",
+   "debut": "2027-03-15",
+   "fin": "2027-03-18",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "gratuit",
+   "themes": [
+    "Énergie & industrie",
+    "Opérations"
+   ],
+   "url": "https://www.global-industrie.com/",
+   "source": "https://www.global-industrie.com/",
+   "confirme": true,
+   "note": "Industrie, à Eurexpo, badge visiteur gratuit",
+   "note_en": "Manufacturing, at Eurexpo, free visitor badge"
   },
   {
    "nom": "Patrimonia Paris",
@@ -474,6 +1036,24 @@
    "confirme": true
   },
   {
+   "nom": "MIPIM",
+   "debut": "2027-03-16",
+   "fin": "2027-03-19",
+   "ville": "Cannes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Immobilier & construction",
+    "Finance & investissement"
+   ],
+   "url": "https://www.mipim.com/",
+   "source": "https://www.mipim.com/",
+   "confirme": true,
+   "note": "Immobilier international, au Palais des Festivals",
+   "note_en": "International real estate, at the Palais des Festivals"
+  },
+  {
    "nom": "All4Customer Paris",
    "debut": "2027-03-23",
    "fin": "2027-03-25",
@@ -491,6 +1071,60 @@
    "source": "https://www.abondance.com/agenda/all4customer-paris-2027",
    "confirme": true,
    "note": "Badge visiteur gratuit"
+  },
+  {
+   "nom": "Printemps Agile 2027",
+   "debut": "2027-03-23",
+   "fin": "2027-03-23",
+   "ville": "Caen",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Gestion de projet",
+    "Conseil"
+   ],
+   "url": "https://www.printempsagile.fr",
+   "source": "https://sessionize.com/printemps-agile-2027/",
+   "confirme": true,
+   "note": "ISEN, presqu’île de Caen ; 15e édition, environ 500 participants ; tarifs pas encore publiés",
+   "note_en": "ISEN, Caen peninsula; 15th edition, about 500 attendees; prices not yet published"
+  },
+  {
+   "nom": "SITL",
+   "debut": "2027-03-23",
+   "fin": "2027-03-25",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Opérations",
+    "Transport & mobilité"
+   ],
+   "url": "https://www.sitl.eu/",
+   "source": "https://www.sitl.eu/",
+   "confirme": true,
+   "note": "Transport et logistique",
+   "note_en": "Transport and logistics"
+  },
+  {
+   "nom": "BePositive",
+   "debut": "2027-03-31",
+   "fin": "2027-04-02",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Énergie & industrie",
+    "Immobilier & construction"
+   ],
+   "url": "https://www.bepositive-events.com/",
+   "source": "https://www.bepositive-events.com/",
+   "confirme": true,
+   "note": "Transition énergétique et bâtiment, à Eurexpo",
+   "note_en": "Energy transition and buildings, at Eurexpo"
   },
   {
    "nom": "AWS Summit Paris",
@@ -526,6 +1160,23 @@
    "confirme": true
   },
   {
+   "nom": "Municipalia",
+   "debut": "2027-04-15",
+   "fin": "2027-04-16",
+   "ville": "Marche-en-Famenne",
+   "pays": "BE",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Secteur public & éducation"
+   ],
+   "url": "https://www.municipalia.be/",
+   "source": "https://www.municipalia.be/",
+   "confirme": true,
+   "note": "Salon des pouvoirs locaux wallons (ex-Salon des Mandataires), au WEX",
+   "note_en": "Show for Walloon local authorities (formerly Salon des Mandataires), at WEX"
+  },
+  {
    "nom": "GO Entrepreneurs Paris",
    "debut": "2027-04-28",
    "fin": "2027-04-29",
@@ -539,27 +1190,30 @@
     "Marketing",
     "Sales"
    ],
-   "url": "https://www.salondesentrepreneurs.com",
+   "url": "https://www.go-entrepreneurs.com",
    "source": "https://www.agoris.io/en/salons/go-entrepreneurs-paris",
-   "confirme": true
+   "confirme": true,
+   "pres": [
+    "Paris"
+   ]
   },
   {
-   "nom": "Rencontres du PMI France 2027",
-   "debut": "2027-05",
-   "fin": "",
-   "ville": "Paris La Défense",
-   "pays": "FR",
+   "nom": "Salon international des inventions de Genève",
+   "debut": "2027-04-28",
+   "fin": "2027-05-02",
+   "ville": "Genève",
+   "pays": "CH",
    "mode": "presentiel",
    "prix": "variable",
    "themes": [
-    "Opérations",
-    "Conseil",
-    "Direction générale",
-    "Gestion de projet"
+    "Enseignement & recherche",
+    "Énergie & industrie"
    ],
-   "url": "https://pmi-france.org/conferences/national-bALL",
-   "source": "https://eocen.setec.fr/retour-sur-les-rencontres-du-project-management-institute-pmi-2026/",
-   "confirme": false
+   "url": "https://www.inventions-geneva.ch/",
+   "source": "https://www.inventions-geneva.ch/",
+   "confirme": true,
+   "note": "À Palexpo",
+   "note_en": "At Palexpo"
   },
   {
    "nom": "Journée internationale du PMO",
@@ -577,6 +1231,46 @@
    "source": "https://internationalpmoday.com/",
    "confirme": true,
    "note": "Journée mondiale : webinaires et rencontres organisés par les communautés PMO"
+  },
+  {
+   "nom": "EHL HumanX Summit",
+   "debut": "2027-05-11",
+   "fin": "2027-05-12",
+   "ville": "Lausanne",
+   "pays": "CH",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Tourisme, hôtellerie & restauration",
+    "RH",
+    "Direction générale"
+   ],
+   "url": "https://industry.ehl.edu/humanx-summit",
+   "source": "https://industry.ehl.edu/humanx-summit",
+   "confirme": true,
+   "note": "Hôtellerie et facteur humain, à l’EHL",
+   "note_en": "Hospitality and people, at EHL"
+  },
+  {
+   "nom": "Rencontres du PMI France 2027",
+   "debut": "2027-05-17",
+   "fin": "2027-05-18",
+   "ville": "Paris La Défense",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Opérations",
+    "Conseil",
+    "Direction générale",
+    "Gestion de projet"
+   ],
+   "url": "https://pmi-france.org/r27---les-rencontres-du-pmi-2027",
+   "source": "https://pmi-france.org/r27---les-rencontres-du-pmi-2027",
+   "confirme": true,
+   "pres": [
+    "Paris"
+   ]
   },
   {
    "nom": "SantExpo 2027",
@@ -606,9 +1300,28 @@
     "Banque & assurance",
     "Tech"
    ],
-   "url": "https://www.money2020europe.com",
+   "url": "https://europe.money2020.com",
    "source": "https://earlyhall.com/conferences/money20-20-europe",
    "confirme": true
+  },
+  {
+   "nom": "EPHJ",
+   "debut": "2027-06-08",
+   "fin": "2027-06-11",
+   "ville": "Genève",
+   "pays": "CH",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Énergie & industrie",
+    "Santé",
+    "Opérations"
+   ],
+   "url": "https://www.ephj.ch/",
+   "source": "https://www.ephj.ch/",
+   "confirme": true,
+   "note": "Horlogerie, microtechnique et medtech, à Palexpo",
+   "note_en": "Watchmaking, microtechnology and medtech, at Palexpo"
   },
   {
    "nom": "Solutions Ressources Humaines",
@@ -624,6 +1337,27 @@
    "url": "https://solutions-ressources-humaines.fr",
    "source": "https://solutions-ressources-humaines.fr/infos-pratiques/",
    "confirme": true
+  },
+  {
+   "nom": "Salon international de l’aéronautique et de l’espace",
+   "debut": "2027-06-14",
+   "fin": "2027-06-20",
+   "ville": "Le Bourget",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Transport & mobilité",
+    "Énergie & industrie"
+   ],
+   "url": "https://www.siae.fr/",
+   "source": "https://www.siae.fr/",
+   "confirme": true,
+   "note": "Journées professionnelles et grand public",
+   "note_en": "Trade and public days",
+   "pres": [
+    "Paris"
+   ]
   },
   {
    "nom": "VivaTech 2027",
@@ -647,6 +1381,24 @@
    "confirme": true
   },
   {
+   "nom": "Cannes Lions",
+   "debut": "2027-06-21",
+   "fin": "2027-06-25",
+   "ville": "Cannes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Marketing",
+    "Télécom & médias"
+   ],
+   "url": "https://www.canneslions.com/",
+   "source": "https://www.canneslions.com/",
+   "confirme": true,
+   "note": "Festival de la créativité publicitaire",
+   "note_en": "Creativity and advertising festival"
+  },
+  {
    "nom": "SIDO Lyon 2027",
    "debut": "2027-09-15",
    "fin": "2027-09-16",
@@ -663,6 +1415,25 @@
    "url": "https://www.sido-lyon.com",
    "source": "https://salonsenfrance.fr/salons/sido-lyon",
    "confirme": true
+  },
+  {
+   "nom": "GO Entrepreneurs Lyon",
+   "debut": "2027-09-23",
+   "fin": "2027-09-23",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Direction générale",
+    "Finance",
+    "Sales"
+   ],
+   "url": "https://www.go-entrepreneurs.com/",
+   "source": "https://www.go-entrepreneurs.com/",
+   "confirme": true,
+   "note": "Création et développement d’entreprise, à La Sucrière",
+   "note_en": "Starting and growing a business, at La Sucrière"
   },
   {
    "nom": "Big Data & AI Paris 2027",
@@ -683,8 +1454,8 @@
   },
   {
    "nom": "BIG Bpifrance Inno Génération",
-   "debut": "2027-10",
-   "fin": "",
+   "debut": "2027-10-05",
+   "fin": "2027-10-05",
    "ville": "Paris",
    "pays": "FR",
    "mode": "presentiel",
@@ -696,8 +1467,82 @@
     "Sales"
    ],
    "url": "https://big.bpifrance.fr",
-   "source": "https://big.bpifrance.fr/en",
-   "confirme": false
+   "source": "https://big.bpifrance.fr",
+   "confirme": true,
+   "note": "Accor Arena",
+   "note_en": "Accor Arena"
+  },
+  {
+   "nom": "IFTM Top Resa",
+   "debut": "2027-10-05",
+   "fin": "2027-10-07",
+   "ville": "Paris",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Tourisme, hôtellerie & restauration",
+    "Sales"
+   ],
+   "url": "https://www.iftm.fr/",
+   "source": "https://www.iftm.fr/",
+   "confirme": true,
+   "note": "Salon des professionnels du tourisme, Porte de Versailles",
+   "note_en": "Travel industry show, Porte de Versailles"
+  },
+  {
+   "nom": "Pollutec",
+   "debut": "2027-10-12",
+   "fin": "2027-10-15",
+   "ville": "Lyon",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Énergie & industrie",
+    "Secteur public & éducation"
+   ],
+   "url": "https://www.pollutec.com/",
+   "source": "https://www.pollutec.com/",
+   "confirme": true,
+   "note": "Environnement et transition écologique, à Eurexpo",
+   "note_en": "Environment and ecological transition, at Eurexpo"
+  },
+  {
+   "nom": "Serbotel",
+   "debut": "2027-10-17",
+   "fin": "2027-10-20",
+   "ville": "Nantes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "variable",
+   "themes": [
+    "Tourisme, hôtellerie & restauration",
+    "Agroalimentaire"
+   ],
+   "url": "https://www.serbotel.com/",
+   "source": "https://www.serbotel.com/",
+   "confirme": true,
+   "note": "Hôtellerie et restauration, au parc des expositions",
+   "note_en": "Hospitality and food service, at the exhibition centre"
+  },
+  {
+   "nom": "MIPCOM Cannes",
+   "debut": "2027-10-18",
+   "fin": "2027-10-21",
+   "ville": "Cannes",
+   "pays": "FR",
+   "mode": "presentiel",
+   "prix": "payant",
+   "themes": [
+    "Télécom & médias",
+    "Sales"
+   ],
+   "url": "https://www.mipcom.com/",
+   "source": "https://www.mipcom.com/",
+   "confirme": true,
+   "note": "Marché international des contenus audiovisuels",
+   "note_en": "International TV and content market"
   }
  ],
  "agendas": [

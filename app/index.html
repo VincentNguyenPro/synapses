@@ -1195,7 +1195,7 @@ let evCity = ''; try { evCity = localStorage.getItem(EV_CITY_KEY) || ''; } catch
 function loadEvents(){ if(!eventsP) eventsP = fetch('../data/evenements.json').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => (eventsData = d)).catch(e => { eventsP = null; throw e; }); return eventsP; }
 const COUNTRY = {FR:['france'], PT:['portugal'], FI:['finland', 'finlande'], ES:['spain', 'espagne'], GB:['united kingdom', 'royaume-uni', 'uk', 'england', 'angleterre'], NL:['netherlands', 'pays-bas'], DE:['germany', 'allemagne'], BE:['belgium', 'belgique'], CH:['switzerland', 'suisse'], US:['united states', 'etats-unis']};
 const COUNTRY_NAME = {FR:['France', 'France'], PT:['Portugal', 'Portugal'], FI:['Finlande', 'Finland'], ES:['Espagne', 'Spain'], GB:['Royaume-Uni', 'United Kingdom'], NL:['Pays-Bas', 'Netherlands'], DE:['Allemagne', 'Germany'], BE:['Belgique', 'Belgium'], CH:['Suisse', 'Switzerland'], US:['États-Unis', 'United States']};
-const VILLE_EN = {'Lisbonne':'Lisbon', 'Londres':'London', 'Barcelone':'Barcelona'};
+const VILLE_EN = {'Lisbonne':'Lisbon', 'Londres':'London', 'Barcelone':'Barcelona', 'Genève':'Geneva'};
 /* Ce que Synapses sait de toi pour choisir : fonction et secteur (même classement que tes contacts), ville et pays (Profile.csv) */
 function myEventProfile(){
   /* Ton dernier poste (Positions.csv) d’abord : le titre du profil (Headline) mélange souvent plusieurs rôles */
@@ -1245,7 +1245,9 @@ async function showEvents(keepScroll){
   const okSecteur = th => { const x = th.filter(isSecTheme); return !evState.secteur || x.includes(evState.secteur === 'moi' ? me.sector : evState.secteur); };
   if(!evLieuInit){ evLieuInit = true; if(evCity) evState.lieu = 'ville'; }
   if(evState.lieu === 'ville' && !me.city) evState.lieu = 'pays';
-  const inCity = e => me.city && e.ville && (norm(e.ville).includes(norm(me.city)) || norm(me.city).includes(norm(e.ville)) || (norm(me.city) === 'paris' && /^paris|nanterre|la defense/.test(norm(e.ville))));
+  /* pres : villes proches (Neuilly-sur-Seine pour Paris…), écrites dans data/evenements.json */
+  const nearCity = v => norm(v).includes(norm(me.city)) || norm(me.city).includes(norm(v));
+  const inCity = e => me.city && e.ville && (nearCity(e.ville) || (e.pres || []).some(nearCity) || (norm(me.city) === 'paris' && /^paris|nanterre|la defense/.test(norm(e.ville))));
   const ok = e => (!evState.mode || (evState.mode === 'presentiel' ? e.mode !== 'en-ligne' : e.mode !== 'presentiel'))
     && (!evState.prix || e.prix === evState.prix)
     && (!evState.lieu || (evState.lieu === 'ville' ? inCity(e) : evState.lieu === 'pays' ? (e.pays === me.country || e.mode === 'en-ligne') : e.pays && e.pays !== me.country))
@@ -1258,7 +1260,7 @@ async function showEvents(keepScroll){
   if(!list.length && evState.metier === 'moi' && evState.metier === defMetier && evState.secteur === defSecteur){ evState.metier = ''; list = all.filter(ok); }
   list.sort((x, y) => rel(y) - rel(x) || (inCity(y) ? 1 : 0) - (inCity(x) ? 1 : 0) || evDate(x.debut) - evDate(y.debut));
   const countryName = (COUNTRY_NAME[me.country] || [me.country, me.country])[EN ? 1 : 0];
-  const cities = [...new Set([me.city, me.profileCity, ...all.filter(e => e.pays === me.country && e.ville).map(e => e.ville)].filter(Boolean))].sort((a, b) => a.localeCompare(b, LOC));
+  const cities = [...new Set([me.city, me.profileCity, ...all.filter(e => e.pays === me.country && e.ville).map(e => (e.pres || [])[0] || e.ville)].filter(Boolean))].sort((a, b) => a.localeCompare(b, LOC));
   const isDefault = evState.lieu === 'pays' && !evState.mode && !evState.prix && evState.metier === defMetier && evState.secteur === defSecteur;
   const where = e => e.mode === 'en-ligne' ? L('En ligne', 'Online') : [EN ? VILLE_EN[e.ville] || e.ville : e.ville, e.pays && e.pays !== me.country ? (COUNTRY_NAME[e.pays] || [e.pays, e.pays])[EN ? 1 : 0] : ''].filter(Boolean).join(', ');
   const price = {gratuit:L('Gratuit', 'Free'), payant:L('Payant', 'Paid'), variable:L('Prix selon le billet', 'Price varies')};
