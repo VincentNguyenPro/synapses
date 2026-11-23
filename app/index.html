@@ -651,6 +651,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   /* Fiche ouverte sur téléphone : les bandeaux (démo, IA, réseau à garder) laissent la place au graphe au-dessus de la fiche */
   body.drawer-open #bar .demo{display:none}
   .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
+  .drawer.tall{max-height:90%}
   .list{padding:8px 12px 96px}
 }
 </style>
@@ -1305,7 +1306,7 @@ async function showEvents(keepScroll){
     ${agGroups.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3>${agGroups.map(([k, name, items], i) => `<details class="evgrp"${i === 0 || items.some(a => a.themes.some(t => me.job.has(t))) ? ' open' : ''}><summary>${esc(name)}<span class="n">${items.length}</span></summary><ul class="evag">${items.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN && a.en || a.nom)} ${ICON_EXT}</a></li>`).join('')}</ul></details>`).join('')}` : ''}
     <h3>${L('Chercher plus', 'Search further')}</h3>
     <p class="evmore">${more.map(([n, u]) => `<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">${n} ${ICON_EXT}</a>`).join('')}</p>
-    <p class="hint" style="margin-top:14px">${L(`Liste vérifiée le ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}, dates à confirmer sur le site de l’organisateur. Rien n’est envoyé : seul un clic ouvre le site choisi.`, `List checked on ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}; confirm dates on the organizer’s site. Nothing is sent: only a click opens the chosen site.`)}</p>`);
+    <p class="hint" style="margin-top:14px">${L(`Liste vérifiée le ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}, dates à confirmer sur le site de l’organisateur. Rien n’est envoyé : seul un clic ouvre le site choisi.`, `List checked on ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}; confirm dates on the organizer’s site. Nothing is sent: only a click opens the chosen site.`)}</p>`, true);
   $('#evMetier').addEventListener('change', e => { evState.metier = e.target.value; showEvents(true); });
   $('#evSecteur').addEventListener('change', e => { evState.secteur = e.target.value; showEvents(true); });
   $('#evLieu').addEventListener('change', e => { const v = e.target.value;
@@ -4054,8 +4055,9 @@ const ACC_KEY = 'synapses-panneau-v1';
 
 /* ---------- Drawer ---------- */
 const drawer = $('#drawer'), dbody = $('#drawerBody');
-function openDrawer(html){
-  dbody.innerHTML = html;
+/* tall : sur téléphone, la fiche monte presque jusqu’en haut (événements : rien à voir dans le graphe) */
+function openDrawer(html, tall){
+  dbody.innerHTML = html; drawer.classList.toggle('tall', !!tall);
   canvas.classList.add('has-drawer'); document.body.classList.add('drawer-open');
   drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); drawer.scrollTop = 0;
   syncLegendRoom();
