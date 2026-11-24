@@ -143,6 +143,7 @@ details.acc>summary .sic{margin-right:-2px}
 .qlink .n{margin-left:auto;font-weight:800;color:var(--accent)}
 .qlink small{display:block;font-weight:400;color:var(--muted);font-size:12px}
 #cibleHint,#relanceHint{margin:0}
+.dback{display:block;margin:0 0 6px;font-size:13.5px;padding:6px 0}
 details.acc:not([open])>summary{margin-bottom:12px}
 .accsum{flex:1;min-width:0;font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .accsum b{color:var(--accent);font-weight:700}
@@ -255,7 +256,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .evmore{display:flex;flex-wrap:wrap;gap:8px}
 .mebr{cursor:pointer}
 .ilogo.medot{width:14px;height:14px;margin:0;vertical-align:middle}
-.ilogo.imono{display:inline-flex;flex:none;align-items:center;justify-content:center;box-sizing:border-box;background:var(--surface-2);color:var(--muted);font-size:7.5px;font-weight:800;letter-spacing:-.02em;line-height:1;font-style:normal}
+.ilogo.imono{display:inline-flex;flex:none;white-space:nowrap;overflow:hidden;align-items:center;justify-content:center;box-sizing:border-box;background:var(--surface-2);color:var(--muted);font-size:7.5px;font-weight:800;letter-spacing:-.02em;line-height:1;font-style:normal}
 .ilogo.medot.imono{font-size:6.5px}
 .dlist{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--muted)}
 .dlist li{margin-bottom:5px}
@@ -652,6 +653,8 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   body.drawer-open #bar .demo{display:none}
   .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
   .drawer.tall{max-height:90%}
+  /* Listes de contacts : le lien LinkedIn réduit à son icône (le mot prenait 90 px et la ligne montait jusqu’à 230 px) ; nom gardé dans aria-label */
+  .people .lk,.invrow .lk{font-size:0;gap:0;min-width:40px;min-height:40px;justify-content:center;padding:0}.people .lk svg,.invrow .lk svg{width:18px!important;height:18px!important}
   .ofchip{font-size:14px;padding:8px 12px}
   /* Entreprises cibles : les filtres sur une ligne qui défile, pour laisser voir la liste */
   .cbchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-20px;padding-right:20px}.cbchips .chip{flex:none}
@@ -1644,17 +1647,17 @@ function showRelance(){
   if(list.length && state.view === 'graph') focus(ids);
   const invRow = x => `<li class="invrow"><span class="who"><strong>${esc(x.n)}</strong><span>${x.d ? L('Envoyée ', 'Sent ') + esc(sinceFr(x.d + '-15')) : ''}</span></span><a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener" aria-label="${EN ? `Open ${esc(x.n)}’s LinkedIn profile` : `Ouvrir le profil LinkedIn de ${esc(x.n)}`}">LinkedIn ${ICON_EXT}</a></li>`;
   const invList = (arr, title, note) => arr.length ? `<h3>${title} <small class="h3sub">${arr.length}</small></h3><p class="pos">${note}</p><ul class="people">${[...arr].sort((a, b) => (b.d || '').localeCompare(a.d || '')).slice(0, 30).map(invRow).join('')}</ul>${arr.length > 30 ? `<p class="more">${L(`et ${arr.length - 30} autres`, `and ${arr.length - 30} more`)}</p>` : ''}` : '';
-  openDrawer(EN ? `<h2 id="dtitle" tabindex="-1">Contacts to follow up</h2>
+  openDrawer(EN ? `<h2 id="dtitle" tabindex="-1" data-k="relance">Contacts to follow up</h2>
     <p class="pos">${list.length ? `${list.length} ${list.length === 1 ? 'person' : 'people'} you exchanged at least ${RELANCE_MIN_MSG} messages with, but not in the past year. Closest first.` : `No one to follow up with: you’ve recently been in touch with everyone you used to write to often.`}</p>
     ${peopleList(list, '', 50, true)}
     ${invList(inv.o, 'Sent invitations with no reply', 'You invited these people; they haven’t accepted yet. Most recent first.')}
     ${invList(inv.i, 'Received invitations pending', 'These people invited you; you haven’t replied yet.')}
-    <p class="hint" style="margin-top:14px">Computed in this browser from the dates of your messages (never their text) and your invitations. Nothing is sent.</p>` : `<h2 id="dtitle" tabindex="-1">Contacts à relancer</h2>
+    <p class="hint" style="margin-top:14px">Computed in this browser from the dates of your messages (never their text) and your invitations. Nothing is sent.</p>` : `<h2 id="dtitle" tabindex="-1" data-k="relance">Contacts à relancer</h2>
     <p class="pos">${list.length ? `${list.length} personnes avec qui tu as échangé au moins ${RELANCE_MIN_MSG} messages, mais plus depuis un an. Les plus proches d’abord.` : `Personne à relancer&nbsp;: tu as échangé récemment avec tous les contacts à qui tu écrivais souvent.`}</p>
     ${peopleList(list, '', 50, true)}
     ${invList(inv.o, 'Invitations envoyées sans réponse', 'Tu as invité ces personnes, elles n’ont pas encore accepté. Les plus récentes d’abord.')}
     ${invList(inv.i, 'Invitations reçues en attente', 'Ces personnes t’ont invité ; tu n’as pas encore répondu.')}
-    <p class="hint" style="margin-top:14px">Calculé dans ce navigateur à partir des dates de tes messages (jamais leur texte) et de tes invitations. Rien n’est envoyé.</p>`);
+    <p class="hint" style="margin-top:14px">Calculé dans ce navigateur à partir des dates de tes messages (jamais leur texte) et de tes invitations. Rien n’est envoyé.</p>`, true);
 }
 function syncCibleHint(){
   const el = document.getElementById('cibleHint'); if(!el) return;
@@ -2855,7 +2858,8 @@ const zoom = d3.zoom().scaleExtent([0.02, 5]).on('zoom', e => { root.attr('trans
 svg.call(zoom).on('dblclick.zoom', null).on('click', e => { if(e.target === svg.node()) clearSelection(); });
 
 let nodes = [], links = [], linkSel = null, nodeSel = null, labelSel = null, countSel = null, badgeSel = null, needFit = true;
-let backHub = null; /* groupe dont la fiche était ouverte avant celle du contact (retour à sa fermeture) */
+let backHub = null; /* groupe dont la fiche était ouverte avant celle du contact (retour à sa fermeture), ou 'relance' pour la liste des contacts à relancer */
+let relanceScroll = 0; /* position dans la liste des contacts à relancer, retrouvée au retour */
 let gathered = [], collSel = null, tipSel = null, tipHub = null, tipR = 0, collLbl = null, collR = 0, selBlob = null;
 /* Sélection d’un contact : il part au bout de sa branche, ses collègues forment un cercle autour de lui, puis tout revient en place */
 function releaseColleagues(){
@@ -3675,6 +3679,7 @@ function reapplySelection(){
   }
 }
 function clearSelection(){
+  if(backHub === 'relance' && /^c:/.test(state.selected || '')){ backHub = null; drawerHover = null; spokeHot(null); showRelance(); drawer.scrollTop = relanceScroll; if(state.view === 'graph') fit(); return; }
   if(backHub && /^c:/.test(state.selected || '')){
     const h = nodes.find(n => n.id === backHub); backHub = null;
     if(h){ select(null); clearFocus(); drawerHover = null; spokeHot(null); showHub(h); return; }
@@ -5012,6 +5017,7 @@ document.addEventListener('click', e => {
     /* Démo : lien de profil factice (une adresse inventée pourrait être celle d’une vraie personne) */
     else if(a === 'demolink') toast(L('Contact fictif. Avec ton export, ce lien ouvre son profil LinkedIn.', 'Fictional contact. With your export, this link opens their LinkedIn profile.'));
     else if(a === 'relance') showRelance();
+    else if(a === 'relanceback') clearSelection();
     else if(a === 'events') showEvents();
     else if(a === 'evreset'){ Object.assign(evState, {mode:'', prix:'', lieu:'pays', secteur:null, metier:null}); showEvents(true); }
     else if(a === 'cbkind'){ cibleKind = act.dataset.k; showCibles(); }
@@ -5082,7 +5088,9 @@ document.addEventListener('click', e => {
   if(f){ toggleInclude(f.dataset.k, f.dataset.v); return; }
   const person = e.target.closest('[data-cid]');
   /* Contact ouvert depuis la fiche d’un groupe : en fermant sa fiche, on revient à celle du groupe */
-  if(person){ const c = contacts.find(o => o.id === +person.dataset.cid); if(c){ const from = /^h:/.test(state.selected || '') ? state.selected : null; closePanel(); showContact(c); backHub = from; } }
+  if(person){ const c = contacts.find(o => o.id === +person.dataset.cid); if(c){ const rel = !!dbody.querySelector('#dtitle[data-k="relance"]'), from = /^h:/.test(state.selected || '') ? state.selected : rel ? 'relance' : null; if(rel) relanceScroll = drawer.scrollTop; closePanel(); showContact(c); backHub = from;
+    /* Venu de « Contacts à relancer » : un lien en haut de la fiche ramène à la liste (la croix aussi) */
+    if(rel) dbody.insertAdjacentHTML('afterbegin', `<button class="linkbtn dback" type="button" data-act="relanceback">‹ ${L('Contacts à relancer', 'Contacts to follow up')}</button>`); } }
 });
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
