@@ -213,6 +213,7 @@ rep('Aucun serveur ne reçoit ton fichier. Voici tout ce que la page peut envoye
 rep('<th scope="col">Quoi</th><th scope="col">Envoyé à</th><th scope="col">Quand</th>', '<th scope="col">What</th><th scope="col">Sent to</th><th scope="col">When</th>')
 rep('data-l="Envoyé à"', 'data-l="Sent to"', 7)
 rep('data-l="Quand"', 'data-l="When"', 7)
+rep('td[data-l]::before{content:attr(data-l) "\\00a0: ";', 'td[data-l]::before{content:attr(data-l) ": ";')  # pas d’espace avant « : » en anglais
 rep('<td>Tes contacts&nbsp;: noms, profils, emails</td>', '<td>Your contacts: names, profiles, emails</td>')
 rep('class="never">Personne</td>', 'class="never">Nobody</td>')
 rep('class="never">Jamais</td>', 'class="never">Never</td>')
