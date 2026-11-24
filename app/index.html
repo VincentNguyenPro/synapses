@@ -832,7 +832,9 @@ const LANG = (() => {
   try { const s = localStorage.getItem(LANG_KEY); if(s === 'en' || s === 'fr') return s; } catch(e) {}
   return /^en\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || '') ? 'en' : 'fr';
 })();
-const EN = LANG === 'en', L = (fr, en) => EN ? en : fr, LOC = EN ? 'en-US' : 'fr-FR';
+/* Typographie française : espace insécable avant « : ; ? ! » % » et après «, pour tous les textes français (L) et ceux des données (frNb) */
+const frNb = s => LANG === 'en' || !s ? s : String(s).replace(/ ([:;?!»%])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+const EN = LANG === 'en', L = (fr, en) => EN ? en : frNb(fr), LOC = EN ? 'en-US' : 'fr-FR';
 /* Pluriel anglais : « 1 contact », « 0 contacts », « 2 contacts » */
 const sEN = n => n === 1 ? '' : 's';
 /* Valeurs affichées en anglais (codes internes en français) */
@@ -1171,7 +1173,7 @@ function cibleIndex(){
 /* Ce que tu as fait avec cette entreprise, en une ligne : « Candidature : Product Manager, mars 2026 · 3 offres enregistrées · Suivie » */
 function cibleMeta(r){
   const out = [], K = r.kinds;
-  if(K.a){ const last = [...K.a.items].sort((x, y) => (y.d > x.d) - (y.d < x.d))[0]; out.push(EN ? (K.a.nb > 1 ? `${K.a.nb} applications, the latest in ${monthFr(last.d)}` : `Application${last.t ? ': ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`) : K.a.nb > 1 ? `${K.a.nb} candidatures, la dernière en ${monthFr(last.d)}` : `Candidature${last.t ? ' : ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`); }
+  if(K.a){ const last = [...K.a.items].sort((x, y) => (y.d > x.d) - (y.d < x.d))[0]; out.push(EN ? (K.a.nb > 1 ? `${K.a.nb} applications, the latest in ${monthFr(last.d)}` : `Application${last.t ? ': ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`) : K.a.nb > 1 ? `${K.a.nb} candidatures, la dernière en ${monthFr(last.d)}` : `Candidature${last.t ? '\u00a0: ' + last.t : ''}${last.d ? ', ' + monthFr(last.d) : ''}`); }
   if(K.d) out.push(L('Entreprise de rêve', 'Dream company'));
   if(K.s) out.push(K.s.nb > 1 ? L(`${K.s.nb} offres enregistrées`, `${K.s.nb} saved jobs`) : L('Offre enregistrée', 'Saved job'));
   if(K.f) out.push(L('Suivie', 'Followed'));
@@ -1277,10 +1279,10 @@ async function showEvents(keepScroll){
   const isDefault = evState.lieu === 'pays' && !evState.mode && !evState.prix && evState.metier === defMetier && evState.secteur === defSecteur;
   const where = e => e.mode === 'en-ligne' ? L('En ligne', 'Online') : [EN ? VILLE_EN[e.ville] || e.ville : e.ville, e.pays && e.pays !== me.country ? (COUNTRY_NAME[e.pays] || [e.pays, e.pays])[EN ? 1 : 0] : ''].filter(Boolean).join(', ');
   const price = {gratuit:L('Gratuit', 'Free'), payant:L('Payant', 'Paid'), variable:L('Prix selon le billet', 'Price varies')};
-  const card = e => `<li class="evcard"><div class="evdate">${esc(evWhen(e))}</div><strong>${esc(EN && e.nom_en || e.nom)}</strong>
+  const card = e => `<li class="evcard"><div class="evdate">${esc(evWhen(e))}</div><strong>${esc(EN && e.nom_en || frNb(e.nom))}</strong>
       <div class="evmeta"><span>${esc(where(e))}</span>${me.job.size && rel(e) >= 2 ? `<span class="evtag job">${L('Ton métier', 'Your job')}</span>` : ''}${inCity(e) ? `<span class="evtag near">${L('Près de toi', 'Near you')}</span>` : ''}<span class="evtag ${e.prix === 'gratuit' ? 'free' : ''}">${price[e.prix] || ''}</span>${e.mode === 'hybride' ? `<span class="evtag">${L('Présentiel et en ligne', 'In person and online')}</span>` : ''}</div>
       <div class="evthemes">${e.themes.filter(t => t !== 'Gestion de projet' || me.themes.has(t)).slice(0, 4).map(t => `<span>${esc(t === 'Gestion de projet' ? L('Gestion de projet', 'Project management') : dv(t))}</span>`).join('')}</div>
-      ${e.note ? `<p class="evnote">${esc(EN ? e.note_en || e.note.replace('Plusieurs sessions en anglais (1er, 8 et 9 décembre)', 'Several sessions in English (Dec 1, 8 and 9)').replace('Webinaire en anglais', 'Webinar in English').replace('Badge visiteur gratuit', 'Free visitor badge').replace('Journée mondiale : webinaires et rencontres organisés par les communautés PMO', 'Worldwide day: webinars and meetups run by PMO communities') : e.note)}</p>` : ''}
+      ${e.note ? `<p class="evnote">${esc(EN ? e.note_en || e.note.replace('Plusieurs sessions en anglais (1er, 8 et 9 décembre)', 'Several sessions in English (Dec 1, 8 and 9)').replace('Webinaire en anglais', 'Webinar in English').replace('Badge visiteur gratuit', 'Free visitor badge').replace('Journée mondiale : webinaires et rencontres organisés par les communautés PMO', 'Worldwide day: webinars and meetups run by PMO communities') : frNb(e.note))}</p>` : ''}
       <a class="btn primary sm" href="${esc(e.url)}" target="_blank" rel="noopener">${L('S’inscrire', 'Register')} ${ICON_EXT}</a></li>`;
   /* Agendas : un agenda sans thème (école, coopérative…) vaut pour tous ; ceux de ton métier d’abord */
   const ag = (eventsData.agendas || []).filter(a => !a.themes.length || (okMetier(a.themes) && okSecteur(a.themes)))
@@ -1301,7 +1303,7 @@ async function showEvents(keepScroll){
       <label class="evf"><span>${L('Secteur d’activité', 'Industry')}</span><select id="evSecteur">${me.sector ? `<option value="moi"${evState.secteur === 'moi' ? ' selected' : ''}>${L('Mon secteur', 'My industry')} (${esc(dv(me.sector))})</option>` : ''}<option value=""${!evState.secteur ? ' selected' : ''}>${L('Tous les secteurs', 'All industries')}</option>${secAll.map(t => `<option value="${esc(t)}"${evState.secteur === t ? ' selected' : ''}>${esc(dv(t))}</option>`).join('')}</select></label>
       <label class="evf"><span>${L('Lieu', 'Where')}</span><select id="evLieu">
         ${me.city ? `<option value="ville:${esc(me.city)}"${evState.lieu === 'ville' ? ' selected' : ''}>${L(`Ma ville : ${esc(me.city)}`, `My city: ${esc(VILLE_EN[me.city] || me.city)}`)}</option>` : ''}
-        <option value="pays"${evState.lieu === 'pays' ? ' selected' : ''}>${L(`Mon pays : ${countryName} (et en ligne)`, `My country: ${countryName} (and online)`)}</option>
+        <option value="pays"${evState.lieu === 'pays' ? ' selected' : ''}>${L(`Mon pays\u00a0: ${countryName} (et en ligne)`, `My country: ${countryName} (and online)`)}</option>
         <option value=""${!evState.lieu ? ' selected' : ''}>${L('Le monde entier', 'Worldwide')}</option>
         <optgroup label="${L('Changer de ville', 'Change city')}">${cities.filter(v => norm(v) !== norm(me.city)).map(v => `<option value="ville:${esc(v)}">${esc(EN ? VILLE_EN[v] || v : v)}</option>`).join('')}</optgroup>
         <option value="etranger"${evState.lieu === 'etranger' ? ' selected' : ''}>${L('Seulement à l’étranger', 'Abroad only')}</option>
@@ -1315,10 +1317,10 @@ async function showEvents(keepScroll){
     </div>
     <div class="evhead"><h3>${list.length ? L(`${list.length} événement${list.length > 1 ? 's' : ''} à venir`, `${list.length} upcoming event${sEN(list.length)}`) : L('Aucun événement avec ces filtres', 'No events with these filters')}</h3>${isDefault ? '' : `<button class="linkbtn" type="button" data-act="evreset">${L('Réinitialiser', 'Reset')}</button>`}</div>
     ${list.length ? `<ul class="evlist">${list.map(card).join('')}</ul>` : `<p class="pos">${L('Élargis un filtre, ou cherche plus loin ci-dessous.', 'Widen a filter, or search further below.')}</p>`}
-    ${agGroups.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3>${agGroups.map(([k, name, items], i) => `<details class="evgrp"${i === 0 || items.some(a => a.themes.some(t => me.job.has(t))) ? ' open' : ''}><summary>${esc(name)}<span class="n">${items.length}</span></summary><ul class="evag">${items.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN && a.en || a.nom)} ${ICON_EXT}</a></li>`).join('')}</ul></details>`).join('')}` : ''}
+    ${agGroups.length ? `<h3>${L('Agendas à suivre', 'Calendars to follow')}</h3>${agGroups.map(([k, name, items], i) => `<details class="evgrp"${i === 0 || items.some(a => a.themes.some(t => me.job.has(t))) ? ' open' : ''}><summary>${esc(name)}<span class="n">${items.length}</span></summary><ul class="evag">${items.map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(EN && a.en || frNb(a.nom))} ${ICON_EXT}</a></li>`).join('')}</ul></details>`).join('')}` : ''}
     <h3>${L('Chercher plus', 'Search further')}</h3>
     <p class="evmore">${more.map(([n, u]) => `<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">${n} ${ICON_EXT}</a>`).join('')}</p>
-    <p class="hint" style="margin-top:14px">${L(`Liste vérifiée le ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}, dates à confirmer sur le site de l’organisateur. Rien n’est envoyé : seul un clic ouvre le site choisi.`, `List checked on ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}; confirm dates on the organizer’s site. Nothing is sent: only a click opens the chosen site.`)}</p>`, true);
+    <p class="hint" style="margin-top:14px">${L(`Liste vérifiée le ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}, dates à confirmer sur le site de l’organisateur. Rien n’est envoyé\u00a0: seul un clic ouvre le site choisi.`, `List checked on ${evDate(eventsData.maj).toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'})}; confirm dates on the organizer’s site. Nothing is sent: only a click opens the chosen site.`)}</p>`, true);
   $('#evMetier').addEventListener('change', e => { evState.metier = e.target.value; showEvents(true); });
   $('#evSecteur').addEventListener('change', e => { evState.secteur = e.target.value; showEvents(true); });
   $('#evLieu').addEventListener('change', e => { const v = e.target.value;
@@ -1559,7 +1561,7 @@ function offerStep1(){
     </form>
     ${f ? `<div id="ofFound">${f.loading ? `<p class="pos">${L('Recherche en cours…', 'Searching…')}</p>` : f.err || srcOff ? `<p class="ofnote">${L('La liste d’offres n’est pas disponible pour le moment. Utilise les recherches ci-dessous.', 'The job list isn’t available right now. Use the searches below.')}</p>` : f.list.length ? `<p class="pos">${L(`${f.list.length} offre${f.list.length > 1 ? 's' : ''}, les plus récentes d’abord. Garde celles qui t’intéressent.`, `${f.list.length} job${sEN(f.list.length)}, newest first. Keep the ones you like.`)}</p><ul class="ofjobs">${f.list.map(job).join('')}</ul><p class="hint ofattr">${L('Offres fournies par', 'Jobs by')} ${[['Adzuna', 'https://www.adzuna.fr'], ['Jooble', 'https://fr.jooble.org']].filter(([n]) => f.sources[n] === 'ok').map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(L(' et ', ' and '))}</p>` : `<p class="pos">${L('Aucune offre pour ces critères. Élargis le lieu ou le poste, ou essaie les sites ci-dessous.', 'No jobs for these criteria. Widen the location or the job, or try the sites below.')}</p>`}</div>` : ''}
     <p class="ofsites"><span>${L('Chercher aussi sur', 'Also search on')}</span>${jobSearchLinks(c).map(([n, u]) => `<a class="ofsite" href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ${ICON_EXT}</a>`).join('')}</p>
-    <p class="hint">${L('Une offre trouvée sur un site : copie son lien et son texte, puis ajoute-la à l’étape 2.', 'Found a job on a site? Copy its link and text, then add it in step 2.')}</p></section>`;
+    <p class="hint">${L('Une offre trouvée sur un site\u00a0: copie son lien et son texte, puis ajoute-la à l’étape 2.', 'Found a job on a site? Copy its link and text, then add it in step 2.')}</p></section>`;
 }
 function syncOffreHint(){
   const el = document.getElementById('offreHint'); if(!el) return;
@@ -1658,7 +1660,7 @@ function showRelance(){
     <p class="pos">${list.length ? `${list.length} personnes avec qui tu as échangé au moins ${RELANCE_MIN_MSG} messages, mais plus depuis un an. Les plus proches d’abord.` : `Personne à relancer&nbsp;: tu as échangé récemment avec tous les contacts à qui tu écrivais souvent.`}</p>
     ${peopleList(list, '', 50, true)}
     ${invList(inv.o, 'Invitations envoyées sans réponse', 'Tu as invité ces personnes, elles n’ont pas encore accepté. Les plus récentes d’abord.')}
-    ${invList(inv.i, 'Invitations reçues en attente', 'Ces personnes t’ont invité ; tu n’as pas encore répondu.')}
+    ${invList(inv.i, 'Invitations reçues en attente', 'Ces personnes t’ont invité\u00a0; tu n’as pas encore répondu.')}
     <p class="hint" style="margin-top:14px">Calculé dans ce navigateur à partir des dates de tes messages (jamais leur texte) et de tes invitations. Rien n’est envoyé.</p>`, true);
 }
 function syncCibleHint(){
@@ -1726,7 +1728,7 @@ async function setKeep(on){
 function keepCard(){
   if(isDemo || keepAsked || keepOn() || !contacts.length) return '';
   return EN ? `<div class="demo" role="note"><div><strong>Keep your network on this device?</strong><span>To find it again without re-importing. Nothing is sent; avoid on a shared computer.</span></div>
-    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Keep on this device</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Don’t keep my network">✕</button></div></div>` : `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé ; à éviter sur un ordinateur partagé.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Keep on this device</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Don’t keep my network">✕</button></div></div>` : `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé\u00a0; à éviter sur un ordinateur partagé.</span></div>
     <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Garder sur cet appareil</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
 }
 /* Section « Mon réseau » en haut du panneau : état du réseau importé et bouton pour le garder ou l’oublier */
