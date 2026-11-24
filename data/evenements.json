@@ -1,10 +1,11 @@
 {
  "version": 1,
- "description": "Événements professionnels proposés dans Synapses (fiche « Événements pour toi »). Liste vérifiée à la main : chaque date vient de la source indiquée. Un événement passé disparaît tout seul. themes = fonctions (data/postes.json) et secteurs (data/entreprises.json), en codes français. prix : gratuit, payant ou variable (selon le billet, ou non publié). mode : presentiel, en-ligne ou hybride. confirme = false quand seul le mois est connu (debut au format AAAA-MM). note_en = note en anglais. pres = villes proches (badge « Près de toi » quand la commune n’est pas celle du profil).",
+ "description": "Événements professionnels proposés dans Synapses (fiche « Événements pour toi »). Liste vérifiée à la main : chaque date vient de la source indiquée. Un événement passé disparaît tout seul. themes = fonctions (data/postes.json) et secteurs (data/entreprises.json), en codes français. prix : gratuit, payant ou variable (selon le billet, ou non publié). mode : presentiel, en-ligne ou hybride. confirme = false quand seul le mois est connu (debut au format AAAA-MM). nom_en = nom en anglais (absent quand le nom est déjà anglais ou une marque). note_en = note en anglais. pres = villes proches (badge « Près de toi » quand la commune n’est pas celle du profil).",
  "maj": "2026-11-23",
  "evenements": [
   {
    "nom": "RDV des Transformations du Droit",
+   "nom_en": "Legal Transformation Meetings",
    "debut": "2026-11-24",
    "fin": "2026-11-25",
    "ville": "Paris",
@@ -20,6 +21,7 @@
   },
   {
    "nom": "Red Hat Summit : Connect Paris (avec Devoteam)",
+   "nom_en": "Red Hat Summit: Connect Paris (with Devoteam)",
    "debut": "2026-11-24",
    "fin": "2026-11-24",
    "ville": "Paris",
@@ -35,6 +37,7 @@
   },
   {
    "nom": "Salon des maires et des collectivités locales",
+   "nom_en": "Mayors and Local Authorities Trade Show",
    "debut": "2026-11-24",
    "fin": "2026-11-26",
    "ville": "Paris",
@@ -54,6 +57,7 @@
   },
   {
    "nom": "TPC : l’impact réel de l’IA sur les équipes tech",
+   "nom_en": "TPC: the real impact of AI on tech teams",
    "debut": "2026-11-25",
    "fin": "2026-11-25",
    "pays": "FR",
@@ -73,6 +77,7 @@
   },
   {
    "nom": "TPC : Transfo IA @ Treezor, séparer la hype de la réalité",
+   "nom_en": "TPC: AI transformation @ Treezor, separating hype from reality",
    "debut": "2026-11-26",
    "fin": "2026-11-26",
    "ville": "",
@@ -124,6 +129,7 @@
   },
   {
    "nom": "Product School : ateliers en ligne",
+   "nom_en": "Product School: online workshops",
    "debut": "2026-12-01",
    "fin": "2026-12-17",
    "ville": "",
@@ -141,6 +147,7 @@
   },
   {
    "nom": "IOFM : tendances 2027 pour la finance",
+   "nom_en": "IOFM: 2027 trends for finance",
    "debut": "2026-12-01",
    "fin": "2026-12-01",
    "ville": "",
@@ -157,6 +164,7 @@
   },
   {
    "nom": "TPC : Transfo IA, poser le cadre, lâcher les dogmes",
+   "nom_en": "TPC: AI transformation, set the frame, drop the dogmas",
    "debut": "2026-12-01",
    "fin": "2026-12-01",
    "ville": "",
@@ -176,6 +184,7 @@
   },
   {
    "nom": "PMI France Lyon : la Fresque de l’éco-conception",
+   "nom_en": "PMI France Lyon: the Eco-design Fresk",
    "debut": "2026-12-01",
    "fin": "2026-12-01",
    "ville": "Lyon",
@@ -194,6 +203,7 @@
   },
   {
    "nom": "Lyon Data Science : table ronde Data & IA, projets et retours terrain",
+   "nom_en": "Lyon Data Science: Data & AI round table, projects and lessons from the field",
    "debut": "2026-12-01",
    "fin": "2026-12-01",
    "ville": "Lyon",
@@ -231,6 +241,7 @@
   },
   {
    "nom": "Agile Nantes : la chocolaterie agile, financez les meilleures idées",
+   "nom_en": "Agile Nantes: the agile chocolate factory, fund the best ideas",
    "debut": "2026-12-02",
    "fin": "2026-12-02",
    "ville": "Nantes",
@@ -267,6 +278,7 @@
   },
   {
    "nom": "ProductTank Paris : relier la pensée produit et la delivery",
+   "nom_en": "ProductTank Paris: connecting product thinking and delivery",
    "debut": "2026-12-03",
    "fin": "2026-12-03",
    "ville": "Paris",
@@ -286,6 +298,7 @@
   },
   {
    "nom": "Thiga Augmented : réconcilier Canvas et Code",
+   "nom_en": "Thiga Augmented: reconciling Canvas and Code",
    "debut": "2026-12-03",
    "fin": "2026-12-03",
    "ville": "Paris",
@@ -304,6 +317,7 @@
   },
   {
    "nom": "Forum Ouvert Agile Rennes 2026",
+   "nom_en": "Agile Open Space Rennes 2026",
    "debut": "2026-12-04",
    "fin": "2026-12-04",
    "ville": "Rennes",
@@ -322,6 +336,7 @@
   },
   {
    "nom": "Forum des 10 ans de Lyon Data Science",
+   "nom_en": "Lyon Data Science 10th anniversary forum",
    "debut": "2026-12-05",
    "fin": "2026-12-06",
    "ville": "Lyon",
@@ -340,6 +355,7 @@
   },
   {
    "nom": "SIMI, salon de l’immobilier d’entreprise",
+   "nom_en": "SIMI, commercial real estate trade show",
    "debut": "2026-12-08",
    "fin": "2026-12-10",
    "ville": "Paris",
@@ -356,6 +372,7 @@
   },
   {
    "nom": "Data + AI World Tour Paris (avec Devoteam)",
+   "nom_en": "Data + AI World Tour Paris (with Devoteam)",
    "debut": "2026-12-08",
    "fin": "2026-12-08",
    "ville": "Nanterre",
@@ -377,6 +394,7 @@
   },
   {
    "nom": "PMI France La Défense : manager les projets dans l’incertitude et la complexité",
+   "nom_en": "PMI France La Défense: managing projects amid uncertainty and complexity",
    "debut": "2026-12-08",
    "fin": "2026-12-08",
    "ville": "Neuilly-sur-Seine",
@@ -398,6 +416,7 @@
   },
   {
    "nom": "PMI France Côte d’Azur : atelier IA de PMI appliquée au management de projet",
+   "nom_en": "PMI France Côte d’Azur: PMI workshop on AI for project management",
    "debut": "2026-12-08",
    "fin": "2026-12-08",
    "ville": "Valbonne",
@@ -421,6 +440,7 @@
   },
   {
    "nom": "Agile Toulouse : Bière Agile, agilité et IA",
+   "nom_en": "Agile Toulouse: Agile Beer, agility and AI",
    "debut": "2026-12-08",
    "fin": "2026-12-08",
    "ville": "Toulouse",
@@ -439,6 +459,7 @@
   },
   {
    "nom": "Software Craftsmanship Lille : tous architectes à l’heure de l’IA ?",
+   "nom_en": "Software Craftsmanship Lille: all architects in the age of AI?",
    "debut": "2026-12-08",
    "fin": "2026-12-08",
    "ville": "Lille",
@@ -456,6 +477,7 @@
   },
   {
    "nom": "WeTalk : l’IA à l’heure du déj, faire monter une équipe produit en compétence",
+   "nom_en": "WeTalk: AI over lunch, upskilling a product team",
    "debut": "2026-12-09",
    "fin": "2026-12-09",
    "ville": "",
@@ -491,6 +513,7 @@
   },
   {
    "nom": "Generative AI Rennes #13 : RH, l’IA est déjà dans vos équipes",
+   "nom_en": "Generative AI Rennes #13: HR, AI is already in your teams",
    "debut": "2026-12-10",
    "fin": "2026-12-10",
    "ville": "Cesson-Sévigné",
@@ -512,6 +535,7 @@
   },
   {
    "nom": "Les Meetups de l’IA : Marseille #3",
+   "nom_en": "AI Meetups: Marseille #3",
    "debut": "2026-12-10",
    "fin": "2026-12-10",
    "ville": "Marseille",
@@ -530,6 +554,7 @@
   },
   {
    "nom": "PMI France Yvelines : webinaire « PMO sans filtre », de la gouvernance à la valeur",
+   "nom_en": "PMI France Yvelines: “PMO unfiltered” webinar, from governance to value",
    "debut": "2026-12-15",
    "fin": "2026-12-15",
    "ville": "",
@@ -548,6 +573,7 @@
   },
   {
    "nom": "PMI France Rouen : l’IA dans nos pratiques de projet",
+   "nom_en": "PMI France Rouen: AI in our project practices",
    "debut": "2026-12-16",
    "fin": "2026-12-16",
    "ville": "Saint-Étienne-du-Rouvray",
@@ -569,6 +595,7 @@
   },
   {
    "nom": "PMI France Tours : afterwork Guide PMBOK 8e édition",
+   "nom_en": "PMI France Tours: afterwork on the PMBOK Guide, 8th edition",
    "debut": "2026-12-16",
    "fin": "2026-12-16",
    "ville": "Tours",
@@ -586,6 +613,7 @@
   },
   {
    "nom": "TPC : le PM n’est plus expert produit, il est expert métier",
+   "nom_en": "TPC: the PM is no longer a product expert but a business expert",
    "debut": "2027-01-05",
    "fin": "2027-01-05",
    "pays": "FR",
@@ -602,6 +630,7 @@
   },
   {
    "nom": "PMI France Paris Centre : webinaire « l’IA, la partie prenante invisible »",
+   "nom_en": "PMI France Paris Centre: “AI, the invisible stakeholder” webinar",
    "debut": "2027-01-12",
    "fin": "2027-01-12",
    "ville": "",
@@ -636,6 +665,7 @@
   },
   {
    "nom": "Voxel51 : meetup MCP, agents et skills",
+   "nom_en": "Voxel51: MCP, agents and skills meetup",
    "debut": "2027-01-14",
    "fin": "2027-01-14",
    "ville": "",
@@ -654,6 +684,7 @@
   },
   {
    "nom": "Grand Forum du Patrimoine",
+   "nom_en": "Grand Forum on Wealth Management",
    "debut": "2027-01-18",
    "fin": "2027-01-18",
    "ville": "Paris",
@@ -671,6 +702,7 @@
   },
   {
    "nom": "Test Forward 2027 : la qualité logicielle à l’ère de l’IA",
+   "nom_en": "Test Forward 2027: software quality in the age of AI",
    "debut": "2027-01-19",
    "fin": "2027-01-19",
    "ville": "Paris",
@@ -760,6 +792,7 @@
   },
   {
    "nom": "Sommet du droit",
+   "nom_en": "Law Summit",
    "debut": "2027-01-28",
    "fin": "2027-01-28",
    "ville": "Paris",
@@ -775,6 +808,7 @@
   },
   {
    "nom": "Product Meetup SXB #25 : atelier",
+   "nom_en": "Product Meetup SXB #25: workshop",
    "debut": "2027-01-28",
    "fin": "2027-01-28",
    "ville": "Strasbourg",
@@ -827,6 +861,7 @@
   },
   {
    "nom": "Rencontres AMRAE",
+   "nom_en": "AMRAE Risk Management Meetings",
    "debut": "2027-02-03",
    "fin": "2027-02-05",
    "ville": "Deauville",
@@ -879,6 +914,7 @@
   },
   {
    "nom": "Salon international de l’agriculture",
+   "nom_en": "Paris International Agricultural Show",
    "debut": "2027-02-27",
    "fin": "2027-03-07",
    "ville": "Paris",
@@ -1199,6 +1235,7 @@
   },
   {
    "nom": "Salon international des inventions de Genève",
+   "nom_en": "Geneva International Exhibition of Inventions",
    "debut": "2027-04-28",
    "fin": "2027-05-02",
    "ville": "Genève",
@@ -1217,6 +1254,7 @@
   },
   {
    "nom": "Journée internationale du PMO",
+   "nom_en": "International PMO Day",
    "debut": "2027-05-11",
    "fin": "2027-05-11",
    "ville": "",
@@ -1253,6 +1291,7 @@
   },
   {
    "nom": "Rencontres du PMI France 2027",
+   "nom_en": "PMI France Meetings 2027",
    "debut": "2027-05-17",
    "fin": "2027-05-18",
    "ville": "Paris La Défense",
@@ -1325,6 +1364,7 @@
   },
   {
    "nom": "Solutions Ressources Humaines",
+   "nom_en": "Solutions Ressources Humaines, HR trade show",
    "debut": "2027-06-09",
    "fin": "2027-06-10",
    "ville": "Paris",
@@ -1340,6 +1380,7 @@
   },
   {
    "nom": "Salon international de l’aéronautique et de l’espace",
+   "nom_en": "International Paris Air Show",
    "debut": "2027-06-14",
    "fin": "2027-06-20",
    "ville": "Le Bourget",
