@@ -653,6 +653,8 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   body.drawer-open #bar .demo{display:none}
   .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
   .drawer.tall{max-height:90%}
+  /* Lignes cliquables des fiches (répartitions, filiales) et petits liens : assez hauts pour le doigt */
+  .drawer .legendlist .hl{min-height:32px}.facts .linkbtn,.edumates{padding:7px 0}
   /* Listes de contacts : le lien LinkedIn réduit à son icône (le mot prenait 90 px et la ligne montait jusqu’à 230 px) ; nom gardé dans aria-label */
   .people .lk,.invrow .lk{font-size:0;gap:0;min-width:40px;min-height:40px;justify-content:center;padding:0}.people .lk svg,.invrow .lk svg{width:18px!important;height:18px!important}
   .ofchip{font-size:14px;padding:8px 12px}
@@ -3881,7 +3883,8 @@ function zoomToNodes(ms){
   if(!ms.length || state.view !== 'graph') return;
   const px = n => n.ax ?? n.fx ?? n.x, py = n => n.ay ?? n.fy ?? n.y, pad = 40;
   const L = d3.min(ms, n => px(n) - n.r), R = d3.max(ms, n => px(n) + n.r), T = d3.min(ms, n => py(n) - n.r), B = d3.max(ms, n => py(n) + n.r);
-  const vb = viewport();
+  /* Téléphone, fiche ouverte (en bas de l’écran) : on cadre au-dessus d’elle, sous le bouton « Vue d’ensemble » (ligne de la fiche Moi…) */
+  const vb = drawer.classList.contains('open') && window.matchMedia('(max-width:760px)').matches ? {x:0, y:56, w:W(), h:Math.max(140, H() - drawer.offsetHeight - 56)} : viewport();
   const k = Math.max(0.15, Math.min(3, (vb.w - 2 * pad) / Math.max(1, R - L), (vb.h - 2 * pad) / Math.max(1, B - T)));
   const t = d3.zoomIdentity.translate(vb.x + vb.w / 2 - k * (L + R) / 2, vb.y + vb.h / 2 - k * (T + B) / 2).scale(k);
   (reduceMotion ? svg : svg.transition().duration(700).ease(d3.easeCubicInOut)).call(zoom.transform, t);
@@ -4983,8 +4986,11 @@ document.addEventListener('click', e => {
     else if(a === 'clearall') clearAll();
     else if(a === 'saveme') saveMe();
     else if(a === 'wipe') wipeData();
-    else if(a === 'schoolpaste') showSchoolPaste(act.dataset.s);
-    else if(a === 'payspaste') showCountryPaste();
+    else if(a === 'schoolpaste' || a === 'payspaste'){ const fromMe = state.selected === 'me';
+      if(a === 'schoolpaste') showSchoolPaste(act.dataset.s); else showCountryPaste();
+      /* Venu de la fiche Moi : un lien ramène à elle */
+      if(fromMe) dbody.insertAdjacentHTML('afterbegin', `<button class="linkbtn dback" type="button" data-act="meback">‹ ${L('Ma fiche', 'My profile')}</button>`); }
+    else if(a === 'meback') showMe();
     else if(a === 'paysapply'){ const p = countryCode($('#paysIn').value), n = paysPending.length; if(!p) return; setCountries(paysPending, p); paysPending = []; toast(L(`${n} contact${n > 1 ? 's' : ''} associé${n > 1 ? 's' : ''} à ${dv(p)}`, `${n} contact${sEN(n)} linked to ${dv(p)}`)); showCountryPaste(p); }
     else if(a === 'paysclear'){ const p = act.dataset.s; setCountries(contacts.filter(c => c.countrySrc === 'colle' && c.country === p), ''); toast(L(`Pays retiré : ${dv(p)}`, `Country removed: ${dv(p)}`)); showCountryPaste(); }
     else if(a === 'schoolapply'){ const s = act.dataset.s, n = schoolPending.length; setSchools(schoolPending, s); schoolPending = []; toast(L(`${n} contact${n > 1 ? 's' : ''} associé${n > 1 ? 's' : ''} à ${s}`, `${n} contact${sEN(n)} linked to ${s}`)); showMe(); }
@@ -5149,7 +5155,8 @@ new ResizeObserver(() => {
   needFit = true;
   /* Sélection en cours (par exemple fiche ouverte sur téléphone, qui masque les bandeaux) : on la recadre dans la nouvelle zone libre */
   const sn = state.selected && drawer.classList.contains('open') ? nodes.find(n => n.id === state.selected) : null;
-  if(sn){ needFit = false; zoomToNode(sn); }
+  /* Fiche « Moi » : tout le réseau (zoomer sur le rond « Moi » ne montrait plus aucun groupe) */
+  if(sn){ needFit = false; if(sn.type === 'me') fit(); else zoomToNode(sn); }
 }).observe(canvas);
 
 loadDictionary()
