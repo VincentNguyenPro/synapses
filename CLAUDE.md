@@ -41,7 +41,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 - **Pas de Google Fonts ni de ressource tierce traçante** (RGPD). Seules exceptions : D3, PapaParse et JSZip depuis cdnjs (versions figées, empreintes SRI), l’API Supabase ci-dessus, l’API du fournisseur d’IA choisi par l’utilisateur et Brandfetch (logos des entreprises).
 - **Mentions légales et confidentialité** (choix de Vincent du 5 novembre 2026) : `legal/index.html` et sa version anglaise `en/legal/index.html` (écrite à la main, à tenir à jour en même temps), liées dans le pied de page et sous le tableau Confidentialité de la landing, et dans « Tes données » de l’outil.
   Éditeur : Vincent, particulier ; contact et exercice des droits par « Donner mon avis » (pas d’email publié) ; hébergeur GitHub ; base légale et durée de chaque donnée reçue (avis : 24 mois au plus) ; services tiers ; stockage sur l’appareil ; conditions d’utilisation.
-  **Tout nouvel envoi de données, nouveau service tiers ou changement de durée doit y être ajouté**, avec le tableau de la landing et « Tes données ».
+  **Tout nouvel envoi de données, nouveau service tiers ou changement de durée doit y être ajouté**, avec le tableau de la landing et « Tes données » ; à chaque changement de contenu, mettre à jour la date « Mise à jour » des deux versions.
 - **Outil indépendant, non affilié à LinkedIn** : pas de logo LinkedIn, pas de formulation laissant croire à un partenariat.
 - Tout le code est public : ne jamais y mettre de clé d’API, de jeton ou de donnée personnelle. Seule exception : la clé **publishable** Supabase (`sb_publishable_…`), publique par conception. Jamais la clé secrète (`sb_secret_…`).
 
