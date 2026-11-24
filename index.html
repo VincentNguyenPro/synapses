@@ -75,6 +75,10 @@ p{margin:0}
 .links a:hover{color:var(--ink)}
 .bar .btn{min-height:42px;padding:0 18px;font-size:15px;margin-left:auto;display:none}
 .bar .btn.show{display:inline-flex;animation:in .3s var(--ease)}
+.bar .btn{flex:none;white-space:nowrap}
+/* Téléphone : « Essayer la démo » sur une ligne ; sous 360 px, le lien EN laisse sa place au bouton quand celui-ci apparaît */
+@media (max-width:600px){ .bar .wrap{gap:12px} .bar .btn{padding:0 14px;font-size:14px} }
+@media (max-width:359px){ .bar .wrap:has(.navcta.show) .lang{display:none} .bar .wrap .navcta{margin-left:auto} }
 /* Langue : FR · EN, l’autre version de la page (en/index.html, générée par outils/landing-en.py) */
 .lang{margin-left:auto;font-size:14px;font-weight:700;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:var(--radius);background:var(--tone);transition:color .15s,background .15s}
 .lang:hover{color:var(--ink);background:var(--tone-2)}
@@ -627,7 +631,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
   .cell .t{padding:18px 18px 4px}
   .cell .t p{font-size:var(--step-small)}
   .frag{margin:14px 18px 18px}
-  .frag .menu div:nth-child(n+6){display:none}
+  .frag .menu div{padding:5px 10px 5px 28px}.frag .menu div.on::before{top:9px} /* les huit choix, resserrés */
   .frag.fiche dl{gap:2px 12px;font-size:13px}
   .frag.fiche .ptitle{margin-top:8px}
   /* Confidentialité : tableau resserré */
@@ -940,7 +944,7 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
         <ol class="loop rise" style="--i:2">
           <li>Tu donnes ton avis, en deux minutes.</li>
           <li>Vincent le lit et te répond si tu le souhaites.</li>
-          <li>Ce qui en sort est listé ici, à droite.</li>
+          <li>Ce qui en sort est listé dans «&nbsp;Vous l’avez demandé&nbsp;».</li>
         </ol>
         <a class="btn rise" style="--i:3" href="#demandes" data-fb>Donner mon avis</a>
       </div>

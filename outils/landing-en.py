@@ -244,7 +244,7 @@ rep('Ton avis fait évoluer Synapses</h2>', 'Your feedback shapes Synapses</h2>'
 rep('Une idée, un bug, une fonction qui te manque&nbsp;: Vincent lit chaque message.</p>', 'An idea, a bug, a missing feature: Vincent reads every message.</p>')
 rep('<li>Tu donnes ton avis, en deux minutes.</li>', '<li>You share your feedback, in two minutes.</li>')
 rep('<li>Vincent le lit et te répond si tu le souhaites.</li>', '<li>Vincent reads it and replies if you’d like.</li>')
-rep('<li>Ce qui en sort est listé ici, à droite.</li>', '<li>What comes out of it is listed here, on the right.</li>')
+rep('<li>Ce qui en sort est listé dans «&nbsp;Vous l’avez demandé&nbsp;».</li>', '<li>What comes out of it is listed under “You asked for it”.</li>')
 rep('data-fb>Donner mon avis</a>', 'data-fb>Give feedback</a>', 2)
 rep('<h3>Vous l’avez demandé</h3>', '<h3>You asked for it</h3>')
 rep('Les premières améliorations nées de vos retours apparaîtront ici.', 'The first improvements that come from your feedback will appear here.')
