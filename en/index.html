@@ -337,8 +337,8 @@ p{margin:0}
   .cell.on .t p{display:block}
   .cell .frag{grid-column:2;grid-row:1/7;align-self:center;justify-self:center;width:min(420px,80%);margin:0;display:none}
   .cell.on .frag{display:block;animation:in .35s var(--ease)}
-  /* « Qui contacter » : trois réglages seulement, la carte garde une marge bleue au-dessus et en dessous ; la place en trop va sous la liste */
-  .pistes .cells{grid-template-rows:auto auto auto 1fr}
+  /* « Qui contacter » : cinq réglages, la carte garde une marge bleue au-dessus et en dessous ; la place en trop va sous la liste */
+  .pistes .cells{grid-template-rows:repeat(5,auto) 1fr}
   .pistes .cell .frag{margin:36px 0}
 }
 .frag{background:#fff;color:#17212E;font-size:14px;line-height:1.4;margin:26px;border-radius:12px;padding:16px 18px}
@@ -803,10 +803,22 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
           <div class="t"><h3>Contacts to follow up</h3><p>People you used to write to often but not for a year, then your invitations still unanswered.</p></div>
           <div class="frag" data-ui><span class="lbl">Contacts to follow up</span>
             <ul class="rows"><li><b>Nathan Morel</b><span>28 messages, the last one 2 years ago</span></li><li><b>Juliette Guerin</b><span>20 messages, the last one 3 years ago</span></li><li><b>Hugo Roux</b><span>Invitation sent, no reply</span></li></ul>
-            <p class="sub">Fictional example</p></div>
+            <p class="sub">Exemple fictif</p></div>
+        </article>
+        <article class="cell alt rise" style="--i:1">
+          <div class="t"><h3>A job: who to contact</h3><p>Search for jobs or paste an ad: your possible future manager, people in the same role, then your other contacts at the company. An outreach message is ready to copy.</p></div>
+          <div class="frag" data-ui><span class="lbl">Product Manager · Doctolib</span>
+            <p class="sub">7 contacts at Doctolib, where to start</p>
+            <ul class="rows"><li><b>Paul Diallo</b><span>Head of Product · Possible future manager</span></li><li><b>Adrien Blanc</b><span>Product Owner · Same role</span></li><li><b>Juliette Guerin</b><span>Software Engineer · You know her</span><em>20 msg</em></li></ul></div>
+        </article>
+        <article class="cell rise" style="--i:2">
+          <div class="t"><h3>Events for your field</h3><p>Trade shows, meetups and webinars picked for your role and industry, in your city or online. Checked by hand; one click opens the sign-up page.</p></div>
+          <div class="frag" data-ui><span class="lbl">Events for you: Product, Paris and online</span>
+            <ul class="rows"><li><b>Product meetup</b><span>Paris · Free</span><em>Your field</em></li><li><b>Webinar: AI and product teams</b><span>Online · Free</span><em>Your field</em></li><li><b>Tech trade show</b><span>Paris · Paid</span><em>Near you</em></li></ul>
+            <p class="sub">Exemple fictif</p></div>
         </article>
       </div>
-      <p class="count rise" style="margin-top:16px">Closeness, contacts to follow up and target companies need the full archive (messages, invitations, job applications). Everything is computed in your browser.</p>
+      <p class="count rise" style="margin-top:16px">Closeness, contacts to follow up and target companies need the full archive (messages, invitations, job applications). Everything is computed in your browser; for jobs, only your criteria (role, location, experience, salary) go to Adzuna and Jooble.</p>
     </div>
   </section>
 
@@ -851,9 +863,9 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <h2 id="fonctions-titre" class="rise">The settings that matter</h2>
       <div class="cells">
         <article class="cell rise">
-          <div class="t"><h3>Group by whatever you want</h3><p>Industry, company, function, seniority, year connected, tag. The graph rebuilds around you.</p></div>
+          <div class="t"><h3>Group by whatever you want</h3><p>Industry, company, function, seniority, country, education, year connected, tag. Country comes from the company’s headquarters or from a LinkedIn search you paste, and so does education.</p></div>
           <div class="frag" data-ui><label>Group by</label><div class="sel">Industry <span aria-hidden="true">⌄</span></div>
-            <div class="menu"><div class="on">Industry</div><div>Company</div><div class="hv">Function</div><div>Seniority</div><div>Year connected</div><div>Tag</div></div></div>
+            <div class="menu"><div class="on">Industry</div><div>Company</div><div class="hv">Function</div><div>Seniority</div><div>Country</div><div>Education</div><div>Year connected</div><div>Tag</div></div></div>
         </article>
         <article class="cell alt rise" style="--i:1">
           <div class="t"><h3>Color by another criterion</h3><p>Each dot takes the color of its seniority, its function or the year you connected. The legend gives the counts.</p></div>

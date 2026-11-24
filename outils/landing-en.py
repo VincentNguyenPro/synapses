@@ -140,9 +140,20 @@ rep('<span class="lbl">Contacts à relancer</span>', '<span class="lbl">Contacts
 rep('28 messages, le dernier il y a 2 ans', '28 messages, the last one 2 years ago')
 rep('20 messages, le dernier il y a 3 ans', '20 messages, the last one 3 years ago')
 rep('Invitation envoyée, sans réponse', 'Invitation sent, no reply')
-rep('<p class="sub">Exemple fictif</p>', '<p class="sub">Fictional example</p>')
-rep('Proximité, contacts à relancer et entreprises cibles demandent l’archive complète (messages, invitations, candidatures). Tout est calculé dans ton navigateur.',
-    'Closeness, contacts to follow up and target companies need the full archive (messages, invitations, job applications). Everything is computed in your browser.')
+rep('<h3>Une offre&nbsp;: qui contacter</h3><p>Cherche des offres ou colle une annonce&nbsp;: ton futur manager possible, ceux qui font le même métier, puis tes autres contacts dans l’entreprise. Un message d’approche est prêt à copier.</p>',
+    '<h3>A job: who to contact</h3><p>Search for jobs or paste an ad: your possible future manager, people in the same role, then your other contacts at the company. An outreach message is ready to copy.</p>')
+rep('7 contacts chez Doctolib, par qui commencer', '7 contacts at Doctolib, where to start')
+rep('<span>Head of Product · Futur manager possible</span>', '<span>Head of Product · Possible future manager</span>')
+rep('<span>Product Owner · Même métier</span>', '<span>Product Owner · Same role</span>')
+rep('<span>Software Engineer · Tu la connais</span>', '<span>Software Engineer · You know her</span>')
+rep('<h3>Des événements pour ton métier</h3><p>Salons, meetups et webinaires choisis selon ton métier et ton secteur, dans ta ville ou en ligne. Liste vérifiée à la main&nbsp;; un clic ouvre la page d’inscription.</p>',
+    '<h3>Events for your field</h3><p>Trade shows, meetups and webinars picked for your role and industry, in your city or online. Checked by hand; one click opens the sign-up page.</p>')
+rep('Événements pour toi&nbsp;: Produit, Paris et en ligne', 'Events for you: Product, Paris and online')
+rep('<b>Meetup produit</b><span>Paris · Gratuit</span><em>Ton métier</em>', '<b>Product meetup</b><span>Paris · Free</span><em>Your field</em>')
+rep('<b>Webinaire IA et équipes produit</b><span>En ligne · Gratuit</span><em>Ton métier</em>', '<b>Webinar: AI and product teams</b><span>Online · Free</span><em>Your field</em>')
+rep('<b>Salon de la tech</b><span>Paris · Payant</span><em>Près de toi</em>', '<b>Tech trade show</b><span>Paris · Paid</span><em>Near you</em>')
+rep('Proximité, contacts à relancer et entreprises cibles demandent l’archive complète (messages, invitations, candidatures). Tout est calculé dans ton navigateur&nbsp;; pour les offres, seuls tes critères (poste, lieu, expérience, salaire) partent vers Adzuna et Jooble.',
+    'Closeness, contacts to follow up and target companies need the full archive (messages, invitations, job applications). Everything is computed in your browser; for jobs, only your criteria (role, location, experience, salary) go to Adzuna and Jooble.')
 
 # ---------- Démarrer ----------
 rep('Trois gestes, sans compte</h2>', 'Three steps, no account</h2>')
@@ -166,12 +177,12 @@ rep('<span>à un poste de direction</span>', '<span>in leadership roles</span>')
 
 # ---------- Réglages ----------
 rep('Les réglages qui comptent</h2>', 'The settings that matter</h2>')
-rep('<h3>Regrouper par ce que tu veux</h3><p>Secteur, entreprise, fonction, séniorité, année de connexion, tag. Le graphe se reconstruit autour de toi.</p>',
-    '<h3>Group by whatever you want</h3><p>Industry, company, function, seniority, year connected, tag. The graph rebuilds around you.</p>')
+rep('<h3>Regrouper par ce que tu veux</h3><p>Secteur, entreprise, fonction, séniorité, pays, formation, année de connexion, tag. Le pays vient du siège de l’entreprise ou d’une recherche LinkedIn que tu colles, la formation aussi.</p>',
+    '<h3>Group by whatever you want</h3><p>Industry, company, function, seniority, country, education, year connected, tag. Country comes from the company’s headquarters or from a LinkedIn search you paste, and so does education.</p>')
 rep('<label>Regrouper par</label><div class="sel">Secteur <span aria-hidden="true">⌄</span></div>',
     '<label>Group by</label><div class="sel">Industry <span aria-hidden="true">⌄</span></div>')
-rep('<div class="on">Secteur</div><div>Entreprise</div><div class="hv">Fonction</div><div>Séniorité</div><div>Année de connexion</div><div>Tag</div>',
-    '<div class="on">Industry</div><div>Company</div><div class="hv">Function</div><div>Seniority</div><div>Year connected</div><div>Tag</div>')
+rep('<div class="on">Secteur</div><div>Entreprise</div><div class="hv">Fonction</div><div>Séniorité</div><div>Pays</div><div>Formation</div><div>Année de connexion</div><div>Tag</div>',
+    '<div class="on">Industry</div><div>Company</div><div class="hv">Function</div><div>Seniority</div><div>Country</div><div>Education</div><div>Year connected</div><div>Tag</div>')
 rep('<h3>Colorer par un autre critère</h3><p>Chaque point prend la couleur de sa séniorité, de sa fonction ou de son année de connexion. La légende donne les comptes.</p>',
     '<h3>Color by another criterion</h3><p>Each dot takes the color of its seniority, its function or the year you connected. The legend gives the counts.</p>')
 rep('<span class="lbl">Couleur et grappes&nbsp;: séniorité</span>', '<span class="lbl">Color and clusters: seniority</span>')

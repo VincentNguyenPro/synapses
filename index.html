@@ -337,8 +337,8 @@ p{margin:0}
   .cell.on .t p{display:block}
   .cell .frag{grid-column:2;grid-row:1/7;align-self:center;justify-self:center;width:min(420px,80%);margin:0;display:none}
   .cell.on .frag{display:block;animation:in .35s var(--ease)}
-  /* « Qui contacter » : trois réglages seulement, la carte garde une marge bleue au-dessus et en dessous ; la place en trop va sous la liste */
-  .pistes .cells{grid-template-rows:auto auto auto 1fr}
+  /* « Qui contacter » : cinq réglages, la carte garde une marge bleue au-dessus et en dessous ; la place en trop va sous la liste */
+  .pistes .cells{grid-template-rows:repeat(5,auto) 1fr}
   .pistes .cell .frag{margin:36px 0}
 }
 .frag{background:#fff;color:#17212E;font-size:14px;line-height:1.4;margin:26px;border-radius:12px;padding:16px 18px}
@@ -805,8 +805,20 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
             <ul class="rows"><li><b>Nathan Morel</b><span>28 messages, le dernier il y a 2 ans</span></li><li><b>Juliette Guerin</b><span>20 messages, le dernier il y a 3 ans</span></li><li><b>Hugo Roux</b><span>Invitation envoyée, sans réponse</span></li></ul>
             <p class="sub">Exemple fictif</p></div>
         </article>
+        <article class="cell alt rise" style="--i:1">
+          <div class="t"><h3>Une offre&nbsp;: qui contacter</h3><p>Cherche des offres ou colle une annonce&nbsp;: ton futur manager possible, ceux qui font le même métier, puis tes autres contacts dans l’entreprise. Un message d’approche est prêt à copier.</p></div>
+          <div class="frag" data-ui><span class="lbl">Product Manager · Doctolib</span>
+            <p class="sub">7 contacts chez Doctolib, par qui commencer</p>
+            <ul class="rows"><li><b>Paul Diallo</b><span>Head of Product · Futur manager possible</span></li><li><b>Adrien Blanc</b><span>Product Owner · Même métier</span></li><li><b>Juliette Guerin</b><span>Software Engineer · Tu la connais</span><em>20 msg</em></li></ul></div>
+        </article>
+        <article class="cell rise" style="--i:2">
+          <div class="t"><h3>Des événements pour ton métier</h3><p>Salons, meetups et webinaires choisis selon ton métier et ton secteur, dans ta ville ou en ligne. Liste vérifiée à la main&nbsp;; un clic ouvre la page d’inscription.</p></div>
+          <div class="frag" data-ui><span class="lbl">Événements pour toi&nbsp;: Produit, Paris et en ligne</span>
+            <ul class="rows"><li><b>Meetup produit</b><span>Paris · Gratuit</span><em>Ton métier</em></li><li><b>Webinaire IA et équipes produit</b><span>En ligne · Gratuit</span><em>Ton métier</em></li><li><b>Salon de la tech</b><span>Paris · Payant</span><em>Près de toi</em></li></ul>
+            <p class="sub">Exemple fictif</p></div>
+        </article>
       </div>
-      <p class="count rise" style="margin-top:16px">Proximité, contacts à relancer et entreprises cibles demandent l’archive complète (messages, invitations, candidatures). Tout est calculé dans ton navigateur.</p>
+      <p class="count rise" style="margin-top:16px">Proximité, contacts à relancer et entreprises cibles demandent l’archive complète (messages, invitations, candidatures). Tout est calculé dans ton navigateur&nbsp;; pour les offres, seuls tes critères (poste, lieu, expérience, salaire) partent vers Adzuna et Jooble.</p>
     </div>
   </section>
 
@@ -851,9 +863,9 @@ footer .tiles{max-width:1360px;margin:0 auto;padding:0 var(--gutter)}
       <h2 id="fonctions-titre" class="rise">Les réglages qui comptent</h2>
       <div class="cells">
         <article class="cell rise">
-          <div class="t"><h3>Regrouper par ce que tu veux</h3><p>Secteur, entreprise, fonction, séniorité, année de connexion, tag. Le graphe se reconstruit autour de toi.</p></div>
+          <div class="t"><h3>Regrouper par ce que tu veux</h3><p>Secteur, entreprise, fonction, séniorité, pays, formation, année de connexion, tag. Le pays vient du siège de l’entreprise ou d’une recherche LinkedIn que tu colles, la formation aussi.</p></div>
           <div class="frag" data-ui><label>Regrouper par</label><div class="sel">Secteur <span aria-hidden="true">⌄</span></div>
-            <div class="menu"><div class="on">Secteur</div><div>Entreprise</div><div class="hv">Fonction</div><div>Séniorité</div><div>Année de connexion</div><div>Tag</div></div></div>
+            <div class="menu"><div class="on">Secteur</div><div>Entreprise</div><div class="hv">Fonction</div><div>Séniorité</div><div>Pays</div><div>Formation</div><div>Année de connexion</div><div>Tag</div></div></div>
         </article>
         <article class="cell alt rise" style="--i:1">
           <div class="t"><h3>Colorer par un autre critère</h3><p>Chaque point prend la couleur de sa séniorité, de sa fonction ou de son année de connexion. La légende donne les comptes.</p></div>
