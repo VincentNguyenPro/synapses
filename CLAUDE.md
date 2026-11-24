@@ -9,7 +9,7 @@ Propriétaire : Vincent Nguyen, Product Manager. Langue de l’interface et des 
 
 ## Principes non négociables
 - **Le fichier importé et les données de contact ne quittent pas le navigateur.** Jamais de nom, d’URL de profil ni d’email d’un contact envoyé où que ce soit. Pas d’analytics.
-- **Réseau gardé sur l’appareil** (choix de Vincent du 4 novembre 2026) : **non gardé par défaut**, proposé par un bandeau après l’import et par la section « Mon réseau » en haut du panneau (état, bouton « Garder sur cet appareil » ou « Oublier mon réseau », `syncKeepField`).
+- **Réseau gardé sur l’appareil** (choix de Vincent du 4 novembre 2026) : **non gardé par défaut**, proposé par un bandeau après l’import et par la section « Mon réseau » en haut du panneau (état, bouton « Garder sur cet appareil » ou « Oublier », `syncKeepField`).
   Cochée, les champs bruts de Connections.csv **sans les emails** sont enregistrés dans IndexedDB (`synapses-reseau`) et le réseau est rouvert au chargement ; décochée ou « Effacer mes données », la base est supprimée. Rien n’est envoyé.
 - **Proximité avec les contacts** (choix de Vincent du 4 novembre 2026) : les listes de contacts des fiches sont triées « les plus proches de toi d’abord » (`proxOf`, `proximityFrom`).
   Signaux lus dans le zip, dans le navigateur : nombre de messages échangés (`messages.csv`, **seules les colonnes d’adresses de profil sont utilisées, jamais le texte**), recommandations et compétences recommandées (dans les deux sens), entreprises de `Positions.csv` et écoles d’`Education.csv` en commun, tags.
