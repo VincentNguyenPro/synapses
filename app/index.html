@@ -2883,6 +2883,20 @@ function updateOverview(){ const b = document.getElementById('overview'); if(b) 
 /* Borne basse sous le zoom de cadrage d’un grand réseau (~0,07) : sinon « − » ramenait à 0,15, c’est-à-dire zoomait */
 const zoom = d3.zoom().scaleExtent([0.02, 5]).on('zoom', e => { root.attr('transform', e.transform); zk = e.transform.k; styleLabels(); sizePins(); hideTip(); updateOverview(); });
 svg.call(zoom).on('dblclick.zoom', null).on('click', e => { if(e.target === svg.node()) clearSelection(); });
+/* Toucher bref sur le graphe = clic. Safari iOS (iPad, iPhone) prend parfois le premier toucher pour un survol et n’envoie
+   pas de clic quand le graphe bouge encore (recadrage, points qui glissent) : on déclenche le clic nous-mêmes au lever du doigt,
+   et le clic du navigateur qui suivrait est ignoré (sinon la fiche s’ouvrirait puis se refermerait). */
+{ let tap = null, tapAt = -1e9; const sv = svg.node();
+  sv.addEventListener('pointerdown', e => { tap = e.pointerType === 'touch' && e.isPrimary && !tap ? {x:e.clientX, y:e.clientY, t:e.timeStamp, el:e.target} : null; }, true);
+  sv.addEventListener('pointercancel', () => { tap = null; }, true);
+  sv.addEventListener('pointerup', e => {
+    const s = tap; tap = null;
+    if(!s || e.pointerType !== 'touch' || !e.isPrimary || e.timeStamp - s.t > 600 || Math.hypot(e.clientX - s.x, e.clientY - s.y) > 10 || !s.el.isConnected) return;
+    tapAt = performance.now();
+    s.el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, clientX:e.clientX, clientY:e.clientY}));
+  }, true);
+  sv.addEventListener('click', e => { if(e.isTrusted && performance.now() - tapAt < 800){ e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+}
 
 let nodes = [], links = [], linkSel = null, nodeSel = null, labelSel = null, countSel = null, badgeSel = null, needFit = true;
 let backHub = null; /* groupe dont la fiche était ouverte avant celle du contact (retour à sa fermeture), ou 'relance' pour la liste des contacts à relancer */
