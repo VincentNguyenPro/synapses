@@ -612,6 +612,23 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
 }
 
 /* Mobile */
+/* Tablette en portrait (iPad, jusqu’à 1024 px de large) : la fiche s’ouvre en bas de l’écran comme sur téléphone ;
+   sur le côté, elle ne laissait que 235 à 335 px au graphe (choix de Vincent du 25 novembre 2026) */
+@media (min-width:761px) and (max-width:1024px) and (orientation:portrait){
+  .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
+  .drawer.tall{max-height:90%}
+  .canvas.has-drawer .legendbox{display:none}
+  body.drawer-open #bar .demo{display:none}
+  body.drawer-open .zoombar .zin,body.drawer-open .zoombar .zout{display:none} /* on zoome en pinçant ; les boutons cachaient des noms de groupes */
+}
+/* Tablette et écran tactile au-delà du téléphone : mêmes zones de toucher que sur téléphone (lignes des fiches, petits liens, puces) */
+@media (pointer:coarse) and (min-width:761px){
+  .drawer .legendlist .hl{min-height:32px}.facts .linkbtn,.edumates{padding:7px 0}
+  .ofchip{font-size:14px;padding:8px 12px}
+  .lgtoggle{min-height:34px}.viewtoggle button{min-height:36px}.afchip{min-height:36px}
+  #panel .linkbtn,.ofwhy .linkbtn,.lgmore .linkbtn,.lgcrumbs .linkbtn{padding:7px 0}
+  #panel details:not(.acc) > summary{padding:6px 0}
+}
 @media (max-width:760px){
   .app{grid-template-columns:1fr}
   header{flex-wrap:wrap;gap:10px;padding:10px 12px}
@@ -2819,6 +2836,8 @@ let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
 let labelF = 1;
 const LK = 0.06, lblScale = k => Math.min(1, k / LK) * labelF;
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
+/* Fiche ouverte en bas de l’écran : téléphone, et tablette en portrait jusqu’à 1024 px */
+const SHEET_MQ = window.matchMedia('(max-width:760px), (min-width:761px) and (max-width:1024px) and (orientation:portrait)'), sheetDrawer = () => SHEET_MQ.matches;
 /* Texte d’exemple de la barre de recherche : plus court sur téléphone, où il ne tenait pas en entier */
 { const q = document.getElementById('q'), mq = window.matchMedia('(max-width:760px)'), setPh = () => { q.placeholder = mq.matches ? L('Nom, entreprise, poste…', 'Name, company, job title…') : L('Rechercher un nom, une entreprise, un poste…', 'Search a name, a company, a job title…'); };
   setPh(); mq.addEventListener('change', setPh); }
@@ -3593,8 +3612,12 @@ function estimateFitK(){
 }
 function viewport(){
   /* Fiche ouverte (bureau) : la zone utile s’arrête à sa gauche */
-  const dw = drawer.classList.contains('open') && !window.matchMedia('(max-width:760px)').matches ? drawer.offsetWidth : 0;
-  const w = W() - dw, h = H();
+  let dw = drawer.classList.contains('open') && !sheetDrawer() ? drawer.offsetWidth : 0;
+  /* Moins de 480 px à côté de la fiche (iPad en paysage 1024 px) : le graphe garde toute la zone, en partie sous la fiche, plutôt qu’une étoile illisible */
+  if(dw && W() - dw < 480) dw = 0;
+  /* Tablette en portrait, fiche en bas : le graphe est cadré au-dessus d’elle (sur téléphone, la place y est trop petite) */
+  const sh = drawer.classList.contains('open') && sheetDrawer() && !narrowScreen() ? drawer.offsetHeight : 0;
+  const w = W() - dw, h = sh && H() - sh >= 240 ? H() - sh : H();
   const lg = document.getElementById('legend');
   if(!lg || lg.hidden || state.view !== 'graph' || !lg.offsetWidth) return {x:0, y:0, w, h};
   const lw = lg.offsetWidth + 28, lh = lg.offsetHeight + 28;
@@ -3718,7 +3741,7 @@ function reframeOpenHub(){
 }
 function zoomToNode(n){
   if(!n || state.view !== 'graph') return;
-  const mobile = window.matchMedia('(max-width:760px)').matches;
+  const mobile = sheetDrawer(); /* fiche en bas de l’écran */
   const open = drawer.classList.contains('open');
   /* Téléphone, fiche ouverte : le haut du graphe est occupé par le bouton « Vue d’ensemble », on cadre en dessous */
   const topRes = open && mobile ? 56 : 0;
@@ -3893,7 +3916,7 @@ function zoomToNodes(ms){
   const px = n => n.ax ?? n.fx ?? n.x, py = n => n.ay ?? n.fy ?? n.y, pad = 40;
   const L = d3.min(ms, n => px(n) - n.r), R = d3.max(ms, n => px(n) + n.r), T = d3.min(ms, n => py(n) - n.r), B = d3.max(ms, n => py(n) + n.r);
   /* Téléphone, fiche ouverte (en bas de l’écran) : on cadre au-dessus d’elle, sous le bouton « Vue d’ensemble » (ligne de la fiche Moi…) */
-  const vb = drawer.classList.contains('open') && window.matchMedia('(max-width:760px)').matches ? {x:0, y:56, w:W(), h:Math.max(140, H() - drawer.offsetHeight - 56)} : viewport();
+  const vb = drawer.classList.contains('open') && sheetDrawer() ? {x:0, y:56, w:W(), h:Math.max(140, H() - drawer.offsetHeight - 56)} : viewport();
   const k = Math.max(0.15, Math.min(3, (vb.w - 2 * pad) / Math.max(1, R - L), (vb.h - 2 * pad) / Math.max(1, B - T)));
   const t = d3.zoomIdentity.translate(vb.x + vb.w / 2 - k * (L + R) / 2, vb.y + vb.h / 2 - k * (T + B) / 2).scale(k);
   (reduceMotion ? svg : svg.transition().duration(700).ease(d3.easeCubicInOut)).call(zoom.transform, t);
@@ -4093,7 +4116,7 @@ function openDrawer(html, tall){
   const t = $('#dtitle'); if(t) t.focus({preventScroll:true});
 }
 function closeDrawer(){ const was = drawer.classList.contains('open'); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); canvas.classList.remove('has-drawer'); document.body.classList.remove('drawer-open'); syncLegendRoom(); if(was) refitBeside(); }
-function refitBeside(){ if(state.view === 'graph' && !state.selected && !window.matchMedia('(max-width:760px)').matches) requestAnimationFrame(() => {
+function refitBeside(){ if(state.view === 'graph' && !state.selected && !sheetDrawer()) requestAnimationFrame(() => {
   /* Moins de 480 px à côté de la fiche : le graphe garde son cadrage (recadré dans si peu de place, il deviendrait illisible) */
   if(!state.selected && W() - (drawer.classList.contains('open') ? drawer.offsetWidth : 0) >= 480) fit(); }); }
 /* Fiche ouverte et moins de 760 px de graphe à côté : la légende (déjà détaillée dans la fiche) est masquée,
