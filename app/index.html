@@ -640,7 +640,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   #langBtn{display:none} .langm{display:inline}
   #fbBtn,#helpBtn{padding-left:10px;padding-right:10px}
   .stage{grid-column:1}
-  aside{position:fixed;left:0;right:0;bottom:0;max-height:82vh;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);border-right:0;border-radius:18px 18px 0 0;z-index:20;box-shadow:var(--shadow);transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s;padding-bottom:env(safe-area-inset-bottom,0px)}
+  aside{position:fixed;left:0;right:0;bottom:0;max-height:82vh;max-height:82dvh;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);border-right:0;border-radius:18px 18px 0 0;z-index:20;box-shadow:var(--shadow);transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s;padding-bottom:env(safe-area-inset-bottom,0px)}
   aside.open{transform:none;visibility:visible;transition:transform .25s ease,visibility 0s}
   /* Safari iOS zoome sur un champ dont le texte fait moins de 16 px : on les met à 16 px sur téléphone */
   input[type=text],input[type=search],input[type=email],input[type=url],select,textarea{font-size:16px !important}
@@ -684,6 +684,8 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
    de démo (il reste en portrait), fiche sur le côté, la moitié de la largeur au plus ; le graphe garde le plus de hauteur possible */
 @media (max-height:500px) and (orientation:landscape){
   .hubLabel{display:none}
+  .canvas.has-drawer .legendbox{display:none}
+  .canvas.has-drawer .overview{left:calc((100% - min(390px, 50%)) / 2)}
   header{flex-wrap:nowrap;padding:6px 12px;gap:8px}
   .brand > div{display:none}
   .search{order:0;flex:1 1 auto;flex-basis:auto}
@@ -3643,12 +3645,14 @@ function viewport(){
   /* Fiche ouverte (bureau) : la zone utile s’arrête à sa gauche */
   let dw = drawer.classList.contains('open') && !sheetDrawer() ? drawer.offsetWidth : 0;
   /* Moins de 480 px à côté de la fiche (iPad en paysage 1024 px) : le graphe garde toute la zone, en partie sous la fiche, plutôt qu’une étoile illisible */
-  if(dw && W() - dw < 480) dw = 0;
+  /* … sauf sur téléphone couché, où la hauteur limite déjà l’étoile : elle tient à gauche de la fiche */
+  if(dw && W() - dw < 480 && !noGroupNames()) dw = 0;
   /* Tablette en portrait, fiche en bas : le graphe est cadré au-dessus d’elle (sur téléphone, la place y est trop petite) */
   const sh = drawer.classList.contains('open') && sheetDrawer() && !narrowScreen() ? drawer.offsetHeight : 0;
   const w = W() - dw, h = sh && H() - sh >= 240 ? H() - sh : H();
   const lg = document.getElementById('legend');
-  if(!lg || lg.hidden || state.view !== 'graph' || !lg.offsetWidth) return {x:0, y:0, w, h};
+  /* Téléphone couché : la légende, repliée, tient dans un coin ; le graphe garde toute la zone */
+  if(!lg || lg.hidden || state.view !== 'graph' || !lg.offsetWidth || noGroupNames()) return {x:0, y:0, w, h};
   const lw = lg.offsetWidth + 28, lh = lg.offsetHeight + 28;
   const a = {x:0, y:0, w:Math.max(160, w - lw), h}, b = {x:0, y:0, w, h:Math.max(160, h - lh)};
   const best = Math.min(a.w, a.h) >= Math.min(b.w, b.h) ? a : b;
@@ -3773,12 +3777,13 @@ function zoomToNode(n){
   const mobile = sheetDrawer(); /* fiche en bas de l’écran */
   const open = drawer.classList.contains('open');
   /* Téléphone, fiche ouverte : le haut du graphe est occupé par le bouton « Vue d’ensemble », on cadre en dessous */
-  const topRes = open && mobile ? 56 : 0;
+  /* … de même sur téléphone couché, où la fiche est sur le côté */
+  const topRes = open && (mobile || noGroupNames()) ? 56 : 0;
   const vb = open ? {x:0, y:topRes, w:W(), h:H()} : viewport();
   const lgEl = document.getElementById('legend');
   const lgW = open && !mobile && lgEl && !lgEl.hidden && lgEl.offsetWidth ? lgEl.offsetWidth + 28 : 0;
   const visW = open && !mobile ? Math.max(200, vb.w - drawer.offsetWidth - lgW) : vb.w;
-  const visH = open && mobile ? Math.max(140, vb.h - drawer.offsetHeight - topRes) : vb.h;
+  const visH = open && mobile ? Math.max(140, vb.h - drawer.offsetHeight - topRes) : open ? vb.h - topRes : vb.h;
   const x = n.ax ?? n.fx ?? n.x, y = n.ay ?? n.fy ?? n.y;
   let k;
   /* Profil déplacé au bout de sa branche : on cadre le groupe, la branche prolongée et le cercle des collègues */
@@ -3799,7 +3804,7 @@ function zoomToNode(n){
   const M = 12, items = [];
   const hid = n.type === 'hub' ? n.id : n.hub;
   const lblEl = labelSel && hid ? labelSel.nodes().find(el => el.__data__ && el.__data__.id === hid) : null;
-  if(lblEl && !(n.type === 'hub' && hubCentered(n))){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
+  if(lblEl && !noGroupNames() && !(n.type === 'hub' && hubCentered(n))){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
   const orb = n.type === 'hub' ? (n.outer || n.r) + 6 : (collLbl ? collR + 6 : n.r + 30);
   /* Pastilles logo autour des grappes : 44 px à l’écran au-delà du cercle, à garder dans le cadre */
   const P = n.type === 'hub' && envR(n) && state.colorBy === 'company' ? 50 : 0;
@@ -4147,7 +4152,7 @@ function openDrawer(html, tall){
 function closeDrawer(){ const was = drawer.classList.contains('open'); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); canvas.classList.remove('has-drawer'); document.body.classList.remove('drawer-open'); syncLegendRoom(); if(was) refitBeside(); }
 function refitBeside(){ if(state.view === 'graph' && !state.selected && !sheetDrawer()) requestAnimationFrame(() => {
   /* Moins de 480 px à côté de la fiche : le graphe garde son cadrage (recadré dans si peu de place, il deviendrait illisible) */
-  if(!state.selected && W() - (drawer.classList.contains('open') ? drawer.offsetWidth : 0) >= 480) fit(); }); }
+  if(!state.selected && W() - (drawer.classList.contains('open') ? drawer.offsetWidth : 0) >= (noGroupNames() ? 200 : 480)) fit(); }); }
 /* Fiche ouverte et moins de 760 px de graphe à côté : la légende (déjà détaillée dans la fiche) est masquée,
    sinon elle occupe le milieu de la zone libre et le zoom ne peut plus cadrer la sélection */
 /* Fiche ouverte (groupe ou contact) : la légende s’efface pour laisser le graphe visible ; elle revient à la fermeture de la fiche */
