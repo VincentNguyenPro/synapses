@@ -447,6 +447,8 @@ button.lg:hover{background:var(--surface-2)}
 .lg[aria-pressed="true"] .fbar{opacity:1}
 .lg .n{font-weight:700;color:var(--ink)}
 .lg .pct{background:none;padding:0;min-width:34px;text-align:right}
+/* Légende jamais sous les boutons + − et plein écran (iPad couché, petit portable) : sa liste défile */
+@media (min-width:761px) and (min-height:501px){.legendbox:not([hidden]){display:flex;flex-direction:column;max-height:calc(100% - 184px)}.legendbox > *{flex:none}.legendbox > .lgbody{flex:0 1 auto;min-height:0}}
 @media (min-width:761px) and (min-height:501px){.legendbox{min-width:240px}.legendbox:has(.lgg){width:340px;max-width:calc(100% - 32px)}}
 /* Fiche ouverte : la légende se décale à gauche de la fiche pour rester visible */
 .legendbox{transition:right .22s ease}
@@ -501,6 +503,7 @@ button.lgv:focus-visible{outline:2px solid var(--accent)}
 .zoombar{position:absolute;right:16px;top:16px;display:flex;flex-direction:column;gap:6px;z-index:2}
 .zoombar .btn{box-shadow:var(--shadow);font-size:18px}
 .overview{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:3;box-shadow:var(--shadow);background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.canvas.has-drawer .overview{left:calc((100% - 390px) / 2)} /* centré dans la zone laissée libre par la fiche */
 .overview:hover{border-color:var(--ink);filter:brightness(1.2)}
 .namebubble{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;max-width:320px;z-index:1000;box-shadow:var(--shadow);opacity:0;transition:opacity .1s}
 .namebubble.on{opacity:1}
@@ -617,6 +620,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
 @media (max-width:1024px) and (orientation:portrait), (max-width:760px) and (min-height:501px){
   .drawer{top:auto;left:0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%)}
   .drawer.tall{max-height:90%}
+  .canvas.has-drawer .overview{left:50%}
   .canvas.has-drawer .legendbox{display:none}
   body.drawer-open #bar .demo{display:none}
   body.drawer-open .zoombar .zin,body.drawer-open .zoombar .zout{display:none} /* on zoome en pinçant ; les boutons cachaient des noms de groupes */
@@ -3778,7 +3782,8 @@ function zoomToNode(n){
   const open = drawer.classList.contains('open');
   /* Téléphone, fiche ouverte : le haut du graphe est occupé par le bouton « Vue d’ensemble », on cadre en dessous */
   /* … de même sur téléphone couché, où la fiche est sur le côté */
-  const topRes = open && (mobile || noGroupNames()) ? 56 : 0;
+  /* (et avec une fiche sur le côté : sur iPad couché ou petit portable, le groupe zoomé touchait le bouton) */
+  const topRes = open ? 56 : 0;
   const vb = open ? {x:0, y:topRes, w:W(), h:H()} : viewport();
   const lgEl = document.getElementById('legend');
   const lgW = open && !mobile && lgEl && !lgEl.hidden && lgEl.offsetWidth ? lgEl.offsetWidth + 28 : 0;
