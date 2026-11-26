@@ -293,7 +293,16 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 0}
 .demo div:first-child{flex:1;min-width:220px;font-size:13.5px}
 .demo strong{display:block;font-size:14px}
 .demo span{color:var(--muted)}
-.demo-actions{display:flex;gap:8px;align-items:center}
+.demo-actions{display:flex;gap:8px;align-items:center}.kplong{font-style:normal}.demo .kpl{color:inherit}
+/* Téléphone et écran peu haut (portable Windows à 125 ou 150 % : 580 à 700 px utiles) : bandeaux « Garder ton réseau ? » et
+   « Affine la classification avec une IA » sur une ligne, sans leur phrase d’explication (redite dans « Mon réseau » et le panneau Affichage).
+   Sur deux lignes, ils laissaient 280 px au graphe d’un téléphone 360 × 640 et 400 px à celui d’un portable 1280 × 587 : noms en rayons illisibles */
+@media (max-width:760px), (max-height:700px){
+  .demo[role=note]:not(.isdemo){flex-wrap:nowrap;padding:8px 10px;gap:8px}
+  .demo[role=note]:not(.isdemo) div:first-child{min-width:0;font-size:12.5px}
+  .demo[role=note]:not(.isdemo) strong{font-size:13px}
+  .demo[role=note]:not(.isdemo) div:first-child span, .demo .kplong{display:none}
+}
 .aierr{background:#FDF0F3;border:1px solid #F3C6D2;color:#5A1A2B;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.5;margin:0 0 14px}
 .aierr a{color:#9B1C3A;font-weight:700}
 .sharebox{display:flex;gap:10px;font-weight:400;align-items:flex-start;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:13px;color:var(--muted);line-height:1.45;cursor:pointer}
@@ -1763,9 +1772,9 @@ async function setKeep(on){
 }
 function keepCard(){
   if(isDemo || keepAsked || keepOn() || !contacts.length) return '';
-  return EN ? `<div class="demo" role="note"><div><strong>Keep your network on this device?</strong><span>To find it again without re-importing. Nothing is sent; avoid on a shared computer.</span></div>
-    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Keep on this device</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Don’t keep my network">✕</button></div></div>` : `<div class="demo" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé\u00a0; à éviter sur un ordinateur partagé.</span></div>
-    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes">Garder sur cet appareil</button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
+  return EN ? `<div class="demo keepask" role="note"><div><strong>Keep your network on this device?</strong><span>To find it again without re-importing. Nothing is sent; avoid on a shared computer.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes"><span class="kpl">Keep<i class="kplong"> on this device</i></span></button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Don’t keep my network">✕</button></div></div>` : `<div class="demo keepask" role="note"><div><strong>Garder ton réseau sur cet appareil&nbsp;?</strong><span>Pour le retrouver sans réimporter. Rien n’est envoyé\u00a0; à éviter sur un ordinateur partagé.</span></div>
+    <div class="demo-actions"><button class="btn primary sm" type="button" data-act="keepyes"><span class="kpl">Garder<i class="kplong"> sur cet appareil</i></span></button><button class="btn icon-btn sm" type="button" data-act="keepno" aria-label="Ne pas garder mon réseau">✕</button></div></div>`;
 }
 /* Section « Mon réseau » en haut du panneau : état du réseau importé et bouton pour le garder ou l’oublier */
 let keptAt = 0;
