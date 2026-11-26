@@ -418,7 +418,9 @@ circle.logohub.sel{stroke:var(--accent) !important;stroke-width:3px !important}
 .hub{fill:var(--hub);stroke:var(--ink);stroke-width:1.5px;cursor:pointer}
 .hub:hover{stroke-width:3px}
 circle.sel,circle.hov{stroke:var(--ink) !important;stroke-width:3.5px !important}
-.hubLabel{font-weight:700;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;cursor:pointer}
+/* geometricPrecision : largeur des noms proportionnelle à la police, quel que soit le zoom ; sans lui, Chrome et Safari ajustaient les métriques
+   à la taille affichée et le cadrage (fit) mesurait le même nom de 107 à 119 : vue d’ensemble au hasard à l’horizontale (0,11) ou en rayons (0,04) */
+.hubLabel{font-weight:700;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;cursor:pointer;text-rendering:geometricPrecision}
 .hubLabel:hover{text-decoration:underline}
 .hubCount{font-weight:800;fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
 .link.me{stroke:var(--accent);stroke-opacity:.55;stroke-width:1.8px}
@@ -3078,7 +3080,9 @@ function lblGeo(el){
   /* Largeur à l’écran en taille pleine : constante quel que soit le zoom, donc mesurée une seule fois par affichage */
   let m = el.__w13;
   if(!m){
-    const K = Math.max(zk, LK), len = sel => { const t = el.querySelector(sel); try { return t && t.getComputedTextLength() * K / labelF || 0; } catch(e) { return 0; } };
+    /* Ramenée à la police de base (13 px) d’après la taille réellement posée sur le nom : pendant une transition ou entre deux recadrages,
+       zk et labelF ne correspondaient pas toujours à la police affichée, et une mesure fausse restait en cache (cadrage au hasard 0,04 ou 0,11) */
+    const fs = parseFloat(el.style.fontSize) || 13 * labelF / Math.max(zk, LK), len = sel => { const t = el.querySelector(sel); try { return t && t.getComputedTextLength() * 13 / fs || 0; } catch(e) { return 0; } };
     /* Même texte, même largeur : mesurée une fois par texte (la remesurer à chaque affichage coûtait 0,15 s sur téléphone) */
     const ck = el.textContent + '|' + (el.__nl || 1) + '|' + (el.__small ? 1 : 0), hit = LBL_W.get(ck);
     if(hit) m = hit;
@@ -3720,11 +3724,21 @@ function fit(){
   };
   /* Cadrage avec noms horizontaux ; s’ils se chevauchent à ce zoom, cadrage pour des noms radiaux */
   /* Noms horizontaux, au besoin un peu plus petits (90 %, puis 80 %) ; s’ils se chevauchent encore, noms radiaux en taille normale */
-  let t = null;
-  const geos = labelSel && !noGroupNames() ? labelSel.nodes().map(lblGeo) : [];
-  /* Groupe seul : son nom en plus grand (rien d’autre à loger autour) */
-  for(const F of (solo ? [1.4, 1.2, 1] : [1, 0.9, 0.8])){ labelF = F; const tt = solve(false); if(!labelSel || !hClash(geos, tt)){ t = tt; break; } }
-  if(!t){ labelF = 1; t = solve(true); }
+  /* Les noms sont mesurés tels qu’ils seront affichés au zoom d’arrivée : de loin, le nombre de contacts s’ajoute au nom (small, styleLabels).
+     Calculé depuis un contact zoomé, le cadrage mesurait des noms trop courts, puis basculait en rayons au retour (Safari 1024 × 640 : 0,07 → 0,03) */
+  const F0 = labelF;
+  const smallAt = kk => { let moved = false; if(labelSel) labelSel.each(function(d){ const sm = d.type === 'hub' && d.r * kk < 13; if(this.__small !== sm){ this.__small = sm; this.__w13 = 0; moved = true; d3.select(this).select('tspan.lblN').style('display', sm ? null : 'none'); } }); return moved; };
+  const run = () => {
+    labelF = F0; /* mesure (lblGeo) avec la taille de police réellement affichée */
+    const geos = labelSel && !noGroupNames() ? labelSel.nodes().map(lblGeo) : [];
+    let tt = null;
+    /* Groupe seul : son nom en plus grand (rien d’autre à loger autour) */
+    for(const F of (solo ? [1.4, 1.2, 1] : [1, 0.9, 0.8])){ labelF = F; const t1 = solve(false); if(!labelSel || !hClash(geos, t1)){ tt = t1; break; } }
+    if(!tt){ labelF = 1; tt = solve(true); }
+    return tt;
+  };
+  let t = run();
+  if(smallAt(t.k)){ t = run(); smallAt(t.k); }
   fitK = t.k;
   (reduceMotion ? svg : svg.transition().duration(600)).call(zoom.transform, t);
 }
