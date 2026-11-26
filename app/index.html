@@ -2851,7 +2851,7 @@ let zk = 1, fitK = 1, labelLimit = false, labelRadial = false;
    lblScale(k) donne ce facteur de taille pour un zoom k : le cadrage s’en sert pour ne jamais couper un nom. */
 /* labelF : taille des noms choisie par le cadrage (1, 0,9 ou 0,8) pour qu’ils tiennent à l’horizontale avant de passer en rayons */
 let labelF = 1;
-const LK = 0.06, lblScale = k => Math.min(1, k / LK) * labelF;
+const LK = 0.035, lblScale = k => Math.min(1, k / LK) * labelF;
 /* Téléphone : moins de 761 px de large, ou paysage de moins de 500 px de haut (iPhone couché) */
 const PHONE_Q = '(max-width:760px), (max-height:500px) and (orientation:landscape)';
 const narrowScreen = () => window.matchMedia(PHONE_Q).matches;
@@ -3044,17 +3044,20 @@ function positionLabels(){
     if(labelRadial){ const flip = c < 0; el.attr('transform', `rotate(${a * 180 / Math.PI + (flip ? 180 : 0)} ${x} ${y})`).style('text-anchor', flip ? 'end' : 'start').style('dominant-baseline', 'central'); }
     else el.attr('transform', null).style('text-anchor', c > 0.3 ? 'start' : c < -0.3 ? 'end' : 'middle').style('dominant-baseline', s > 0.3 ? 'hanging' : s < -0.3 ? 'auto' : 'central');
     /* Noms horizontaux sur deux lignes (nom, puis part et nombre) : deux fois moins larges, donc plus grands à l’écran.
-       En mode radial, une seule ligne dans l’axe de la branche */
+       En mode radial, le nom sur une ligne dans l’axe de la branche, la part et le nombre juste dessous (sur une seule ligne,
+       les noms d’un vrai réseau dépassaient de l’écran d’un téléphone en portrait) */
     const two = !labelRadial;
     const nl = this.__nl || 1, up = nl * 1.15; /* lignes au-dessus de la part : 1 ou 2 lignes de nom */
     /* Le décalage vertical va sur le premier morceau du nom : le drapeau s’il y en a un, sinon le nom */
     const dy0 = two ? (s > 0.3 ? 0 : s < -0.3 ? `-${up}em` : `-${up / 2}em`) : 0, hasFlag = !el.select('tspan.lblFlag').empty();
     /* Drapeau plus grand que le nom : son « em » aussi, d’où la division */
     const fe = flagEm();
-    el.select('tspan.lblFlag').attr('dy', two ? (s > 0.3 ? 0 : s < -0.3 ? `-${up / fe}em` : `-${up / 2 / fe}em`) : 0);
-    el.select('tspan.lblName').attr('dy', hasFlag ? 0 : dy0);
-    el.select('tspan.lblName2').attr('x', two ? x : null).attr('dy', two ? '1.15em' : 0).attr('dx', two ? 0 : '0.3em');
-    el.select('tspan.lblPct').attr('x', two ? x : null).attr('dy', two ? '1.15em' : 0).attr('dx', two ? 0 : '0.3em');
+    /* Radial : nom coupé en deux (téléphone) → trois lignes (début du nom, fin du nom, part et nombre), centrées sur l’axe */
+    const rUp = 0.575 * nl;
+    el.select('tspan.lblFlag').attr('dy', two ? (s > 0.3 ? 0 : s < -0.3 ? `-${up / fe}em` : `-${up / 2 / fe}em`) : `-${rUp / fe}em`);
+    el.select('tspan.lblName').attr('dy', hasFlag ? 0 : two ? dy0 : `-${rUp}em`);
+    el.select('tspan.lblName2').attr('x', x).attr('dy', '1.15em').attr('dx', 0);
+    el.select('tspan.lblPct').attr('x', x).attr('dy', '1.15em').attr('dx', 0);
   });
   if(countSel) countSel.attr('x', d => d.x).attr('y', d => d.y).selectAll('tspan').attr('x', function(){ return this.parentNode.__data__.x; });
   if(badgeSel) badgeSel.attr('transform', d => `translate(${d.x},${d.y})`);
@@ -3082,7 +3085,8 @@ function lblGeo(el){
 /* Boîte d’un nom en pixels d’écran, relative à son ancrage, en mode horizontal ou radial ; f : facteur de taille du nom (lblScale) */
 function lblOffsets(g, radial, f = 1){
   const ox = g.c * 8 * f, oy = g.s * 8 * f, w = (radial ? g.w : g.w2 ?? g.w) * f;
-  if(radial){ const ex = ox + g.c * w, ey = oy + g.s * w; return {l:Math.min(ox, ex) - 7 * f, r:Math.max(ox, ex) + 7 * f, t:Math.min(oy, ey) - 7 * f, b:Math.max(oy, ey) + 7 * f}; }
+  /* Radial : une ligne par morceau (nom, ou début et fin du nom, puis part et nombre), de part et d’autre de l’axe */
+  if(radial){ const wr = g.w2 * f, h = (7.5 * (g.nl || 1) + 8) * f, ex = ox + g.c * wr, ey = oy + g.s * wr; return {l:Math.min(ox, ex) - h, r:Math.max(ox, ex) + h, t:Math.min(oy, ey) - h, b:Math.max(oy, ey) + h}; }
   const hh = (g.nl > 1 ? 48 : 32) * f, l = g.c > 0.3 ? 0 : g.c < -0.3 ? -w : -w / 2, t = g.s > 0.3 ? 0 : g.s < -0.3 ? -hh : -hh / 2;
   return {l:ox + l, r:ox + l + w, t:oy + t, b:oy + t + hh};
 }
@@ -3130,7 +3134,13 @@ function styleLabels(){
     if(hubs.length === 1) meF = 0.8 / zk;
   }
   if(nodeSel) nodeSel.filter(d => d.type === 'me').attr('r', d => d.r * meF);
-  if(countSel) countSel.filter(d => d.type === 'me').style('font-size', d => `${Math.max((d.r > 30 ? 11.5 : 14) * meF, 11 / zk)}px`);
+  if(countSel) countSel.filter(d => d.type === 'me').style('font-size', d => `${Math.max((d.r > 30 ? 11.5 : 14) * meF, 11 / zk)}px`)
+    .each(function(d){
+      const ini = this.querySelector('tspan.meIni'); if(!ini || !this.__meW) return;
+      /* Le nom tient-il dans le rond ? sinon ses initiales */
+      const fs = parseFloat(this.style.fontSize) || 11.5, fits = this.__meW * fs <= 1.8 * d.r * meF;
+      d3.select(this).selectAll('tspan.meFull').style('display', fits ? null : 'none'); ini.style.display = fits ? 'none' : null;
+    });
   /* Vue d’ensemble (fort dézoom) : le chiffre dans un rond de quelques pixels serait illisible ; il passe à côté du nom */
   const small = d => d.type === 'hub' && d.r * zk < 13;
   if(countSel) countSel.filter(d => d.type === 'hub').style('display', d => small(d) || hubCentered(d) ? 'none' : null);
@@ -3576,8 +3586,13 @@ function renderGraph(vis){
       t.text(null);
       const parts = nm.split(/\s+/), cut = s => s.length > 12 ? s.slice(0, 11) + '…' : s;
       const l2 = parts.slice(1).join(' ');
-      t.append('tspan').attr('x', d.x).attr('dy', l2 ? '-0.6em' : 0).text(cut(parts[0]));
-      if(l2) t.append('tspan').attr('x', d.x).attr('dy', '1.2em').text(cut(l2));
+      t.append('tspan').attr('class', 'meFull').attr('x', d.x).attr('dy', l2 ? '-0.6em' : 0).text(cut(parts[0]));
+      if(l2) t.append('tspan').attr('class', 'meFull').attr('x', d.x).attr('dy', '1.2em').text(cut(l2));
+      /* Initiales, affichées à la place du nom quand le rond devient trop petit pour lui (fort dézoom d’un grand réseau sur téléphone) */
+      t.append('tspan').attr('class', 'meIni').attr('x', d.x).attr('dy', 0).style('display', 'none').text(initials(nm));
+      /* Largeur du nom rapportée à la taille de police, mesurée une fois */
+      const fs = parseFloat(t.style('font-size')) || 11.5;
+      try { this.__meW = d3.max(t.selectAll('tspan.meFull').nodes(), n => n.getComputedTextLength()) / fs; } catch(e) { this.__meW = 0; }
     });
   const labelled = hubNodes;
   /* Le nom d’un groupe se clique comme son nœud : plus facile à viser quand le nœud est petit */
@@ -3689,7 +3704,7 @@ function fit(){
       return {L, R, T, B};
     };
     const ok = k => { const e = ext(k); return e.R - e.L <= vb.w - 2 * M && e.B - e.T <= vb.h - 2 * M; };
-    let lo = 0.05, hi = 2.6;
+    let lo = 0.03, hi = 2.6;
     if(ok(hi)) lo = hi; else for(let i = 0; i < 26; i++){ const mid = (lo + hi) / 2; if(ok(mid)) lo = mid; else hi = mid; }
     const e = ext(lo);
     return d3.zoomIdentity.translate(vb.x + (vb.w - (e.R - e.L)) / 2 - e.L, vb.y + (vb.h - (e.B - e.T)) / 2 - e.T).scale(lo);
