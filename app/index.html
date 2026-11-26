@@ -3048,9 +3048,11 @@ const drag = d3.drag()
 
 function positionLabels(){
   const k = Math.max(zk, LK);
+  /* Noms en rayons : décalage vers l’extérieur des noms qui toucheraient leur voisin près de « Moi » (en pixels d’écran → unités du graphe) */
+  const push = labelRadial && labelSel ? radialPush(labelSel.nodes().map(lblGeo), zk) : null;
   /* Noms horizontaux tant qu’ils ne se touchent pas ; sinon, noms dans l’axe de leur branche (mode radial) */
   if(labelSel) labelSel.each(function(d){
-    const a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0) + 8 / k;
+    const a = d.angle ?? Math.PI / 2, c = Math.cos(a), s = Math.sin(a), R = (d.outer || d.r) + (d.extra || 0) + 8 / k + (push ? (push.get(d.id) || 0) / zk : 0);
     const x = d.x + c * R, y = d.y + s * R, el = d3.select(this).attr('x', x).attr('y', y);
     if(labelRadial){ const flip = c < 0; el.attr('transform', `rotate(${a * 180 / Math.PI + (flip ? 180 : 0)} ${x} ${y})`).style('text-anchor', flip ? 'end' : 'start').style('dominant-baseline', 'central'); }
     else el.attr('transform', null).style('text-anchor', c > 0.3 ? 'start' : c < -0.3 ? 'end' : 'middle').style('dominant-baseline', s > 0.3 ? 'hanging' : s < -0.3 ? 'auto' : 'central');
@@ -3093,9 +3095,35 @@ function lblGeo(el){
     }
     if(m.w1 > 4 && isFinite(m.w1)) el.__w13 = m; else { const n = (el.textContent || '').length * 7.4; m = {w1:n, w2:n * 0.6}; }
   }
-  return {d, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w:m.w1, w2:m.w2, nl:el.__nl || 1};
+  return {d, el, a, c, s, bx:(d.ax ?? d.x) + c * R, by:(d.ay ?? d.y) + s * R, w:m.w1, w2:m.w2, nl:el.__nl || 1};
 }
 /* Boîte d’un nom en pixels d’écran, relative à son ancrage, en mode horizontal ou radial ; f : facteur de taille du nom (lblScale) */
+/* Noms en rayons : près de « Moi », deux branches voisines sont proches et leurs noms (deux ou trois lignes d’épaisseur) se touchaient
+   (téléphone de 360 px : « 3 % » d’Indépendant sur Transport). Pour chaque paire de voisins trop proches, le plus court des deux noms
+   démarre plus loin, là où les branches sont assez écartées ; le plus long garde sa place (il dépasserait de l’écran).
+   Rend, pour un zoom k, le décalage en pixels d’écran de chaque nom (id du groupe → px) */
+let pushF = 1; /* part du décalage appliquée (réduite par fit quand l’étoile ne tient pas à l’écran) */
+function radialPush(geos, k){
+  const out = new Map(), me = nodes.find(n => n.type === 'me');
+  const gs = geos.filter(g => g.el && g.el.style.display !== 'none');
+  if(!me || gs.length < 3) return out;
+  const mx = me.ax ?? me.fx ?? me.x, my = me.ay ?? me.fy ?? me.y, f = lblScale(k), TAU = Math.PI * 2;
+  const L = gs.map(g => ({g, a:((Math.atan2(g.by - my, g.bx - mx) % TAU) + TAU) % TAU, r0:k * Math.hypot(g.bx - mx, g.by - my) + 8 * f, h:(7.5 * (g.nl || 1) + 8) * f, len:g.w2 * f})).sort((u, v) => u.a - v.a);
+  const n = L.length, need = (u, v) => { let t = Math.abs(v.a - u.a); if(t > Math.PI) t = TAU - t; return t >= Math.PI / 2 ? 0 : (u.h + v.h + 4) / Math.sin(t); };
+  /* On part du nom le plus long (jamais décalé) et on fait le tour : un nom en conflit avec son voisin précédent non décalé est décalé */
+  const i0 = L.reduce((b, u, i) => u.len > L[b].len ? i : b, 0), pushed = new Array(n).fill(false);
+  for(let s = 1; s <= n; s++){
+    const i = (i0 + s) % n, prev = (i - 1 + n) % n;
+    if(i === i0) break;
+    const q = need(L[prev], L[i]);
+    if(!pushed[prev] && q > Math.min(L[prev].r0, L[i].r0)) pushed[i] = true;
+  }
+  /* Dernier nom face au premier (le plus long, jamais décalé) */
+  const last = (i0 - 1 + n) % n;
+  if(last !== i0 && !pushed[last] && need(L[last], L[i0]) > Math.min(L[last].r0, L[i0].r0)) pushed[last] = true;
+  L.forEach((u, i) => { if(!pushed[i]) return; const q = Math.max(need(u, L[(i - 1 + n) % n]), need(u, L[(i + 1) % n])); if(q > u.r0 && pushF > 0) out.set(u.g.d.id, (q - u.r0) * pushF); });
+  return out;
+}
 function lblOffsets(g, radial, f = 1){
   const ox = g.c * 8 * f, oy = g.s * 8 * f, w = (radial ? g.w : g.w2 ?? g.w) * f;
   /* Radial : une ligne par morceau (nom, ou début et fin du nom, puis part et nombre), de part et d’autre de l’axe */
@@ -3121,7 +3149,7 @@ function layoutLabels(){
   labelRadial = hClash(geos, tr);
   if(!labelRadial) return;
   /* Garde-fou en cas de très fort dézoom : si deux noms radiaux partent trop près, on masque celui du plus petit groupe */
-  const f = lblScale(tr.k), anchor = g => [tr.x + tr.k * g.bx + g.c * 8 * f, tr.y + tr.k * g.by + g.s * 8 * f];
+  const f = lblScale(tr.k), P = radialPush(geos, tr.k), anchor = g => { const p = 8 * f + (P.get(g.d.id) || 0); return [tr.x + tr.k * g.bx + g.c * p, tr.y + tr.k * g.by + g.s * p]; };
   const order = geos.map((g, i) => i).sort((i, j) => (geos[j].d.id === state.selected) - (geos[i].d.id === state.selected) || geos[j].d.count - geos[i].d.count);
   const kept = [];
   order.forEach(i => { const p = anchor(geos[i]); if(kept.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < 16)) els[i].style.display = 'none'; else kept.push(p); });
@@ -3696,7 +3724,7 @@ function viewport(){
 /* Boîte de chaque nom de groupe : point d’ancrage dans le graphe + décalage et largeur en pixels d’écran */
 function labelBoxes(radial){
   if(!labelSel || noGroupNames()) return [];
-  return labelSel.nodes().map(el => { const g = lblGeo(el), o = lblOffsets(g, radial); return {x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}; });
+  return labelSel.nodes().map(el => { const g = lblGeo(el), o = lblOffsets(g, radial); return {x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b, id:g.d.id, c:g.c, s:g.s}; });
 }
 function fit(){
   if(!nodes.length || state.view !== 'graph') return;
@@ -3709,15 +3737,22 @@ function fit(){
   const base = nodes.map(n => { const rr = n.type === 'me' ? (solo ? 0 : n.r * 2) : n.type === 'hub' && envR(n) ? envR(n) + 4 : n.r; return {x0:px(n) - rr, x1:px(n) + rr, y0:py(n) - rr, y1:py(n) + rr, l:0, r:0, t:0, b:0}; });
   const M = 14;
   const solve = radial => {
-    const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b})));
+    const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b, id:b.id, c:b.c, s:b.s})));
+    /* Noms en rayons décalés vers l’extérieur quand ils se toucheraient près de « Moi » (radialPush) : le cadrage en tient compte */
+    const pg = radial && labelSel && !noGroupNames() ? labelSel.nodes().map(lblGeo) : null;
     const ext = k => {
       let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
       const f = lblScale(k); /* les noms rétrécissent sous le zoom LK : leur boîte aussi */
-      for(const it of items){ L = Math.min(L, k * it.x0 + it.l * f); R = Math.max(R, k * it.x1 + it.r * f); T = Math.min(T, k * it.y0 + it.t * f); B = Math.max(B, k * it.y1 + it.b * f); }
+      const P = pg ? radialPush(pg, k) : null;
+      for(const it of items){ const p = P && it.id ? P.get(it.id) || 0 : 0, dx = p ? it.c * p : 0, dy = p ? it.s * p : 0;
+        L = Math.min(L, k * it.x0 + it.l * f + dx); R = Math.max(R, k * it.x1 + it.r * f + dx); T = Math.min(T, k * it.y0 + it.t * f + dy); B = Math.max(B, k * it.y1 + it.b * f + dy); }
       return {L, R, T, B};
     };
     const ok = k => { const e = ext(k); return e.R - e.L <= vb.w - 2 * M && e.B - e.T <= vb.h - 2 * M; };
     let lo = 0.03, hi = 2.6;
+    /* Noms en rayons décalés : si même au zoom minimal l’étoile ne tient pas (téléphone 360 × 640), le décalage est réduit
+       jusqu’à ce qu’elle tienne : mieux vaut deux noms qui se frôlent qu’un nom coupé au bord de l’écran */
+    if(pg){ pushF = 1; for(const pf of [0.75, 0.5, 0.25, 0]){ if(ok(lo)) break; pushF = pf; } }
     if(ok(hi)) lo = hi; else for(let i = 0; i < 26; i++){ const mid = (lo + hi) / 2; if(ok(mid)) lo = mid; else hi = mid; }
     const e = ext(lo);
     return d3.zoomIdentity.translate(vb.x + (vb.w - (e.R - e.L)) / 2 - e.L, vb.y + (vb.h - (e.B - e.T)) / 2 - e.T).scale(lo);
