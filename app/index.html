@@ -698,6 +698,9 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
 }
 /* Téléphone couché ou téléviseur 960 × 540 (moins de 560 px de haut, Safari y prend déjà beaucoup de hauteur) : en-tête sur une ligne, sans le bandeau
    de démo (il reste en portrait), fiche sur le côté, la moitié de la largeur au plus ; le graphe garde le plus de hauteur possible */
+/* Écran de moins de 340 px de large (écran externe des Galaxy Fold 1 à 4) : l’étoile ne tient pas même au zoom minimal,
+   noms des groupes masqués dans le graphe (la fiche et la légende les donnent), choix de Vincent du 27 novembre 2026 */
+@media (max-width:339px){.hubLabel{display:none}}
 @media (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape){
   .hubLabel{display:none}
   .canvas.has-drawer .legendbox{display:none}
@@ -2873,6 +2876,9 @@ const narrowScreen = () => window.matchMedia(PHONE_Q).matches;
 const SHEET_MQ = window.matchMedia('(max-width:1024px) and (orientation:portrait), (max-width:760px) and (min-height:501px), (max-width:900px) and (min-height:661px)'), sheetDrawer = () => SHEET_MQ.matches;
 /* Téléphone couché : noms des groupes masqués (la fiche et la légende les donnent), pour que l’étoile prenne toute la hauteur */
 const LAND_MQ = window.matchMedia('(max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape)'), noGroupNames = () => LAND_MQ.matches;
+/* Noms des groupes masqués dans le graphe : téléphone couché, ou écran de moins de 340 px de large (Galaxy Fold 1 à 4 fermé : 10 à 12 noms
+   se chevauchaient ou étaient coupés) ; la mise en page reste celle du téléphone en portrait */
+const NARROW_MQ = window.matchMedia('(max-width:339px)'), namesHidden = () => LAND_MQ.matches || NARROW_MQ.matches;
 /* Texte d’exemple de la barre de recherche : plus court sur téléphone, où il ne tenait pas en entier */
 { const q = document.getElementById('q'), mq = window.matchMedia(PHONE_Q), setPh = () => { q.placeholder = mq.matches ? L('Nom, entreprise, poste…', 'Name, company, job title…') : L('Rechercher un nom, une entreprise, un poste…', 'Search a name, a company, a job title…'); };
   setPh(); mq.addEventListener('change', setPh); }
@@ -3726,7 +3732,7 @@ function viewport(){
 }
 /* Boîte de chaque nom de groupe : point d’ancrage dans le graphe + décalage et largeur en pixels d’écran */
 function labelBoxes(radial){
-  if(!labelSel || noGroupNames()) return [];
+  if(!labelSel || namesHidden()) return [];
   return labelSel.nodes().map(el => { const g = lblGeo(el), o = lblOffsets(g, radial); return {x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b, id:g.d.id, c:g.c, s:g.s}; });
 }
 function fit(){
@@ -3742,7 +3748,7 @@ function fit(){
   const solve = radial => {
     const items = base.concat(labelBoxes(radial).map(b => ({x0:b.x, x1:b.x, y0:b.y, y1:b.y, l:b.l, r:b.r, t:b.t, b:b.b, id:b.id, c:b.c, s:b.s})));
     /* Noms en rayons décalés vers l’extérieur quand ils se toucheraient près de « Moi » (radialPush) : le cadrage en tient compte */
-    const pg = radial && labelSel && !noGroupNames() ? labelSel.nodes().map(lblGeo) : null;
+    const pg = radial && labelSel && !namesHidden() ? labelSel.nodes().map(lblGeo) : null;
     const ext = k => {
       let L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
       const f = lblScale(k); /* les noms rétrécissent sous le zoom LK : leur boîte aussi */
@@ -3768,7 +3774,7 @@ function fit(){
   const smallAt = kk => { let moved = false; if(labelSel) labelSel.each(function(d){ const sm = d.type === 'hub' && d.r * kk < 13; if(this.__small !== sm){ this.__small = sm; this.__w13 = 0; moved = true; d3.select(this).select('tspan.lblN').style('display', sm ? null : 'none'); } }); return moved; };
   const run = () => {
     labelF = F0; /* mesure (lblGeo) avec la taille de police réellement affichée */
-    const geos = labelSel && !noGroupNames() ? labelSel.nodes().map(lblGeo) : [];
+    const geos = labelSel && !namesHidden() ? labelSel.nodes().map(lblGeo) : [];
     let tt = null;
     /* Groupe seul : son nom en plus grand (rien d’autre à loger autour) */
     for(const F of (solo ? [1.4, 1.2, 1] : [1, 0.9, 0.8])){ labelF = F; const t1 = solve(false); if(!labelSel || !hClash(geos, t1)){ tt = t1; break; } }
@@ -3887,7 +3893,7 @@ function zoomToNode(n){
   const M = 12, items = [];
   const hid = n.type === 'hub' ? n.id : n.hub;
   const lblEl = labelSel && hid ? labelSel.nodes().find(el => el.__data__ && el.__data__.id === hid) : null;
-  if(lblEl && !noGroupNames() && !(n.type === 'hub' && hubCentered(n))){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
+  if(lblEl && !namesHidden() && !(n.type === 'hub' && hubCentered(n))){ const g = lblGeo(lblEl), o = lblOffsets(g, labelRadial); items.push({x:g.bx, y:g.by, l:o.l, r:o.r, t:o.t, b:o.b}); }
   const orb = n.type === 'hub' ? (n.outer || n.r) + 6 : (collLbl ? collR + 6 : n.r + 30);
   /* Pastilles logo autour des grappes : 44 px à l’écran au-delà du cercle, à garder dans le cadre */
   const P = n.type === 'hub' && envR(n) && state.colorBy === 'company' ? 50 : 0;
