@@ -698,9 +698,10 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
 }
 /* Téléphone couché ou téléviseur 960 × 540 (moins de 560 px de haut, Safari y prend déjà beaucoup de hauteur) : en-tête sur une ligne, sans le bandeau
    de démo (il reste en portrait), fiche sur le côté, la moitié de la largeur au plus ; le graphe garde le plus de hauteur possible */
-/* Écran de moins de 340 px de large (écran externe des Galaxy Fold 1 à 4) : l’étoile ne tient pas même au zoom minimal,
-   noms des groupes masqués dans le graphe (la fiche et la légende les donnent), choix de Vincent du 27 novembre 2026 */
-@media (max-width:339px){.hubLabel{display:none}}
+/* Écran de 360 px de large ou moins (écran externe des Galaxy Fold 1 à 4, Galaxy S24 et autres Android de 360 px) : l’étoile
+   ne tient pas même au zoom minimal, noms des groupes masqués dans le graphe (la fiche et la légende les donnent),
+   choix de Vincent du 27 novembre 2026, seuil relevé de 339 à 360 px le 28 novembre 2026 */
+@media (max-width:360px){.hubLabel{display:none}}
 /* Écran de moins de 500 px de haut en portrait ou carré (écran externe des Galaxy Z Flip 5 à 7, 360 × 374 à 412 × 455) :
    en-tête sur une ligne et sans bandeau de démo comme le téléphone couché, noms des groupes masqués (la fiche et la légende
    les donnent), fiche en bas ; sinon le graphe n’avait que 30 px de haut et les noms étaient coupés, choix de Vincent du 28 novembre 2026 */
@@ -2893,7 +2894,7 @@ const SHEET_MQ = window.matchMedia('(max-width:1024px) and (orientation:portrait
 const LAND_MQ = window.matchMedia('(max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape)'), noGroupNames = () => LAND_MQ.matches;
 /* Noms des groupes masqués dans le graphe : téléphone couché, ou écran de moins de 340 px de large (Galaxy Fold 1 à 4 fermé : 10 à 12 noms
    se chevauchaient ou étaient coupés) ; la mise en page reste celle du téléphone en portrait */
-const NARROW_MQ = window.matchMedia('(max-width:339px), (max-height:500px) and (orientation:portrait)'), namesHidden = () => LAND_MQ.matches || NARROW_MQ.matches;
+const NARROW_MQ = window.matchMedia('(max-width:360px), (max-height:500px) and (orientation:portrait)'), namesHidden = () => LAND_MQ.matches || NARROW_MQ.matches;
 /* Texte d’exemple de la barre de recherche : plus court sur téléphone, où il ne tenait pas en entier */
 { const q = document.getElementById('q'), mq = window.matchMedia(PHONE_Q), setPh = () => { q.placeholder = mq.matches ? L('Nom, entreprise, poste…', 'Name, company, job title…') : L('Rechercher un nom, une entreprise, un poste…', 'Search a name, a company, a job title…'); };
   setPh(); mq.addEventListener('change', setPh); }
