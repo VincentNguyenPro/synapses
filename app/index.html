@@ -123,7 +123,7 @@ details.acc>summary .sic{margin-right:-2px}
 .ofjb{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ofjb .btn{padding:6px 12px;font-size:12.5px}.ofkept{font-size:12.5px;font-weight:700;color:#1F7A4D}
 .ofattr{margin:8px 0 0;text-align:right}.ofattr a{color:var(--accent);font-weight:700}
 .ofsites{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 0}.ofsites>span{font-size:12.5px;font-weight:700;color:var(--muted);margin-right:4px}.ofsite{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:12.5px;font-weight:600;color:var(--accent);text-decoration:none}.ofsite:hover{border-color:var(--accent);background:var(--accent-soft)}
-@media (max-width:760px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape){.ofgrid{grid-template-columns:1fr 1fr}.ofgrid .evf:first-child{grid-column:1/-1}}
+@media (max-width:760px), (max-width:900px) and (max-height:800px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape){.ofgrid{grid-template-columns:1fr 1fr}.ofgrid .evf:first-child{grid-column:1/-1}}
 .ofcount{font-weight:400}.ofcur{display:flex;flex-wrap:wrap;gap:6px 14px;margin:-4px 0 0;font-size:12.5px}.ofcur a{font-weight:700;color:var(--accent);text-decoration:none}
 .ofpaste[open]{display:grid;gap:8px}.ofnote{margin:0;padding:8px 10px;border-radius:10px;background:#FFF6E5;color:#7A4A00}.ofpaste textarea{margin-top:6px;resize:vertical}.ofpaste .btn{justify-self:start}
 .people li.ofli{flex-wrap:wrap}
@@ -138,7 +138,7 @@ details.acc>summary .sic{margin-right:-2px}
 .ofmsg .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
 .ofmsg .seg button{border:0;background:var(--surface);padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}
 .ofmsg .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
-@media (max-width:760px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape){.ofwhy,.ofmsg{padding-left:6px}.ofform input,.ofform textarea,.ofform select{font-size:16px}}
+@media (max-width:760px), (max-width:900px) and (max-height:800px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape){.ofwhy,.ofmsg{padding-left:6px}.ofform input,.ofform textarea,.ofform select{font-size:16px}}
 .qtxt{flex:1;min-width:0}
 .qlink{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;margin-top:6px}
 .qlink:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -646,7 +646,7 @@ button.lk{border:0;background:none;font:inherit;font-weight:700;font-size:13px;c
   #panel details:not(.acc) > summary{padding:6px 0}
 }
 /* Téléphone, en portrait ou en paysage (moins de 560 px de haut, téléviseur 960 × 540 compris ; petite fenêtre de moins de 1150 × 660, Vision Pro ou portable : le graphe y tombait au zoom 0,03) : même mise en page */
-@media (max-width:760px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape){
+@media (max-width:760px), (max-width:900px) and (max-height:800px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape){
   .app{grid-template-columns:1fr}
   header{flex-wrap:wrap;gap:10px;padding:10px 12px}
   .brand p,.lbl-long{display:none}
@@ -2885,7 +2885,7 @@ const LK = 0.035, lblScale = k => Math.min(1, k / LK) * labelF;
 /* Téléphone : moins de 761 px de large, ou paysage de moins de 560 px de haut (iPhone couché ; téléviseur Android TV en 960 × 540 :
    en mise en page d’ordinateur, le graphe n’avait que 660 × 350 px, zoom 0,03 et noms chevauchés), ou petite fenêtre de moins de 1150 × 660
    (Vision Pro, portable : 800 × 600 et 1024 × 600 tombaient au zoom 0,03, et une fiche ne laissait que 150 px au graphe) */
-const PHONE_Q = '(max-width:760px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape)';
+const PHONE_Q = '(max-width:760px), (max-width:900px) and (max-height:800px), (max-height:560px) and (orientation:landscape), (max-height:660px) and (max-width:1150px) and (orientation:landscape)';
 const narrowScreen = () => window.matchMedia(PHONE_Q).matches;
 /* Fiche ouverte en bas de l’écran : téléphone, tablette en portrait jusqu’à 1024 px, fenêtre de moins de 900 px de large */
 const SHEET_MQ = window.matchMedia('(max-width:1024px) and (orientation:portrait), (max-width:760px) and (min-height:501px), (max-width:900px) and (min-height:661px)'), sheetDrawer = () => SHEET_MQ.matches;
